@@ -24,7 +24,9 @@
 - [ ] Utseendetest av 3D-verden med 2D-figurer (ett rom, vegglamper, måneskygger, bloom), hvis Tom vil.
 - [x] Bilder av 40 kuriositeter, åtte piller og et tomt preparatglass fra ChatGPT i gpt-grafikk/.
 - [x] Spillerens figurark fra ChatGPT i gpt-grafikk/.
-- [ ] Flere bilder fra ChatGPT etter DESIGN_BRIEF.md: personale og andre figurer. Lastes opp til gpt-grafikk/.
+- [x] Tre delark fra ChatGPT for personale: hoder, hatter og uniformer.
+- [x] Fire sko og fem småobjekter fra ChatGPT: hjerte, Morbidiumdråpe, gulltann, due og eterflaske.
+- [ ] Flere bilder fra ChatGPT etter DESIGN_BRIEF.md: andre figurer, rekvisitter og effekter. Lastes opp til gpt-grafikk/.
 - [ ] Musikk og flere lyder.
 - [ ] Byggeanimasjon når et rom avsløres (idé fra threejs-architecture-effects).
 - [ ] Flere diagnoser og oppvåkningssteder, flere spor etter tidligere pasienter.
