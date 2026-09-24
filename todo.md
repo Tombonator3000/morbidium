@@ -22,7 +22,8 @@
 - [ ] Balansere kuriositetene etter spilltesting; noen kombinasjoner blir trolig altfor sterke.
 - [ ] Oppskriftssystemet i motoren: sette sammen fiender av deler fra assets/deler/ (rolle, hode, hatt/hår, tilbehør, kropp, farging, størrelse, elitemerker, navn).
 - [ ] Utseendetest av 3D-verden med 2D-figurer (ett rom, vegglamper, måneskygger, bloom), hvis Tom vil.
-- [ ] Flere bilder fra ChatGPT etter DESIGN_BRIEF.md: kuriositetene, figur_pasient og personale. Lastes opp til gpt-grafikk/.
+- [x] Bilder av 40 kuriositeter, åtte piller og et tomt preparatglass fra ChatGPT i gpt-grafikk/.
+- [ ] Flere bilder fra ChatGPT etter DESIGN_BRIEF.md: figur_pasient og personale. Lastes opp til gpt-grafikk/.
 - [ ] Musikk og flere lyder.
 - [ ] Byggeanimasjon når et rom avsløres (idé fra threejs-architecture-effects).
 - [ ] Flere diagnoser og oppvåkningssteder, flere spor etter tidligere pasienter.
