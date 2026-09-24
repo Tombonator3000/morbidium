@@ -227,7 +227,7 @@ function planWaves(F, r, rng, depth, opts) {
   if (!['combat', 'risk', 'start'].includes(r.role)) return;
   if (r.role === 'start' && !opts.startCombat) return;
   const pool = DEPTH_ENEMIES[depth] || DEPTH_ENEMIES[4];
-  const bias = { kapell: 'kultist', bad: 'yngel', behandling: 'oppasser', sovesal: 'pleier', kjeller: 'yngel', isolat: 'pleier', kartotek: 'kultist' }[r.template];
+  const bias = { kapell: 'kultist', bad: 'yngel', behandling: 'oppasser', sovesal: 'pleier', kjeller: 'yngel', isolat: 'tvang', kartotek: 'byrakrat' }[r.template];
   const d = F.dist ? F.dist[r.id] : 2;
   const nWaves = r.role === 'risk' ? 2 : r.role === 'start' ? 1 : (d >= 3 && rng.chance(.55) ? 2 : 1) + (depth >= 3 && rng.chance(.3) ? 1 : 0);
   for (let w = 0; w < nWaves; w++) {

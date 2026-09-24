@@ -112,7 +112,7 @@ function updatePlayer(dt, A) {
     if (k.p >= 1) { P.atk = null; if (P.queued) { P.queued = false; startSwing(false); } else P.chain = .3; }
   } else if (P.chain > 0) { P.chain -= dt; if (P.chain <= 0) P.combo = 0; }
   // bevegelse
-  let spd = (5 + P.stats.smidighet * .15) * (hasDiag('ruging') ? .9 : 1) * (P.fastT > 0 ? 1.4 : 1) * (P.coffee ? 1.1 : 1) * Items.stat('speed'), mx = stunned ? 0 : A.mx, mz = stunned ? 0 : A.mz;
+  let spd = (5 + P.stats.smidighet * .15) * (P.gasT > 0 ? .6 : 1) * (hasDiag('ruging') ? .9 : 1) * (P.fastT > 0 ? 1.4 : 1) * (P.coffee ? 1.1 : 1) * Items.stat('speed'), mx = stunned ? 0 : A.mx, mz = stunned ? 0 : A.mz;
   if (P.roll > 0) { P.roll -= dt; mx = Math.sin(P.rollA); mz = Math.cos(P.rollA); spd = 11 + P.stats.smidighet * .3; if (Math.random() < dt * 20) puff(P.x, P.z, 1, .45); }
   else if (P.atk) spd *= .3; else if (P.charging) spd *= .4;
   P.vx = lerp(P.vx, mx * spd, 1 - Math.exp(-dt * 16)); P.vz = lerp(P.vz, mz * spd, 1 - Math.exp(-dt * 16));
@@ -363,9 +363,9 @@ function enemyTarget(e) {
    ============================================================ */
 function spawnEnemy(type, x, z, elite, depth) {
   const D = ENEMIES[type], hpK = 1 + (depth - 1) * .3;
-  const doll = new Doll(type, { elite, weapon: type === 'oppasser' ? 'sproyte' : null, shadow: type === 'pleier' ? .55 : .42, scale: elite ? 1.2 : 1 });
+  const doll = new Doll(type, { elite, weapon: type === 'oppasser' ? 'sproyte' : D.weapon || null, shadow: type === 'pleier' ? .55 : D.r > .45 ? .5 : .42, scale: elite ? 1.2 : 1 });
   R.scene.add(doll.root); doll.root.position.set(x, 0, z); doll.root.scale.setScalar(.01);
-  const e = { kind: 'enemy', type, x, z, r: D.r * (elite ? 1.15 : 1), face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, elite, hp: D.hp * hpK * (elite ? 2.2 : 1), dmg: D.dmg * (1 + (depth - 1) * .17) * (elite ? 1.3 : 1), sp: D.speed, state: 'spawn', t: .5, cd: rnd(.8, 2), stun: 0, slip: 0, sleep: 0, speechT: rnd(3, 8), teles: [], bubbleH: type === 'yngel' ? 1.7 : type === 'pleier' ? 3.3 : 3.1, blood: type === 'yngel' ? 0x6b2d8c : 0xb3261e, depth };
+  const e = { kind: 'enemy', type, x, z, r: D.r * (elite ? 1.15 : 1), face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, elite, hp: D.hp * hpK * (elite ? 2.2 : 1), dmg: D.dmg * (1 + (depth - 1) * .17) * (elite ? 1.3 : 1), sp: D.speed, state: 'spawn', t: .5, cd: rnd(.8, 2), stun: 0, slip: 0, sleep: 0, speechT: rnd(3, 8), teles: [], bubbleH: D.bubbleH || (type === 'yngel' ? 1.7 : type === 'pleier' ? 3.3 : 3.1), blood: D.blood || (type === 'yngel' ? 0x6b2d8c : 0xb3261e), depth };
   e.max = e.hp; G.enemies.push(e); puff(x, z, 2, .8, type === 'yngel' ? '#6b3a82' : null);
   if (type === 'yngel') Particles.spawn(x, .2, z, 8, 0x6b2d8c, { speed: 2, up: 5 });
   return e;
@@ -383,6 +383,7 @@ function enemyDie(e, src) {
 function updateEnemy(e, dt) {
   const P = G.player;
   if (!e.alive) { e.deadT -= dt; e.doll.update(dt, { down: true }); e.doll.dissolve(1 - Math.max(0, e.deadT) / .5); if (e.deadT <= 0 && !e.gone) { e.gone = true; e.doll.dispose(); } return; }
+  updateEnemyQueue(e, dt);
   e.t -= dt; e.cd -= dt; e.stun -= dt; e.slip -= dt; e.sleep -= dt; e.speechT -= dt; e.confused -= dt || 0; e.exposed -= dt; e.shrink -= dt; e.bloat -= dt;
   if (e.bleed > 0) { e.bleed -= dt; e.bleedT = (e.bleedT || 0) - dt; if (e.bleedT <= 0) { e.bleedT = .5; hurt(e, 2, { from: 'player' }); } }
   const T = enemyTarget(e), dx = T.x - e.x, dz = T.z - e.z, dist = Math.hypot(dx, dz), toT = Math.atan2(dx, dz);
@@ -392,7 +393,8 @@ function updateEnemy(e, dt) {
   else if (e.state === 'charge') {
     const W0 = e.chargeDir; mv = 0; want = W0;
     const wall = moveEnt(e, Math.sin(W0) * 13 * dt, Math.cos(W0) * 13 * dt); e.chargeLeft -= 13 * dt;
-    if (d2(e.x, e.z, P.x, P.z) < (e.r + P.r + .2) ** 2 && !e.chargeHit) { e.chargeHit = true; hurt(P, e.dmg * 1.2, { type: 'pleier', x: e.x, z: e.z, kb: 10 }); }
+    if (d2(e.x, e.z, P.x, P.z) < (e.r + P.r + .2) ** 2 && !e.chargeHit) { e.chargeHit = true; hurt(P, e.dmg * 1.2, { type: e.type, x: e.x, z: e.z, kb: 10 }); }
+    if (wall || e.chargeLeft <= 0) e.rolling = false;
     if (wall) { e.state = 'recover'; e.t = 1; e.stun = 1; numText(e.x, e.z, 'BONK', 'crit', 2.6); Sound.play('bonk'); R.shake(.2); puff(e.x, e.z, 3); }
     else if (e.chargeLeft <= 0) { e.state = 'recover'; e.t = .8; }
     if (Math.random() < dt * 20) puff(e.x, e.z, 1, .5);
@@ -400,7 +402,7 @@ function updateEnemy(e, dt) {
   else if (e.state === 'chase') {
     want = toT;
     const keep = { pleier: 1.3, kultist: 3.6, oppasser: 5, yngel: 1.0 }[e.type] ?? Grotesk.keep[e.type] ?? 1.2;
-    if (dist > keep) mv = 1; else if (dist < keep - 1.3 && (e.type === 'kultist' || e.type === 'oppasser' || e.type === 'lunge' || e.type === 'svulst')) mv = -.7;
+    if (dist > keep) mv = 1; else if (dist < keep - 1.3 && (e.type === 'kultist' || e.type === 'oppasser' || Grotesk.retreat[e.type])) mv = -.7;
     const canHit = T === P ? P.alive : true;
     if (e.cd <= 0 && canHit) {
       if (e.type === 'pleier') {
@@ -417,7 +419,7 @@ function updateEnemy(e, dt) {
     }
     if (e.type === 'kultist' && e.speechT <= 0) { e.speechT = rnd(6, 11); if (Math.random() < .45) { e.state = 'pose'; e.t = 1.6; e.pose = 1.6; FX.bubble(e, pick(LINES.pose), 1.8); } else FX.bubble(e, pick(LINES.kultist), 3); }
     if (e.type === 'pleier' && e.speechT <= 0) { e.speechT = rnd(9, 15); FX.bubble(e, pick(LINES.pleier), 2.4); }
-    if ((e.type === 'lunge' || e.type === 'svulst') && e.speechT <= 0) { e.speechT = rnd(7, 12); FX.bubble(e, pick(LINES[e.type]), 1.6); }
+    if (Grotesk.talk[e.type] && e.speechT <= 0) { e.speechT = rnd(7, 12); if (Math.random() < .6) FX.bubble(e, pick(LINES[e.type]), 1.6); }
     if (e.type === 'yngel' && e.speechT <= 0) { e.speechT = rnd(6, 12); FX.bubble(e, pick(LINES.yngel), 1.2); }
   } else if (e.state === 'wind') { want = e.type === 'kultist' ? toT : e.face; if (e.t <= 0) { e.state = 'recover'; e.t = .45; e.raise = false; e.cd = rnd(1.3, 2.4) * (e.elite ? .75 : 1); } }
   else if (e.state === 'recover' || e.state === 'pose') { e.pose -= dt; if (e.t <= 0) { e.state = 'chase'; e.raise = false; e.pose = 0; } }
@@ -446,8 +448,8 @@ function updateEnemy(e, dt) {
   for (const zn of G.zones) if (zn.kind === 'trip' && e.slip <= 0) { const t = clamp(((e.x - zn.x0) * (zn.x1 - zn.x0) + (e.z - zn.z0) * (zn.z1 - zn.z0)) / (d2(zn.x0, zn.z0, zn.x1, zn.z1) || 1), 0, 1); if (d2(e.x, e.z, lerp(zn.x0, zn.x1, t), lerp(zn.z0, zn.z1, t)) < .25) enemySlip(e); }
   e.doll.setFacing(e.face);
   const sp = Math.hypot(e.vx, e.vz);
-  e.doll.update(dt, { speed: sp, down: e.slip > 0 || e.sleep > 0, raise: e.raise || e.state === 'pose', headTilt: e.state === 'pose' ? .25 : 0, hop: e.type === 'yngel' && sp > 1 ? Math.abs(Math.sin(G.time * 14)) * .15 : 0,
-    attack: e.type === 'oppasser' && e.state === 'wind' ? { p: .1, combo: 0 } : e.type === 'pleier' && e.state === 'wind' ? { p: .2 + (1 - e.t / .55) * .2, combo: 0 } : null, hold: e.type === 'oppasser' });
+  e.doll.update(dt, { speed: sp, down: e.slip > 0 || e.sleep > 0, raise: e.raise || e.state === 'pose', headTilt: e.state === 'pose' ? .25 : 0, hop: Grotesk.hop[e.type] && sp > 1 ? Math.abs(Math.sin(G.time * (e.type === 'rotte' ? 20 : 14))) * (e.type === 'tvang' ? .25 : .15) : 0, spin: e.rolling && e.state === 'charge' ? (G.time * 16) % TAU : 0,
+    attack: e.type === 'oppasser' && e.state === 'wind' ? { p: .1, combo: 0 } : e.type === 'pleier' && e.state === 'wind' ? { p: .2 + (1 - e.t / .55) * .2, combo: 0 } : null, hold: e.type === 'oppasser' || Grotesk.hold[e.type] });
   e.doll.root.position.set(e.x, 0, e.z);
   if ((e.stun > 0 || e.sleep > 0) && Math.random() < dt * 3) Particles.spawn(e.x, 2.3, e.z, 1, e.sleep > 0 ? 0xcfe8ef : 0xfff6c8, { speed: 1, up: 1, g: 0, life: .5, size: .8 });
 }

@@ -323,8 +323,8 @@ const Items = {
     if (this.has('speil')) { if (Math.random() < .13 && e.alive) { hurt(e, dmg, { from: 'player' }); numText(e.x, e.z, 'SPEIL', 'crit', 2.6); } if (Math.random() < .01) { hurt(P, 2, { type: 'self' }); numText(P.x, P.z, 'Au. Speilet.', 'info', 2.4); } }
   },
   onKill(e) {
-    const col = { pleier: '#9a1818', kultist: '#6a1030', oppasser: '#9a1818', yngel: '#5a2a7a', flue: '#5a6a2a', svulst: '#d8c060', lunge: '#b8c060' }[e.type] || '#8a1010';
-    this.splat(e.x, e.z, col, e.type === 'flue' ? .5 : e.elite ? 1.5 : 1.1);
+    const col = { pleier: '#9a1818', kultist: '#6a1030', oppasser: '#9a1818', yngel: '#5a2a7a', flue: '#5a6a2a', svulst: '#d8c060', lunge: '#b8c060', rotte: '#6a1818', oyeblomst: '#5a2a7a', narkose: '#8a1818' }[e.type] || '#8a1010';
+    this.splat(e.x, e.z, col, e.type === 'flue' || e.type === 'rotte' ? .5 : e.elite ? 1.5 : 1.1);
     Particles.spawn(e.x, .8, e.z, 6, 0xf4f0e0, { speed: 4, up: 5, life: .9, size: .8 });
     if (this.has('rattent_kjott')) G.run.flies = Math.min(6 + (this.tf('flue') ? 2 : 0), (G.run.flies || 0) + 1);
     if (this.has('gulltann')) dropTeeth(e.x, e.z, 1);

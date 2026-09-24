@@ -172,3 +172,14 @@ Alle tidspunkt er UTC.
 - Sjefene har egen kø for forsinkede handlinger, så angrepene følger pause og tidsfall. Egne dødsårsaker per sjef. Nye høyttalermeldinger, sjefsreplikker og tre nye journalfragmenter.
 - Fiendenes helse og skade stiger litt saktere per etasje (0,3 og 0,17 i stedet for 0,35 og 0,2), siden det nå er fire etasjer.
 - Tester: test_ekstra kjører alle fire sjefer med alle angrep og sjekker at luken åpnes. Alt bestått, ingen konsollfeil. Feil funnet og rettet underveis: isolatveggene forsvant med en gang, og teksten på stempelet ble speilvendt.
+
+## 2026-09-24 16:39 Etappe 3: fem nye fiender
+- Ny fil src/26_fiender.js med fem fiender, tegnet i kode, med egne replikker og dødsårsaker:
+  - Pasient i tvangstrøye: hopper, ruller seg som en kjegle mot pasienten (spinner rundt), og stanger på kort hold. Vanligst i isolatene.
+  - Byråkrat (grønn skjermlue, blyant bak øret): holder avstand, kaster tre skjemaer i vifte, eller stempler en «kølapp» der pasienten står som holder hen fast i et sekund.
+  - Narkoselege (gassmaske, eterkolbe): kaster eter som blir en sky på gulvet. I skyen går pasienten 40 % tregere og sovner litt etter drøye to sekunder. Heliumlunge beskytter.
+  - Arkivrotter: kommer alltid tre og tre, små, raske og svake, med et skjema i munnen.
+  - Øyeblomst: står fast i gulvet (kan ikke dyttes), skyter langsomme Morbidium-kuler som følger etter pasienten, og slår rundt seg når noen kommer for nær.
+- Fordeling: tvangstrøye fra etasje 1, narkoselege fra etasje 2, alle i Isolat og arkiv, øyeblomst og rotter i Dypet. Isolat-rom trekker mot tvangstrøyer og kartotek mot byråkrater. Overarkivaren kaller inn byråkrater.
+- Motoren: fiendeskudd kan være målsøkende, fiender kan ha egen kø for forsinkede handlinger, og oppførselslistene (trekke seg unna, snakke, holde ting, hoppe) er gjort generelle.
+- Test: alle fem satt ut rundt pasienten i fem sekunder. Rottene kom i flokk, gass-skyen oppstod, pasienten tok skade, ingen konsollfeil. Rettet: tvangstrøye-pasienten så ut som en bamse bakfra.

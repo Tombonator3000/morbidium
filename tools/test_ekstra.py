@@ -93,6 +93,22 @@ async def main():
         sjekk('ingen konsollfeil (journal)', not pg.errs, pg.errs[:5])
         await pg.close()
 
+        # 5) de nye fiendene i aksjon
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        await pg.evaluate("""() => { const G = MORBIDIUM; G.run.seed = 5; startFloor(3, false); G.rooms.forEach(s => s.cleared = true); const P = G.player; P.hp = P.maxHp = 400;
+          const r = G.F.rooms.filter(r => r.role === 'combat').sort((a, b) => b.w * b.h - a.w * a.h)[0]; const c = freeSpot(r.x + r.w / 2, r.z + r.h / 2, 3); P.x = c.x; P.z = c.z; R.snapCamera(P.x, P.z);
+          const types = ['tvang', 'byrakrat', 'narkose', 'rotte', 'oyeblomst']; types.forEach((t, i) => { const a = i / types.length * Math.PI * 2, s = freeSpot(P.x + Math.sin(a) * 3.2, P.z + Math.cos(a) * 3.2, 2); spawnEnemy(t, s.x, s.z, false, 3); }); }""")
+        await pg.wait_for_timeout(1400); await pg.screenshot(path='/tmp/e_8fiender.png')
+        await pg.wait_for_timeout(5000); await pg.screenshot(path='/tmp/e_9fiender_kamp.png')
+        st = await pg.evaluate("() => ({ n: MORBIDIUM.enemies.filter(e => e.alive).length, types: [...new Set(MORBIDIUM.enemies.map(e => e.type))], hp: Math.round(MORBIDIUM.player.hp), gas: MORBIDIUM.zones.filter(z => z.kind === 'gas').length })")
+        sjekk('nye fiender lever og rotter kom i flokk', st['n'] >= 7 and len(st['types']) == 5, st)
+        sjekk('fiendene gjorde skade', st['hp'] < 400, st['hp'])
+        await pg.evaluate("() => { for (const e of MORBIDIUM.enemies) if (e.alive) hurt(e, 9999, { from: 'player' }); }")
+        await pg.wait_for_timeout(800)
+        sjekk('ingen konsollfeil (nye fiender)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         # 4) alle fire sjefer med alle angrep, og rommene i Isolat og arkiv
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await start_lop(pg)
