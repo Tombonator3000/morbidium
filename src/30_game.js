@@ -431,7 +431,7 @@ function drawHeadMap(c) {
   REGIONS.forEach((r, i) => cloud(HEADMAP.cx[i] * 600, HEADMAP.cy[i] * 600, 98, 84, r.color, i * 7 + 1));
   // navnet på området øverst i skyen, over kortplassen
   g.textAlign = 'center'; g.font = '26px "Alfa Slab One", Georgia, serif'; g.lineJoin = 'round';
-  REGIONS.forEach((r, i) => { const x = HEADMAP.cx[i] * 600, y = HEADMAP.cy[i] * 600 - 68; g.lineWidth = 7; g.strokeStyle = '#f6ead0'; g.strokeText(r.name.toUpperCase(), x, y); g.fillStyle = Col.dark(r.dark, .8); g.fillText(r.name.toUpperCase(), x, y); });
+  REGIONS.forEach((r, i) => { const x = HEADMAP.cx[i] * 600, y = HEADMAP.cy[i] * 600 - (i < 2 ? 68 : 56); g.lineWidth = 7; g.strokeStyle = '#f6ead0'; g.strokeText(r.name.toUpperCase(), x, y); g.fillStyle = Col.dark(r.dark, .8); g.fillText(r.name.toUpperCase(), x, y); });
   // ord rundt hodet med ledestreker
   g.font = '600 25px Caveat, cursive'; g.fillStyle = INK;
   const L = [['Orden', 150, 58, 0], ['Frykt', 70, 150, 0], ['Tvang', 48, 222, 0], ['Flukt', 40, 290, 0], ['Erindring', 196, 270, 0], ['Kontroll', 520, 70, 1], ['Plikt', 572, 150, 1], ['Tap', 580, 220, 1], ['Håp', 572, 280, 1], ['Drømmer', 190, 462, 2], ['Hva hvis?', 255, 560, 2], ['Stillhet', 390, 505, 3], ['Mening', 575, 390, 3], ['Tilpasning', 560, 450, 3], ['Frigjøring', 520, 510, 3]];
@@ -686,7 +686,7 @@ function boot() {
   window.MORBIDIUM = G; Object.assign(window, { Items, ITEMS, spawnEnemy, itemIcon, jarPart, pillPart, addonPart, shotPart, LOOKS, PILL_COL, BLOBS, R, hurt, descend, finishCombat, openService, killEntity, Art, RIG, PROPS, CARD_ART, WEAPONS, THEMES, charPart, propArt, weaponPart, shoePart, cardArtCanvas, generateFloor, CONSUMABLES, heartPart, morbPart, bottlePart, cardPart, pigeonPart, stampDecal, handPart, toothPart, starPart, puffPart, barrierArt });
   // til testene
   Object.assign(window, { freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
-  step('Bygger tittelrommet');
-  setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40);
+  step('Pakker ut bilder');
+  Art.preload().then(() => { step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }
 try { boot(); } catch (e) { if (window.showErr) showErr((e && e.message) || String(e)); throw e; }

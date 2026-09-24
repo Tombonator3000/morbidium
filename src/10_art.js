@@ -17,7 +17,13 @@ const Col = {
 };
 
 const Art = {
-  cache: new Map(),
+  cache: new Map(), img: {},
+  /* innebygde bilder dekodes før spillet starter, så tegninger som kopieres én gang (kort i HUD og journal) får bildet med en gang */
+  preload(ms = 4000) {
+    const keys = Object.keys(SPRITES); if (!keys.length) return Promise.resolve();
+    const all = keys.map(k => new Promise(res => { const im = new Image(); this.img[k] = im; im.onload = im.onerror = () => res(); im.src = SPRITES[k]; }));
+    return Promise.race([Promise.all(all), new Promise(res => setTimeout(res, ms))]);
+  },
   part(key, w, h, ax, ay, draw) {
     if (this.cache.has(key)) return this.cache.get(key);
     const c = document.createElement('canvas'); c.width = Math.ceil(w * PX); c.height = Math.ceil(h * PX);
@@ -26,7 +32,10 @@ const Art = {
     draw(g);
     const P = { key, w, h, ax, ay, canvas: c, tex: new THREE.CanvasTexture(c) };
     P.tex.anisotropy = 4;
-    if (SPRITES[key]) { const img = new Image(); img.onload = () => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height); P.tex.needsUpdate = true; }; img.src = SPRITES[key]; }
+    if (SPRITES[key]) {
+      const put = img => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height); P.tex.needsUpdate = true; };
+      const pre = this.img[key]; if (pre && pre.complete && pre.naturalWidth) put(pre); else { const img = new Image(); img.onload = () => put(img); img.src = SPRITES[key]; }
+    }
     this.cache.set(key, P); return P;
   },
   /* flat farge + skyggemåne + lys kant + kontur */
