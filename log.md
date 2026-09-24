@@ -198,6 +198,10 @@ Alle tidspunkt er UTC.
 - Tegnet tre delark til personalet: hoder, hodeplagg og uniformer i tre vinkler, 27 deler totalt. Justerte størrelser og rutene slik at arkene kan klippes uten sammenblanding.
 - Tegnet et ni ruters ark med fire sko, hjerte, Morbidiumdråpe, gulltann, due og eterflaske. Rettet tøffelen, hjertet og duen etter visuell kontroll.
 - Prøvde alle ark i en egen kopi av den nyeste hovedgrenen. Verktøyene laget 27 personaldeler og ni nye enkeltbilder, behandlet 77 bilder uten feil og bygde spillfila med 77 innebygde bilder. Personaldelene venter på oppskriftssystemet før de blir synlige i spillet.
+
+## 2026-09-24 17:14 Resten av plukk og effekter fra ChatGPT
+- Tegnet og kontrollerte de siste ni småbildene: tre beholdere, tre støvpuff, skyggehånd, stempelmerke og treffstjerne. Krympet skyggehånden så ingen motiv krysser rutekanten.
+- Prøvde arket med bildebehandling og bygging i en egen kopi. 86 bilder ble behandlet uten feil og tatt med i spillfila. Hele den opprinnelige runden med 14 plukk og effekter er nå tegnet.
 ## 2026-09-24 16:50 Etappe 4: spesialrom
 - Hemmelig rom i hver etasje: generatoren legger et lite rom i en tom celle ved siden av et vanlig rom, med en korridor som er stengt av en sprukken murvegg der den møter rommet. Tre vanlige slag, ett tungt slag, en eksplosjon (nitroglyserin, eksplosiv pille) eller et stempel knuser veggen. Det støver fra sprekken når pasienten er i nærheten. Inni: en kuriositet i preparatglass, en journalside, tenner og en pille.
 - Forbannet rom (rundt hver femte etasje, i en blindvei): tornemerker og rødt lys ved døra, og tornene tar ett hjerte hver gang pasienten går inn (aldri det siste). Midt i rommet står en kuriositet fra blodhylla på et skjevt tegnet pentagram («IKKE TRÅKK»). Tar du den, låses dørene og et bakhold med to eliter kommer.
