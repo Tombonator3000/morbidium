@@ -17,8 +17,8 @@
 - [x] Etappe 1: testoppsett, lagring og fortsettelse, berøring på mobil, journalplasser, fiender rundt møbler.
 - [x] Etappe 2: etasjen Kjelleren: Isolat og arkiv med Overarkivar Gunhild Paragraf, og signaturangrep for alle sjefer.
 - [x] Etappe 3: fem nye fiender (tvangstrøye, byråkrat, narkoselege, arkivrotter, øyeblomst).
+- [x] Etappe 4: spesialrom (hemmelig rom bak sprukken vegg, forbannet rom med bakhold, blodofferrom med tre handler).
 - [ ] Aktive gjenstander (med lading ved romrydding) og småtrinkets, som i Isaac.
-- [ ] Egne rom: forbannet rom, hemmelig rom, blodofferrom med flere valg.
 - [ ] Balansere kuriositetene etter spilltesting; noen kombinasjoner blir trolig altfor sterke.
 - [ ] Oppskriftssystemet i motoren: sette sammen fiender av deler fra assets/deler/ (rolle, hode, hatt/hår, tilbehør, kropp, farging, størrelse, elitemerker, navn).
 - [ ] Utseendetest av 3D-verden med 2D-figurer (ett rom, vegglamper, måneskygger, bloom), hvis Tom vil.

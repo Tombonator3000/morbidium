@@ -156,7 +156,7 @@ function meleeHit(k) {
     if (W0.wet && Math.random() < W0.wet) addPuddle(e.x, e.z, 'wet', .9, 14);
     hits++;
   }
-  hits += hitProps(P.x, P.z, P.face, range, arc, dmg, 12);
+  hits += hitProps(P.x, P.z, P.face, range, arc, dmg, 12) + Spesial.hitCrack(P.x, P.z, P.face, range, arc, k.heavy ? 3 : 1);
   if (hits) { G.hitstop = k.heavy || k.combo === 2 ? .085 : .045; R.shake(k.heavy ? .45 : .2); Sound.play(W0.sound, 1, 1 + rnd(-.1, .1)); }
 }
 function useConsumable() {
@@ -316,7 +316,7 @@ function applyPill(en, o, pow) {
   numText(en.x, en.z, txt, o === 'eksplosjon' ? 'crit' : 'info', 2.5);
   if (o === 'sove') { en.sleep = 4; cancelTeles(en); }
   else if (o === 'forvirret') en.confused = 5;
-  else if (o === 'eksplosjon') { puff(en.x, en.z, 5, 1.3, '#f0c080'); flashLight(en.x, en.z, 3, '#ffb060', .3); for (const x of G.enemies) if (x.alive && d2(x.x, x.z, en.x, en.z) < 3.3) hurt(x, 25 * pow, { from: 'player', x: en.x, z: en.z, kb: 8 }); Sound.play('slam'); }
+  else if (o === 'eksplosjon') { Spesial.boom(en.x, en.z, 3); puff(en.x, en.z, 5, 1.3, '#f0c080'); flashLight(en.x, en.z, 3, '#ffb060', .3); for (const x of G.enemies) if (x.alive && d2(x.x, x.z, en.x, en.z) < 3.3) hurt(x, 25 * pow, { from: 'player', x: en.x, z: en.z, kb: 8 }); Sound.play('slam'); }
   else if (o === 'krymp') { en.shrink = 8; en.doll.sc *= .6; }
   else if (o === 'oppblåst') { en.bloat = 6; en.doll.sc *= 1.25; }
   else en.hp = Math.min(en.max, en.hp + 20);
@@ -324,7 +324,7 @@ function applyPill(en, o, pow) {
 function stampDrop(x, z, r, dmg, heal) {
   const t = addTele('circle', { x, z, r, color: 0xb3261e }, .28, o => {
     let n = 0; for (const e of (G.boss && G.boss.alive ? G.enemies.concat([G.boss]) : G.enemies)) if (e.alive && d2(e.x, e.z, x, z) < (r + e.r) ** 2) { hurt(e, dmg, { from: 'player', x, z, stun: .8, kb: 3 }); n++; }
-    if (heal && n) healPlayer(3 * n);
+    if (heal && n) healPlayer(3 * n); Spesial.boom(x, z, r);
     const dec = propSprite(null, x, z, { P: stampDecal(), flat: true }); R.dyn.add(dec); addFx(dec, 8, (ob, p) => { ob.userData.U.uAlpha.value = p > .8 ? (1 - p) * 5 : 1; });
     FX.text(x, 1.6, z, 'AVSLÅTT', 'stamp', 1); R.shake(.35); Sound.play('stamp'); puff(x, z, 4, 1.2); flashLight(x, z, 2.5, '#ffd0a0', .25);
   });

@@ -109,6 +109,42 @@ async def main():
         sjekk('ingen konsollfeil (nye fiender)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 6) spesialrom: sprukken vegg, forbannet rom, blodoffer
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        funnet = await pg.evaluate("""() => { const G = MORBIDIUM; for (let s = 1; s < 400; s++) { const F = generateFloor(s * 7919, 2, {}); if (F.rooms.some(r => r.role === 'cursed') && F.rooms.some(r => r.role === 'offer')) { G.run.seed = s * 7919 - 2 * 7919; startFloor(2, false); return { seed: s, roles: G.F.rooms.map(r => r.role) }; } } return null; }""")
+        sjekk('fant en etasje med forbannet rom og blodoffer', funnet is not None and 'cursed' in funnet['roles'] and 'offer' in funnet['roles'] and 'secret' in funnet['roles'], funnet)
+        # a) hemmelig rom: stå innenfor den sprukne veggen og slå tungt
+        r = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, P = G.player; G.rooms.forEach(s => s.cleared = true); const c = Spesial.cracks[Math.floor(Spesial.cracks.length / 2)]; const par = F.rooms.find(r => r.role === 'secret'); const parent = F.rooms[par.parent];
+            const tx = Math.floor(c.x), tz = Math.floor(c.z); let ix = tx, iz = tz; if (tz === parent.z - 1) iz = tz + 1; else if (tz === parent.z + parent.h) iz = tz - 1; else if (tx === parent.x - 1) ix = tx + 1; else ix = tx - 1;
+            P.x = ix + .5; P.z = iz + .5; P.face = Math.atan2(c.x - P.x, c.z - P.z); R.snapCamera(P.x, P.z); return { hp: c.hp, secretReach: false }; }""")
+        await pg.wait_for_timeout(600); await pg.screenshot(path='/tmp/e_10sprekk.png')
+        await pg.evaluate("() => { const P = MORBIDIUM.player; const c = Spesial.cracks[0]; startSwing(true, 1); }")
+        await pg.wait_for_timeout(900)
+        brutt = await pg.evaluate("() => ({ broken: Spesial.cracks.every(c => c.broken), block: Spesial.cracks.map(c => MORBIDIUM.F.block[c.i]), secrets: MORBIDIUM.run.secrets || 0 })")
+        sjekk('tungt slag knuser den sprukne veggen', brutt['broken'] and brutt['secrets'] == 1 and not any(brutt['block']), brutt)
+        # b) forbannet rom: gå inn, ta glasset, overlev bakholdet
+        cur = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, P = G.player; P.hp = P.maxHp; const r = F.rooms.find(r => r.role === 'cursed'); const h0 = P.hp; const d = r.doors[0]; P.x = d % F.W + .5; P.z = ((d / F.W) | 0) + .5; return { h0, id: r.id }; }""")
+        await pg.evaluate("""(id) => { const G = MORBIDIUM, r = G.F.rooms[id], P = G.player; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2 + 1.5; R.snapCamera(P.x, P.z); }""", cur['id'])
+        await pg.wait_for_timeout(700); await pg.screenshot(path='/tmp/e_11forbannet.png')
+        etter = await pg.evaluate("() => MORBIDIUM.player.hp")
+        sjekk('tornene tar et hjerte ved inngangen', cur['h0'] - etter >= 9.9, (cur['h0'], etter))
+        await pg.evaluate("() => { const pd = Items.pedestals.find(p => p.cursed); Items.take(pd); }")
+        await pg.wait_for_timeout(2600)
+        kamp = await pg.evaluate("() => ({ combat: !!MORBIDIUM.combat, n: MORBIDIUM.enemies.filter(e => e.alive).length, items: MORBIDIUM.run.items.length })")
+        sjekk('kuriositeten utløser bakhold', kamp['combat'] and kamp['n'] > 0 and kamp['items'] == 1, kamp)
+        await pg.screenshot(path='/tmp/e_12bakhold.png')
+        for _ in range(3):
+            await pg.evaluate("() => { for (const e of MORBIDIUM.enemies) if (e.alive) hurt(e, 9999, { from: 'player' }); }"); await pg.wait_for_timeout(1700)
+        sjekk('bakholdet kan ryddes', await pg.evaluate("() => !MORBIDIUM.combat"))
+        # c) blodoffer
+        await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player; P.teeth = 60; P.hp = P.maxHp; const o = G.props.find(o => o.kind === 'offeralter'); P.x = o.x; P.z = o.z + 1.6; R.snapCamera(P.x, P.z); Spesial.offer(o); }""")
+        await pg.wait_for_timeout(700); await pg.screenshot(path='/tmp/e_13offer.png')
+        await pg.click('[data-ch="0"]'); await pg.wait_for_timeout(600)
+        sjekk('alteret tar imot én gave', await pg.evaluate("() => MORBIDIUM.props.find(o => o.kind === 'offeralter').used === true && MORBIDIUM.state === 'play'"))
+        sjekk('ingen konsollfeil (spesialrom)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         # 4) alle fire sjefer med alle angrep, og rommene i Isolat og arkiv
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await start_lop(pg)

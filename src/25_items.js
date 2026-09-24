@@ -212,7 +212,7 @@ const Items = {
     if (p && p.teeth) { if (P.teeth < p.teeth) { toast('For få tenner', p.teeth + ' gulltenner trengs'); Sound.play('deny'); return; } P.teeth -= p.teeth; }
     pd.taken = true; R.remove(pd.g); pd.g = propSprite(null, pd.x, pd.z, { P: jarPart(null) }); R.level.add(pd.g);
     for (const o of this.pedestals) if (o !== pd && o.pair === pd.pair && pd.pair && !o.taken) { o.taken = true; R.remove(o.g); o.g = propSprite(null, o.x, o.z, { P: jarPart(null) }); R.level.add(o.g); }
-    this.give(pd.id);
+    this.give(pd.id); Spesial.onTake(pd);
   },
   give(id) {
     const P = G.player, it = ITEMS[id]; if (!it || this.has(id)) return;
@@ -276,7 +276,7 @@ const Items = {
     this.shots.push(s); return s;
   },
   boom(x, z, dmg) {
-    hitShape('circle', { x, z, r: 1.3 }, dmg, { from: 'player', x, z, kb: 6 }, 'player');
+    hitShape('circle', { x, z, r: 1.3 }, dmg, { from: 'player', x, z, kb: 6 }, 'player'); Spesial.boom(x, z, 1.3);
     puff(x, z, 4, 1, '#6a5a4a'); Particles.spawn(x, .5, z, 16, 0xffa040, { speed: 6, up: 5, life: .45 }); flashLight(x, z, 3.2, '#ffb050', .3, 1.6);
     Sound.play('slam', .6, 1.3); R.shake(.18); this.splat(x, z, '#2a1a10', 1.1, .5);
   },
@@ -348,7 +348,8 @@ const Items = {
   onFloor() {
     for (const pd of this.pedestals) { R.remove(pd.g); } this.pedestals = []; this.clearSplats();
     G.run.buffs = {}; const P = G.player; if (P && P.doll && P.doll.sc0) { P.doll.sc = P.doll.sc0; P.r = .36; }
-    for (const r of G.F.rooms) if (r.role === 'treasure') this.spawnPedestal(r.x + r.w / 2, r.z + r.h / 2, this.pickFrom('kabinett'));
+    for (const r of G.F.rooms) if (r.role === 'treasure' || r.role === 'secret') this.spawnPedestal(r.x + r.w / 2, r.z + r.h / 2, this.pickFrom('kabinett'));
+    for (const r of G.F.rooms) if (r.role === 'cursed') { const pd = this.spawnPedestal(r.cx + .5, r.cz - .5, this.pickFrom('blod')); pd.cursed = true; pd.room = r.id; }
   },
   onRoomClear(r) {
     const cx = r.x + r.w / 2, cz = r.z + r.h / 2;
