@@ -234,3 +234,8 @@ Alle tidspunkt er UTC.
 - HUD: apparatet vises ved siden av lomma med ladestreker og tast V, lommerusket med gullring først i gjenstandsraden. På berøringsskjerm dukker Aktiv-knappen opp i klyngen når pasienten har et apparat. Journalens kuriositetsfane viser begge.
 - Begge lagres med løpet. README har fått V i kontrollene.
 - Test: defibrillatoren skader og tømmer ladningen, ett streik per ryddet rom, bytte gir glass med det gamle, frosken redder fra døden, lommerusk byttes, og alt overlever lagring. Ingen konsollfeil.
+
+## 2026-09-24 17:50 Grovere ansikter og to spillerfigurer
+- Tom ønsket at ansiktene skulle bli mer morbide, stygge og stiliserte. Brukte referansene som retning for asymmetri, ujevne tenner, øyeposer og røffe blekkstreker uten å kopiere figurene i dem.
+- Tegnet to nye voksenvarianter av spilleren, kvinne og mann, hver som seks figurdeler i samme mal som standardpasienten. Den mannlige varianten er også tatt i bruk som nytt standardark, og de ni personalhodene er tegnet om i samme grovere stil. Ikoner og utstyr er ikke endret.
+- Prøvde klipping, bildebehandling og bygging i en egen kopi. Standardfiguren gir seks behandlede deler, personalarket gir ni deler, og spillet bygges med 93 bilder uten feil. De to ekstra variantarkene ligger i gpt-grafikk/varianter/ til Claude registrerer dem i manifestet og lager figurvalg.

@@ -23,6 +23,8 @@ Eksempel på et «ni ting»-ark med de ni første kuriositetene:
 
 Et bilde med et navn som ikke finnes i manifestet, blir hoppet over med en melding. Det ødelegger ikke bygget.
 
+Spillerfigurene i `varianter/` er ferdige figurark, men er ennå ikke registrert i manifestet. De ligger i undermappa så bildebehandlingen ikke rapporterer ukjente filnavn ved hver publisering. Claude kan flytte dem opp hit når figurvalget og nøklene er på plass.
+
 ## Krav til bildene
 - PNG, helst med gjennomsiktig bakgrunn. Hvit eller ensfarget bakgrunn går også, den fjernes fra kantene og innover.
 - Ingen skygge på bakken, ingen tekst, ingen ramme, ingen bakgrunn.
