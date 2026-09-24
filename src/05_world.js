@@ -372,7 +372,7 @@ function updateProps(dt) {
 
 /* ---------- plukk ---------- */
 function dropTeeth(x, z, n) {
-  n = Math.round(n * (1 + (G.player.stats.fatteevne - 1) * .08));
+  n = Math.round(n * (1 + (G.player.stats.fatteevne - 1) * .08) * (G.run && G.run.gjen ? 1.25 : 1) * (hasDiag('gradig') ? 1.2 : 1));
   for (let i = 0; i < n; i++) dropPickup(x, z, 'tooth', 1);
 }
 function dropPickup(x, z, kind, val, extra) {

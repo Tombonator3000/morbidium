@@ -194,6 +194,7 @@ const Items = {
     if (!luck && b[n]) v *= b[n];
     if (luck && Lomme.has('hestesko')) v += 10;
     if (n === 'dmg' && this.tf('edgelord')) v *= 1.2;
+    if (n === 'dmg' && hasDiag('samlemani')) v *= 1.1;
     if (n === 'dmg' && this.has('eyeliner') && G.player && G.player.morb > 50) v *= 1.15;
     if (n === 'range' && this.tf('kirurg')) v *= 1.2;
     return v;
@@ -205,8 +206,8 @@ const Items = {
     this.clearLook();
   },
   pickFrom(pool) {
-    const cand = ITEM_IDS.filter(id => ITEMS[id].pool.includes(pool) && !this.has(id) && !this.pedestals.some(p => p.id === id && !p.taken));
-    return cand.length ? pick(cand) : pick(ITEM_IDS.filter(id => !this.has(id))) || 'hjerte_i_glass';
+    const cand = ITEM_IDS.filter(id => ITEMS[id].pool.includes(pool) && !this.has(id) && !Merknad.laast(id) && !this.pedestals.some(p => p.id === id && !p.taken));
+    return cand.length ? pick(cand) : pick(ITEM_IDS.filter(id => !this.has(id) && !Merknad.laast(id))) || 'gulltann';
   },
   /* ---------- preparatglass ---------- */
   spawnPedestal(x, z, id, price) {
@@ -239,7 +240,7 @@ const Items = {
       if (r.transforms.includes(t)) continue;
       const n = this.owned().filter(id => (ITEMS[id].tags || []).includes(t)).length;
       if (n >= 3) {
-        r.transforms.push(t); const T = TRANSFORMS[t];
+        r.transforms.push(t); const T = TRANSFORMS[t]; Merknad.onTransform();
         setTimeout(() => { stampBig('FORVANDLING', T.name); toast(T.name, T.desc); R.shake(.4); if (R.fx) R.fx.flash = 1; }, 1300);
         if (t === 'svulst') { recalcPlayer(); healPlayer(20, true); }
         if (t === 'flue') r.flies = Math.max(r.flies, 2);

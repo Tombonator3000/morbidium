@@ -196,7 +196,16 @@ const Sound = {
     paper: [{ n: 1, d: .12, f0: 6000, f1: 2500, ft: 'highpass', v: .25 }],
     glass: [{ arp: [2100, 2600, 1900], nl: .03, w: 'triangle', v: .15 }, { n: 1, d: .15, f0: 7000, f1: 3000, ft: 'highpass', v: .2 }],
     heal: [{ arp: [392, 523, 659], nl: .09, w: 'sine', v: .22 }],
-    clear: [{ arp: [392, 523, 659, 784, 1046], nl: .07, w: 'triangle', v: .22 }]
+    clear: [{ arp: [392, 523, 659, 784, 1046], nl: .07, w: 'triangle', v: .22 }],
+    // stemningslyder og hjerteslag (etappe 7)
+    hjerte: [{ w: 'sine', f: 64, d: .14, pd: .35, v: .55 }, { w: 'sine', f: 56, d: .18, pd: .35, v: .42, at: .2 }],
+    drypp: [{ w: 'sine', f: 1300, d: .09, pd: -.9, v: .1 }],
+    klokke: [{ w: 'sine', f: 392, d: 2.4, v: .08 }, { w: 'sine', f: 1082, d: 1.2, v: .03 }],
+    knirk: [{ w: 'sawtooth', f: 170, d: .6, pd: -.35, v: .05 }, { n: 1, d: .6, f0: 800, f1: 1500, ft: 'bandpass', v: .07 }],
+    skrik: [{ w: 'sawtooth', f: 540, d: 1.1, pd: .4, v: .035 }, { w: 'sine', f: 800, d: 1, pd: .35, v: .025 }],
+    ror: [{ w: 'sawtooth', f: 68, d: 1.7, pd: .18, v: .05 }, { w: 'sawtooth', f: 102, d: 1.2, pd: .25, v: .025, at: .3 }],
+    skrivemaskin: [{ n: 1, d: .02, f0: 3200, f1: 3000, ft: 'highpass', v: .22 }, { n: 1, d: .02, f0: 3200, f1: 3000, ft: 'highpass', v: .2, at: .09 }, { n: 1, d: .02, f0: 3200, f1: 3000, ft: 'highpass', v: .22, at: .16 }, { n: 1, d: .02, f0: 3200, f1: 3000, ft: 'highpass', v: .18, at: .27 }, { w: 'sine', f: 2600, d: .6, v: .05, at: .42 }],
+    rotte: [{ arp: [2400, 2900, 2500], nl: .04, w: 'sine', v: .06 }]
   },
   init() {
     if (this.ready) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
@@ -206,6 +215,7 @@ const Sound = {
       this.master = this.ctx.createGain(); this.master.gain.value = this.volume; this.master.connect(this.ctx.destination);
       this.sfx = this.ctx.createGain(); this.sfx.gain.value = .8; this.sfx.connect(this.master);
       this.amb = this.ctx.createGain(); this.amb.gain.value = .35; this.amb.connect(this.master);
+      this.mus = this.ctx.createGain(); this.mus.gain.value = .8; this.mus.connect(this.master); if (this.mix) this.setMix(...this.mix);
       const len = this.ctx.sampleRate; this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
       const d = this.noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
       // brun stoy (tilfeldig gange), som i The Deep Ones sin Soundscape
@@ -215,14 +225,16 @@ const Sound = {
     } catch (e) { this.ready = false; }
   },
   setVolume(v) { this.volume = v; if (this.master) this.master.gain.value = v; },
+  setMix(sfx = 1, amb = 1, mus = .8) { this.mix = [sfx, amb, mus]; if (this.sfx) this.sfx.gain.value = .8 * sfx; if (this.amb) this.amb.gain.value = .35 * amb; if (this.mus) this.mus.gain.value = mus; },
   play(name, vol = 1, pitch = 1) {
     if (!this.ready || this.volume <= 0) return;
     const layers = this.lib[name]; if (!layers) return;
     const now = this.ctx.currentTime;
     for (const L of layers) {
-      if (L.arp) this._arp(L, vol, pitch, now);
-      else if (L.n) this._noise(L, vol, pitch, now);
-      else this._synth(L, vol, pitch, now);
+      const t = now + (L.at || 0);
+      if (L.arp) this._arp(L, vol, pitch, t);
+      else if (L.n) this._noise(L, vol, pitch, t);
+      else this._synth(L, vol, pitch, t);
     }
   },
   _synth(s, vol, pitch, now) {
@@ -269,17 +281,15 @@ const Sound = {
     const ng = this.ctx.createGain(); ng.gain.value = depth >= 2 ? .1 : .05; n.connect(nf); nf.connect(ng); ng.connect(g); n.start(now);
     this.ambNodes = [...oscs, lfo, n, g];
   },
-  /* Generativ tonerekke, tilpasset fra Tombonator3000/the-deep-ones v2/audio.js (Soundscape.tick):
-     én lang tone hvert 3,6 sekund fra en rolig eller en urolig skala. Her styres uroen av
-     dybde, Morbidium-metning og sjefskamp i stedet for natt og sanity. */
-  noteT: 0, noteI: 0,
+  /* Stemningslyder: en tilfeldig lyd fra etasjen hvert tiende til tjuende sekund.
+     Tonerekka fra the-deep-ones er erstattet av musikken i 06_musikk.js. */
+  evT: 8,
   tick(dt, unsettled, depth) {
     if (!this.ready || this.volume <= 0) return;
-    this.noteT -= dt; if (this.noteT > 0) return; this.noteT = 3.6;
-    const day = [146.83, 220, 293.66, 329.63, 220, 196, 293.66, 440], dark = [146.83, 155.56, 220, 293.66, 207.65, 146.83, 311.13, 220];
-    const f = (unsettled ? dark : day)[this.noteI++ % 8] * (depth >= 3 ? .5 : 1), now = this.ctx.currentTime;
-    const note = (fr, d, v) => { const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = 'triangle'; o.frequency.value = fr; g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(v, now + .012); g.gain.exponentialRampToValueAtTime(.001, now + d); o.connect(g); g.connect(this.amb); o.start(now); o.stop(now + d + .05); };
-    note(f, 3.2, .09); note(f * 2, 2, .035);
+    this.evT -= dt; if (this.evT > 0) return; this.evT = 10 + Math.random() * 12 - (unsettled ? 4 : 0);
+    const valg = { 1: ['klokke', 'knirk', 'knirk', 'skrik'], 2: ['drypp', 'drypp', 'ror', 'knirk'], 3: ['skrivemaskin', 'skrivemaskin', 'knirk', 'rotte'], 4: ['skrik', 'hjerte', 'klokke', 'ror'] }[depth] || ['knirk'];
+    const k = valg[Math.floor(Math.random() * valg.length)], n = k === 'drypp' ? 3 : 1;
+    for (let i = 0; i < n; i++) setTimeout(() => this.play(k, .7, (k === 'klokke' && depth >= 4 ? .5 : .85) + Math.random() * .3), i * (300 + Math.random() * 500));
   },
   stopAmbience() {
     for (const n of this.ambNodes) { try { if (n.stop) n.stop(); else n.disconnect(); } catch (e) { } }

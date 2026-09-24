@@ -14,8 +14,8 @@
 - [x] 1: journalen uten rulling.
 - [x] 2: tjenesterom med egne rekvisitter, hovedrekvisitten alltid på plass.
 - [x] 3: varierte pasienter (kjønn, hår, hud, fem plagg, sko og pynt; kvinnefiguren fra ChatGPT er tatt i bruk).
-- [ ] 4: bruksanvisning og bedre innstillinger.
-- [ ] 5: nytt arkiv og UI-løft.
+- [x] 4: bruksanvisning (Pasienthåndboka) og innstillinger med faner (lyd i tre kanaler, kamera, risting, skjermtekst, skadetall, bobler, navneskilt, styring, data).
+- [x] 5: arkivet som arkivskap med mapper, fragmenter og årsrapport; ny tittelmeny og pause. Resten av UI-et (tjenester, dødskort, HUD) kan få samme behandling i etappe 9.
 
 ## Kjente svakheter
 - [ ] Claude-appen på Android viser ingen publiserte sider (hvit skjerm), heller ikke en enkel testside. Meldt inn av Tom. Spill i Chrome inntil videre.
@@ -30,7 +30,8 @@
 - [x] Etappe 4: spesialrom (hemmelig rom bak sprukken vegg, forbannet rom med bakhold, blodofferrom med tre handler).
 - [x] Etappe 5: apparater (ti aktive gjenstander som lades ved romrydding) og lommerusk (tolv små gjenstander med én plass).
 - [ ] Balansere kuriositetene etter spilltesting; noen kombinasjoner blir trolig altfor sterke.
-- [ ] Oppskriftssystemet i motoren: sette sammen fiender av deler fra assets/deler/ (rolle, hode, hatt/hår, tilbehør, kropp, farging, størrelse, elitemerker, navn).
+- [x] Etappe 6: oppskriftssystemet setter sammen fiender av deler (rolle, hode, hatt, tilbehør, kropp, farging, størrelse, mestere med navn). Personaldelene fra ChatGPT skaleres riktig.
+- [x] Varierte pasienter, Pasienthåndboka, innstillinger med faner, nytt arkiv, ny tittelmeny og pause (Toms punkt 3, 4 og 5).
 - [ ] Utseendetest av 3D-verden med 2D-figurer (ett rom, vegglamper, måneskygger, bloom), hvis Tom vil.
 - [x] Bilder av 40 kuriositeter, åtte piller og et tomt preparatglass fra ChatGPT i gpt-grafikk/.
 - [x] Spillerens figurark fra ChatGPT i gpt-grafikk/.
@@ -45,8 +46,12 @@
 - [x] Alle 54 figurdelene i kunstlisten, inkludert personale, sjefer, kultist, småfiender og spillerens døde ansikt.
 - [x] De ni ekstra ansiktstilbehørene, slimskuddet og kortplukk. Hele den gjeldende kunstlisten har bilder.
 - [ ] Flere bilder fra ChatGPT etter DESIGN_BRIEF.md: andre figurer, rekvisitter og effekter. Lastes opp til gpt-grafikk/.
-- [ ] Musikk og flere lyder.
-- [ ] Byggeanimasjon når et rom avsløres (idé fra threejs-architecture-effects).
-- [ ] Flere diagnoser og oppvåkningssteder, flere spor etter tidligere pasienter.
+- [ ] ChatGPT: pasientplagg som figurark med bare kroppsraden (figur_tvang.png, figur_skjorte.png, figur_pyjamas.png) og pynt som enkeltbilder (pynt_nattlue.png osv., se gpt-grafikk/LESMEG.md). Koden tegner dem til da.
+- [x] Etappe 7: musikk (seks stykker i lag som følger kampen) og stemningslyder.
+- [x] Etappe 8: merknader som låser opp kuriositeter og oppvåkningssteder, utskrivningsbrev, gjeninnleggelse, tre diagnoser og sju fragmenter.
+- [x] Spor etter tidligere pasienter (rablinger med kritt signert med navn fra arkivet).
+- [ ] Etappe 9: finpuss (samme papirstil på tjenester, dødskort og HUD, balanse, innføring for nye spillere).
+- [x] Byggeanimasjon når pasienten nærmer seg et rom (idé fra threejs-architecture-effects).
 - [ ] Rydde bort ubrukt kode i old/ og ubrukte deler av 04_render.js.
-- [ ] Utvide tools/lag_manifest.py og ART_BRIEF.md med alt det nye (fjerde etasje, nye fiender, Overarkivaren, apparater, lommerusk, spesialrom), så ChatGPT kan tegne dem.
+- [x] Utvide tools/lag_manifest.py og ART_BRIEF.md med alt det nye. ART_BRIEF viser nå hva som er levert (150 av 287).
+- [ ] ChatGPT: resten av ART_BRIEF.md, særlig figurene (runde 6), apparater og lommerusk (runde 1) og pynt (runde 4).

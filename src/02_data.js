@@ -49,18 +49,6 @@ const REGIONS = [
 const AFFINITY = { due: 'frykt', kappe: 'frykt', benektelse: 'frykt', lys: 'kontroll', skjema: 'kontroll', nokler: 'kontroll', skyggehand: 'uvirkelighet', monolog: 'uvirkelighet', resept: 'uvirkelighet', stempel: 'mening', hydro: 'mening', brekning: 'mening' };
 const ABILITY_IDS = Object.keys(ABILITIES);
 
-/* Ikoner tegnet som enkle SVG-stier, blekk på kartotekkort */
-const ICONS = {
-  brekning: '<path d="M20 6c-5 0-8 4-8 8 0 3 2 5 4 6l-3 8M20 20c2 0 5-2 5-5" fill="none" stroke="#2b1a12" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="33" r="3" fill="#6f8a3a"/><circle cx="20" cy="31" r="2.5" fill="#6f8a3a"/><circle cx="27" cy="34" r="3.2" fill="#6f8a3a"/>',
-  benektelse: '<rect x="8" y="8" width="24" height="26" rx="2" fill="none" stroke="#2b1a12" stroke-width="3"/><path d="M13 14l14 14M27 14L13 28" stroke="#b3261e" stroke-width="3.5" stroke-linecap="round"/>',
-  due: '<ellipse cx="20" cy="23" rx="11" ry="8" fill="#8a8f98" stroke="#2b1a12" stroke-width="2.5"/><circle cx="28" cy="14" r="6" fill="#8a8f98" stroke="#2b1a12" stroke-width="2.5"/><path d="M33 14l5 2-5 1" fill="#e8b93a" stroke="#2b1a12" stroke-width="1.5"/><circle cx="29" cy="13" r="1.5" fill="#b3261e"/>',
-  skjema: '<rect x="9" y="5" width="22" height="30" fill="#fff" stroke="#2b1a12" stroke-width="2.5"/><path d="M13 12h14M13 17h14M13 22h9" stroke="#2b1a12" stroke-width="2"/><circle cx="25" cy="28" r="5" fill="none" stroke="#b3261e" stroke-width="2.5"/>',
-  hydro: '<path d="M20 5C15 13 11 18 11 24a9 9 0 0 0 18 0c0-6-4-11-9-19z" fill="#6aa9c8" stroke="#2b1a12" stroke-width="2.5"/><path d="M16 25a4 4 0 0 0 4 4" stroke="#fff" stroke-width="2" fill="none"/>',
-  monolog: '<path d="M6 9h28v17H18l-7 6v-6H6z" fill="#fff" stroke="#2b1a12" stroke-width="2.5" stroke-linejoin="round"/><path d="M11 15h18M11 20h12" stroke="#2b1a12" stroke-width="2"/>',
-  kappe: '<path d="M20 5l-4 6-8 24h24L24 11z" fill="#2b1a12"/><path d="M12 35c3-3 5-3 8 0 3-3 5-3 8 0" stroke="#b3261e" stroke-width="2" fill="none"/><circle cx="20" cy="8" r="4" fill="#efe4c4" stroke="#2b1a12" stroke-width="2"/>',
-  nokler: '<circle cx="14" cy="14" r="7" fill="none" stroke="#2b1a12" stroke-width="3"/><path d="M19 19l13 13M26 26l4-4M30 30l3-3" stroke="#2b1a12" stroke-width="3" stroke-linecap="round"/>',
-  resept: '<rect x="7" y="15" width="26" height="11" rx="5.5" fill="#fff" stroke="#2b1a12" stroke-width="2.5" transform="rotate(-30 20 20)"/><path d="M20 12v16" stroke="#2b1a12" stroke-width="2" transform="rotate(-30 20 20)"/><rect x="20" y="15" width="13" height="11" rx="0" fill="#b3261e" opacity=".8" transform="rotate(-30 20 20)"/>'
-};
 
 const CONSUMABLES = {
   levertran: { name: 'Levertran', desc: 'Helbreder 30. Smaker som straff.' },
@@ -108,6 +96,8 @@ const AWAKENINGS = {
   soppel: { name: 'Søppelrommet', perk: 'Mer tilfeldig utstyr: et ekstra våpen og to evner.', problem: 'Utstyret var bevoktet. Noen vil ha det tilbake, nå.', template: 'soppel' },
   vaskesjakt: { name: 'Vaskesjakten', perk: 'Du starter i underetasjen, ett nivå høyere.', problem: 'Hardere fiender før du rekker å utruste deg.', template: 'vask', depth: 2 },
   operasjon: { name: 'Operasjonsbordet', perk: 'En umiddelbar særmutasjon: tilfeldig diagnose og en oppgradert evne.', problem: 'Operasjonen er fortsatt i gang. Kirurgen vil fullføre.', template: 'operasjon', unlock: 'bossKill' },
+  kapell: { name: 'Kapellet', perk: 'Velsignet start: en tilfeldig kuriositet og en ekstra evne.', problem: 'Mørket følger med velsignelsen: 30 Morbidium i blodet fra første stund.', template: 'kapell', unlock: 'merk:rust' },
+  vaktbod: { name: 'Vaktmesterens bod', perk: 'Nøkkelknippet og 40 gulltenner fra kaffeboksen.', problem: 'Olsen savner nøklene sine. Vaktmesterskapet er stengt for deg hele oppholdet.', template: 'vaktbod', unlock: 'merk:tenner' },
   begravelse: { name: 'En annens begravelse', perk: 'Falsk identitet. Arvingen får rabatt overalt.', problem: 'Sørgefølget har oppdaget at liket reiste seg. De er misfornøyde.', template: 'begravelse', unlock: 'deaths3' }
 };
 
@@ -118,16 +108,12 @@ const DIAGNOSES = {
   rulling: { name: 'Kronisk rulling', good: 'Rullingen lades 30 % raskere.', bad: 'Av og til faller en gulltann ut når du ruller.', note: 'Pasienten foretrekker å rulle fremfor å gå. Gulvet har klaget.' },
   nysgjerrighet: { name: 'Kirurgisk nysgjerrighet', good: 'Møbler du knuser gir flere gulltenner.', bad: 'Lamper gnistrer lenger når du er i nærheten.', note: 'Pasienten åpner ting som burde vært lukket.' },
   innsikt: { name: 'Kosmisk innsikt', good: 'Evner lades 20 % raskere.', bad: 'Du ser fiender som ikke finnes.', note: 'Pasienten har sett for mye. Journalen har sett pasienten.' },
+  samlemani: { name: 'Patologisk samlemani', good: 'Kuriositetene gir 10 % mer skade.', bad: 'Lommene er fulle: du går 5 % tregere.', note: 'Pasienten tar med seg alt som ikke er spikret fast, og noe av det som er det.' },
+  gradig: { name: 'Tannløs grådighet', good: 'Fiender slipper 20 % flere gulltenner.', bad: 'Folk merker det: priser opp 15 %.', note: 'Pasienten teller tennene om natten. Også andres.' },
+  blodtorst: { name: 'Klinisk blodtørst', good: 'Hvert drap gir én helse tilbake.', bad: 'Suppe, piller og behandling virker 25 % dårligere.', note: 'Pasienten har begynt å telle. Personalet har begynt å gå i par.' },
   hypokonder: { name: 'Institusjonell hypokondri', good: 'All helbredelse virker 40 % bedre.', bad: '10 % mindre maks helse.', note: 'Pasienten ber om behandling for ting som ikke finnes. Innvilget.' }
 };
 
-const STATS = {
-  kropp: { name: 'Kropp', desc: '+10 maks helse og mer nærkampskade' },
-  smid: { name: 'Smidighet', desc: 'Fart og raskere rulling' },
-  vett: { name: 'Vett', desc: 'Kortere nedkjøling og sterkere evner' },
-  nerver: { name: 'Nerver', desc: 'Mindre skade og mer stabil Morbidium' },
-  tryne: { name: 'Tryne', desc: 'Lavere priser og flere gulltenner' }
-};
 
 const FIRST_M = ['Ingvald', 'Asbjørn', 'Torleif', 'Halvard', 'Eilert', 'Sigvart', 'Kasper', 'Leopold', 'Ansgar', 'Olaus', 'Reidar', 'Kornelius', 'Gottfred', 'Alf', 'Edvin', 'Tobias', 'Ivar', 'Mikkel'];
 const FIRST_K = ['Borghild', 'Magnhild', 'Ragna', 'Solveig', 'Gudrun', 'Oddny', 'Signe', 'Jenny', 'Petra', 'Dagny', 'Hulda', 'Aslaug', 'Klara', 'Edle', 'Tordis', 'Bergljot', 'Ingeborg', 'Martha'];
@@ -210,7 +196,14 @@ const LORE = [
   { t: 'Arkivets regler, punkt 1 til 400', b: 'Punkt 1: Alt skal arkiveres. Punkt 2: Den som arkiverer, arkiveres også. Punkt 3 til 400 er arkivert og kan ikke leses uten skjema 1.' },
   { t: 'Innskrevet på veggen i isolat 4', b: 'De sier det er stille her. Det er ikke stille. Arkivet under meg skriver hele natten. Jeg hører pennen.' },
   { t: 'Overarkivarens lommebok', b: 'Kvittering for 40 000 stempler. Et fotografi av et stempel. En lapp: «Glem ikke å arkivere deg selv før du går hjem.»' },
-  { t: 'Siste side', b: 'Utskrivning krever at pasienten leser sin egen journal til slutten. Ingen pasient har gjort det. Ingen pasient har vært en pasient lenge nok.' }
+  { t: 'Siste side', b: 'Utskrivning krever at pasienten leser sin egen journal til slutten. Ingen pasient har gjort det. Ingen pasient har vært en pasient lenge nok.' },
+  { t: 'Menyen i kafeteriaen, uke 38', b: 'Mandag: suppe. Tirsdag: suppe (grå). Onsdag: det som var igjen av suppen. Torsdag: vi snakker ikke om torsdag. Fredag: fisk, hvis fisken kommer tilbake.' },
+  { t: 'Søster Hansens lommebok', b: 'Et bilde av en katt. Tre piller uten merking. En lapp: «Hvis pasientene begynner å telle tennene sine, ring overlegen. Hvis overlegen begynner, ring noen andre.»' },
+  { t: 'Kvittering fra Christiania Glassverk', b: 'Levert: 400 preparatglass, store. Merknad fra kusken: flere av glassene var ikke tomme da de ble levert, og ett av dem ba ham kjøre forsiktig.' },
+  { t: 'Vaktmester Olsens nøkkelliste', b: 'Nøkkel 1: hoveddøren. Nøkkel 2: kjelleren. Nøkkel 3: kjelleren under kjelleren. Nøkkel 4: vet ikke. Den varmer seg om natten.' },
+  { t: 'Klage fra en pårørende', b: 'Min bror ble lagt inn for melankoli og overdreven lesing av Poe. Nå skriver han hjem på et språk ingen kan lese. Frimerkene er ekte. Vi har ingen bror.' },
+  { t: 'Rust sin tabell over vanntemperatur', b: 'Kaldt: roer nervene. Iskaldt: roer pasienten. Varmt: vekker noe i rørene. Kokende: se vedlegg B, som er vått.' },
+  { t: 'Uten dato, skrevet med tannkjøtt', b: 'Jeg er ikke den første som ligger her. Jeg har sett likene. De har ansiktet mitt. Neste gang skal jeg ta med meg noe opp. Eller ned.' }
 ];
 
 const SERVICES = {

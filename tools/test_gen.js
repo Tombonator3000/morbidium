@@ -12,6 +12,7 @@ for(let s=1;s<=300;s++){
   for(const depth of [1,2,3,4]){
     try{ const F=ctx.generateFloor(s*9973,depth,{startTemplate:'eget'}); ok++; att+=F.attempts;
       const roles={}; F.rooms.forEach(r=>roles[r.role]=(roles[r.role]||0)+1);
+      if(depth===3&&!F.rooms.some(r=>r.template==='isolat'||r.template==='kartotek')) throw new Error('Isolat og arkiv uten isolat eller kartotek');
       if(s===1&&(depth===1||depth===3)){ console.log('rom:',F.rooms.length,'kanter:',F.edges.length,'roller:',JSON.stringify(roles));
         console.log('tjenester:',F.rooms.filter(r=>r.role==='service').map(r=>r.service).join(', '));
         console.log('rekvisitter:',F.rooms.reduce((a,r)=>a+r.props.length,0),'boelger:',F.rooms.reduce((a,r)=>a+r.waves.length,0));

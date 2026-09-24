@@ -279,8 +279,45 @@ Alle tidspunkt er UTC.
 - Ny fil src/14_pasient.js. Doll tar egne farger og sko per figur. Nye tester i test_ekstra: variasjon over 300 pasienter, navn som passer kjønnet, figuren bruker riktige deler, fortsatt løp beholder utseendet, likene husker utseendet, gamle lagringer, plass i båndnettet.
 - Tester: generator 1200 av 1200, gjennomspilling uten feil, test_ekstra alt bestått.
 
+## 2026-09-24 19:23 Pasienthåndboka, innstillinger med faner, nytt arkiv, ny tittel og pause (Toms punkt 4 og 5)
+- Ny fil src/32_meny.js samler tittelmenyen, pausen, innstillingene, pasienthåndboka og arkivet. Alt er papir, skaleres til skjermen og ruller aldri. Smale skjermer får egne oppsett.
+- Tittelen er et innleggelsesskjema der knappene krysses av, med et stempel i hjørnet. Pasienthåndboka har fått egen knapp.
+- Pausen er en utklippstavle med pasientens portrett, navn, etasje, tenner og antall slåtte fiender, og knapper til journalen, håndboka og innstillingene.
+- Innstillingene er et kartotekkort med fem faner. Lyd: hovedvolum, effekter, stemning og musikk hver for seg. Bilde: kameraavstand, styrke på skjermristing (var av eller på), glimt, forvrengning, lys, enkel grafikk. Spill: størrelse på skjermteksten, skadetall, snakkebobler og navneskilt av eller på. Styring: tabell for tastatur og mus, håndkontroll og berøring. Data: slett lagret løp eller brenn arkivet, begge med to trykk. Gamle innstillinger flyttes over.
+- Pasienthåndboka er et grønt hefte med åtte kapitler (Velkommen, Styring, Kamp, Journalen, Morbidium, Ting du finner, Rommene, Døden). Tekstene er skrevet ut fra hvordan spillet faktisk virker, med bilde fra spillet og en håndskrevet lapp i margen fra en tidligere pasient på hver side.
+- Arkivet er et arkivskap med tre skuffer: pasientmapper (portrett i pasientens eget utseende, navn, nummer, alder, hvor langt pasienten kom, dødsårsak, stempel AVDØD eller UTSKREVET, og en gul lapp hvis liket fortsatt ligger i bygget), journalfragmenter (funne som maskinskrevne ark, manglende som tomme plasser) og årsrapport (døde, utskrevne, overleger, dypeste etasje, fiender slått, vanligste dødsårsak, steder å våkne og lik som ligger igjen). Mappene blas i sider.
+- Test_ekstra fikk en test for etasje 3 som av og til feilet: med fire kamprom var det omtrent 1 % sjanse for at ingen ble isolat eller kartotek. Generatoren sørger nå for at Isolat og arkiv alltid har minst ett slikt rom, og test_gen sjekker det for alle 300 frø.
+- Nye tester i test_ekstra: gamle innstillinger flyttes over, alle faner får plass, kameraavstand og skadetall virker og lagres, alle åtte kapitler får plass uten rulling, arkivet viser mapper med portrett, fragmenter og rapport, pausen går til innstillinger og tilbake.
+
+## 2026-09-24 19:30 Etappe 7: musikk og stemningslyder
+- Ny fil src/06_musikk.js: et lite sekvenseringsverk som spiller musikk laget av synth i nettleseren, uten lydfiler. Stilen er en sanatoriumsgrammofon fra 1923.
+- Seks stykker: tittelen (spilledåsevals i a-moll), etasje 1 (vals i d-moll med celesta og pizzicatobass), etasje 2 (sakte orgel med drypp fra rørene), etasje 3 (frygisk marsj med cembalo og skrivemaskinklikk), etasje 4 (kor og klokker) og tjenesterommene (en litt for munter vals i dur, filtrert som en gammel grammofon med knitring).
+- Musikken har tre lag som toner inn etter situasjonen: grunnlaget spiller alltid, kamplaget legger på trommer og drivende bass når dørene låses, og sjefslaget legger på messing og pauker i sjefskampen. Tempoet øker litt i kamp. Jo mer Morbidium i blodet, jo skjevere blir tonene.
+- Stikk ved død (fallende orgel og en dyp klokke) og ved utskrivning (spilledåse i dur). Musikken dempes når journalen eller en meny er åpen.
+- Nye stemningslyder per etasje, spilt tilfeldig hvert tiende til tjuende sekund: klokke og knirk i første etasje, drypp og rør i underetasjen, skrivemaskin og rotter i arkivet, skrik og hjerteslag under grunnmuren. Tonerekka fra the-deep-ones er erstattet av musikken (README er rettet).
+- Hjerteslag når helsa er under 25 %, raskere jo mindre helse.
+- Innstillingene har fått egen glidebryter for musikk. Lyd-fanen har nå hovedvolum, effekter, musikk og stemning.
+- Målt i nettleseren: alle stykker spiller, kamp- og sjefslaget kommer inn, ingen klipping (høyeste topp 0,36 i sjefskamp). Ny test i test_ekstra: musikk på tittelen, over i kamp, stopp ved død.
+
+## 2026-09-24 19:37 Etappe 8: merknader, utskrivningsbrev, gjeninnleggelse og mer innhold
+- Ny fil src/33_merknader.js. Femten merknader gis for ting pasientene får til: første død, ta tennene fra et lik, behandle hver av de tre første overlegene, bli utskrevet, 100 fiender og fem mestere til sammen, 150 gulltenner på en gang, tre diagnoser i samme løp, en forvandling, 100 Morbidium, alle journalfragmentene, utskrivning på under 30 minutter og utskrivning etter gjeninnleggelse. Hver merknad stemples på skjermen og står i en ny skuff i arkivet.
+- Merknadene åpner noe: ni kuriositeter er låst til de er fortjent (knust speil, fanget tannfe, lommekirurgi, hodeskalle med stearinlys, ukontrollert celledeling, svulsten Sverre, hjerte på glass, altfor lang kappe, dikt om mørket), og to nye steder å våkne: Kapellet (en kuriositet og en ekstra evne, men 30 Morbidium fra start) og Vaktmesterens bod (nøkkelknippet og 40 tenner, men Olsen stenger vaktmesterskapet for deg).
+- Slutten: når Journalen er behandlet, kommer et utskrivningsbrev fra sanatoriet før kortet. Brevet er skrevet ut fra løpet: tid, antall behandlede ansatte og rom, diagnosene («regnes fra i dag av som personlighet»), kuriositetene (sanatoriet vil ha én tilbake), forvandlinger og Morbidium i blodet. Første gang står det et P.S. om gjeninnleggelse.
+- Gjeninnleggelse: etter første utskrivning kan pasienten krysses av for gjeninnleggelse ved innleggelsen. Fiender og sjefer har 30 % mer helse og slår 20 % hardere, mestere dukker opp 60 % oftere, og det faller 25 % flere tenner. Valget huskes.
+- Tre nye diagnoser: patologisk samlemani (åtte kuriositeter: mer skade, litt tregere), tannløs grådighet (120 tenner: flere tenner fra fiender, høyere priser) og klinisk blodtørst (60 drap i løpet: hvert drap helbreder, annen helbredelse virker dårligere).
+- Sju nye journalfragmenter (18 i alt): kafeteriamenyen, Søster Hansens lommebok, en kvittering fra glassverket, Olsens nøkkelliste, en klage fra en pårørende, Rusts tabell over vanntemperatur og en lapp skrevet med tannkjøtt.
+- Musikken stopper nå i selve dødsøyeblikket, og dødsstikket kommer med dødskortet.
+- Nye tester: låste kuriositeter dukker ikke opp, merknader låser opp, brevet kommer før kortet, gjeninnleggelse tilbys og gir sterkere fiender.
+
 ## 2026-09-24 19:40 Hele kunstlisten er tegnet
 - Tegnet ni nye figurark. Pleier, oppasser og kultist har hode og kropp forfra, bakfra og fra siden. Bibliotekar, Hansen, kokk, Krok, Olsen og Rust har hode og kropp forfra. Ansiktene er skjeve, grove og komisk morbide etter Toms tilbakemelding.
 - Tegnet kultistens kappe i tre retninger, et dødt spillerhode og ti småfiendebilder: flue, lunge og svulst fra tre sider samt slukyngel forfra.
 - Tegnet de siste småtingene i kunstlisten: ni ansiktstilbehør i ett ark, slimskudd og kortplukk. Justerte Krok og Rust så figurarkene ikke lager ekstra bilder fra nabofelt.
 - Kontrollerte hele bildeprosessen i en kopi av den nyeste hovedgrenen. Alle 199 bildefilene i ART_BRIEF.md finnes etter utskjæring. 205 bilder ble behandlet uten feil og bygget inn i spillet sammen med 27 personaldeler. Ingen spillkode ble endret.
+
+## 2026-09-24 19:44 Etappe 9, første del: rablinger, byggeanimasjon, tips og ny kunstliste
+- Spor etter tidligere pasienter: i hver etasje kan det stå opptil to rablinger med kritt på gulvet, signert med navn fra arkivet («DAGNY VAR HER»). Leser du rablingen, får du en setning fra pasienten («Ikke stol på Rust.», «Suppa er ikke suppe.», dødsårsaken deres) og hvor det gikk med dem.
+- Byggeanimasjon (idé fra threejs-architecture-effects): møblene i et rom står flate og usynlige til pasienten kommer innen seks ruter, og spretter så opp ett og ett med en liten bue, nærmest først. Startrommet er ferdig bygget. Av i enkel grafikk.
+- Tips for nye pasienter: små lapper med nål under romskiltet første gang noe skjer (gå, kamp, evnekort, tjenesterom, lite helse, nytt nivå, Morbidium, luka, overlege). Teksten følger enheten: tastatur, håndkontroll eller berøring. Kan slås av under Spill, og vises på nytt fra Data.
+- tools/lag_manifest.py dekker nå alle fire etasjer, alle maler (også Kapellet og Vaktmesterens bod), de nye fiendene, sjefene, apparatene, lommerusket og spesialrommene. Den fletter inn nye nøkler og beholder de gamle, så ingen levert ChatGPT-tegning blir foreldreløs. 64 nye nøkler.
+- tools/lag_brief.py skriver ART_BRIEF.md med beskrivelse av alt det nye og en kolonne som viser hva ChatGPT allerede har levert: 150 av 287 bilder. Det som gjenstår er mest figurer (fiender, personale, sjefer), apparater og lommerusk, pynt og de nyeste møblene.
