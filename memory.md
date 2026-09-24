@@ -55,3 +55,6 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Slagene kan hoste slimklumper; nesten alle angrepsgjenstander virker på klumpene. Det er dette som gir kombinasjonene.
 - Nye fiender: flue, svulst, lunge (enkeltsprites som yngelen). I 26_fiender.js: tvang, byrakrat, narkose, rotte (flokk på tre), oyeblomst (står fast). Byråkrat og narkoselege er tegnet bare forfra (ENEMY_ART), som tjenestefolkene.
 - Tonen skal være mer absurd og grotesk, som Isaac, men fortsatt tegneserieaktig.
+
+## Spesialrom (13_rom.js, Spesial)
+- Hemmelig rom i hver etasje bak sprukken vegg (F.crack er rutene; tre poeng: vanlig slag 1, tungt 3, eksplosjon 3). Forbannet rom i blindvei (torner tar et hjerte per inngang, glasset utløser bakhold). Blodofferrom med alter som tilbyr tre handler.

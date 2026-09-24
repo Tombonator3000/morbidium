@@ -162,8 +162,8 @@ function startFloor(depth, first) {
   }
   const P = G.player, sp = freeSpot(sr.x + sr.w / 2, sr.z + sr.h / 2 + 1, 4); P.x = sp.x; P.z = sp.z; P.vx = P.vz = P.kvx = P.kvz = 0;
   P.doll.root.position.set(P.x, 0, P.z); P.coffee = false;
-  Items.onFloor(); Items.updateLook();
-  G.rooms = F.rooms.map(r => ({ cleared: r.role !== 'boss' && !(r.waves && r.waves.length), visited: false }));
+  Items.onFloor(); Items.updateLook(); Spesial.onFloor(); G.lastRid = -2;
+  G.rooms = F.rooms.map(r => ({ cleared: r.role === 'cursed' || (r.role !== 'boss' && !(r.waves && r.waves.length)), visited: false }));
   G.seen = new Uint8Array(F.W * F.H); G.seenT = 0; G.shops = {}; G.lore = {};
   const reveal = r => { for (let z = r.z - 1; z <= r.z + r.h; z++) for (let x = r.x - 1; x <= r.x + r.w; x++) if (x >= 0 && z >= 0 && x < F.W && z < F.H) G.seen[z * F.W + x] = 1; };
   if (run.revealBoss) reveal(F.rooms[F.bossId]);
@@ -200,16 +200,19 @@ function roomLogic(dt) {
     if (rid >= 0) { const r = F.rooms[rid]; for (let z = r.z - 1; z <= r.z + r.h; z++) for (let x = r.x - 1; x <= r.x + r.w; x++) if (x >= 0 && z >= 0 && x < F.W && z < F.H) G.seen[z * F.W + x] = 1; }
   }
   if (G.combat) { combatTick(dt); return; }
+  if (rid < 0) G.lastRid = -1;
   if (rid < 0 || !P.alive) return;
   const r = F.rooms[rid], st = G.rooms[rid];
+  if (rid !== G.lastRid) { G.lastRid = rid; Spesial.onEnter(r, !st.visited); }
   if (!st.visited) { st.visited = true; if (r.role === 'service') { const S = SERVICES[r.service]; toast(S.name, S.npc ? S.npc + ' er på vakt' : ''); } if (r.role === 'treasure') toast('Et stille rom', 'Noen har glemt noe her'); }
   if (st.cleared) return;
   if (P.x < r.x + 1.3 || P.x > r.x + r.w - 1.3 || P.z < r.z + 1.3 || P.z > r.z + r.h - 1.3) return;
   lockRoom(r);
 }
 function lockRoom(r) {
-  const F = G.F; G.lock = new Set(r.doors);
+  const F = G.F, crack = new Set(F.crack || []); G.lock = new Set(r.doors);
   for (const i of r.doors) {
+    if (crack.has(i)) continue;
     const x = i % F.W, z = (i / F.W) | 0, g = propSprite('barrier', x + .5, z + .95, { P: barrierArt() });
     g.position.y = -1.6; R.level.add(g); G.barriers.push({ g, t: 0, up: true });
   }
@@ -263,6 +266,7 @@ function findInteract() {
     if (o.kind === 'lore' && !o.read) consider(d, { t: 'Les journalsiden', fn: () => readLore(o) });
     if (o.kind === 'locker' && !o.opened) consider(d, { t: 'Be Olsen åpne skapet', fn: () => olsenLocker(o) });
   }
+  Spesial.interact(consider);
   for (const pd of Items.pedestals) if (!pd.taken) consider(Math.hypot(pd.x - P.x, pd.z - P.z) - .9, { t: 'Ta ' + ITEMS[pd.id].name + Items.priceText(pd), fn: () => Items.take(pd) });
   if (G.corpse && !G.corpse.ld.looted) consider(Math.hypot(G.corpse.x - P.x, G.corpse.z - P.z) - .5, { t: 'Undersøk liket', fn: lootCorpse });
   if (G.trapdoor) consider(Math.hypot(G.trapdoor.x - P.x, G.trapdoor.z - P.z) - .6, { t: G.depth >= MAX_DEPTH ? 'Gå ut av bygget' : 'Klatre ned', fn: descend });
@@ -586,10 +590,10 @@ function hudUpdate() {
 function drawMap() {
   const c = $('map'), g = c.getContext('2d'), F = G.F, P = G.player, s = 5.2; if (!F || !P) return;
   g.fillStyle = '#1c1410'; g.fillRect(0, 0, 200, 200); g.save(); g.translate(100 - P.x * s, 100 - P.z * s);
-  const cols = { service: '#e8c890', boss: '#d88a7a', treasure: '#f0d870', risk: '#c8a0d8' };
+  const cols = { service: '#e8c890', boss: '#d88a7a', treasure: '#f0d870', risk: '#c8a0d8', cursed: '#c86a7a', offer: '#e0906a', secret: '#b8c8e8' };
   for (let z = 0; z < F.H; z++) for (let x = 0; x < F.W; x++) { const i = z * F.W + x; if (!F.tiles[i] || !G.seen[i]) continue; const rid = F.roomId[i]; g.fillStyle = F.tiles[i] === T_COR ? '#8a7650' : (rid >= 0 && cols[F.rooms[rid].role]) || '#d8c08a'; g.fillRect(x * s, z * s, s + .6, s + .6); }
   g.font = 'bold 11px Georgia, serif'; g.textAlign = 'center';
-  for (const r of F.rooms) { const i = Math.floor(r.z + r.h / 2) * F.W + Math.floor(r.x + r.w / 2); if (!G.seen[i]) continue; const lab = r.role === 'boss' ? 'X' : r.role === 'service' ? SERVICES[r.service].name.replace(/^(Den|Det) /, '')[0] : r.role === 'treasure' ? '*' : ''; if (lab) { g.fillStyle = '#2a1a14'; g.fillText(lab, (r.x + r.w / 2) * s, (r.z + r.h / 2) * s + 4); } }
+  for (const r of F.rooms) { const i = Math.floor(r.z + r.h / 2) * F.W + Math.floor(r.x + r.w / 2); if (!G.seen[i]) continue; const lab = r.role === 'boss' ? 'X' : r.role === 'service' ? SERVICES[r.service].name.replace(/^(Den|Det) /, '')[0] : r.role === 'treasure' || r.role === 'secret' ? '*' : r.role === 'cursed' ? '!' : r.role === 'offer' ? 'O' : ''; if (lab) { g.fillStyle = '#2a1a14'; g.fillText(lab, (r.x + r.w / 2) * s, (r.z + r.h / 2) * s + 4); } }
   for (const e of G.enemies) if (e.alive) { g.fillStyle = '#b3261e'; g.beginPath(); g.arc(e.x * s, e.z * s, 3, 0, TAU); g.fill(); }
   if (G.trapdoor) { g.fillStyle = '#e8b93a'; g.fillRect(G.trapdoor.x * s - 4, G.trapdoor.z * s - 4, 8, 8); }
   g.restore(); g.fillStyle = '#e8b93a'; g.strokeStyle = '#2a1a14'; g.lineWidth = 2;
@@ -638,7 +642,7 @@ function loop(now) {
     updatePlayer(sdt, A);
     for (const e of G.enemies) updateEnemy(e, sdt); G.enemies = G.enemies.filter(e => !e.gone);
     if (G.boss) { updateBoss(G.boss, sdt); if (G.boss.gone) G.boss = null; }
-    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt); updateZones(sdt);
+    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt); updateZones(sdt); Spesial.update(sdt);
     if (hallucinate) hallucinate(sdt);
     G.flowT = (G.flowT || 0) - sdt; if (G.flowT <= 0 && P.alive) { G.flowT = .25; buildFlow(Math.floor(P.x), Math.floor(P.z)); }
     roomLogic(sdt); interactLogic(A);
@@ -685,7 +689,7 @@ function boot() {
   $('bJournal').onclick = () => openJournal(); $('bPause').onclick = () => openPause();
   window.MORBIDIUM = G; Object.assign(window, { Items, ITEMS, spawnEnemy, itemIcon, jarPart, pillPart, addonPart, shotPart, LOOKS, PILL_COL, BLOBS, R, hurt, descend, finishCombat, openService, killEntity, Art, RIG, PROPS, CARD_ART, WEAPONS, THEMES, charPart, propArt, weaponPart, shoePart, cardArtCanvas, generateFloor, CONSUMABLES, heartPart, morbPart, bottlePart, cardPart, pigeonPart, stampDecal, handPart, toothPart, starPart, puffPart, barrierArt });
   // til testene
-  Object.assign(window, { bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
   step('Pakker ut bilder');
   Art.preload().then(() => { step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }

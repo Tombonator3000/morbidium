@@ -21,7 +21,7 @@ function buildFloor(seed, depth, opts) {
   const rng = new RNG(seed);
   const { C, GW, GH } = GEN, W = GW * C, H = GH * C;
   const F = { seed, depth, W, H, tiles: new Uint8Array(W * H), roomId: new Int16Array(W * H).fill(-1), block: new Uint8Array(W * H),
-    rooms: [], edges: [], adj: [], startId: 0, bossId: -1 };
+    rooms: [], edges: [], adj: [], startId: 0, bossId: -1, crack: [] };
   const cellMap = new Map(), key = (i, j) => i + ',' + j;
   const addRoom = (ci, cj) => { const r = { id: F.rooms.length, ci, cj, role: 'combat', props: [], waves: [], doors: [], spawns: [] }; F.rooms.push(r); F.adj.push([]); cellMap.set(key(ci, cj), r.id); return r; };
   const link = (a, b) => { F.edges.push([a, b]); F.adj[a].push(b); F.adj[b].push(a); };
@@ -73,12 +73,25 @@ function buildFloor(seed, depth, opts) {
     if (free().length <= 3) break;
     const r = rng.pick(pool); r.role = 'service'; r.service = s;
   }
+  // forbannet rom i en ledig blindvei, blodofferrom i et ledig rom et stykke inne
+  const curseLeaf = free().filter(r => F.adj[r.id].length === 1 && D[r.id] >= 1);
+  if (curseLeaf.length && free().length > 3 && rng.chance(depth >= 2 ? .6 : .35)) rng.pick(curseLeaf).role = 'cursed';
+  const offerPool = free().filter(r => D[r.id] >= 2);
+  if (offerPool.length && free().length > 3 && rng.chance(depth >= 2 ? .5 : .3)) rng.pick(offerPool).role = 'offer';
+  // hemmelig rom: en tom celle ved siden av et vanlig rom, uten korridor i grafen
+  const parents = rng.shuffle(F.rooms.filter(r => !['boss', 'start'].includes(r.role)).slice());
+  let secret = null;
+  for (const par of parents) {
+    const dirs = rng.shuffle([[1, 0], [-1, 0], [0, 1], [0, -1]]).filter(([di, dj]) => { const ni = par.ci + di, nj = par.cj + dj; return ni >= 0 && nj >= 0 && ni < GW && nj < GH && !cellMap.has(key(ni, nj)); });
+    if (dirs.length) { const [di, dj] = dirs[0]; secret = addRoom(par.ci + di, par.cj + dj); secret.role = 'secret'; secret.parent = par.id; break; }
+  }
 
   // 5) rommoduler i cellene
   for (const r of F.rooms) {
     let w, h;
     if (r.role === 'boss') { w = 12; h = 12; }
     else if (r.role === 'start' || r.role === 'treasure') { w = rng.int(8, 10); h = rng.int(8, 9); }
+    else if (r.role === 'secret') { w = rng.int(6, 7); h = rng.int(6, 7); }
     else if (r.role === 'service') { w = rng.int(9, 11); h = rng.int(8, 10); }
     else { w = rng.int(9, 12); h = rng.int(9, 12); }
     r.w = w; r.h = h;
@@ -100,6 +113,17 @@ function buildFloor(seed, depth, opts) {
     let a = F.rooms[ia], b = F.rooms[ib];
     if (a.ci === b.ci) { if (a.cj > b.cj) [a, b] = [b, a]; const mz = (a.cj + 1) * C; carve(a.cx, a.cz, a.cx, mz); carve(a.cx, mz, b.cx, mz); carve(b.cx, mz, b.cx, b.cz); }
     else { if (a.ci > b.ci) [a, b] = [b, a]; const mx = (a.ci + 1) * C; carve(a.cx, a.cz, mx, a.cz); carve(mx, a.cz, mx, b.cz); carve(mx, b.cz, b.cx, b.cz); }
+  }
+  if (secret) {
+    const before = F.tiles.slice(); let a = F.rooms[secret.parent], b = secret;
+    if (a.ci === b.ci) { if (a.cj > b.cj) [a, b] = [b, a]; const mz = (a.cj + 1) * C; carve(a.cx, a.cz, a.cx, mz); carve(a.cx, mz, b.cx, mz); carve(b.cx, mz, b.cx, b.cz); }
+    else { if (a.ci > b.ci) [a, b] = [b, a]; const mx = (a.ci + 1) * C; carve(a.cx, a.cz, mx, a.cz); carve(mx, a.cz, mx, b.cz); carve(mx, b.cz, b.cx, b.cz); }
+    const par = F.rooms[secret.parent];
+    for (let z = par.z - 1; z <= par.z + par.h; z++) for (let x = par.x - 1; x <= par.x + par.w; x++) {
+      const i = z * W + x; if (F.tiles[i] !== T_COR || before[i] !== T_VOID) continue;
+      const inX = x >= par.x && x < par.x + par.w, inZ = z >= par.z && z < par.z + par.h;
+      if ((inX && (z === par.z - 1 || z === par.z + par.h)) || (inZ && (x === par.x - 1 || x === par.x + par.w))) { F.crack.push(i); F.block[i] = 1; }
+    }
   }
   // 7) dører: korridorruter som grenser til rommet
   for (const r of F.rooms) {
@@ -133,7 +157,7 @@ function decorateRoom(F, r, rng) {
   const W = F.W, reserved = new Set(), doorZone = new Set();
   const inRoom = (x, z) => x >= r.x && x < r.x + r.w && z >= r.z && z < r.z + r.h;
   for (const di of r.doors) { const dx = di % W, dz = (di / W) | 0; for (let z = dz - 2; z <= dz + 2; z++) for (let x = dx - 2; x <= dx + 2; x++) if (Math.abs(x - dx) + Math.abs(z - dz) <= 3) { reserved.add(z * W + x); doorZone.add(z * W + x); } }
-  const keepCenter = !['service', 'treasure', 'start'].includes(r.role) || r.template === 'begravelse';
+  const keepCenter = !['service', 'treasure', 'start', 'offer', 'cursed', 'secret'].includes(r.role) || r.template === 'begravelse';
   if (keepCenter) for (let z = r.cz - 2; z <= r.cz + 2; z++) for (let x = r.cx - 2; x <= r.cx + 2; x++) reserved.add(z * W + x);
   const used = new Set();
   const ok = (x, z) => inRoom(x, z) && !reserved.has(z * W + x) && !used.has(z * W + x);
@@ -190,6 +214,9 @@ function decorateRoom(F, r, rng) {
       for (const [ox, oz] of [[2, 2], [r.w - 3, 2], [2, r.h - 3], [r.w - 3, r.h - 3]]) put('pillar', r.x + ox, r.z + oz);
       ent('chain', 4); drains(3); break;
     }
+    case 'cursed': put('forbannet', r.cx, r.cz - 1, 0, { block: false }); ent('candles', 3); ent('chain', rng.int(2, 3)); ent('puddle', 2, { data: { kind: 'blod' } }); break;
+    case 'offer': put('offeralter', r.cx - 1, r.cz, 0, { tiles: [[0, 0], [1, 0], [2, 0]] }); ent('candles', 4); ent('puddle', rng.int(2, 3), { data: { kind: 'blod' } }); drains(1); break;
+    case 'secret': put('lore', r.cx + 1, r.cz + 1, 0, { block: false }); ent('crate', rng.int(2, 3)); ent('candles', 1); break;
     case 'treasure': put('chest', r.cx, r.cz, 0, { block: false, data: { chest: 'treasure' } }); put('lore', r.cx + 1, r.cz + 1, 0, { block: false }); ent('crate', 3); break;
     case 'kafeteria': {
       put('counter', r.cx - 2, r.z, 0, { tiles: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]], data: { len: 5, svc: 'kafeteria' } });
@@ -224,19 +251,19 @@ function decorateRoom(F, r, rng) {
 
 /* Fiendebølger planlegges ved generering, så samme seed gir samme etasje */
 function planWaves(F, r, rng, depth, opts) {
-  if (!['combat', 'risk', 'start'].includes(r.role)) return;
+  if (!['combat', 'risk', 'start', 'cursed'].includes(r.role)) return;
   if (r.role === 'start' && !opts.startCombat) return;
   const pool = DEPTH_ENEMIES[depth] || DEPTH_ENEMIES[4];
   const bias = { kapell: 'kultist', bad: 'yngel', behandling: 'oppasser', sovesal: 'pleier', kjeller: 'yngel', isolat: 'tvang', kartotek: 'byrakrat' }[r.template];
   const d = F.dist ? F.dist[r.id] : 2;
-  const nWaves = r.role === 'risk' ? 2 : r.role === 'start' ? 1 : (d >= 3 && rng.chance(.55) ? 2 : 1) + (depth >= 3 && rng.chance(.3) ? 1 : 0);
+  const nWaves = r.role === 'risk' ? 2 : r.role === 'start' || r.role === 'cursed' ? 1 : (d >= 3 && rng.chance(.55) ? 2 : 1) + (depth >= 3 && rng.chance(.3) ? 1 : 0);
   for (let w = 0; w < nWaves; w++) {
     const n = r.role === 'start' ? 2 : 2 + [0, 0, 1, 2, 2][Math.min(4, depth)] + rng.int(0, 2) + (d >= 4 ? 1 : 0) + (depth >= 4 && rng.chance(.4) ? 1 : 0);
     const wave = [];
     for (let i = 0; i < n; i++) {
       let t = bias && rng.chance(.35) ? bias : rng.pick(pool);
       if (depth === 1 && t === 'yngel') t = 'pleier';
-      wave.push({ t, elite: r.role === 'risk' && i < 1 + w });
+      wave.push({ t, elite: (r.role === 'risk' && i < 1 + w) || (r.role === 'cursed' && i < 2) });
     }
     if (opts.extraPleier && depth === opts.startDepth && r.role === 'combat') wave.push({ t: 'pleier' });
     r.waves.push(wave);
@@ -252,7 +279,7 @@ function validateFloor(F) {
     if (F.adj[F.bossId].length !== 1) reasons.push('sjefsrommet er ikke en blindvei');
     if (F.dist[F.bossId] < 3) reasons.push('sjefsrommet ligger for nær start');
   }
-  if (F.edges.length < F.rooms.length) reasons.push('ingen sløyfe');
+  if (F.edges.length < F.rooms.filter(r => r.role !== 'secret').length) reasons.push('ingen sløyfe');
   const svc = F.rooms.filter(r => r.role === 'service').map(r => r.service);
   if (!svc.includes('journal')) reasons.push('mangler journalskap');
   if (!svc.includes('kafeteria') && !svc.includes('medisin')) reasons.push('ingen helbredelse før sjefen');
@@ -267,7 +294,9 @@ function validateFloor(F) {
       const j = nz * W + nx; if (seen[j] || !F.tiles[j] || F.block[j]) continue; seen[j] = 1; q.push(j);
     }
   }
-  for (const r of F.rooms) { for (const d of r.doors) if (!seen[d]) { reasons.push('dør i rom ' + r.id + ' er stengt av møbler'); break; } }
+  const crack = new Set(F.crack || []);
+  for (const r of F.rooms) { if (r.role === 'secret') { if (seen[r.cz * W + r.cx]) reasons.push('hemmelig rom kan nås uten å knuse veggen'); continue; } for (const d of r.doors) if (!seen[d] && !crack.has(d)) { reasons.push('dør i rom ' + r.id + ' er stengt av møbler'); break; } }
+  if (F.rooms.some(r => r.role === 'secret') && !(F.crack || []).length) reasons.push('hemmelig rom uten sprukken vegg');
   if (boss && !seen[boss.cz * W + boss.cx]) reasons.push('sjefsrommet kan ikke nås');
   return { ok: reasons.length === 0, reasons };
 }

@@ -193,3 +193,11 @@ Alle tidspunkt er UTC.
 - Tegnet figur_pasient.png med tre vinkler av hode og tre vinkler av gul morgenkåpe uten armer og bein. Justerte plasseringen for å holde hodene og kroppene i hver sin rad.
 - Prøvde arket i en egen kopi med samme bildebehandling og bygging som GitHub bruker. Seks figurdeler ble laget; 68 bilder ble behandlet uten feil og tatt med i spillfila.
 - GitHub Pages bygde og publiserte den forrige leveransen med kuriositeter og piller uten feil.
+## 2026-09-24 16:50 Etappe 4: spesialrom
+- Hemmelig rom i hver etasje: generatoren legger et lite rom i en tom celle ved siden av et vanlig rom, med en korridor som er stengt av en sprukken murvegg der den møter rommet. Tre vanlige slag, ett tungt slag, en eksplosjon (nitroglyserin, eksplosiv pille) eller et stempel knuser veggen. Det støver fra sprekken når pasienten er i nærheten. Inni: en kuriositet i preparatglass, en journalside, tenner og en pille.
+- Forbannet rom (rundt hver femte etasje, i en blindvei): tornemerker og rødt lys ved døra, og tornene tar ett hjerte hver gang pasienten går inn (aldri det siste). Midt i rommet står en kuriositet fra blodhylla på et skjevt tegnet pentagram («IKKE TRÅKK»). Tar du den, låses dørene og et bakhold med to eliter kommer.
+- Blodofferrom (en av tre etasjer, oftere lenger ned): et alter som tilbyr tre av seks handler, for eksempel et hjerte for en kuriositet, halve tennene for en kuriositet, et evnekort for to poeng, 30 helse for 40 tenner, mørke for styrke eller slipingen for et hjerte. Én gave per alter, eller «Gå din vei».
+- Blod er ny væsketype i vannshaderen, og leder strøm.
+- Kartet viser spesialrommene med egne farger og tegn (* for skatt og hemmelig rom, ! for forbannet, O for offer).
+- Generatoren: validering tar hensyn til den sprukne veggen, sløyfekravet teller ikke det hemmelige rommet, og midten holdes ikke lenger fri i spesialrom. 1200 av 1200 gyldige, 1,01 forsøk i snitt.
+- Test: tungt slag knuser veggen, tornene tar et hjerte, kuriositeten utløser bakhold som kan ryddes, alteret tar imot én gave. Ingen konsollfeil.

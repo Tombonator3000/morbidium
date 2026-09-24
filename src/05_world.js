@@ -208,7 +208,7 @@ function slowMo(t, s) {
 }
 
 /* ---------- pytter og strøm ---------- */
-const CONDUCTIVE = { wet: 1, soup: 1, vomit: 1 };
+const CONDUCTIVE = { wet: 1, soup: 1, vomit: 1, blod: 1 };
 function addPuddle(x, z, kind, r = 1, life = 16) {
   if (tIdx(x, z) < 0 || !G.F.tiles[tIdx(x, z)]) return null;
   for (const p of G.puddles) if (p.kind === kind && d2(p.x, p.z, x, z) < (p.r * .7) * (p.r * .7)) { p.r = Math.min(2.6, Math.max(p.r, r) + .15); p.life = Math.max(p.life, life); p.mesh.scale.set(p.r * 2, p.r * 2, 1); return p; }
@@ -271,7 +271,7 @@ function spawnProps() {
   for (const r of F.rooms) for (const p of r.props) {
     if (p.k === 'puddle') { addPuddle(p.x, p.z, p.kind || 'wet', rnd(.9, 1.4), 1e9); continue; }
     if (p.k === 'npc') { spawnNPC(p, r); continue; }
-    const P = propArt(p), flat = p.k === 'drain' || p.k === 'trapdoor';
+    const P = propArt(p), flat = p.k === 'drain' || p.k === 'trapdoor' || p.k === 'forbannet';
     const blocking = F.block[Math.floor(p.z) * F.W + Math.floor(p.x)] === 1 || (p.fd || 1) > 1 || (p.fw || 1) > 1;
     const zf = flat ? p.z : blocking ? p.z + (p.fd || 1) / 2 - .04 : p.z + .2;
     const rr = ((p.rot || 0) % TAU + TAU) % TAU, side = rr > .5 && rr < TAU - .5 && Math.abs(rr - Math.PI) > .5;
@@ -283,6 +283,8 @@ function spawnProps() {
     if (p.k === 'candles') o.light = R.light(p.x, p.z + .2, 1.8, '#ffb24a', .6, R.levelL);
     if (p.k === 'journalskap') o.light = R.light(p.x, p.z + .8, 2.6, '#b36be0', .7, R.levelL);
     if (p.k === 'altar') o.light = R.light(p.x, p.z + .6, 3, '#9a4ac8', .5, R.levelL);
+    if (p.k === 'offeralter') o.light = R.light(p.x, p.z + .6, 3.4, '#ff4a3a', .55, R.levelL);
+    if (p.k === 'forbannet') o.light = R.light(p.x, p.z, 2.6, '#ff2a1a', .45, R.levelL);
     if (p.k === 'chest' || p.k === 'lore') o.light = R.light(p.x, p.z + .3, 1.6, '#ffd070', .45, R.levelL);
     if (p.k === 'trolley') { o.r = .45; o.vx = 0; o.vz = 0; o.soup = !!p.soup; }
     if (p.k === 'chest') o.chest = p.chest || 'treasure';
