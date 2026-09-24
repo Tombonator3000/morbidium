@@ -152,3 +152,10 @@ Alle tidspunkt er UTC.
   - Journalen: kortplassene er mindre og står litt under midten av hjerneområdene, og hvert område har fått navnet sitt skrevet øverst, så fargen og navnet synes.
   - Fiender: sikt sjekkes nå for hele kroppen, ikke bare midtpunktet, og en fiende som står fast i et halvt sekund prøver en annen vei. I en målt test nådde alle 48 fiender fram både før og etter, så svakheten var sjelden; den nye koden fanger resten.
 - Tester: generator 900 av 900, gjennomspilling uten feil, test_ekstra alt bestått.
+
+## 2026-09-24 16:18 Evnekortene fra ChatGPT vises riktig
+- Tom la inn 13 evnekort i gpt-grafikk/ mens etappe 1 pågikk. Flettet inn (rebase av min upushede commit, loggen og gjøremålene beholdt begge oppføringene).
+- Kjørte behandle_bilder.py som Pages-bygget gjør: 13 kort på 256 ganger 256 piksler, ingen feil. Spillfila blir 1,7 MB.
+- Feil funnet: innebygde bilder ble lastet asynkront, så kort som tegnes én gang (HUD, journal, butikk) fikk kodetegningen i stedet for bildet. Nå dekodes alle innebygde bilder før tittelen vises (Art.preload, maks 4 sekunder).
+- assets/ferdig/*.png er lagt i .gitignore; Pages-bygget lager dem fra gpt-grafikk/.
+- Journalen: kortplassene er gjort litt mindre, og navnene på de nedre områdene er flyttet, så ingen navn skjules av kort.
