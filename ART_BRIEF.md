@@ -10,7 +10,7 @@ Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke red
 4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).
 5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.
 
-Status: 223 av 287 bilder er levert. Kolonnen «Levert» viser hvilke.
+Status: 245 av 287 bilder er levert. Kolonnen «Levert» viser hvilke.
 
 ## Stilblokk (lim inn i ChatGPT)
 
@@ -25,22 +25,22 @@ Technical: PNG with a TRANSPARENT background. Exactly one object, centered, full
 - Gjennomsiktig bakgrunn er best. Hvit eller ensfarget bakgrunn går også, verktøyet fjerner den fra kantene og innover.
 - Ikke tegn skygge på bakken. Spillet legger på skygge og lys selv.
 
-## Runde 1: kuriositetene (Isaac-gjenstander), apparater og lommerusk (71 bilder, 49 levert)
+## Runde 1: kuriositetene (Isaac-gjenstander), apparater og lommerusk (71 bilder, 71 levert)
 
 Gjenstandene man plukker opp og kombinerer. Små, tydelige og groteske, som gjenstandene i The Binding of Isaac. Bruk gjerne «ni ting»-arket fra DESIGN_BRIEF.md.
 
 | Filnavn | Beskrivelse til ChatGPT | Format | Levert |
 |---|---|---|---|
-| `akt_adrenalin.png` | icon for an active gadget from a 1920s sanatorium: «Adrenalinsprøyte» (Seks sekunder med fart og kraft, og et lite plaster på såret.). Readable at small size | kvadrat |  |
-| `akt_blits.png` | icon for an active gadget from a 1920s sanatorium: «Kamera med magnesiumblits» (SI APPELSIN. Alle fiender du ser, blir blendet. Sjefer myser.). Readable at small size | kvadrat |  |
-| `akt_blodpose.png` | icon for an active gadget from a 1920s sanatorium: «Blodpose» (Fyller på 40 prosent helse. Gruppe ukjent.). Readable at small size | kvadrat |  |
-| `akt_bor.png` | icon for an active gadget from a 1920s sanatorium: «Tannlegebor» (Du snurrer med boret i to sekunder. Alt rundt deg tar skade og mister tenner.). Readable at small size | kvadrat |  |
-| `akt_defib.png` | icon for an active gadget from a 1920s sanatorium: «Bærbar defibrillator» (Et elektrisk støt rundt deg. Alle i nærheten tar skade og blir stående. Pytter får strøm.). Readable at small size | kvadrat |  |
-| `akt_duebur.png` | icon for an active gadget from a 1920s sanatorium: «Duebur» (Slipper ut fire duer som kjemper for deg en stund.). Readable at small size | kvadrat |  |
-| `akt_grammofon.png` | icon for an active gadget from a 1920s sanatorium: «Grammofon med vuggevise» (Alle i nærheten sovner. Musikken er ikke god.). Readable at small size | kvadrat |  |
-| `akt_meisel.png` | icon for an active gadget from a 1920s sanatorium: «Vaktmesterens meisel» (Tegner hele etasjen på kartet, med det hemmelige rommet, og knuser sprekker i nærheten.). Readable at small size | kvadrat |  |
-| `akt_stempelpute.png` | icon for an active gadget from a 1920s sanatorium: «Stempelpute» (AVSLÅTT på alle i rommet. De tar skade og står og venter i to sekunder.). Readable at small size | kvadrat |  |
-| `akt_stoppeklokke.png` | icon for an active gadget from a 1920s sanatorium: «Forstanderens stoppeklokke» (Fiendene går i sakte film i fem sekunder. Du gjør ikke det.). Readable at small size | kvadrat |  |
+| `akt_adrenalin.png` | icon for an active gadget from a 1920s sanatorium: «Adrenalinsprøyte» (Seks sekunder med fart og kraft, og et lite plaster på såret.). Readable at small size | kvadrat | ja |
+| `akt_blits.png` | icon for an active gadget from a 1920s sanatorium: «Kamera med magnesiumblits» (SI APPELSIN. Alle fiender du ser, blir blendet. Sjefer myser.). Readable at small size | kvadrat | ja |
+| `akt_blodpose.png` | icon for an active gadget from a 1920s sanatorium: «Blodpose» (Fyller på 40 prosent helse. Gruppe ukjent.). Readable at small size | kvadrat | ja |
+| `akt_bor.png` | icon for an active gadget from a 1920s sanatorium: «Tannlegebor» (Du snurrer med boret i to sekunder. Alt rundt deg tar skade og mister tenner.). Readable at small size | kvadrat | ja |
+| `akt_defib.png` | icon for an active gadget from a 1920s sanatorium: «Bærbar defibrillator» (Et elektrisk støt rundt deg. Alle i nærheten tar skade og blir stående. Pytter får strøm.). Readable at small size | kvadrat | ja |
+| `akt_duebur.png` | icon for an active gadget from a 1920s sanatorium: «Duebur» (Slipper ut fire duer som kjemper for deg en stund.). Readable at small size | kvadrat | ja |
+| `akt_grammofon.png` | icon for an active gadget from a 1920s sanatorium: «Grammofon med vuggevise» (Alle i nærheten sovner. Musikken er ikke god.). Readable at small size | kvadrat | ja |
+| `akt_meisel.png` | icon for an active gadget from a 1920s sanatorium: «Vaktmesterens meisel» (Tegner hele etasjen på kartet, med det hemmelige rommet, og knuser sprekker i nærheten.). Readable at small size | kvadrat | ja |
+| `akt_stempelpute.png` | icon for an active gadget from a 1920s sanatorium: «Stempelpute» (AVSLÅTT på alle i rommet. De tar skade og står og venter i to sekunder.). Readable at small size | kvadrat | ja |
+| `akt_stoppeklokke.png` | icon for an active gadget from a 1920s sanatorium: «Forstanderens stoppeklokke» (Fiendene går i sakte film i fem sekunder. Du gjør ikke det.). Readable at small size | kvadrat | ja |
 | `glass_tomt.png` | an empty glass specimen jar with a metal lid, standing on a small wooden base (the game puts the item inside) | stående | ja |
 | `kur_adrenalin.png` | item icon, a single grotesque 1920s hospital curiosity: «Hestesprøyte med adrenalin» (Raskere bein og raskere slag. Hjertet klager.). Isaac-style item sprite, readable at small size | kvadrat | ja |
 | `kur_bart.png` | item icon, a single grotesque 1920s hospital curiosity: «Pålimt bart» (Flere kritiske treff og bedre priser. Folk stoler på bart.). Isaac-style item sprite, readable at small size | kvadrat | ja |
@@ -82,18 +82,18 @@ Gjenstandene man plukker opp og kombinerer. Små, tydelige og groteske, som gjen
 | `kur_tang.png` | item icon, a single grotesque 1920s hospital curiosity: «Tannlegens tang» (Klumpene dine blir til tenner: mer skade, og drap gir tenner.). Isaac-style item sprite, readable at small size | kvadrat | ja |
 | `kur_tannfe.png` | item icon, a single grotesque 1920s hospital curiosity: «Fanget tannfe» (Tannfeen henter tenner til deg på lang avstand.). Isaac-style item sprite, readable at small size | kvadrat | ja |
 | `kur_tuberkulose.png` | item icon, a single grotesque 1920s hospital curiosity: «Tuberkuløs hoste» (Hvert slag hoster opp en slimklump. Ikke dekk til munnen.). Isaac-style item sprite, readable at small size | kvadrat | ja |
-| `lomme_batteri.png` | icon for a small pocket trinket: «Lekkende batteri» (Apparatet ditt lades dobbelt så fort.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_frosk.png` | icon for a small pocket trinket: «Tørket frosk» (Én gang per etasje tar frosken et dødelig slag for deg.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_hestesko.png` | icon for a small pocket trinket: «Hestesko» (Flere kritiske treff.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_kaninpote.png` | icon for a small pocket trinket: «Kaninpote fra tøffelen» (Rullingen lades 25 prosent raskere. Tøffelen savner den.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_knappenal.png` | icon for a small pocket trinket: «Knappenål i fôret» (10 prosent mer skade når du har full helse.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_kolapp.png` | icon for a small pocket trinket: «Kølapp nummer 1» (Første treff på hver fiende gjør 50 prosent mer skade. Du var først.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_lanekort.png` | icon for a small pocket trinket: «Lånekort med stempel» (Alt koster 15 prosent mindre. Ingen sjekker datoen.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_monokkel.png` | icon for a small pocket trinket: «Sprukket monokkel» (Du ser straks hvor den sprukne veggen er i hver etasje.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_morfin.png` | icon for a small pocket trinket: «Morfindråpe» (Tre helse hver gang et rom er ryddet.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_pastill.png` | icon for a small pocket trinket: «Halspastill» (Morbidium stiger 30 prosent saktere. Smaker mint og angst.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_skalpell.png` | icon for a small pocket trinket: «Rusten skalpell» (Slag gir ofte blødning. Stivkrampevaksinen er utgått.). Tiny object, readable at small size | kvadrat |  |
-| `lomme_tannspeil.png` | icon for a small pocket trinket: «Tannlegespeil» (Tenner og hjerter trekkes til deg fra dobbelt så langt unna.). Tiny object, readable at small size | kvadrat |  |
+| `lomme_batteri.png` | icon for a small pocket trinket: «Lekkende batteri» (Apparatet ditt lades dobbelt så fort.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_frosk.png` | icon for a small pocket trinket: «Tørket frosk» (Én gang per etasje tar frosken et dødelig slag for deg.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_hestesko.png` | icon for a small pocket trinket: «Hestesko» (Flere kritiske treff.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_kaninpote.png` | icon for a small pocket trinket: «Kaninpote fra tøffelen» (Rullingen lades 25 prosent raskere. Tøffelen savner den.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_knappenal.png` | icon for a small pocket trinket: «Knappenål i fôret» (10 prosent mer skade når du har full helse.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_kolapp.png` | icon for a small pocket trinket: «Kølapp nummer 1» (Første treff på hver fiende gjør 50 prosent mer skade. Du var først.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_lanekort.png` | icon for a small pocket trinket: «Lånekort med stempel» (Alt koster 15 prosent mindre. Ingen sjekker datoen.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_monokkel.png` | icon for a small pocket trinket: «Sprukket monokkel» (Du ser straks hvor den sprukne veggen er i hver etasje.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_morfin.png` | icon for a small pocket trinket: «Morfindråpe» (Tre helse hver gang et rom er ryddet.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_pastill.png` | icon for a small pocket trinket: «Halspastill» (Morbidium stiger 30 prosent saktere. Smaker mint og angst.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_skalpell.png` | icon for a small pocket trinket: «Rusten skalpell» (Slag gir ofte blødning. Stivkrampevaksinen er utgått.). Tiny object, readable at small size | kvadrat | ja |
+| `lomme_tannspeil.png` | icon for a small pocket trinket: «Tannlegespeil» (Tenner og hjerter trekkes til deg fra dobbelt så langt unna.). Tiny object, readable at small size | kvadrat | ja |
 | `pille_pille_bla.png` | ONE small pill capsule, color: bla (rod=red, bla=blue, gul=yellow, hvit=white, svart=black, rosa=pink, gronn=green, flekket=white with red dots) | kvadrat | ja |
 | `pille_pille_flekket.png` | ONE small pill capsule, color: flekket (rod=red, bla=blue, gul=yellow, hvit=white, svart=black, rosa=pink, gronn=green, flekket=white with red dots) | kvadrat | ja |
 | `pille_pille_gronn.png` | ONE small pill capsule, color: gronn (rod=red, bla=blue, gul=yellow, hvit=white, svart=black, rosa=pink, gronn=green, flekket=white with red dots) | kvadrat | ja |

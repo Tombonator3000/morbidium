@@ -57,4 +57,4 @@
 - [x] Byggeanimasjon når pasienten nærmer seg et rom (idé fra threejs-architecture-effects).
 - [x] Rydde bort ubrukt kode (ICONS, STATS, R.basic). Mappa old/ finnes ikke lenger.
 - [x] Utvide tools/lag_manifest.py og ART_BRIEF.md med alt det nye. ART_BRIEF viser nå hva som er levert (150 av 287).
-- [ ] ChatGPT: de 64 bildene som gjenstår i ART_BRIEF.md (223 av 287 levert): nye figurer (Overarkivaren, byråkrat, narkoselege, pasient i tvangstrøye, arkivrotte, øyeblomst, Journalen), apparater og lommerusk og de nyeste møblene.
+- [ ] ChatGPT: de 42 bildene som gjenstår i ART_BRIEF.md (245 av 287 levert): nye figurer (Overarkivaren, byråkrat, narkoselege, pasient i tvangstrøye, arkivrotte, øyeblomst, Journalen), de nyeste møblene og torner.

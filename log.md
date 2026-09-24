@@ -351,3 +351,7 @@ Alle tidspunkt er UTC.
 - Alt bygges oppå den vanlige etasjen og kan slås av uten å bygge etasjen på nytt: materialene byttes tilbake, modellene fjernes og platene vises igjen. Følger med til nye etasjer og tittelskjermen.
 - Vurdering etter bildene: stemningen med lyspøler og måneskygger fungerer, og søyler, lamper og møbler får tydelig dybde. De enkle modellene er mindre detaljerte enn tegningene fra ChatGPT, så en ordentlig 3D-versjon trenger bedre modeller eller teksturer tegnet av ChatGPT på modellene. Ytelse er ikke målt på ekte maskinvare; skyggekart 2048 og åtte punktlys kan bli tungt på mobil.
 - Ny test i test_ekstra: slå på, modeller, lys og glød finnes, følger med til etasje 2, og alt er tilbake som før når det slås av.
+
+## 2026-09-24 20:42 Apparater og lommerusk tegnet
+- Tegnet ti ikoner for aktive apparater og tolv små ikoner for lommerusk som enkeltbilder med gjennomsiktig bakgrunn og nøkkelnavn fra manifestet. De ligger i gpt-grafikk/.
+- Kjørte utskjæring, bildebehandling og bygging i en kopi. 245 bilder ble behandlet og bygget inn uten feil, sammen med 27 personaldeler. ART_BRIEF.md er generert på nytt og viser 245 av 287 leverte bilder.
