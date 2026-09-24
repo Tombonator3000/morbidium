@@ -1,0 +1,162 @@
+{
+ "tuberkulose": {
+  "name": "Tuberkuløs hoste",
+  "desc": "Hvert slag hoster opp en slimklump. Ikke dekk til munnen."
+ },
+ "bronkitt": {
+  "name": "Kronisk bronkitt",
+  "desc": "Hostene kommer i treer. Legen sier det er normalt."
+ },
+ "spyttkjertel": {
+  "name": "Overaktiv spyttkjertel",
+  "desc": "Større, tregere og tyngre klumper."
+ },
+ "magnet": {
+  "name": "Svelget magnet",
+  "desc": "Klumpene søker mot nærmeste fiende. Den sitter der fortsatt."
+ },
+ "syl": {
+  "name": "Syl i spiserøret",
+  "desc": "Klumpene går gjennom to fiender."
+ },
+ "celledeling": {
+  "name": "Ukontrollert celledeling",
+  "desc": "Klumpene deler seg i tre når de treffer."
+ },
+ "nitro": {
+  "name": "Nitroglyserintabletter",
+  "desc": "For hjertet. Klumpene eksploderer."
+ },
+ "kvikksolv": {
+  "name": "Knust kvikksølvtermometer",
+  "desc": "Treff forgifter. Ikke slikk på det."
+ },
+ "frost": {
+  "name": "Frostskadet tå",
+  "desc": "Treff bremser fiender. Tåa var ikke din."
+ },
+ "elektro": {
+  "name": "Elektrosjokkbehandling",
+  "desc": "Treff hopper videre til to fiender til."
+ },
+ "boomerang": {
+  "name": "Tilbakefall",
+  "desc": "Klumpene kommer tilbake. Som alt annet."
+ },
+ "sprett": {
+  "name": "Gummicelle",
+  "desc": "Klumpene spretter på veggene."
+ },
+ "igle": {
+  "name": "Blodigler",
+  "desc": "Treff gir deg litt helse tilbake. Iglene er fornøyde."
+ },
+ "glassoye": {
+  "name": "Lånt glassøye",
+  "desc": "Lengre rekkevidde og flere kritiske treff. Eieren vil ha det tilbake."
+ },
+ "ekstra_tunge": {
+  "name": "Ekstra tunge",
+  "desc": "Klumpene flyr lenger og raskere."
+ },
+ "adrenalin": {
+  "name": "Hestesprøyte med adrenalin",
+  "desc": "Raskere bein og raskere slag. Hjertet klager."
+ },
+ "blodtrykk": {
+  "name": "Livsfarlig høyt blodtrykk",
+  "desc": "30 % mer skade. Du spruter litt når du blir truffet."
+ },
+ "bart": {
+  "name": "Pålimt bart",
+  "desc": "Flere kritiske treff og bedre priser. Folk stoler på bart."
+ },
+ "hjerte_i_glass": {
+  "name": "Hjerte på glass",
+  "desc": "Ett ekstra hjerte og full helse. Det slår fortsatt."
+ },
+ "svulst": {
+  "name": "Godartet svulst (sier de)",
+  "desc": "To ekstra hjerter. Litt tregere. Den vokser."
+ },
+ "svulstvenn": {
+  "name": "Svulsten Sverre",
+  "desc": "En svulst går i bane rundt deg og stopper prosjektiler."
+ },
+ "cyste": {
+  "name": "Pratsom cyste",
+  "desc": "Når du blir truffet, spytter den klumper i alle retninger."
+ },
+ "rattent_kjott": {
+  "name": "Råttent kjøtt",
+  "desc": "Hver fiende du dreper, gir deg en flue som kjemper for deg."
+ },
+ "fluepapir": {
+  "name": "Fluepapir",
+  "desc": "Fluene dine gjør dobbel skade og fanger skudd."
+ },
+ "surkal": {
+  "name": "Gammel surkål",
+  "desc": "Når du ruller, slipper du en gass som gir fiender kvalme."
+ },
+ "lavement": {
+  "name": "Lavement",
+  "desc": "Når du løper fort, etterlater du et glatt, brunt spor. Fiender sklir."
+ },
+ "eyeliner": {
+  "name": "Tung eyeliner",
+  "desc": "15 % mer skade når Morbidium er over 50. Tårene er malt på."
+ },
+ "kappe_lang": {
+  "name": "Altfor lang kappe",
+  "desc": "En ekstra rull. Kappen feier gulvet for deg."
+ },
+ "dikt": {
+  "name": "Dikt om mørket (14 vers)",
+  "desc": "Står du stille, sovner fiender i nærheten av ren kjedsomhet."
+ },
+ "hodeskalle": {
+  "name": "Hodeskalle med stearinlys",
+  "desc": "Et lys brenner på hodet ditt. Fiender helt inntil deg tar brannskade."
+ },
+ "lommekirurgi": {
+  "name": "Lommekirurgi",
+  "desc": "Alle slag gir blødning."
+ },
+ "eterflaske": {
+  "name": "Evig eterflaske",
+  "desc": "Fiender du treffer, sovner et øyeblikk."
+ },
+ "stemmegaffel": {
+  "name": "Stemmegaffel",
+  "desc": "Tunge slag sender ut en sjokkbølge."
+ },
+ "tannfe": {
+  "name": "Fanget tannfe",
+  "desc": "Tannfeen henter tenner til deg på lang avstand."
+ },
+ "gulltann": {
+  "name": "Løs gulltann",
+  "desc": "En ekstra tann per drap, og treff kan slå ut tenner."
+ },
+ "tang": {
+  "name": "Tannlegens tang",
+  "desc": "Klumpene dine blir til tenner: mer skade, og drap gir tenner."
+ },
+ "brodsmuler": {
+  "name": "Brødsmuler i lomma",
+  "desc": "En due følger deg inn i hvert rom som låses."
+ },
+ "speil": {
+  "name": "Knust speil",
+  "desc": "13 % sjanse for dobbel skade. 1 % sjanse for å kutte deg selv."
+ },
+ "heliumlunge": {
+  "name": "Heliumlunge",
+  "desc": "Du svever litt over gulvet. Pytter og strøm biter ikke på deg."
+ },
+ "karantene": {
+  "name": "Karantenebånd",
+  "desc": "Fiender i låste rom har 20 % mindre helse."
+ }
+}
