@@ -24,8 +24,8 @@ const MESTER = {
 const MESTER_TITTEL = { pleier: 'Søster', oppasser: 'Oppasser', kultist: '', byrakrat: 'Fullmektig', narkose: 'Dr.', tvang: 'Pasient', flue: 'Flua', svulst: 'Svulsten', lunge: 'Lunga', yngel: 'Yngelen', rotte: 'Rotta', oyeblomst: 'Blomsten' };
 /* rollene: hvilke farger klærne kan få, hvilke delserier fra ChatGPT som passer, og hvor ansiktet sitter */
 const ROLLER = {
-  pleier: { farger: ['#6a94c8', '#d880a0', '#7ab888', '#d8b850', '#a888d0'], serier: ['personale'], ansikt: -.12 },
-  oppasser: { farger: [], serier: ['personale'], ansikt: -.08 },
+  pleier: { farger: ['#6a94c8', '#d880a0', '#7ab888', '#d8b850', '#a888d0'], serier: ['personale'], kropper: ['uniformer'], ansikt: -.12 },
+  oppasser: { farger: [], serier: ['personale'], kropper: ['uniformer'], ansikt: -.08 },
   kultist: { farger: [], serier: ['kultister'], ansikt: -.06 },
   byrakrat: { farger: ['#d89a9a', '#9ab4d8', '#d8c888'], serier: ['personale'], ansikt: -.1 },
   narkose: { farger: [], serier: ['personale'], ansikt: -.1 },
@@ -39,14 +39,32 @@ const Oppskrift = {
   onFloor() { this.rng = new RNG(((G.F && G.F.seed) || 1) * 31 + 977); },
   r() { return (this.rng || (this.rng = new RNG(1))).next(); },
   p(arr) { return arr[Math.floor(this.r() * arr.length)]; },
-  /* delene fra ChatGPT, samlet per kategori og serie: { hode: { personale: { 1: { f: P, b: P, s: P } } } } */
+  /* delene fra ChatGPT, samlet per kategori og serie: { hode: { personale: { 1: { f: nøkkel, b: nøkkel, s: nøkkel } } } }.
+     Hoder og kropper tilpasses samme boks som spillets egne deler; hatter, hår og tilbehør tilpasses hodet de havner på. */
   deler() {
     if (this._deler) return this._deler; const out = {};
-    for (const [k, m] of Object.entries(typeof DELER_META === 'object' ? DELER_META : {})) {
-      const P = Art.part(k, m.w, m.h, m.ax, m.ay, () => { });
-      ((out[m.kategori] = out[m.kategori] || {})[m.serie] = out[m.kategori][m.serie] || {})[m.del] = Object.assign(out[m.kategori][m.serie][m.del] || {}, { [m.visning]: P });
-    }
+    for (const [k, m] of Object.entries(typeof DELER_META === 'object' ? DELER_META : {})) ((out[m.kategori] = out[m.kategori] || {})[m.serie] = out[m.kategori][m.serie] || {})[m.del] = Object.assign(out[m.kategori][m.serie][m.del] || {}, { [m.visning]: k });
     return (this._deler = out);
+  },
+  delPart(k, kind, head) {
+    const m = DELER_META[k], img = Art.img[k]; if (!m || !img) return null;
+    const draw = (s, W, H, ax, ay) => { const P = Art.part('del_' + kind + '_' + k + (head ? '_' + head.key : ''), W, H, ax, ay, g => g.drawImage(img, -m.bw * s / 2, -m.bh * s, m.bw * s, m.bh * s)); P.dw = m.bw * s; P.dh = m.bh * s; return P; };
+    if (kind === 'hode') return draw(Math.min(1.08 / m.bw, .92 / m.bh), 1.2, 1.1, .6, .1);
+    if (kind === 'kropp') return draw(Math.min(1.24 / m.bw, .86 / m.bh), 1.3, 1.0, .65, .08);
+    const hw = head ? head.dw : .85, s = (kind === 'har' ? 1.02 : kind === 'tilbehor' ? .62 : .74) * hw / m.bw;
+    return draw(s, m.bw * s + .1, m.bh * s + .1, (m.bw * s + .1) / 2, .05);
+  },
+  /* setter delene på dukken: hode og kropp per visning, hatt/hår/tilbehør som tillegg som følger hodet */
+  kleDeler(d, hode, kropp, topp, topKind, tb) {
+    const H = hode ? Object.fromEntries(Object.entries(hode).map(([v, k]) => [v, this.delPart(k, 'hode')])) : null;
+    const B = kropp ? Object.fromEntries(Object.entries(kropp).map(([v, k]) => [v, this.delPart(k, 'kropp')])) : null;
+    if (H || B) d.setParts(H, B);
+    const ref = H ? (H.f || H.s) : null;
+    for (const [set, kind] of [[topp, topKind], [tb, 'tilbehor']]) {
+      if (!set) continue; const views = {}, off = {};
+      for (const v of ['f', 'b', 's']) { if (!set[v]) continue; const hv = (H && (H[v] || H.f)) || ref; views[v] = this.delPart(set[v], kind, hv); const hh = hv ? hv.dh : .9; off[v] = [0, kind === 'tilbehor' ? hh * .38 : hh * (kind === 'har' ? .6 : .74)]; }
+      const first = views.f || views.s || views.b; if (first) d.addAddon(first, { at: 'head', off: Object.assign({ f: off.f || [0, .6] }, off), views });
+    }
   },
   velgDel(kat, serier) {
     const D = this.deler()[kat]; if (!D) return null;
@@ -60,12 +78,10 @@ const Oppskrift = {
     const rolle = ROLLER[e.type], d = e.doll, humanoid = !RIG[e.type] || !RIG[e.type].blob;
     if (rolle && humanoid) {
       // deler fra ChatGPT når de finnes: hode, kropp, og hatt eller frisyre oppå
-      const hode = this.r() < .7 && this.velgDel('hode', rolle.serier), kropp = this.r() < .7 && this.velgDel('kropp', rolle.serier);
-      if (hode || kropp) d.setParts(hode, kropp);
-      const topp = this.r() < .6 && this.velgDel(this.r() < .5 ? 'hatt' : 'har', rolle.serier);
-      if (topp) d.addAddon(topp.f || topp.s || topp.b, { at: 'head', off: { f: [0, 0] }, views: topp });
-      const tb = this.r() < .35 && this.velgDel('tilbehor', rolle.serier.concat(['ansikt']));
-      if (tb) d.addAddon(tb.f || tb.s, { at: 'head', off: { f: [0, 0] }, views: tb });
+      const hode = this.r() < .7 && this.velgDel('hode', rolle.serier), kropp = this.r() < .6 && this.velgDel('kropp', rolle.kropper || rolle.serier);
+      const topKind = this.r() < .5 ? 'hatt' : 'har', topp = hode && this.r() < .65 && this.velgDel(topKind, rolle.serier);
+      const tb = hode && this.r() < .35 && this.velgDel('tilbehor', rolle.serier.concat(['ansikt']));
+      if (hode || kropp) this.kleDeler(d, hode, kropp, topp, topKind, tb);
       // uten deler: av og til et hodebytte som spøk, og tilbehør i ansiktet
       if (!hode && HODEBYTTE[e.type] && this.r() < .05) { const h = HODEBYTTE[e.type]; d.setParts({ f: charPart(h, 'hode', 'f'), b: charPart(h, 'hode', 'b'), s: charPart(h, 'hode', 's') }, null); e.speechT = .5; e.forkledd = true; }
       if (!tb && this.r() < .18) { const k = this.p(TILBEHOR_KODE), L = LOOKS[k], dy = e.forkledd ? 0 : rolle.ansikt; d.addAddon(addonPart(k), Object.assign({}, L, { off: Object.fromEntries(Object.entries(L.off).map(([v, o]) => [v, [o[0], o[1] + dy]])) })); }
