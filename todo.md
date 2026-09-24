@@ -26,6 +26,7 @@
 - [x] Spillerens figurark fra ChatGPT i gpt-grafikk/.
 - [x] Tre delark fra ChatGPT for personale: hoder, hatter og uniformer.
 - [x] Fire sko og fem småobjekter fra ChatGPT: hjerte, Morbidiumdråpe, gulltann, due og eterflaske.
+- [x] De siste ni bildene for plukk og effekter fra ChatGPT: kamfer, levertran, luktesalt, tre støvpuff, skyggehånd, stempelmerke og treffstjerne.
 - [ ] Flere bilder fra ChatGPT etter DESIGN_BRIEF.md: andre figurer, rekvisitter og effekter. Lastes opp til gpt-grafikk/.
 - [ ] Musikk og flere lyder.
 - [ ] Byggeanimasjon når et rom avsløres (idé fra threejs-architecture-effects).
