@@ -239,3 +239,8 @@ Alle tidspunkt er UTC.
 - Tom ønsket at ansiktene skulle bli mer morbide, stygge og stiliserte. Brukte referansene som retning for asymmetri, ujevne tenner, øyeposer og røffe blekkstreker uten å kopiere figurene i dem.
 - Tegnet to nye voksenvarianter av spilleren, kvinne og mann, hver som seks figurdeler i samme mal som standardpasienten. Den mannlige varianten er også tatt i bruk som nytt standardark, og de ni personalhodene er tegnet om i samme grovere stil. Ikoner og utstyr er ikke endret.
 - Prøvde klipping, bildebehandling og bygging i en egen kopi. Standardfiguren gir seks behandlede deler, personalarket gir ni deler, og spillet bygges med 93 bilder uten feil. De to ekstra variantarkene ligger i gpt-grafikk/varianter/ til Claude registrerer dem i manifestet og lager figurvalg.
+
+## 2026-09-24 18:02 Første gruppe rekvisitter og møbler
+- Tom ba om å starte runden med rekvisitter og møbler. Tegnet åtte enkeltbilder i trekvart perspektiv: alter, kafeteriadisk, medisindisk, vaktmesterbenk, venteværelsesbenk, sykehusbord og stol forfra og bakfra.
+- Bildene har gjennomsiktig bakgrunn, og stolens to vinkler er tegnet etter samme møbel. Kontrollerte de ferdig behandlede bildene visuelt.
+- Prøvde hele bildeflyten i en egen kopi. 101 bilder ble behandlet uten feil og bygget inn i spillfila. Oppdaterte designbriefen slik at den gjenspeiler Toms beslutning om møbler som enkeltbilder.

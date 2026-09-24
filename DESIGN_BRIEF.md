@@ -147,7 +147,7 @@ Motoren for dette bygger Claude. Delene ChatGPT tegner nå, havner i `assets/del
 
 ## Hva ChatGPT ikke skal lage
 
-Animasjonsark med mange bilder per bevegelse. Spillet animerer ved å flytte delene (som klippeanimasjon i Castle Crashers), og bildegeneratorer klarer ikke å tegne samme figur likt nok fra bilde til bilde til at det blir jevn animasjon. Heller ikke 3D-modeller eller møbler som flate bilder foreløpig, før vi har bestemt om verdenen blir 3D.
+Animasjonsark med mange bilder per bevegelse. Spillet animerer ved å flytte delene (som klippeanimasjon i Castle Crashers), og bildegeneratorer klarer ikke å tegne samme figur likt nok fra bilde til bilde til at det blir jevn animasjon. Lag heller ikke 3D-modeller. Tom har bedt om rekvisitter og møbler som enkeltbilder i trekvart perspektiv. Disse legges i gpt-grafikk og behandles av det eksisterende bildeløpet.
 
 ## Første bestilling, i denne rekkefølgen
 
