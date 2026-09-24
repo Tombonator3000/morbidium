@@ -155,7 +155,14 @@ body.touch #prompt{ bottom:calc(214px + env(safe-area-inset-bottom,0px)); }
 #lvl{ font-family:var(--display); font-size:13px; }
 #pips{ display:flex; gap:4px; } #pips i{ width:12px; height:12px; border-radius:50%; border:2px solid var(--ink); background:var(--gold); } #pips i.off{ background:#5a4a3a; }
 #cons{ position:absolute; left:calc(196px + env(safe-area-inset-left,0px)); bottom:calc(14px + env(safe-area-inset-bottom,0px)); width:64px; height:80px; transform:rotate(2deg); text-align:center; font-weight:800; font-size:11px; padding-top:4px; }
-#cons canvas{ width:40px; height:52px; display:block; margin:0 auto; } #cons .n{ position:absolute; right:-6px; top:-8px; font-family:var(--display); font-size:13px; background:var(--ink); color:var(--gold); border-radius:10px; padding:0 6px; }
+#cons canvas{ width:40px; height:52px; display:block; margin:0 auto; }
+#akt{ position:absolute; left:calc(272px + env(safe-area-inset-left,0px)); bottom:calc(14px + env(safe-area-inset-bottom,0px)); width:64px; height:80px; transform:rotate(-2deg); text-align:center; padding-top:6px; }
+#akt canvas{ width:46px; height:46px; display:block; margin:0 auto; } #akt .n{ position:absolute; right:-6px; top:-8px; font-family:var(--display); font-size:13px; background:var(--ink); color:var(--gold); border-radius:10px; padding:0 6px; }
+#akt .pips{ display:flex; gap:3px; justify-content:center; margin-top:4px; } #akt .pips i, #tAkt i{ width:8px; height:8px; border-radius:2px; border:2px solid var(--ink); background:var(--gold); } #akt .pips i.off, #tAkt i.off{ background:#5a4a3a; }
+#akt.full{ box-shadow:0 0 0 3px var(--gold); }
+#tAkt{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; } #tAkt canvas{ width:26px; height:26px; } #tAkt .pp{ display:flex; gap:2px; } #tAkt i{ width:5px; height:5px; border-width:1px; }
+#items canvas.lomme{ border:2px solid var(--gold); border-radius:50%; background:rgba(42,26,20,.12); }
+body.touch #akt{ display:none; } #cons .n{ position:absolute; right:-6px; top:-8px; font-family:var(--display); font-size:13px; background:var(--ink); color:var(--gold); border-radius:10px; padding:0 6px; }
 .acard.match{ box-shadow:0 0 0 3px var(--gold), 4px 4px 0 rgba(20,12,8,.5); }
 .acard.tap{ background-color:#fff4c8; filter:brightness(1.1); }
 .acard .dots{ position:absolute; left:4px; top:4px; display:flex; gap:2px; } .acard .dots i{ width:6px; height:6px; border-radius:50%; background:var(--ink); } .acard .dots i.off{ background:transparent; border:1px solid var(--ink); }
@@ -303,11 +310,12 @@ body.touch #prompt{ bottom:calc(214px + env(safe-area-inset-bottom,0px)); }
   <div id="cards"></div>
   <div id="weapon"><canvas id="wpc" width="88" height="132"></canvas><div><b id="wname"></b><i id="wdesc"></i></div></div>
   <div id="cons" class="paper"><canvas id="consc" width="80" height="104"></canvas><span id="consn">Tom</span><span class="n" id="consk">F</span></div>
+  <div id="akt" class="paper hidden"><canvas id="aktc" width="80" height="80"></canvas><div class="pips" id="aktp"></div><span class="n">V</span></div>
   <div id="mapring"><canvas id="map" width="200" height="200"></canvas></div>
   <div id="prompt" class="hidden"></div>
   <div id="tools"><button class="btn" id="bJournal">Journal</button><button class="btn" id="bPause">Pause</button></div>
 </div>
-<div id="touch" class="hidden"><div id="stick"><i></i></div><div id="tbtns"><button data-t="use">Bruk</button><button data-t="interact">Snakk</button><button data-t="heavy">Tungt</button><button data-t="dodge">Rull</button><button data-t="attack">Slag</button></div></div>
+<div id="touch" class="hidden"><div id="stick"><i></i></div><div id="tbtns"><button data-t="active" id="tAkt" class="hidden">Aktiv</button><button data-t="use">Bruk</button><button data-t="interact">Snakk</button><button data-t="heavy">Tungt</button><button data-t="dodge">Rull</button><button data-t="attack">Slag</button></div></div>
 <div id="toast"></div><div id="bigstamp"></div>
 <div id="title" class="screen"></div>
 <div id="panel" class="screen dim hidden"></div>

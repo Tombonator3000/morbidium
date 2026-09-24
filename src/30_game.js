@@ -42,6 +42,8 @@ function artFor(kind, id) {
     if (kind === 'weapon') return partCanvas(weaponPart(id), 92, 92, 1);
     if (kind === 'heart') return partCanvas(heartPart(), 92, 92, .8);
     if (kind === 'kur') return partCanvas(itemIcon(id), 92, 92, .9);
+    if (kind === 'akt') return partCanvas(aktIcon(id), 92, 92, .9);
+    if (kind === 'lomme') return partCanvas(lommeIcon(id), 92, 92, .9);
   } catch (e) { }
   return cardArtCanvas('ukjent', 92);
 }
@@ -162,9 +164,9 @@ function startFloor(depth, first) {
   }
   const P = G.player, sp = freeSpot(sr.x + sr.w / 2, sr.z + sr.h / 2 + 1, 4); P.x = sp.x; P.z = sp.z; P.vx = P.vz = P.kvx = P.kvz = 0;
   P.doll.root.position.set(P.x, 0, P.z); P.coffee = false;
-  Items.onFloor(); Items.updateLook(); Spesial.onFloor(); G.lastRid = -2;
+  Items.onFloor(); Items.updateLook(); Spesial.onFloor(); G.lastRid = -2; G.slowEnemies = 0; Aktiv.key = '';
   G.rooms = F.rooms.map(r => ({ cleared: r.role === 'cursed' || (r.role !== 'boss' && !(r.waves && r.waves.length)), visited: false }));
-  G.seen = new Uint8Array(F.W * F.H); G.seenT = 0; G.shops = {}; G.lore = {};
+  G.seen = new Uint8Array(F.W * F.H); G.seenT = 0; G.shops = {}; G.lore = {}; Lomme.onFloor();
   const reveal = r => { for (let z = r.z - 1; z <= r.z + r.h; z++) for (let x = r.x - 1; x <= r.x + r.w; x++) if (x >= 0 && z >= 0 && x < F.W && z < F.H) G.seen[z * F.W + x] = 1; };
   if (run.revealBoss) reveal(F.rooms[F.bossId]);
   if (run.revealTreasure) F.rooms.filter(r => r.role === 'treasure').forEach(reveal);
@@ -242,7 +244,7 @@ function finishCombat() {
   const C = G.combat, r = C.r, st = G.rooms[r.id]; st.cleared = true; G.combat = null; G.lock = null; G.run.rooms++;
   for (const b of G.barriers) b.up = false;
   Sound.play('clear'); stampBig('RYDDET', r.role === 'boss' ? '' : pick(['Rommet er friskmeldt', 'Personalet er beroliget', 'Ingen klager']));
-  Items.onRoomClear(r);
+  Items.onRoomClear(r); Aktiv.onRoomClear(r); Lomme.onRoomClear();
   if (r.role === 'risk') dropTeeth(r.x + r.w / 2, r.z + r.h / 2, 12);
   else if (Math.random() < .35) dropPickup(G.player.x, G.player.z, 'heart');
   if (G.player.points > 0) setTimeout(() => toast('Du har poeng å fordele', 'Åpne journalen (Tab)'), 1200);
@@ -267,10 +269,11 @@ function findInteract() {
     if (o.kind === 'locker' && !o.opened) consider(d, { t: 'Be Olsen åpne skapet', fn: () => olsenLocker(o) });
   }
   Spesial.interact(consider);
+  for (const pd of Items.pedestals) if (!pd.taken && pd.akt) consider(Math.hypot(pd.x - P.x, pd.z - P.z) - .9, { t: 'Ta ' + AKTIVE[pd.akt].name + Items.priceText(pd), fn: () => Items.take(pd) });
   for (const pd of Items.pedestals) if (!pd.taken && ITEMS[pd.id]) consider(Math.hypot(pd.x - P.x, pd.z - P.z) - .9, { t: 'Ta ' + ITEMS[pd.id].name + Items.priceText(pd), fn: () => Items.take(pd) });
   if (G.corpse && !G.corpse.ld.looted) consider(Math.hypot(G.corpse.x - P.x, G.corpse.z - P.z) - .5, { t: 'Undersøk liket', fn: lootCorpse });
   if (G.trapdoor) consider(Math.hypot(G.trapdoor.x - P.x, G.trapdoor.z - P.z) - .6, { t: G.depth >= MAX_DEPTH ? 'Gå ut av bygget' : 'Klatre ned', fn: descend });
-  for (const k of G.pickups) if (k.kind === 'weapon' || k.kind === 'card' || k.kind === 'cons') consider(Math.hypot(k.x - P.x, k.z - P.z) + .2, { t: k.kind === 'weapon' ? 'Ta ' + WEAPONS[k.val].name : k.kind === 'card' ? 'Plukk opp kortet' : 'Ta ' + CONSUMABLES[k.val].name, fn: () => takePickup(k) });
+  for (const k of G.pickups) if (k.kind === 'weapon' || k.kind === 'card' || k.kind === 'cons' || k.kind === 'trinket') consider(Math.hypot(k.x - P.x, k.z - P.z) + .2, { t: k.kind === 'weapon' ? 'Ta ' + WEAPONS[k.val].name : k.kind === 'card' ? 'Plukk opp kortet' : k.kind === 'trinket' ? 'Ta ' + LOMMERUSK[k.val].name + ' (lommerusk)' : 'Ta ' + CONSUMABLES[k.val].name, fn: () => takePickup(k) });
   return best;
 }
 function interactLogic(A) {
@@ -289,7 +292,9 @@ function openChest(o) {
     notOwned.length && { art: ['card', notOwned[0]], name: ABILITIES[notOwned[0]].name, desc: ABILITIES[notOwned[0]].desc, fn: () => giveCard(notOwned[0]) },
     { art: ['weapon', P.weapon], name: 'Slipestein', desc: WEAPONS[P.weapon].name + ' blir 25 % skarpere.', fn: () => { P.weaponLvl++; drawWeaponCard(); toast('Skarpere', WEAPONS[P.weapon].name); } },
     { art: ['cons', 'kamfer'], name: 'Medisinskrin', desc: 'To tilfeldige flasker til lomma.', fn: () => { for (let i = 0; i < 2; i++) dropPickup(P.x, P.z, 'cons', pick(Object.keys(CONSUMABLES))); } },
-    { art: ['heart'], name: 'Sterkt hjerte', desc: 'Ett poeng i Helse, og full helse.', fn: () => { P.stats.helse = Math.min(5, P.stats.helse + 1); recalcPlayer(); healPlayer(P.maxHp, true); } }
+    { art: ['heart'], name: 'Sterkt hjerte', desc: 'Ett poeng i Helse, og full helse.', fn: () => { P.stats.helse = Math.min(5, P.stats.helse + 1); recalcPlayer(); healPlayer(P.maxHp, true); } },
+    (() => { const a = Aktiv.pick(); return { art: ['akt', a], name: AKTIVE[a].name, desc: 'Apparat: ' + AKTIVE[a].desc, fn: () => Aktiv.give(a) }; })(),
+    (() => { const l = Lomme.pick(); return { art: ['lomme', l], name: LOMMERUSK[l].name, desc: 'Lommerusk: ' + LOMMERUSK[l].desc, fn: () => Lomme.give(l) }; })()
   ].filter(Boolean)).slice(0, 3);
   choicePanel('Kisten', 'Du får ta én ting. Resten er beslaglagt.', opts);
 }
@@ -322,7 +327,7 @@ function openLearn(id, src) {
 }
 
 /* ---------- tjenester (pergament med blått bånd, som smeden i Conan) ---------- */
-function price(b) { const P = G.player; return Math.max(1, Math.ceil(b * G.run.price * (1 - (P.stats.fatteevne - 1) * .05) * (hasDiag('hovedperson') ? 1.3 : 1))); }
+function price(b) { const P = G.player; return Math.max(1, Math.ceil(b * G.run.price * (1 - (P.stats.fatteevne - 1) * .05) * (hasDiag('hovedperson') ? 1.3 : 1) * (Lomme.has('lanekort') ? .85 : 1))); }
 const SVC_WHO = { kafeteria: 'kokk', medisin: 'hansen', vaktmester: 'olsen', bibliotek: 'bibliotekar' };
 function buildOffers(svc) {
   const P = G.player, C = CONSUMABLES, o = [];
@@ -330,7 +335,7 @@ function buildOffers(svc) {
   if (svc === 'kafeteria') o.push({ art: ['heart'], name: 'Dagens suppe', desc: 'Helbreder 40 %. Den er grå.', p: 12, fn: () => healPlayer(Math.round(P.maxHp * .4)) }, { art: ['cons', 'kamfer'], name: 'Kaffe', desc: '10 % raskere resten av etasjen.', p: 10, fn: () => { P.coffee = true; } }, cons('levertran'), { art: ['heart'], name: 'Ekstra porsjon', desc: 'Ett poeng i Helse.', p: 34, fn: () => { P.stats.helse = Math.min(5, P.stats.helse + 1); recalcPlayer(); } });
   if (svc === 'medisin') { const pl = pick(Object.keys(PILL_COL)); o.push({ art: ['cons', pl], name: 'Ukjent pille', desc: 'Søster Hansen vet heller ikke hva den gjør.', p: 7, again: true, fn: () => dropPickup(P.x, P.z, 'cons', pick(Object.keys(PILL_COL))) }); }
   if (svc === 'medisin') o.push({ art: ['heart'], name: 'Full behandling', desc: 'Helbreder alt. Søster Hansen sukker.', p: 28, fn: () => healPlayer(P.maxHp) }, { art: ['cons', 'luktesalt'], name: 'Rens for Morbidium', desc: 'Fjerner 40 metning.', p: 14, fn: () => { P.morb = Math.max(0, P.morb - 40); } }, cons('luktesalt'), cons('kamfer'), { art: ['card', 'ukjent'], name: 'Eksperimentell pille', desc: 'Gir en tilfeldig diagnose. Det er poenget.', p: 18, fn: () => { const d = shuf(Object.keys(DIAGNOSES).filter(k => !P.diag.includes(k)))[0]; if (d && P.diag.length < 4) { P.diag.push(d); stampBig('DIAGNOSE', DIAGNOSES[d].name); } } });
-  if (svc === 'vaktmester') { shuf(Object.keys(WEAPONS).filter(w => w !== P.weapon)).slice(0, 2).forEach((w, i) => o.push({ art: ['weapon', w], name: WEAPONS[w].name, desc: WEAPONS[w].desc, p: 28 + i * 6, fn: () => { dropPickup(P.x, P.z, 'weapon', P.weapon); P.weapon = w; P.weaponLvl = 0; P.doll.setWeapon(w); drawWeaponCard(); } })); { const kid = Items.pickFrom('butikk'); o.push({ art: ['kur', kid], name: ITEMS[kid].name, desc: ITEMS[kid].desc, p: 48, fn: () => Items.give(kid) }); } o.push({ art: ['weapon', P.weapon], name: 'Sveis våpenet', desc: WEAPONS[P.weapon].name + ' får 25 % mer skade.', p: 24 + P.weaponLvl * 14, again: true, fn: () => { P.weaponLvl++; drawWeaponCard(); } }, cons('eter')); }
+  if (svc === 'vaktmester') { shuf(Object.keys(WEAPONS).filter(w => w !== P.weapon)).slice(0, 2).forEach((w, i) => o.push({ art: ['weapon', w], name: WEAPONS[w].name, desc: WEAPONS[w].desc, p: 28 + i * 6, fn: () => { dropPickup(P.x, P.z, 'weapon', P.weapon); P.weapon = w; P.weaponLvl = 0; P.doll.setWeapon(w); drawWeaponCard(); } })); { const kid = Items.pickFrom('butikk'); o.push({ art: ['kur', kid], name: ITEMS[kid].name, desc: ITEMS[kid].desc, p: 48, fn: () => Items.give(kid) }); } { const a = Aktiv.pick(); o.push({ art: ['akt', a], name: AKTIVE[a].name, desc: 'Apparat: ' + AKTIVE[a].desc, p: 42, fn: () => Aktiv.give(a) }); } { const l = Lomme.pick(); o.push({ art: ['lomme', l], name: LOMMERUSK[l].name, desc: 'Hittegods: ' + LOMMERUSK[l].desc, p: 22, fn: () => Lomme.give(l) }); } o.push({ art: ['weapon', P.weapon], name: 'Sveis våpenet', desc: WEAPONS[P.weapon].name + ' får 25 % mer skade.', p: 24 + P.weaponLvl * 14, again: true, fn: () => { P.weaponLvl++; drawWeaponCard(); } }, cons('eter')); }
   if (svc === 'journal') {
     for (const c of G.run.slots.concat(G.run.reserve)) { if (!c) continue; const A0 = ABILITIES[c.id];
       if (!c.up && A0.up) for (const k of ['a', 'b']) o.push({ art: ['card', c.id], name: A0.name + ': ' + A0.up[k].name, desc: A0.up[k].desc, p: 22, group: c.id, fn: () => { c.up = k; hudCardsKey = ''; } });
@@ -484,6 +489,7 @@ function renderJournal() {
     const r = G.run, tf = Object.keys(TRANSFORMS).map(t => { const n = (r.items || []).filter(id => (ITEMS[id].tags || []).includes(t)).length; return `<div class="drow ${(r.transforms || []).includes(t) ? '' : 'unk'}"><b>${esc(TRANSFORMS[t].name)}</b> (${Math.min(3, n)} av 3)<br>${esc(TRANSFORMS[t].desc)}</div>`; }).join('');
     const pills = Object.keys(PILL_COL).filter(id => r.pillKnown && r.pillKnown[id]).map(id => `<span class="dlabel">${esc(PILL_COL[id][0])}: ${esc(PILLS[r.pillKnown[id]][0])}</span>`).join('');
     right = `<div class="jtitle">KURIOSITETER</div><div class="jsub">PASIENTENS EFFEKTER, BESLAGLAGT OG UTLEVERT</div>
+      ${r.akt ? `<div class="kur"><span data-aart="${r.akt.id}"></span><div><b>APPARAT: ${esc(AKTIVE[r.akt.id].name)}</b> (${r.akt.charge} av ${r.akt.max})<br>${esc(AKTIVE[r.akt.id].desc)}</div></div>` : ''}${r.trinket ? `<div class="kur"><span data-lart="${r.trinket}"></span><div><b>LOMMERUSK: ${esc(LOMMERUSK[r.trinket].name)}</b><br>${esc(LOMMERUSK[r.trinket].desc)}</div></div>` : ''}
       <div class="kurlist">${(r.items || []).map(id => `<div class="kur"><span data-kart="${id}"></span><div><b>${esc(ITEMS[id].name)}</b><br>${esc(ITEMS[id].desc)}</div></div>`).join('') || '<p class="hint">Ingen ennå. De står i preparatglass i skatterommene, etter sjefene og hos vaktmesteren.</p>'}</div>
       ${r.synergies && r.synergies.length ? `<div class="diags" style="margin-top:8px">${r.synergies.map(s => `<span class="dlabel">SYNERGI: ${esc(s.toUpperCase())}</span>`).join('')}</div>` : ''}
       <h3 style="margin:12px 0 4px;font-family:var(--display);font-weight:normal;font-size:16px">FORVANDLINGER</h3><div class="dlist">${tf}</div>
@@ -506,6 +512,8 @@ function renderJournal() {
   const wp = weaponPart(P.weapon), wg = $('jWp').getContext('2d'), wk = Math.min(226 / wp.canvas.height, 92 / wp.canvas.width); wg.save(); wg.translate(120, 48); wg.rotate(-Math.PI / 2 - .12); wg.drawImage(wp.canvas, -wp.canvas.width * wk / 2, -wp.canvas.height * wk / 2, wp.canvas.width * wk, wp.canvas.height * wk); wg.restore();
   document.querySelectorAll('[data-jart]').forEach(el => el.replaceWith(cardArtCanvas(el.dataset.jart, 120)));
   document.querySelectorAll('[data-kart]').forEach(el => el.replaceWith(partCanvas(itemIcon(el.dataset.kart), 56, 56, 1)));
+  document.querySelectorAll('[data-aart]').forEach(el => el.replaceWith(partCanvas(aktIcon(el.dataset.aart), 56, 56, 1)));
+  document.querySelectorAll('[data-lart]').forEach(el => el.replaceWith(partCanvas(lommeIcon(el.dataset.lart), 56, 56, 1)));
   document.querySelectorAll('[data-wart]').forEach(el => el.replaceWith(partCanvas(weaponPart(el.dataset.wart), 60, 80)));
   const ca = document.querySelector('[data-cart]'); if (ca) ca.replaceWith(P.cons ? partCanvas(bottlePart(P.cons.id), 60, 60) : cardArtCanvas('ukjent', 60));
   if ($('jHead')) { const draw = () => $('jHead') && drawHeadMap($('jHead')); draw(); document.fonts && Promise.all([document.fonts.load('600 25px Caveat'), document.fonts.load('26px "Alfa Slab One"')]).then(draw).catch(() => { }); }
@@ -573,8 +581,8 @@ function hudUpdate() {
     $('pips').innerHTML = Array.from({ length: P.dodgeMax }, (_, i) => `<i class="${i < P.dodge ? '' : 'off'}"></i>`).join('');
     $('pname').textContent = G.run.patient.name; $('pnr').textContent = 'nr. ' + G.run.patient.nr;
   }
-  const ik = (G.run.items || []).join();
-  if (ik !== Items.itemsKey) { Items.itemsKey = ik; const box = $('items'); box.innerHTML = ''; for (const id of G.run.items || []) { const c = partCanvas(itemIcon(id), 44, 44, 1); c.title = ITEMS[id].name + ': ' + ITEMS[id].desc; box.appendChild(c); } }
+  const ik = (G.run.items || []).join() + '|' + (G.run.trinket || '');
+  if (ik !== Items.itemsKey) { Items.itemsKey = ik; const box = $('items'); box.innerHTML = ''; if (G.run.trinket) { const c = partCanvas(lommeIcon(G.run.trinket), 44, 44, 1); c.className = 'lomme'; c.title = 'Lommerusk: ' + LOMMERUSK[G.run.trinket].name + ': ' + LOMMERUSK[G.run.trinket].desc; box.appendChild(c); } for (const id of G.run.items || []) { const c = partCanvas(itemIcon(id), 44, 44, 1); c.title = ITEMS[id].name + ': ' + ITEMS[id].desc; box.appendChild(c); } }
   const ck = G.run.slots.map((c, i) => c ? c.id + c.lvl + (c.up || '') : '-').join();
   if (ck !== hudCardsKey) {
     hudCardsKey = ck;
@@ -584,6 +592,15 @@ function hudUpdate() {
   for (let i = 0; i < 4; i++) { const el = $('ac' + i); if (!el) continue; const cd = el.querySelector('.cd'), c = P.cds[i]; cd.classList.toggle('hidden', !(c > 0)); if (c > 0) cd.textContent = Math.ceil(c); }
   const cons = P.cons ? P.cons.id + P.cons.n : '-';
   if (cons !== hudConsKey) { hudConsKey = cons; const g = $('consc').getContext('2d'); g.clearRect(0, 0, 80, 104); if (P.cons) { const bp = bottlePart(P.cons.id); g.drawImage(bp.canvas, 0, 0, bp.canvas.width, bp.canvas.height, 8, 4, 64, 64 * bp.canvas.height / bp.canvas.width); } $('consn').textContent = P.cons ? CONSUMABLES[P.cons.id].name + (P.cons.n > 1 ? ' x' + P.cons.n : '') : 'Tom lomme'; }
+  const ak = G.run.akt, akk = ak ? ak.id + ak.charge + '/' + ak.max : '-';
+  if (akk !== Aktiv.key) {
+    Aktiv.key = akk; show('akt', !!ak); $('tAkt').classList.toggle('hidden', !ak);
+    if (ak) {
+      const pips = Array.from({ length: ak.max }, (_, i) => `<i class="${i < ak.charge ? '' : 'off'}"></i>`).join(''), g = $('aktc').getContext('2d');
+      g.clearRect(0, 0, 80, 80); g.drawImage(aktIcon(ak.id).canvas, 0, 0, 80, 80); $('aktp').innerHTML = pips; $('akt').classList.toggle('full', ak.charge >= ak.max); $('akt').title = AKTIVE[ak.id].name + ': ' + AKTIVE[ak.id].desc;
+      const tb = $('tAkt'); tb.innerHTML = ''; tb.appendChild(partCanvas(aktIcon(ak.id), 52, 52, 1)); const pp = document.createElement('span'); pp.className = 'pp'; pp.innerHTML = pips; tb.appendChild(pp);
+    }
+  }
   $('roomsign').style.visibility = G.boss && G.boss.alive ? 'hidden' : '';
   if (G.boss && G.boss.alive) $('bossFill').style.width = clamp(G.boss.hp / G.boss.max, 0, 1) * 100 + '%';
 }
@@ -640,9 +657,10 @@ function loop(now) {
     if (G.slow.t > 0) { G.slow.t -= dt; ts = Math.min(ts, G.slow.s); } else G.slow.s = 1;
     const sdt = dt * ts; G.time += sdt; if (R.water) R.water.u.uTime.value += sdt;
     updatePlayer(sdt, A);
-    for (const e of G.enemies) updateEnemy(e, sdt); G.enemies = G.enemies.filter(e => !e.gone);
-    if (G.boss) { updateBoss(G.boss, sdt); if (G.boss.gone) G.boss = null; }
-    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt); updateZones(sdt); Spesial.update(sdt);
+    const edt = G.slowEnemies > 0 ? sdt * .3 : sdt;
+    for (const e of G.enemies) updateEnemy(e, edt); G.enemies = G.enemies.filter(e => !e.gone);
+    if (G.boss) { updateBoss(G.boss, edt); if (G.boss.gone) G.boss = null; }
+    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt); updateZones(sdt); Spesial.update(sdt); Aktiv.update(sdt);
     if (hallucinate) hallucinate(sdt);
     G.flowT = (G.flowT || 0) - sdt; if (G.flowT <= 0 && P.alive) { G.flowT = .25; buildFlow(Math.floor(P.x), Math.floor(P.z)); }
     roomLogic(sdt); interactLogic(A);
@@ -689,7 +707,7 @@ function boot() {
   $('bJournal').onclick = () => openJournal(); $('bPause').onclick = () => openPause();
   window.MORBIDIUM = G; Object.assign(window, { Items, ITEMS, spawnEnemy, itemIcon, jarPart, pillPart, addonPart, shotPart, LOOKS, PILL_COL, BLOBS, R, hurt, descend, finishCombat, openService, killEntity, Art, RIG, PROPS, CARD_ART, WEAPONS, THEMES, charPart, propArt, weaponPart, shoePart, cardArtCanvas, generateFloor, CONSUMABLES, heartPart, morbPart, bottlePart, cardPart, pigeonPart, stampDecal, handPart, toothPart, starPart, puffPart, barrierArt });
   // til testene
-  Object.assign(window, { Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
   step('Pakker ut bilder');
   Art.preload().then(() => { step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }

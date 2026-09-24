@@ -120,7 +120,7 @@ const Input = {
   actions() {
     const K = this.keys, P = this.pressed, M = this.mouse, T = this.touch;
     const a = { mx: 0, mz: 0, attackP: false, attackD: false, heavyD: false, heavyP: false, heavyR: false,
-      dodgeP: false, interactP: false, abP: [false, false, false, false], useP: false, pauseP: false, journalP: false,
+      dodgeP: false, interactP: false, abP: [false, false, false, false], useP: false, aktP: false, pauseP: false, journalP: false,
       aimStickX: 0, aimStickZ: 0, pad: false, touch: T.active && this.lastDevice === 'touch' };
     if (K.KeyW || K.ArrowUp) a.mz -= 1; if (K.KeyS || K.ArrowDown) a.mz += 1;
     if (K.KeyA || K.ArrowLeft) a.mx -= 1; if (K.KeyD || K.ArrowRight) a.mx += 1;
@@ -128,7 +128,7 @@ const Input = {
     a.heavyD = M.r || K.KeyK; a.heavyP = M.rp || P.KeyK; a.heavyR = M.rr || this.released.KeyK;
     a.dodgeP = P.Space || P.ShiftLeft; a.interactP = P.KeyE;
     a.abP = [!!(P.Digit1 || P.KeyQ), !!(P.Digit2 || P.KeyR), !!(P.Digit3 || P.KeyT), !!(P.Digit4 || P.KeyC)];
-    a.useP = P.KeyF || P.KeyG; a.pauseP = P.Escape || P.KeyP; a.journalP = !!(P.Tab || P.KeyI);
+    a.useP = P.KeyF || P.KeyG; a.aktP = !!(P.KeyV || P.KeyX); a.pauseP = P.Escape || P.KeyP; a.journalP = !!(P.Tab || P.KeyI);
     // håndkontroll
     if (this.gp.connected) {
       if (this.gp.lx || this.gp.ly) { a.mx += this.gp.lx; a.mz += this.gp.ly; }
@@ -138,7 +138,7 @@ const Input = {
       if (this.gpPressed(1)) a.dodgeP = true; if (this.gpPressed(3)) a.interactP = true;
       if (this.gpPressed(4)) a.abP[0] = true; if (this.gpPressed(5)) a.abP[1] = true;
       if (this.gpPressed(6)) a.abP[2] = true; if (this.gpPressed(7)) a.abP[3] = true;
-      if (this.gpPressed(13)) a.useP = true; if (this.gpPressed(9)) a.pauseP = true; if (this.gpPressed(8)) a.journalP = true;
+      if (this.gpPressed(13)) a.useP = true; if (this.gpPressed(12)) a.aktP = true; if (this.gpPressed(9)) a.pauseP = true; if (this.gpPressed(8)) a.journalP = true;
       a.pad = this.lastDevice === 'pad';
     }
     // touch
@@ -146,7 +146,7 @@ const Input = {
       a.mx += T.mx; a.mz += T.mz;
       if (T.pressed.attack) a.attackP = true; if (T.btn.attack) a.attackD = true;
       if (T.btn.heavy) a.heavyD = true; if (T.pressed.heavy) a.heavyP = true; if (T.released.heavy) a.heavyR = true;
-      if (T.pressed.dodge) a.dodgeP = true; if (T.pressed.interact) a.interactP = true; if (T.pressed.use) a.useP = true;
+      if (T.pressed.dodge) a.dodgeP = true; if (T.pressed.interact) a.interactP = true; if (T.pressed.use) a.useP = true; if (T.pressed.active) a.aktP = true;
       for (let i = 0; i < 4; i++) if (T.pressed['ab' + i]) a.abP[i] = true;
     }
     const L = Math.hypot(a.mx, a.mz); if (L > 1) { a.mx /= L; a.mz /= L; }

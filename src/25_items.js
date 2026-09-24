@@ -192,6 +192,7 @@ const Items = {
     for (const id of this.owned()) { const s = ITEMS[id] && ITEMS[id].st; if (s && s[n] !== undefined) v = luck ? v + s[n] : v * s[n]; }
     const b = this.run().buffs || {};
     if (!luck && b[n]) v *= b[n];
+    if (luck && Lomme.has('hestesko')) v += 10;
     if (n === 'dmg' && this.tf('edgelord')) v *= 1.2;
     if (n === 'dmg' && this.has('eyeliner') && G.player && G.player.morb > 50) v *= 1.15;
     if (n === 'range' && this.tf('kirurg')) v *= 1.2;
@@ -220,7 +221,7 @@ const Items = {
     if (p && p.teeth) { if (P.teeth < p.teeth) { toast('For få tenner', p.teeth + ' gulltenner trengs'); Sound.play('deny'); return; } P.teeth -= p.teeth; }
     pd.taken = true; R.remove(pd.g); pd.g = propSprite(null, pd.x, pd.z, { P: jarPart(null) }); R.level.add(pd.g);
     for (const o of this.pedestals) if (o !== pd && o.pair === pd.pair && pd.pair && !o.taken) { o.taken = true; R.remove(o.g); o.g = propSprite(null, o.x, o.z, { P: jarPart(null) }); R.level.add(o.g); }
-    this.give(pd.id); Spesial.onTake(pd);
+    if (pd.akt) Aktiv.give(pd.akt, pd.charge); else this.give(pd.id); Spesial.onTake(pd);
   },
   give(id) {
     const P = G.player, it = ITEMS[id]; if (!it || this.has(id)) return;
@@ -324,7 +325,7 @@ const Items = {
   },
   onHit(e, k, dmg) {
     const P = G.player;
-    if (this.has('lommekirurgi')) e.bleed = Math.max(e.bleed || 0, 3);
+    if (this.has('lommekirurgi') || (Lomme.has('skalpell') && Math.random() < .3)) e.bleed = Math.max(e.bleed || 0, 3);
     if (this.has('eterflaske') && e.kind === 'enemy') e.sleep = Math.max(e.sleep || 0, .5);
     if (this.has('igle') && this.leechT <= 0) { this.leechT = .25; healPlayer(1, true); }
     if (this.has('gulltann') && Math.random() < .1) dropTeeth(e.x, e.z, 1);
@@ -356,7 +357,7 @@ const Items = {
   onFloor() {
     for (const pd of this.pedestals) { R.remove(pd.g); } this.pedestals = []; this.clearSplats();
     G.run.buffs = {}; const P = G.player; if (P && P.doll && P.doll.sc0) { P.doll.sc = P.doll.sc0; P.r = .36; }
-    for (const r of G.F.rooms) if (r.role === 'treasure' || r.role === 'secret') this.spawnPedestal(r.x + r.w / 2, r.z + r.h / 2, this.pickFrom('kabinett'));
+    for (const r of G.F.rooms) if (r.role === 'treasure' || r.role === 'secret') { if (Math.random() < (r.role === 'secret' ? .5 : .25)) Aktiv.spawnJar(r.x + r.w / 2, r.z + r.h / 2, Aktiv.pick()); else this.spawnPedestal(r.x + r.w / 2, r.z + r.h / 2, this.pickFrom('kabinett')); }
     for (const r of G.F.rooms) if (r.role === 'cursed') { const pd = this.spawnPedestal(r.cx + .5, r.cz - .5, this.pickFrom('blod')); pd.cursed = true; pd.room = r.id; }
   },
   onRoomClear(r) {

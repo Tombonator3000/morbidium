@@ -4,7 +4,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og He
 
 ## Spill
 - Nettleser: https://tombonator3000.github.io/morbidium/
-- Tastatur og mus: WASD, mus for å sikte, venstreklikk slag, høyreklikk tungt slag, mellomrom rull, 1 til 4 evner, F flaske, E snakk, Tab journal, Esc pause.
+- Tastatur og mus: WASD, mus for å sikte, venstreklikk slag, høyreklikk tungt slag, mellomrom rull, 1 til 4 evner, V apparat, F flaske, E snakk, Tab journal, Esc pause.
 - Håndkontroll og berøring virker også.
 
 ## Bygg
