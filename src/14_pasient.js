@@ -183,6 +183,23 @@ function hudMap(hud) {
 function klaerMap(m) {
   return (r, g, b) => { const [h, s, l] = rgbHsl(r, g, b); if (h < 28 || h > 66) return null; const w = sst(.35, .5, s) * sst(.2, .3, l); return w > .01 ? blandRgb([r, g, b], hslRgb(m[0], Math.min(1, s * m[1]), Math.min(.95, l * m[2] + m[3])), w) : null; };
 }
+/* plagg og pynt fra ChatGPT: grunnfargen i bildet (målt) flyttes til valgt farge; standardfargen beholder bildet som det er */
+const SPR_FARGE = {
+  skjorte: { spr: [200, .3, .7], h: [175, 240], smin: .06 },
+  pyjamas: { spr: [210, .12, .5], h: [185, 250], smin: .04 },
+  tvang: { spr: [30, .5, .8], h: [15, 50], smin: .2, lmin: .45 },
+  nattlue: { spr: [0, .5, .5], h: [340, 20], smin: .25 },
+  rosett: { spr: [0, .5, .4], h: [340, 20], smin: .25 }
+};
+function sprMap(cfg, maal) {
+  const [th, ts, tl] = rgbHsl(...Col.rgb(maal)), [sh, ss, sl] = cfg.spr, [h0, h1] = cfg.h;
+  return (r, g, b) => {
+    const [h, s, l] = rgbHsl(r, g, b), inn = h0 <= h1 ? h >= h0 && h <= h1 : h >= h0 || h <= h1;
+    if (!inn || s < cfg.smin || l < (cfg.lmin || .12)) return null;
+    const w = sst(cfg.smin, cfg.smin + .1, s);
+    return blandRgb([r, g, b], hslRgb(th + (h - sh), Math.min(1, s * ts / ss), Math.min(.96, l * tl / sl)), w);
+  };
+}
 function hexMap(hex, map) { const [r, g, b] = Col.rgb(hex), o = map(r, g, b); return o ? Col.hex(o[0], o[1], o[2]) : hex; }
 
 const Pasient = {
@@ -225,7 +242,12 @@ const Pasient = {
       return Art.part(base + '~' + L.farge, 1.3, 1.0, .65, .08, drawPasientBody(v, { Y: m ? hexMap('#e0a33a', klaerMap(m)) : '#e0a33a' }));
     }
     const base = 'kropp_' + L.klaer + '_' + v, serk = L.klaer === 'serk', box = serk ? [1.3, 1.3, .65, .38] : [1.3, 1.0, .65, .08];
-    if (spriteReady(base)) return Art.part(base, ...box, () => { });
+    if (spriteReady(base)) {
+      let P = Art.part(base, ...box, () => { }); const cfg = SPR_FARGE[L.klaer];
+      if (cfg && L.farge !== PAS_KLAER[L.klaer].farger[0]) P = omfargPart(P, base + '~' + L.farge.replace('#', ''), sprMap(cfg, L.farge));
+      if (L.klaer === 'skjorte' && PAS_HUD[L.hud]) P = omfargPart(P, P.key + '.h' + L.hud, hudMap(PAS_HUD[L.hud]));
+      return P;
+    }
     const draw = { tvang: drawTvang, skjorte: drawSkjorte, pyjamas: drawPyjamas, serk: drawSerk }[L.klaer];
     return Art.part(base + '~' + L.farge.replace('#', '') + (L.klaer === 'skjorte' ? '.' + L.hud : ''), ...box, draw(v, L.farge, this.hudHex(L)));
   },
@@ -236,7 +258,7 @@ const Pasient = {
   },
   pyntPart(k) {
     const [id, col] = k.split(':'), D = PAS_PYNT[id], key = 'pynt_' + id;
-    if (spriteReady(key)) return Art.part(key, D.w, D.h, D.w / 2, D.h / 2, () => { });
+    if (spriteReady(key)) { const P = Art.part(key, D.w, D.h, D.w / 2, D.h / 2, () => { }); return col && SPR_FARGE[id] && D.farger && col !== D.farger[0] ? omfargPart(P, key + '~' + col.replace('#', ''), sprMap(SPR_FARGE[id], col)) : P; }
     return Art.part(key + (col ? '~' + col.replace('#', '') : ''), D.w, D.h, D.w / 2, D.h / 2, D.draw(col || (D.farger && D.farger[0])));
   },
   /* alt som trengs for å tegne pasienten: deler per visning, farger på lemmer, sko og pynt */
