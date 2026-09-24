@@ -88,6 +88,8 @@ function partMesh(P, U) {
 }
 function setPart(m, P) { if (m.userData.P === P) return; m.userData.P = P; m.geometry = quadGeo(P); m.material.uniforms.map.value = P.tex; m.material.uniforms.uTexel.value.set(1 / P.canvas.width, 1 / P.canvas.height); if (m.customDepthMaterial) m.customDepthMaterial.map = P.tex; }
 
+/* armer og bein: tynne blekkstreker som i Conan Chop Chop, eller de gamle tykke båndene i klesfarge (innstillingen Lemmer) */
+const STREK = { tynn: true, farge: '#2e1e16', ben: .06, arm: .055, hand: .062 };
 class Doll {
   constructor(type, opt = {}) {
     this.type = type; this.rig = opt.rig ? Object.assign({}, RIG[type] || RIG.pasient, opt.rig) : RIG[type] || RIG.pasient; this.opt = opt;
@@ -176,15 +178,15 @@ class Doll {
     this.head.position.set(ho.x * .3, neckY + ho.y * .3 - .02, z.head); this.head.rotation.z = ho.x * .25 + (st.headTilt || 0);
     if (this.cape) { this.cape.position.set(v === 's' ? -.08 : 0, shY - .88, v === 'b' ? z.head + .01 : z.cape); this.cape.rotation.z = (v === 's' ? .18 + Math.min(.5, this.speed * .07) : 0) + Math.sin(this.t * 3) * .04; }
     // bein og sko
-    const legW = R0.legW, hw = R0.hipW;
+    const tynn = STREK.tynn, legW = tynn ? STREK.ben : R0.legW, legC = tynn ? STREK.farge : R0.leg, armW = tynn ? STREK.arm : R0.armW, armC = tynn ? STREK.farge : R0.arm, handR = tynn ? STREK.hand : R0.handR, hw = R0.hipW;
     this.back.begin(); this.front.begin();
     let fL, fR;
     if (v === 's') { fL = [-.02 + sp * .2, Math.max(0, -Math.cos(this.phase)) * .1]; fR = [.02 - sp * .2, Math.max(0, Math.cos(this.phase)) * .1]; }
     else { fL = [-hw - .03, Math.max(0, sp) * .12]; fR = [hw + .03, Math.max(0, -sp) * .12]; }
     if (!moving) { fL[1] = fR[1] = 0; }
     const hipL = v === 's' ? [-.03, hipY + .04] : [-hw, hipY + .04], hipR = v === 's' ? [.03, hipY + .04] : [hw, hipY + .04];
-    this.back.add(limb(hipL[0], hipL[1], fL[0], fL[1] + .07, v === 's' ? .05 : -.03), legW, R0.leg, z.legs);
-    this.back.add(limb(hipR[0], hipR[1], fR[0], fR[1] + .07, v === 's' ? .05 : .03), legW, R0.leg, z.legs);
+    this.back.add(limb(hipL[0], hipL[1], fL[0], fL[1] + .07, v === 's' ? .05 : -.03), legW, legC, z.legs);
+    this.back.add(limb(hipR[0], hipR[1], fR[0], fR[1] + .07, v === 's' ? .05 : .03), legW, legC, z.legs);
     this.shoeL.position.set(fL[0], fL[1], z.shoes + (v === 's' ? .004 : 0)); this.shoeR.position.set(fR[0], fR[1], z.shoes);
     this.shoeL.scale.x = this.shoeR.scale.x = 1; if (v === 's') { this.shoeL.scale.x = this.shoeR.scale.x = 1.1; }
     // armer
@@ -208,11 +210,11 @@ class Doll {
     } else if (st.hold) { hR = [shR[0] + .2, shR[1] - .12]; wpAngle = -1.25; }
     if (st.raise) { hL = [shL[0] - .15, shL[1] + .3]; hR = [shR[0] + .15, shR[1] + .3]; }
     const back = v === 's';
-    (back ? this.back : this.front).add(limb(shL[0], shL[1], hL[0], hL[1], v === 's' ? -.06 : .07), R0.armW, R0.arm, back ? z.backArm : z.frontArm);
-    (back ? this.back : this.front).circle(hL[0], hL[1], R0.handR, R0.hand, back ? z.backArm : z.frontArm);
-    this.front.add(limb(shR[0], shR[1], hR[0], hR[1], v === 's' ? .08 : -.07), R0.armW, R0.arm, z.frontArm);
-    this.front.circle(hR[0], hR[1], R0.handR, R0.hand, z.frontArm + .002);
-    this.back.end(.045); this.front.end(.045);
+    (back ? this.back : this.front).add(limb(shL[0], shL[1], hL[0], hL[1], v === 's' ? -.06 : .07), armW, armC, back ? z.backArm : z.frontArm);
+    (back ? this.back : this.front).circle(hL[0], hL[1], handR, R0.hand, back ? z.backArm : z.frontArm);
+    this.front.add(limb(shR[0], shR[1], hR[0], hR[1], v === 's' ? .08 : -.07), armW, armC, z.frontArm);
+    this.front.circle(hR[0], hR[1], handR, R0.hand, z.frontArm + .002);
+    this.back.end(tynn ? .022 : .045); this.front.end(tynn ? .022 : .045);
     if (this.wpId) { this.wp.position.set(hR[0], hR[1], wpBehind ? z.wpBack : z.wp); this.wp.rotation.z = wpAngle; }
     this.placeAddons(v); this.applyFlash(dt);
   }

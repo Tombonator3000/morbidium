@@ -123,7 +123,7 @@ const Paint = {
   level(F, th) {
     if (R.level) { R.scene.remove(R.level); } if (R.levelL) R.lscene.remove(R.levelL);
     if (this.owned) for (const o of this.owned) try { o.dispose(); } catch (e) { }
-    this.owned = [];
+    this.owned = []; this.opptatt = new Map(); // veggfelt med dør eller plakat, så 3D-listene holder seg unna
     const L = R.level = new THREE.Group(); R.scene.add(L); R.levelL = new THREE.Group(); R.lscene.add(R.levelL);
     const W = F.W, H = F.H, tiles = F.tiles, isF = (x, z) => x >= 0 && z >= 0 && x < W && z < H && tiles[z * W + x] > 0;
     R.setGrade(th);
@@ -192,7 +192,7 @@ const Paint = {
   },
   poster(text, x, z) {
     const m = new THREE.Mesh(R.geo('poster2', () => new THREE.PlaneGeometry(.72, .95)), new THREE.MeshBasicMaterial({ map: R.posterTex(text) }));
-    m.position.set(x, 1.62, z + .01); R.level.add(m); return m;
+    m.position.set(x, 1.62, z + .01); R.level.add(m); this.opptatt.set(Math.floor(x) + ',' + z, 'plakat'); return m;
   },
   door(x, z, label) {
     const tex = R.canvasTex(160, 260, g => {
@@ -204,6 +204,6 @@ const Paint = {
       g.fillStyle = INK; g.font = 'bold 17px Georgia, serif'; g.textAlign = 'center'; g.fillText(label, 80, 21);
     });
     const m = new THREE.Mesh(R.geo('door', () => new THREE.PlaneGeometry(1.1, 1.8)), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
-    m.position.set(x, .9, z + .012); R.level.add(m); return m;
+    m.position.set(x, .9, z + .012); R.level.add(m); for (const tx of [Math.floor(x - .5), Math.floor(x)]) this.opptatt.set(tx + ',' + z, 'dor'); return m;
   }
 };
