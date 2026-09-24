@@ -50,8 +50,9 @@
 - [x] Etappe 7: musikk (seks stykker i lag som følger kampen) og stemningslyder.
 - [x] Etappe 8: merknader som låser opp kuriositeter og oppvåkningssteder, utskrivningsbrev, gjeninnleggelse, tre diagnoser og sju fragmenter.
 - [x] Spor etter tidligere pasienter (rablinger med kritt signert med navn fra arkivet).
-- [ ] Etappe 9: finpuss (samme papirstil på tjenester, dødskort og HUD, balanse, innføring for nye spillere).
+- [x] Etappe 9: rablinger fra tidligere pasienter, byggeanimasjon, tips for nye spillere, ubrukt kode fjernet, manifest og kunstliste oppdatert, merknader på døds- og utskrivningskortet.
+- [ ] Balanse etter Toms spilltesting (skade, helse, priser, hvor ofte mestere dukker opp, hvor vanskelig gjeninnleggelse er).
 - [x] Byggeanimasjon når pasienten nærmer seg et rom (idé fra threejs-architecture-effects).
-- [ ] Rydde bort ubrukt kode i old/ og ubrukte deler av 04_render.js.
+- [x] Rydde bort ubrukt kode (ICONS, STATS, R.basic). Mappa old/ finnes ikke lenger.
 - [x] Utvide tools/lag_manifest.py og ART_BRIEF.md med alt det nye. ART_BRIEF viser nå hva som er levert (150 av 287).
 - [ ] ChatGPT: de 82 bildene som gjenstår i ART_BRIEF.md (205 av 287 levert): nye figurer (Overarkivaren, byråkrat, narkoselege, pasient i tvangstrøye, arkivrotte, øyeblomst, Journalen, pasientplaggene), apparater og lommerusk, de nyeste møblene og pynten.
