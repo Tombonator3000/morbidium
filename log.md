@@ -263,3 +263,8 @@ Alle tidspunkt er UTC.
 - build.py klipper nå hver del til det som faktisk er tegnet (gjennomsiktige kanter bort) og lagrer bredde og høyde. Oppskriftssystemet skalerer hoder og kropper inn i spillets egne rammer for figurdeler, og hatter, hår og tilbehør plasseres og skaleres etter hodet de sitter på.
 - Sjekket med skjermbilde av åtte pleiere, oppassere, byråkrater og narkoseleger: hodene passer kroppen og hattene sitter på hodet.
 - Tester: generator 1200 av 1200, gjennomspilling uten feil, test_ekstra alt bestått.
+
+## 2026-09-24 18:47 Alle rekvisitter og møbler fra ChatGPT
+- Tegnet de 43 resterende enkeltbildene fra møbelrunden. Skap og hyller har egne forside-, bakside- og sidevisninger. Seng, båre og badekar har fire retninger hver. Den døde pasienten har det grovere, komisk morbide ansiktet Tom ba om.
+- Kontrollerte at alle 51 filnavnene i kunstlisten har egne PNG-filer med gjennomsiktig bakgrunn. Så på representative spillklare bilder, blant annet kjetting, lik, hyller, skap, badekar og medisintralle.
+- Prøvde hele bildeflyten i en egen kopi av Claudes nyeste hovedgren. 144 bilder ble behandlet uten feil, og spillfila ble bygget med alle 144 bildene og 27 personaldeler. Ingen spillkode ble endret.
