@@ -15,6 +15,7 @@
 ## Neste (plan for et ferdig spill, 2026-09-24)
 - [x] Legge de 13 evnekortene fra ChatGPT i gpt-grafikk/ med den første duen som kort_due.png.
 - [x] Etappe 1: testoppsett, lagring og fortsettelse, berøring på mobil, journalplasser, fiender rundt møbler.
+- [x] Etappe 2: etasjen Kjelleren: Isolat og arkiv med Overarkivar Gunhild Paragraf, og signaturangrep for alle sjefer.
 - [ ] Aktive gjenstander (med lading ved romrydding) og småtrinkets, som i Isaac.
 - [ ] Egne rom: forbannet rom, hemmelig rom, blodofferrom med flere valg.
 - [ ] Balansere kuriositetene etter spilltesting; noen kombinasjoner blir trolig altfor sterke.
@@ -23,7 +24,6 @@
 - [ ] Utseendetest av 3D-verden med 2D-figurer (ett rom, vegglamper, måneskygger, bloom), hvis Tom vil.
 - [ ] Flere bilder fra ChatGPT etter DESIGN_BRIEF.md: kuriositetene, figur_pasient og personale. Lastes opp til gpt-grafikk/.
 - [ ] Musikk og flere lyder.
-- [ ] Etasjen "Isolat og arkiv" fra designdokumentet.
 - [ ] Byggeanimasjon når et rom avsløres (idé fra threejs-architecture-effects).
 - [ ] Flere diagnoser og oppvåkningssteder, flere spor etter tidligere pasienter.
 - [ ] Rydde bort ubrukt kode i old/ og ubrukte deler av 04_render.js.

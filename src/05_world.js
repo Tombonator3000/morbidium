@@ -11,7 +11,7 @@ const G = {
 function tIdx(x, z) { const F = G.F, tx = Math.floor(x), tz = Math.floor(z); if (tx < 0 || tz < 0 || tx >= F.W || tz >= F.H) return -1; return tz * F.W + tx; }
 function solid(tx, tz) {
   const F = G.F; if (tx < 0 || tz < 0 || tx >= F.W || tz >= F.H) return true;
-  const i = tz * F.W + tx; return !F.tiles[i] || F.block[i] === 1 || (G.lock !== null && G.lock.has(i));
+  const i = tz * F.W + tx; return !F.tiles[i] || F.block[i] === 1 || (G.lock !== null && G.lock.has(i)) || (!!G.cage && G.cage.has(i));
 }
 function collide(e) {
   const r = e.r; let any = false;
@@ -264,7 +264,7 @@ function groundEffects(e, dt, speed) {
 }
 
 /* ---------- rekvisitter i drift ---------- */
-const BREAK = { chair: 1, cabinet: 2, crate: 2, garbage: 1, basket: 1, plant: 1, candles: 1, table: 2 };
+const BREAK = { chair: 1, cabinet: 2, crate: 2, garbage: 1, basket: 1, plant: 1, candles: 1, table: 2, papirhaug: 1 };
 function spawnProps() {
   G.props = []; G.npcs = [];
   const F = G.F, th = G.th;
@@ -299,10 +299,10 @@ function spawnNPC(p, r) {
 function propTiles(o) { return [tIdx(o.x, o.z)]; }
 function breakProp(o, src) {
   o.alive = false; const P = G.player; P.counters.props++;
-  const colors = { chair: 0x7a5a3a, cabinet: 0x6f7a55, crate: 0x9a7040, garbage: 0x5a5040, basket: 0xb8904a, plant: 0x4f7a3a, candles: 0xf0e8d0, table: 0xf0ece0 };
+  const colors = { chair: 0x7a5a3a, cabinet: 0x6f7a55, crate: 0x9a7040, garbage: 0x5a5040, basket: 0xb8904a, plant: 0x4f7a3a, candles: 0xf0e8d0, table: 0xf0ece0, papirhaug: 0xf4ecd8 };
   Particles.spawn(o.x, .6, o.z, 10, colors[o.kind] || 0x7a5a3a, { speed: 5, up: 5, life: .8 });
   Particles.spawn(o.x, .6, o.z, 5, 0xefe4c4, { flat: true, speed: 3, up: 4, g: 5, life: 1.4 });
-  Sound.play(o.kind === 'cabinet' ? 'paper' : 'bonk', .8, .7);
+  Sound.play(o.kind === 'cabinet' || o.kind === 'papirhaug' ? 'paper' : 'bonk', .8, .7);
   o.dying = .4; if (o.light) R.remove(o.light);
   for (const i of propTiles(o)) if (i >= 0) G.F.block[i] = 0;
   const nys = hasDiag('nysgjerrighet');

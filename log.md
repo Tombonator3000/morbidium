@@ -159,3 +159,16 @@ Alle tidspunkt er UTC.
 - Feil funnet: innebygde bilder ble lastet asynkront, så kort som tegnes én gang (HUD, journal, butikk) fikk kodetegningen i stedet for bildet. Nå dekodes alle innebygde bilder før tittelen vises (Art.preload, maks 4 sekunder).
 - assets/ferdig/*.png er lagt i .gitignore; Pages-bygget lager dem fra gpt-grafikk/.
 - Journalen: kortplassene er gjort litt mindre, og navnene på de nedre områdene er flyttet, så ingen navn skjules av kort.
+
+## 2026-09-24 16:31 Etappe 2: Kjelleren: Isolat og arkiv, og egne sjefsangrep
+- Spillet har nå fire etasjer: 1. etasje: Mottak og bosted, Underetasjen: Behandling og hydroterapi, Kjelleren: Isolat og arkiv (ny) og Under grunnmuren: Dypet (den gamle kjelleren, der Journalen venter). MAX_DEPTH er 4.
+- Ny fil src/13_rom.js: rekvisitter for den nye etasjen (polstret celle over to ganger to ruter, arkivhylle over tre ruter, madrass, tvangstrøye på stativ, papirhaug som kan knuses).
+- Nye rommaler i generatoren: isolat (polstrede celler langs veggene, madrasser, tvangstrøyer) og kartotek (rader med arkivhyller som danner smug, papirhauger). Generatortesten dekker nå alle fire etasjer: 1200 av 1200 gyldige.
+- Ny fil src/22_sjefer.js: Overarkivar Gunhild Paragraf (tegnet i kode: grå knute med blyant, lorgnett, kjole med kartotekskuffer, stort stempel) og signaturangrep for alle sjefene:
+  - Krok: hektekrok som drar pasienten inn til et kutt, og kjettingsving rundt seg (dobbel når han er rasende).
+  - Rust: flom (vannpytter over hele rommet som får strøm etter et gult varsel) og høytrykksspyler som feier i tre strøk.
+  - Arkivaren: stempelregn, virvel av løse skjemaer, og isolat: en ring av polstrede vegger rundt pasienten i fire sekunder mens stemplene faller inni.
+  - Journalen: sider i spiral, «signer her» med Morbidium-blekk som blir liggende, og omskriving der den låner et angrep fra en av de andre sjefene.
+- Sjefene har egen kø for forsinkede handlinger, så angrepene følger pause og tidsfall. Egne dødsårsaker per sjef. Nye høyttalermeldinger, sjefsreplikker og tre nye journalfragmenter.
+- Fiendenes helse og skade stiger litt saktere per etasje (0,3 og 0,17 i stedet for 0,35 og 0,2), siden det nå er fire etasjer.
+- Tester: test_ekstra kjører alle fire sjefer med alle angrep og sjekker at luken åpnes. Alt bestått, ingen konsollfeil. Feil funnet og rettet underveis: isolatveggene forsvant med en gang, og teksten på stempelet ble speilvendt.
