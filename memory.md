@@ -91,8 +91,16 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - D3.sett(på) fra applySettings (innstillingen d3, eller #3d). D3.onFloor() etter hver etasje og på tittelen. D3.tick(dt) hvert bilde.
 - R.light registrerer lysplatene i R.kilder; D3 gir de åtte nærmeste et PointLight (spillerens lykt først). Månen er et DirectionalLight med skyggekart som følger kameraet.
 - Paint.mesh { gulv, topp, vegg } får MeshToonMaterial (gradient i fire trinn) og normaler. Vanlige MeshBasic-materialer i nivået blir Lambert. Alt huskes i D3.byttet og settes tilbake.
-- D3.modell(p) lager lavpoly-møbler per p.k, hengt på rekvisittens gruppe (o.g), så de fjernes og bygges sammen med den. Plater og dukker kaster skygge med MeshDepthMaterial med alfatest (setPart oppdaterer kartet).
+- Toms retning (24.9. kveld): figurer og ting forblir 2D-tegningene (så alle bildene fra ChatGPT brukes), bare rommene, gulvet og effektene er 3D. Lavpoly-møblene er fjernet.
+- D3.moble(o) gjør rekvisittens tegning til skyggekaster (skyggePlate: MeshDepthMaterial med alfatest, setPart oppdaterer kartet) og gjemmer den gamle skyggeflekken (D3.gjemt, vises igjen i riv).
+- D3.arkitektur: fotlist, brystlist og taklist (InstancedMesh per del) langs alle høye veggfronter, og pilastre med sokkel og kapitel hver tredje rute på bakveggen i hvert rom (midt mellom vegglampene og vinduene). En litt større blekkasse rett bak hver del gir strek på sidene og under. Paint.opptatt (settes av Paint.door og Paint.poster) holder lister, pilastre og vegglamper unna dører og plakater.
+- Gulvet får bumpMap fra sin egen tekstur (D3.BUMP), så fugene får relieff i lyset. D3.stov: 192 støvkorn, hvert hører til ett punktlys og driver rundt i lyskjeglen (additivt, 4,2 px).
+- Materialene som byttes, kastes i riv; egne materialer og geometrier ligger i D3.egne.
 - Glød: R.renderBloom (lyse deler i kvart oppløsning, uskarpt to ganger), lagt til i etterbehandlingen når D3 er på. Den tegnede lysbufferen er av i 3D.
+
+## Strekarmer og strekbein (11_doll.js)
+- STREK = { tynn, farge, ben, arm, hand }: armer og bein som tynne mørke blekkstreker, som i Conan Chop Chop. Innstillingen lemmer ('tynne' som standard, 'tykke' gir de gamle båndene i klesfargen), avkrysning under Bilde. Brukes av Doll.update, drawDollPortrait (journal og kort) og corpseArt (liknøkkelen får .t).
+- applySettings oppdaterer G.meta.settings på stedet (Object.assign), så panelet kan endre flere ting etter hverandre.
 
 ## Musikk og lyd (06_musikk.js, Sound i 01_core.js)
 - Musikk er et sekvenseringsverk i åttendeler med forhåndsplanlegging (0,22 s). Stykker i STYKKER: tittel (spilledåsevals), e1 (vals i d-moll), e2 (sakte orgel med drypp), e3 (frygisk marsj med cembalo og skrivemaskin), e4 (kor og klokker), tjeneste (grammofonvals i dur, filtrert som en gammel grammofon).

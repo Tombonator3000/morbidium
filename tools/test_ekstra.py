@@ -243,6 +243,9 @@ async def main():
         sjekk('gamle lagringer uten utseende og ugyldige verdier gir standardpasienten', g == 'kape', g)
         rib = await pg.evaluate("() => { const dl = MORBIDIUM.player.doll; return [dl.front.n, dl.back.n, dl.front.cap]; }")
         sjekk('armer og bein får plass til både kontur og farge', rib[0] < rib[2] and rib[1] < rib[2], rib)
+        st = await pg.evaluate("""async () => { const dl = MORBIDIUM.player.doll, s = MORBIDIUM.meta.settings, bein = () => dl.back.strokes.filter(k => !k.circle).map(k => [k.w, k.color]), vent = () => new Promise(r => setTimeout(r, 1200));
+          const a = { standard: s.lemmer, tynn: bein() }; s.lemmer = 'tykke'; applySettings(); await vent(); a.tykk = bein(); s.lemmer = 'tynne'; applySettings(); await vent(); a.tilbake = bein(); a.rig = [dl.rig.legW, dl.rig.leg]; a.strek = [STREK.ben, STREK.farge]; return a; }""")
+        sjekk('armer og bein er tynne blekkstreker som standard og kan byttes til tykke i innstillingene', st['standard'] == 'tynne' and st['tynn'] and all(k == st['strek'] for k in st['tynn']) and all(k == st['rig'] for k in st['tykk']) and st['tilbake'] == st['tynn'], st)
         await pg.evaluate("() => { rolig(); R.view = 5; R.resize(); }"); await pg.wait_for_timeout(600); await pg.screenshot(path='/tmp/e_20pasient.png')
         sjekk('ingen konsollfeil (pasienter)', not pg.errs, pg.errs[:6])
         await pg.close()
@@ -363,11 +366,15 @@ async def main():
         await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
         await start_lop(pg)
         d3 = await pg.evaluate("""async () => { rolig(); MORBIDIUM.meta.settings.d3 = true; applySettings(); await new Promise(r => setTimeout(r, 800));
-          const a = { on: D3.on, modeller: D3.modeller.length, lys: D3.pool.filter(l => l.intensity > 0).length, gulv: Paint.mesh.gulv.material.type, glod: R.post.uniforms.uBloom.value > 0 };
-          startFloor(2, false); rolig(); await new Promise(r => setTimeout(r, 800)); a.etasje2 = D3.modeller.length > 0 && Paint.mesh.gulv.material.type === 'MeshToonMaterial';
-          MORBIDIUM.meta.settings.d3 = false; applySettings(); await new Promise(r => setTimeout(r, 300));
-          a.av = { gulv: Paint.mesh.gulv.material.type, lys: R.post.uniforms.uLights.value, modeller: D3.modeller.length, synlig: MORBIDIUM.props.every(o => !o.g || !o.g.userData.m || o.g.userData.m.visible) }; return a; }""")
-        sjekk('rom i 3D slås på med modeller, punktlys og glød, følger med til neste etasje og kan slås av igjen', d3['on'] and d3['modeller'] > 5 and d3['lys'] > 0 and d3['gulv'] == 'MeshToonMaterial' and d3['glod'] and d3['etasje2'] and d3['av'] == {'gulv': 'MeshBasicMaterial', 'lys': 1, 'modeller': 0, 'synlig': True}, d3)
+          const G = MORBIDIUM, tegnet = () => G.props.filter(o => o.g && o.g.userData.m), inst = () => D3.ting.filter(o => o.isInstancedMesh).length;
+          const a = { on: D3.on, lister: inst(), lys: D3.pool.filter(l => l.intensity > 0).length, gulv: Paint.mesh.gulv.material.type, glod: R.post.uniforms.uBloom.value > 0, stov: !!D3.stovP,
+            skygge: tegnet().filter(o => o.g.userData.m.castShadow).length, synlige: tegnet().every(o => o.g.userData.m.visible), modeller: 'modell' in D3 };
+          startFloor(2, false); rolig(); await new Promise(r => setTimeout(r, 800)); a.etasje2 = inst() > 0 && Paint.mesh.gulv.material.type === 'MeshToonMaterial' && tegnet().every(o => o.g.userData.m.visible);
+          G.meta.settings.d3 = false; applySettings(); await new Promise(r => setTimeout(r, 300));
+          a.av = { gulv: Paint.mesh.gulv.material.type, lys: R.post.uniforms.uLights.value, lister: inst() + R.level.children.filter(o => o.isInstancedMesh).length, synlig: tegnet().every(o => o.g.userData.m.visible), skygger: G.props.every(o => !o.g || !o.g.userData.shadow || o.g.userData.shadow.visible) }; return a; }""")
+        sjekk('rom i 3D: lister og pilastre, punktlys, støv og glød, tingene er fortsatt tegningene og kaster skygge, følger med til neste etasje og kan slås av igjen',
+              d3['on'] and d3['lister'] > 5 and d3['lys'] > 0 and d3['gulv'] == 'MeshToonMaterial' and d3['glod'] and d3['stov'] and d3['skygge'] > 5 and d3['synlige'] and not d3['modeller'] and d3['etasje2']
+              and d3['av'] == {'gulv': 'MeshBasicMaterial', 'lys': 1, 'lister': 0, 'synlig': True, 'skygger': True}, d3)
         sjekk('ingen konsollfeil (3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 

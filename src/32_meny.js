@@ -4,19 +4,20 @@
    hefte med kapittelfaner, arkivet et arkivskap med skuffer og mapper.
    Ingenting ruller: alt skaleres til skjermen, og det som ikke får plass, blas i.
    ============================================================ */
-const SET_DEF = { vol: .7, sfx: 1, amb: 1, mus: .8, kamera: 1, shake: 1, flash: true, distort: true, lights: true, simple: false, tall: true, bobler: true, skilt: true, ui: 1, tips: true, d3: false };
+const SET_DEF = { vol: .7, sfx: 1, amb: 1, mus: .8, kamera: 1, shake: 1, flash: true, distort: true, lights: true, simple: false, tall: true, bobler: true, skilt: true, ui: 1, tips: true, d3: false, lemmer: 'tynne' };
 function normSettings(s) {
   const o = Object.assign({}, SET_DEF, s || {});
   if (typeof o.shake === 'boolean') o.shake = o.shake ? 1 : 0; // eldre lagring hadde av/på
   return o;
 }
 function applySettings() {
-  const s = G.meta.settings = normSettings(G.meta.settings);
+  // samme objekt hele tiden: panelet holder på det mens du endrer flere ting etter hverandre
+  const n = normSettings(G.meta.settings), s = G.meta.settings = G.meta.settings ? Object.assign(G.meta.settings, n) : n;
   R.safe = !!s.simple; Sound.setVolume(s.vol); Sound.setMix(s.sfx, s.amb, s.mus);
   R.shakeOn = s.shake > 0; R.shakeK = s.shake; R.flashOn = s.flash; R.distortOn = s.distort; R.lightsOn = s.lights;
   const v = 11.5 * s.kamera; if (Math.abs(R.view - v) > .01) { R.view = v; R.resize(); }
   document.documentElement.style.setProperty('--ui', s.ui);
-  D3.sett(s.d3 && !s.simple);
+  D3.sett(s.d3 && !s.simple); STREK.tynn = s.lemmer !== 'tykke';
   document.body.classList.toggle('uten-tall', !s.tall); document.body.classList.toggle('uten-bobler', !s.bobler); document.body.classList.toggle('uten-skilt', !s.skilt);
 }
 const narrow = () => innerWidth < 700 || innerWidth / innerHeight < .9;
@@ -96,7 +97,7 @@ function settingsBody(tab) {
   const pct = v => Math.round(v * 100) + ' %';
   if (tab === 'lyd') return sl('vol', 'Hovedvolum', 0, 1, .05, s.vol, pct) + sl('sfx', 'Effekter', 0, 1, .05, s.sfx, pct) + sl('mus', 'Musikk', 0, 1, .05, s.mus, pct) + sl('amb', 'Stemning', 0, 1, .05, s.amb, pct) + '<p class="shint">Både musikken og lydene lages av spillet mens du spiller, uten lydfiler. Stemning er suset i veggene og det som knirker.</p>';
   if (tab === 'bilde') return sl('kamera', 'Kameraavstand', .8, 1.25, .05, s.kamera, v => v < .95 ? 'nær' : v > 1.05 ? 'langt unna' : 'vanlig') + sl('shake', 'Skjermristing', 0, 1, .1, s.shake, v => v ? pct(v) : 'av')
-    + cb('flash', 'Hvite glimt ved store treff') + cb('distort', 'Forvrengning', 'Blekkboiling, Morbidium-bølger og hallusinasjoner') + cb('lights', 'Lys og skygge') + cb('d3', 'Rom i 3D (prøve)', 'Ekte lys fra lampene, måneskinn og skygger, lavpoly-møbler og glød. Krever et bedre skjermkort.') + cb('simple', 'Enkel grafikk', 'Uten etterbehandling. For svake eller rare skjermkort.');
+    + cb('flash', 'Hvite glimt ved store treff') + cb('distort', 'Forvrengning', 'Blekkboiling, Morbidium-bølger og hallusinasjoner') + cb('lights', 'Lys og skygge') + `<label class="srow cb"><input type="checkbox" data-s="lemmer" ${s.lemmer !== 'tykke' ? 'checked' : ''}><span>Strekarmer og strekbein<small>Tynne blekkstreker i stedet for tykke armer og bein i klesfargen</small></span></label>` + cb('d3', 'Rom i 3D (prøve)', 'Ekte lys fra lampene, måneskinn, skygger og glød i rommene. Figurene og tingene er de samme tegningene. Krever et bedre skjermkort.') + cb('simple', 'Enkel grafikk', 'Uten etterbehandling. For svake eller rare skjermkort.');
   if (tab === 'spill') return sl('ui', 'Størrelse på skjermtekst', .8, 1.3, .05, s.ui, pct) + cb('tall', 'Skadetall') + cb('bobler', 'Snakkebobler', 'Det fiendene og personalet sier') + cb('skilt', 'Navneskilt over mestere og personale') + cb('tips', 'Tips for nye pasienter', 'Små lapper som forklarer det viktigste første gang det skjer');
   if (tab === 'styring') return `<table class="ktabell"><tr><th></th><th>Tastatur og mus</th><th>Håndkontroll</th><th>Berøring</th></tr>${KONTROLLER.map(r => `<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table>`;
   const sv = savedRun();
@@ -116,7 +117,7 @@ function openSettings(fromTitle, back, tab = 'lyd') {
   document.querySelectorAll('#settings [data-s]').forEach(inp => {
     const k = inp.dataset.s;
     if (inp.type === 'range') inp.oninput = () => { s[k] = +inp.value; inp.parentNode.querySelector('em').textContent = SET_FMT[k](s[k]); up(); };
-    else inp.onchange = () => { s[k] = inp.checked; up(); };
+    else inp.onchange = () => { s[k] = k === 'lemmer' ? (inp.checked ? 'tynne' : 'tykke') : inp.checked; up(); };
   });
   const dr = $('dRun'); if (dr) dr.onclick = () => { if (dr.dataset.ok) { clearRun(); Sound.play('slam'); openSettings(false, onBack, 'data'); } else { dr.dataset.ok = 1; dr.textContent = 'Sikker? Trykk igjen'; } };
   const dtp = $('dTips'); if (dtp) dtp.onclick = () => { G.meta.tips = {}; saveMeta(); Sound.play('paper'); openSettings(false, onBack, 'data'); };

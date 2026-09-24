@@ -141,6 +141,7 @@ Alle tidspunkt er UTC.
 - Brukte den første, mer detaljerte duen som kort_due.png etter Toms valg.
 - Alle bildene er kvadratiske PNG-filer på 1254 ganger 1254 piksler med gjennomsiktig bakgrunn.
 - Kjørte bildeverktøyets sjekk: 13 behandlet, 0 feil. Bilder for senere runder er ikke laget ennå.
+
 ## 2026-09-24 16:15 Tom: «lag spillet ferdig». Plan og etappe 1
 - Tom ba om å fortsette prosjektet og gjøre spillet ferdig. Leste hele kodebasen først. Kjernen (tre etasjer, sjefer, utskrivning, journal, kuriositeter) finnes; det som mangler, står i todo.md.
 - Plan i ni etapper, hver testet og pushet til main: 1) testoppsett og kjente svakheter, 2) etasjen Isolat og arkiv med egen sjef og egne sjefsangrep, 3) nye fiender, 4) spesialrom, 5) aktive gjenstander og lommerusk, 6) oppskriftssystem for fiender, 7) musikk, 8) slutt og metaprogresjon, 9) finpuss.
@@ -189,23 +190,6 @@ Alle tidspunkt er UTC.
 - Kontrollerte rutene for motiver som krysser grensene, og rettet de tre arkene som trengte det.
 - Prøvde hele bildeflyten i en egen kopi av repoet. Alle 40 kuriositeter, åtte piller og glasset ble behandlet, og byggingen tok med 62 bilder totalt uten feil.
 
-## 2026-09-24 16:51 Spillerfigur fra ChatGPT
-- Tegnet figur_pasient.png med tre vinkler av hode og tre vinkler av gul morgenkåpe uten armer og bein. Justerte plasseringen for å holde hodene og kroppene i hver sin rad.
-- Prøvde arket i en egen kopi med samme bildebehandling og bygging som GitHub bruker. Seks figurdeler ble laget; 68 bilder ble behandlet uten feil og tatt med i spillfila.
-- GitHub Pages bygde og publiserte den forrige leveransen med kuriositeter og piller uten feil.
-
-## 2026-09-24 17:10 Personaldeler, sko og småobjekter fra ChatGPT
-- Tegnet tre delark til personalet: hoder, hodeplagg og uniformer i tre vinkler, 27 deler totalt. Justerte størrelser og rutene slik at arkene kan klippes uten sammenblanding.
-- Tegnet et ni ruters ark med fire sko, hjerte, Morbidiumdråpe, gulltann, due og eterflaske. Rettet tøffelen, hjertet og duen etter visuell kontroll.
-- Prøvde alle ark i en egen kopi av den nyeste hovedgrenen. Verktøyene laget 27 personaldeler og ni nye enkeltbilder, behandlet 77 bilder uten feil og bygde spillfila med 77 innebygde bilder. Personaldelene venter på oppskriftssystemet før de blir synlige i spillet.
-
-## 2026-09-24 17:14 Resten av plukk og effekter fra ChatGPT
-- Tegnet og kontrollerte de siste ni småbildene: tre beholdere, tre støvpuff, skyggehånd, stempelmerke og treffstjerne. Krympet skyggehånden så ingen motiv krysser rutekanten.
-- Prøvde arket med bildebehandling og bygging i en egen kopi. 86 bilder ble behandlet uten feil og tatt med i spillfila. Hele den opprinnelige runden med 14 plukk og effekter er nå tegnet.
-
-## 2026-09-24 17:16 Våpen fra ChatGPT
-- Tegnet de sju våpnene i ett ni ruters ark med de to siste rutene tomme. Skaftene vender ned og virkedelen opp, slik at spillet kan rotere våpnene selv.
-- Prøvde klipping, bildebehandling og bygging i en egen kopi. Alle sju våpen ble laget; 93 bilder ble behandlet uten feil og tatt med i spillfila.
 ## 2026-09-24 16:50 Etappe 4: spesialrom
 - Hemmelig rom i hver etasje: generatoren legger et lite rom i en tom celle ved siden av et vanlig rom, med en korridor som er stengt av en sprukken murvegg der den møter rommet. Tre vanlige slag, ett tungt slag, en eksplosjon (nitroglyserin, eksplosiv pille) eller et stempel knuser veggen. Det støver fra sprekken når pasienten er i nærheten. Inni: en kuriositet i preparatglass, en journalside, tenner og en pille.
 - Forbannet rom (rundt hver femte etasje, i en blindvei): tornemerker og rødt lys ved døra, og tornene tar ett hjerte hver gang pasienten går inn (aldri det siste). Midt i rommet står en kuriositet fra blodhylla på et skjevt tegnet pentagram («IKKE TRÅKK»). Tar du den, låses dørene og et bakhold med to eliter kommer.
@@ -214,6 +198,11 @@ Alle tidspunkt er UTC.
 - Kartet viser spesialrommene med egne farger og tegn (* for skatt og hemmelig rom, ! for forbannet, O for offer).
 - Generatoren: validering tar hensyn til den sprukne veggen, sløyfekravet teller ikke det hemmelige rommet, og midten holdes ikke lenger fri i spesialrom. 1200 av 1200 gyldige, 1,01 forsøk i snitt.
 - Test: tungt slag knuser veggen, tornene tar et hjerte, kuriositeten utløser bakhold som kan ryddes, alteret tar imot én gave. Ingen konsollfeil.
+
+## 2026-09-24 16:51 Spillerfigur fra ChatGPT
+- Tegnet figur_pasient.png med tre vinkler av hode og tre vinkler av gul morgenkåpe uten armer og bein. Justerte plasseringen for å holde hodene og kroppene i hver sin rad.
+- Prøvde arket i en egen kopi med samme bildebehandling og bygging som GitHub bruker. Seks figurdeler ble laget; 68 bilder ble behandlet uten feil og tatt med i spillfila.
+- GitHub Pages bygde og publiserte den forrige leveransen med kuriositeter og piller uten feil.
 
 ## 2026-09-24 16:54 Kuriositetene fra ChatGPT i spillet, og mindre spillfil
 - Flettet inn Toms commit med fem kuriositetsark, et pilleark og et tomt preparatglass. Kjørte bildeflyten slik Pages-bygget gjør (i en kopi, så arkene i repoet ikke flyttes): 62 bilder, ingen feil.
@@ -235,6 +224,19 @@ Alle tidspunkt er UTC.
 - Begge lagres med løpet. README har fått V i kontrollene.
 - Test: defibrillatoren skader og tømmer ladningen, ett streik per ryddet rom, bytte gir glass med det gamle, frosken redder fra døden, lommerusk byttes, og alt overlever lagring. Ingen konsollfeil.
 
+## 2026-09-24 17:10 Personaldeler, sko og småobjekter fra ChatGPT
+- Tegnet tre delark til personalet: hoder, hodeplagg og uniformer i tre vinkler, 27 deler totalt. Justerte størrelser og rutene slik at arkene kan klippes uten sammenblanding.
+- Tegnet et ni ruters ark med fire sko, hjerte, Morbidiumdråpe, gulltann, due og eterflaske. Rettet tøffelen, hjertet og duen etter visuell kontroll.
+- Prøvde alle ark i en egen kopi av den nyeste hovedgrenen. Verktøyene laget 27 personaldeler og ni nye enkeltbilder, behandlet 77 bilder uten feil og bygde spillfila med 77 innebygde bilder. Personaldelene venter på oppskriftssystemet før de blir synlige i spillet.
+
+## 2026-09-24 17:14 Resten av plukk og effekter fra ChatGPT
+- Tegnet og kontrollerte de siste ni småbildene: tre beholdere, tre støvpuff, skyggehånd, stempelmerke og treffstjerne. Krympet skyggehånden så ingen motiv krysser rutekanten.
+- Prøvde arket med bildebehandling og bygging i en egen kopi. 86 bilder ble behandlet uten feil og tatt med i spillfila. Hele den opprinnelige runden med 14 plukk og effekter er nå tegnet.
+
+## 2026-09-24 17:16 Våpen fra ChatGPT
+- Tegnet de sju våpnene i ett ni ruters ark med de to siste rutene tomme. Skaftene vender ned og virkedelen opp, slik at spillet kan rotere våpnene selv.
+- Prøvde klipping, bildebehandling og bygging i en egen kopi. Alle sju våpen ble laget; 93 bilder ble behandlet uten feil og tatt med i spillfila.
+
 ## 2026-09-24 17:50 Grovere ansikter og to spillerfigurer
 - Tom ønsket at ansiktene skulle bli mer morbide, stygge og stiliserte. Brukte referansene som retning for asymmetri, ujevne tenner, øyeposer og røffe blekkstreker uten å kopiere figurene i dem.
 - Tegnet to nye voksenvarianter av spilleren, kvinne og mann, hver som seks figurdeler i samme mal som standardpasienten. Den mannlige varianten er også tatt i bruk som nytt standardark, og de ni personalhodene er tegnet om i samme grovere stil. Ikoner og utstyr er ikke endret.
@@ -244,6 +246,7 @@ Alle tidspunkt er UTC.
 - Tom ba om å starte runden med rekvisitter og møbler. Tegnet åtte enkeltbilder i trekvart perspektiv: alter, kafeteriadisk, medisindisk, vaktmesterbenk, venteværelsesbenk, sykehusbord og stol forfra og bakfra.
 - Bildene har gjennomsiktig bakgrunn, og stolens to vinkler er tegnet etter samme møbel. Kontrollerte de ferdig behandlede bildene visuelt.
 - Prøvde hele bildeflyten i en egen kopi. 101 bilder ble behandlet uten feil og bygget inn i spillfila. Oppdaterte designbriefen slik at den gjenspeiler Toms beslutning om møbler som enkeltbilder.
+
 ## 2026-09-24 18:31 Toms tilbakemelding (åtte punkter), første runde: feil, tjenesterom, lik og journal
 - Tom spilte og sendte åtte punkter med skjermbilder: journalen ruller, tjenesterommene ser ikke ut som seg selv (ingen vaskemaskin foran «Undersøk vaskemaskinen»), pasientene ser like ut, mangler bruksanvisning og ordentlige innstillinger, arkivet og UI-et er kjedelig, noen fiender dør ikke, likene synes dårlig, og sjefer blir usynlige.
 - Usynlige sjefer (punkt 8): en feil. Slag-angrepet registrerte sjefens figur som en effekt med null levetid, og effektlisten fjerner objektet når levetiden er ute. Sjefen levde videre, men usynlig. Linja er fjernet.
@@ -359,3 +362,12 @@ Alle tidspunkt er UTC.
 ## 2026-09-24 21:00 Siste rombilder tegnet
 - Tegnet de 22 manglende bildene av rekvisitter, møbler og gulvfarer. De omfatter blant annet arkivhylle, polstret celle, kafeteriadisk, medisinskap, offeralter, vaskerom, sprukken vegg og to verktøytavler i ulik bredde.
 - Kontrollkopien behandlet 267 bilder og bygget dem inn uten feil. Sjekket flere av dem i spillstørrelse. ART_BRIEF.md er generert på nytt og viser 267 av 287 leverte bilder.
+
+## 2026-09-24 21:02 3D bare for rommene, strekarmer og strekbein
+- Tom: figurene og tingene skal fortsatt være 2D, så alle bildene vi har laget brukes. Bare selve rommene, gulvet og effektene skal være 3D. Han vurderer også armer og bein som tynne streker, som i Conan Chop Chop.
+- Lavpoly-møblene er fjernet fra src/15_rom3d.js. Alle ting i rommene er de samme tegningene som ellers, men de lyses av lampene og kaster skygge etter tegningen. Den gamle skyggeflekken under tingene kommer tilbake når 3D slås av (den ble før liggende gjemt).
+- Rommene har fått egen dybde: fotlist, brystlist og taklist stikker ut av alle høye vegger der veggtegningen allerede har dem, og pilastre med sokkel og kapitel står hver tredje rute på bakveggen, midt mellom vegglampene og vinduene. Hver del har blekkstrek på sidene og under. Dører og plakater får være i fred (Paint husker hvilke veggfelt som er opptatt), og vegglamper havner heller ikke oppå dem.
+- Gulvflisene har fått relieff (fugene tar lyset), og støvkorn svever i lyset rundt lampene, vinduene og lykta.
+- Strekarmer og strekbein: tynne mørke blekkstreker med små runde hender, på spilleren, fiendene, personalet, portrettene i journalen og på kortene, og på likene. Det er standard nå. Under Innstillinger, Bilde kan det byttes tilbake til de tykke armene og beina i klesfargen.
+- Rettet en feil i innstillingene: panelet mistet alle endringer etter den første til det ble åpnet på nytt, fordi innstillingene ble byttet ut med et nytt objekt hver gang. Nå oppdateres det samme objektet.
+- Testene er oppdatert: 3D-testen sjekker lister og pilastre, støv, at tingene er tegningene og kaster skygge, og at alt er som før når 3D slås av. Ny test for strekarmene (standard, bytte til tykke og tilbake).

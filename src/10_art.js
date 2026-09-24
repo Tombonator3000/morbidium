@@ -509,7 +509,7 @@ function cardArtCanvas(id, size = 120) {
 }
 /* hel figur til portrett (journal og dødskort): lemmer som blekkstreker */
 function drawDollPortrait(g, type, cx, cy, S, look) {
-  const D = type === 'pasient' ? Pasient.deler(look) : null, R0 = D ? Object.assign({}, RIG[type], D.rig) : RIG[type], L = (a, b, w, col) => { for (const [ww, cc] of [[w + .09, INK], [w, col]]) { g.beginPath(); g.moveTo(cx + a[0] * S, cy - a[1] * S); g.quadraticCurveTo(cx + (a[0] + b[0]) / 2 * S + 3, cy - (a[1] + b[1]) / 2 * S, cx + b[0] * S, cy - b[1] * S); g.lineWidth = ww * S; g.strokeStyle = cc; g.lineCap = 'round'; g.stroke(); } };
+  const D = type === 'pasient' ? Pasient.deler(look) : null, R1 = D ? Object.assign({}, RIG[type], D.rig) : RIG[type], R0 = STREK.tynn ? Object.assign({}, R1, { legW: STREK.ben, armW: STREK.arm, leg: STREK.farge, arm: STREK.farge, handR: STREK.hand }) : R1, L = (a, b, w, col) => { for (const [ww, cc] of [[w + (STREK.tynn ? .04 : .09), INK], [w, col]]) { g.beginPath(); g.moveTo(cx + a[0] * S, cy - a[1] * S); g.quadraticCurveTo(cx + (a[0] + b[0]) / 2 * S + 3, cy - (a[1] + b[1]) / 2 * S, cx + b[0] * S, cy - b[1] * S); g.lineWidth = ww * S; g.strokeStyle = cc; g.lineCap = 'round'; g.stroke(); } };
   const img = (P, x, y) => g.drawImage(P.canvas, cx + (x - P.ax) * S, cy - (y + P.h - P.ay) * S, P.w * S, P.h * S);
   const hip = R0.hip, sh = hip + R0.shY, neck = hip + R0.neck, hw = R0.hipW;
   L([-hw, hip + .04], [-hw - .04, .08], R0.legW, R0.leg); L([hw, hip + .04], [hw + .04, .08], R0.legW, R0.leg);
@@ -608,14 +608,14 @@ function chestArt(open) {
   });
 }
 function corpseArt(look) {
-  const D = Pasient.deler(look), key = 'lik_' + D.key;
+  const D = Pasient.deler(look), key = 'lik_' + D.key + (STREK.tynn ? '.t' : '');
   if (D.look.kjonn === 'm' && D.look.klaer === 'kape' && spriteReady('lik')) return Pasient.likBilde(D.look);
   return Art.part(key, 2.7, 1.2, 1.35, .08, g => {
     A.flat(g, A.ell(-.05, -.08, 1.2, .18), 'rgba(90,10,10,.38)', 0);
-    const R0 = Object.assign({}, RIG.pasient, D.rig), L = D.rig, part = (piece, v) => piece === 'hode' ? D.hode[v] : D.kropp[v];
+    const R0 = Object.assign({}, RIG.pasient, D.rig, STREK.tynn ? { legW: STREK.ben, armW: STREK.arm, leg: STREK.farge, arm: STREK.farge, handR: STREK.hand } : {}), L = STREK.tynn ? Object.assign({}, D.rig, { leg: STREK.farge, arm: STREK.farge }) : D.rig, part = (piece, v) => piece === 'hode' ? D.hode[v] : D.kropp[v];
     g.save(); g.translate(.98, -.36); g.rotate(-Math.PI / 2); g.scale(.78, .78);
     const draw = (P, x, y) => g.drawImage(P.canvas, x - P.ax, y - (P.h - P.ay), P.w, P.h);
-    const limb2 = (a, b, w, col) => { g.lineCap = 'round'; g.beginPath(); g.moveTo(a[0], -a[1]); g.lineTo(b[0], -b[1]); g.lineWidth = w + .09; g.strokeStyle = INK; g.stroke(); g.lineWidth = w; g.strokeStyle = col; g.stroke(); };
+    const limb2 = (a, b, w, col) => { g.lineCap = 'round'; g.beginPath(); g.moveTo(a[0], -a[1]); g.lineTo(b[0], -b[1]); g.lineWidth = w + (STREK.tynn ? .04 : .09); g.strokeStyle = INK; g.stroke(); g.lineWidth = w; g.strokeStyle = col; g.stroke(); };
     const hip = R0.hip, sh = hip + R0.shY, neck = hip + R0.neck;
     for (const s of [-1, 1]) limb2([s * R0.hipW, hip], [s * (R0.hipW + .06), .1], R0.legW, (L.leg || R0.leg));
     for (const s of [-1, 1]) { g.save(); g.translate(s * (R0.hipW + .06), -.02); g.rotate(s * .3); draw(D.sko, 0, 0); g.restore(); }
