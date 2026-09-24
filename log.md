@@ -278,3 +278,9 @@ Alle tidspunkt er UTC.
 - Feil fra første versjon: armer og bein på alle figurer ble tegnet nesten bare med blekk, fordi båndnettet hadde plass til 900 punkter og trengte rundt 1300 for kontur og farge. Nå har det plass til 3200, og armer og bein har fargene de alltid skulle hatt (ermer, hud, uniform). Gjelder spilleren, fiendene, personalet og sjefene.
 - Ny fil src/14_pasient.js. Doll tar egne farger og sko per figur. Nye tester i test_ekstra: variasjon over 300 pasienter, navn som passer kjønnet, figuren bruker riktige deler, fortsatt løp beholder utseendet, likene husker utseendet, gamle lagringer, plass i båndnettet.
 - Tester: generator 1200 av 1200, gjennomspilling uten feil, test_ekstra alt bestått.
+
+## 2026-09-24 19:40 Hele kunstlisten er tegnet
+- Tegnet ni nye figurark. Pleier, oppasser og kultist har hode og kropp forfra, bakfra og fra siden. Bibliotekar, Hansen, kokk, Krok, Olsen og Rust har hode og kropp forfra. Ansiktene er skjeve, grove og komisk morbide etter Toms tilbakemelding.
+- Tegnet kultistens kappe i tre retninger, et dødt spillerhode og ti småfiendebilder: flue, lunge og svulst fra tre sider samt slukyngel forfra.
+- Tegnet de siste småtingene i kunstlisten: ni ansiktstilbehør i ett ark, slimskudd og kortplukk. Justerte Krok og Rust så figurarkene ikke lager ekstra bilder fra nabofelt.
+- Kontrollerte hele bildeprosessen i en kopi av den nyeste hovedgrenen. Alle 199 bildefilene i ART_BRIEF.md finnes etter utskjæring. 205 bilder ble behandlet uten feil og bygget inn i spillet sammen med 27 personaldeler. Ingen spillkode ble endret.
