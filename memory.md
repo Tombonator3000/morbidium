@@ -56,7 +56,8 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Alle sju våpen fra den opprinnelige kunstlista ligger i ett ni ruters ark med de siste to rutene tomme.
 - Tom har bedt ChatGPT starte rekvisitter og møbler som enkeltbilder i trekvart perspektiv. Første gruppe har åtte bilder i gpt-grafikk/: alter, tre disker, venteværelsesbenk, sykehusbord og stol forfra og bakfra. De behandles av den eksisterende bildeflyten.
 - Hele runden med 51 rekvisitter og møbler er tegnet. De resterende 43 bildene omfatter oppbevaring, romrekvisitter, behandlingsutstyr og seng, båre og badekar i fire retninger. Alle PNG-filene ligger i gpt-grafikk/ med gjennomsiktig bakgrunn og filnavn fra manifestet.
-- Hele den gjeldende kunstlisten i ART_BRIEF.md er dekket. Figurarkene for pleier, oppasser og kultist har seks visninger hver. Bibliotekar, Hansen, kokk, Krok, Olsen og Rust har hode og kropp forfra. Kultistens kappe har tre visninger, og flue, lunge og svulst har tre hver. Yngelen, spillerens døde hode, ni små ansiktstilbehør, slimskudd og kortplukk er også tegnet. En kontrollkopi behandlet 205 bilder uten feil og bygget dem inn sammen med 27 personaldeler.
+- Hele den opprinnelige kunstlisten er dekket. Figurarkene for pleier, oppasser og kultist har seks visninger hver. Bibliotekar, Hansen, kokk, Krok, Olsen og Rust har hode og kropp forfra. Kultistens kappe har tre visninger, og flue, lunge og svulst har tre hver. Yngelen, spillerens døde hode, ni små ansiktstilbehør, slimskudd og kortplukk er også tegnet.
+- Ni nye pasientplagg i tre retninger, sju hodeplagg og ansiktsmerker samt bare føtter og ullsokk ligger som enkeltbilder i gpt-grafikk/. ART_BRIEF.md viser 223 av 287 leverte bilder. Hele bildeflyten er kontrollert i en kopi med 223 bilder uten feil og 27 personaldeler.
 
 ## Kuriositeter (Isaac-systemet)
 - src/25_items.js: 40 kuriositeter som stables, ti navngitte synergier, fem forvandlinger (tre i samme gruppe), åtte ukjente piller per løp, preparatglass som leveringsform, blodoffer etter sjefen (koster ett hjerte).
@@ -69,6 +70,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - ChatGPT-hodene og kåpa farges om piksel for piksel. Hår farges bare der det er sammenhengende hår rundt (uskarp maske), ellers blir skjeggstubber prikker.
 - Pasient.deler(look) gir alt som trengs; Pasient.dukke lager figuren. Brukes av spilleren, medaljen, innleggelseskortet, journalen, dødskortet, utskrivningskortet og likene. Lik i likhuset får tilfeldige utseender. Menn i morgenkåpe blir liggende som ChatGPT-liket (lik.png) farget om, alle andre som et sammensatt lik.
 - Nøkler for bilder fra ChatGPT: hode_pasient_kvinne_*, kropp_tvang_*, kropp_skjorte_*, kropp_pyjamas_*, sko_barfot, sko_sokk, pynt_*. Nattserken har ingen bildenøkkel ennå (den går under hofta, og bildebehandlingen fester alt ved hofta).
+- De nye plaggene og pyntbildene vises foreløpig i PNG-fargene. I src/14_pasient.js brukes bildene direkte uten omfarging, selv om pasienten fortsatt kan få andre valgte farger. Bare føtter farges etter hudtonen. Claude må koble på omfarging dersom fargevariasjonen skal synes på de nye bildene.
 - Doll tar opt.rig (farger og mål) og opt.shoeP. Båndene til armer og bein har plass til 3200 punkter; med 900 ble fyllfargen kuttet og lemmene tegnet nesten bare i blekk (feil fra første versjon, rettet 2026-09-24).
 
 ## Merknader og slutten (33_merknader.js)
