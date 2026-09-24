@@ -39,10 +39,10 @@ const R = {
     this.post = new THREE.ShaderMaterial({
       uniforms: { tScene: { value: null }, tLight: { value: null }, uRes: { value: new THREE.Vector2(1, 1) }, uTime: { value: 0 },
         uAmbient: { value: new THREE.Color(1, 1, 1) }, uLift: { value: new THREE.Color(0, 0, 0) }, uGain: { value: new THREE.Color(1, 1, 1) },
-        uMorb: { value: 0 }, uHurt: { value: 0 }, uLow: { value: 0 }, uFlash: { value: 0 }, uDistort: { value: 1 }, uLights: { value: 1 }, uVig: { value: .55 } },
+        uMorb: { value: 0 }, uHurt: { value: 0 }, uLow: { value: 0 }, uFlash: { value: 0 }, uDistort: { value: 1 }, uLights: { value: 1 }, uVig: { value: .55 }, tBloom: { value: null }, uBloom: { value: 0 } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: `
-        uniform sampler2D tScene, tLight; uniform vec2 uRes; uniform float uTime, uMorb, uHurt, uLow, uFlash, uDistort, uLights, uVig;
+        uniform sampler2D tScene, tLight, tBloom; uniform vec2 uRes; uniform float uTime, uMorb, uHurt, uLow, uFlash, uDistort, uLights, uVig, uBloom;
         uniform vec3 uAmbient, uLift, uGain; varying vec2 vUv;
         float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
@@ -57,6 +57,7 @@ const R = {
           vec3 col = vec3(texture2D(tScene, uv + vec2(ca, 0.0)).r, texture2D(tScene, uv).g, texture2D(tScene, uv - vec2(ca, 0.0)).b);
           vec3 L = texture2D(tLight, uv).rgb;
           col *= mix(vec3(1.0), uAmbient + L * 1.35, uLights);
+          if (uBloom > 0.0) col += texture2D(tBloom, uv).rgb * uBloom;
           col = col * uGain + uLift;
           float lum = dot(col, vec3(0.299, 0.587, 0.114));
           col = mix(col, vec3(lum) * vec3(1.05, 0.95, 0.9), uLow * 0.55);
@@ -95,11 +96,33 @@ const R = {
   renderPost(dt) {
     const r = this.renderer, u = this.post.uniforms;
     u.uTime.value += dt; u.uHurt.value = this.fx.hurt; u.uFlash.value = this.flashOn ? this.fx.flash : 0; u.uMorb.value = this.fx.morb; u.uLow.value = this.fx.low;
-    u.uDistort.value = this.distortOn ? 1 : 0; u.uLights.value = this.lightsOn ? 1 : 0;
+    u.uDistort.value = this.distortOn ? 1 : 0; u.uLights.value = this.lightsOn && !D3.on ? 1 : 0; u.uBloom.value = D3.on ? .7 : 0;
     this.fx.hurt = Math.max(0, this.fx.hurt - dt * 2.5); this.fx.flash = Math.max(0, this.fx.flash - dt * 5);
-    r.setRenderTarget(this.lrt); r.setClearColor(0x000000, 1); r.clear(); r.render(this.lscene, this.camera);
+    if (!D3.on) { r.setRenderTarget(this.lrt); r.setClearColor(0x000000, 1); r.clear(); r.render(this.lscene, this.camera); }
     r.setRenderTarget(this.rt); r.setClearColor(this.clear || 0x16130c, 1); r.clear(); r.render(this.scene, this.camera);
+    if (D3.on) this.renderBloom();
     r.setRenderTarget(null); r.render(this.postScene, this.postCam);
+  },
+  /* glød til 3D-prøven: lyse deler av bildet i kvart oppløsning, uskarpt to veier, lagt oppå */
+  renderBloom() {
+    const r = this.renderer, w = Math.max(2, this.rt.width >> 2), h = Math.max(2, this.rt.height >> 2);
+    if (!this.bl || this.bl.w !== w || this.bl.h !== h) {
+      if (this.bl) { this.bl.a.dispose(); this.bl.b.dispose(); }
+      const vs = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+      const lys = new THREE.ShaderMaterial({ uniforms: { t: { value: null } }, vertexShader: vs, fragmentShader: 'uniform sampler2D t; varying vec2 vUv; void main(){ vec3 c = texture2D(t, vUv).rgb; float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(0.86, 1.0, l) * 1.4, 1.0); }', depthTest: false, depthWrite: false });
+      const blur = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, uDir: { value: new THREE.Vector2(1, 0) } }, vertexShader: vs, depthTest: false, depthWrite: false,
+        fragmentShader: 'uniform sampler2D t; uniform vec2 uDir; varying vec2 vUv; void main(){ vec3 c = texture2D(t, vUv).rgb * 0.227; c += (texture2D(t, vUv + uDir * 1.38).rgb + texture2D(t, vUv - uDir * 1.38).rgb) * 0.316; c += (texture2D(t, vUv + uDir * 3.23).rgb + texture2D(t, vUv - uDir * 3.23).rgb) * 0.070; gl_FragColor = vec4(c, 1.0); }' });
+      const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), lys), sc = new THREE.Scene(); q.frustumCulled = false; sc.add(q);
+      this.bl = { w, h, a: new THREE.WebGLRenderTarget(w, h), b: new THREE.WebGLRenderTarget(w, h), lys, blur, q, sc };
+    }
+    const B = this.bl;
+    B.q.material = B.lys; B.lys.uniforms.t.value = this.rt.texture; r.setRenderTarget(B.a); r.render(B.sc, this.postCam);
+    B.q.material = B.blur;
+    for (let i = 0; i < 2; i++) {
+      B.blur.uniforms.t.value = B.a.texture; B.blur.uniforms.uDir.value.set((1 + i) / w, 0); r.setRenderTarget(B.b); r.render(B.sc, this.postCam);
+      B.blur.uniforms.t.value = B.b.texture; B.blur.uniforms.uDir.value.set(0, (1 + i) / h); r.setRenderTarget(B.a); r.render(B.sc, this.postCam);
+    }
+    this.post.uniforms.tBloom.value = B.a.texture;
   },
   /* ---------- hjelpere ---------- */
 
@@ -126,7 +149,10 @@ const R = {
   light(x, z, r, color, intensity = 1, parent) {
     const m = new THREE.Mesh(this.plane1(), new THREE.MeshBasicMaterial({ map: this.tex.pool, color: new THREE.Color(color).multiplyScalar(intensity), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false }));
     m.rotation.x = -Math.PI / 2; m.position.set(x, 0, z); m.scale.set(r * 2, r * 2, 1); m.userData.col = new THREE.Color(color); m.userData.base = intensity;
-    (parent || this.lscene).add(m); return m;
+    (parent || this.lscene).add(m);
+    // lyskildene huskes, så 3D-prøven kan gi de nærmeste et ekte punktlys
+    const K = this.kilder || (this.kilder = []); K.push(m); if (K.length > 400) this.kilder = K.filter(k => k.parent);
+    return m;
   },
   setLight(m, intensity) { m.material.color.copy(m.userData.col).multiplyScalar(Math.max(0, intensity)); },
   /* ---------- toon-vann ----------

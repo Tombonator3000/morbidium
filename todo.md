@@ -32,7 +32,8 @@
 - [ ] Balansere kuriositetene etter spilltesting; noen kombinasjoner blir trolig altfor sterke.
 - [x] Etappe 6: oppskriftssystemet setter sammen fiender av deler (rolle, hode, hatt, tilbehør, kropp, farging, størrelse, mestere med navn). Personaldelene fra ChatGPT skaleres riktig.
 - [x] Varierte pasienter, Pasienthåndboka, innstillinger med faner, nytt arkiv, ny tittelmeny og pause (Toms punkt 3, 4 og 5).
-- [ ] Utseendetest av 3D-verden med 2D-figurer (ett rom, vegglamper, måneskygger, bloom), hvis Tom vil.
+- [x] Prøve på 3D-rom med 2D-figurer (vegglamper, måneskygger, glød, lavpoly-møbler). Av som standard, slås på i innstillingene eller med #3d.
+- [ ] Tom: prøve 3D-rommene og bestemme retning. Går vi videre, trenger modellene mer detalj (bedre former eller teksturer fra ChatGPT) og ytelsen må måles på mobil.
 - [x] Bilder av 40 kuriositeter, åtte piller og et tomt preparatglass fra ChatGPT i gpt-grafikk/.
 - [x] Spillerens figurark fra ChatGPT i gpt-grafikk/.
 - [x] To nye spillerfigurvarianter, kvinne og mann, med grovere ansikter. Standardfiguren og personalansiktene er også tegnet om.

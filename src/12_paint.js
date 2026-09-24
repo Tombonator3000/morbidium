@@ -144,7 +144,8 @@ const Paint = {
     }
     const fg = new THREE.BufferGeometry();
     fg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); fg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); fg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-    { const ft = this.floorCanvas(F, th), fm = new THREE.MeshBasicMaterial({ map: ft, vertexColors: true }); this.owned.push(ft, fm, fg); L.add(new THREE.Mesh(fg, fm)); }
+    this.mesh = {};
+    { const ft = this.floorCanvas(F, th), fm = new THREE.MeshBasicMaterial({ map: ft, vertexColors: true }); this.owned.push(ft, fm, fg); L.add(this.mesh.gulv = new THREE.Mesh(fg, fm)); }
     // vegger: høye bak, lave foran. Bare fronten (mot kameraet) og toppen er synlige.
     const wallH = new Float32Array(W * H);
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
@@ -170,9 +171,9 @@ const Paint = {
       if (nh(x + 1, z) !== h) quadC([x + 1 - e, y, z], [x + 1 - e, y, z + 1], [x + 1, y, z + 1], [x + 1, y, z], cInk);
     }
     const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(cp, 3)); cg.setAttribute('color', new THREE.Float32BufferAttribute(cc, 3));
-    { const cm = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); this.owned.push(cg, cm); L.add(new THREE.Mesh(cg, cm)); }
+    { const cm = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); this.owned.push(cg, cm); L.add(this.mesh.topp = new THREE.Mesh(cg, cm)); }
     const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); wg.setAttribute('uv', new THREE.Float32BufferAttribute(fu, 2));
-    { const wt = this.wallTex(th), wm = new THREE.MeshBasicMaterial({ map: wt, side: THREE.DoubleSide }); this.owned.push(wg, wt, wm); L.add(new THREE.Mesh(wg, wm)); }
+    { const wt = this.wallTex(th), wm = new THREE.MeshBasicMaterial({ map: wt, side: THREE.DoubleSide }); this.owned.push(wg, wt, wm); L.add(this.mesh.vegg = new THREE.Mesh(wg, wm)); }
     this.wallH = wallH;
     return L;
   },
