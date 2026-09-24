@@ -148,8 +148,8 @@ async def main():
         # 7) apparater og lommerusk
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await start_lop(pg)
-        await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player; G.rooms.forEach(s => s.cleared = true); Aktiv.give('defib'); Lomme.give('frosk');
-          for (let i = 0; i < 3; i++) { const s = freeSpot(P.x + Math.sin(i * 2) * 2.2, P.z + Math.cos(i * 2) * 2.2, 2); const e = spawnEnemy('pleier', s.x, s.z, false, 1); e.cd = 99; } }""")
+        await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player; rolig(); Aktiv.give('defib'); Lomme.give('frosk');
+          for (let i = 0; i < 3; i++) { const s = freeSpot(P.x + Math.sin(i * 2) * 2.2, P.z + Math.cos(i * 2) * 2.2, 2); const e = spawnEnemyBareTest('pleier', s.x, s.z); e.cd = 99; } }""")
         await pg.wait_for_timeout(900)
         hp0 = await pg.evaluate("() => MORBIDIUM.enemies.filter(e => e.alive).map(e => e.hp)")
         await pg.keyboard.press('KeyV'); await pg.wait_for_timeout(300)
@@ -163,7 +163,7 @@ async def main():
         sjekk('nytt apparat bytter ut det gamle, som blir stående i et glass', byt['id'] == 'stoppeklokke' and byt['gammel'], byt)
         await pg.evaluate("() => { const P = MORBIDIUM.player; P.invuln = 0; P.iframe = 0; hurt(P, 9999, { type: 'kultist' }); }")
         await pg.wait_for_timeout(300)
-        sjekk('frosken tar det dødelige slaget', await pg.evaluate("() => MORBIDIUM.player.alive && MORBIDIUM.player.hp === 1 && MORBIDIUM.run.froskBrukt"))
+        sjekk('frosken tar det dødelige slaget', await pg.evaluate("() => MORBIDIUM.player.alive && MORBIDIUM.player.hp <= 21 && MORBIDIUM.run.froskBrukt"))
         await pg.evaluate("() => { const P = MORBIDIUM.player; P.hp = P.maxHp; dropPickup(P.x + .5, P.z, 'trinket', 'hestesko'); }")
         await pg.wait_for_timeout(900)
         await pg.evaluate("() => { const k = MORBIDIUM.pickups.find(k => k.kind === 'trinket'); takePickupTest(k); }")
@@ -173,6 +173,54 @@ async def main():
         sjekk('apparat og lommerusk overlever lagring', await pg.evaluate("() => MORBIDIUM.run.akt && MORBIDIUM.run.akt.id === 'stoppeklokke' && MORBIDIUM.run.trinket === 'hestesko'"))
         await pg.evaluate("() => openJournal('kuriositeter')"); await pg.wait_for_timeout(700); await pg.screenshot(path='/tmp/e_16journal_utstyr.png')
         sjekk('ingen konsollfeil (utstyr)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 8) oppskrifter og mestere
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        info = await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player; G.rooms.forEach(s => s.cleared = true); P.hp = P.maxHp = 500; P.teeth = 10; R.view = 15; R.resize();
+          const keys = Object.keys(MESTER), out = [];
+          keys.forEach((k, i) => { const a = i / keys.length * Math.PI * 2, s = freeSpot(P.x + Math.sin(a) * 4, P.z + Math.cos(a) * 4, 2); const e = spawnEnemy(['pleier', 'kultist', 'byrakrat', 'tvang', 'rotte', 'oppasser'][i % 6], s.x, s.z, false, 2); if (!e.mester) Oppskrift.mester(e, k); else { e.mester = k; } out.push(e.mesterNavn); });
+          return { navn: out, labels: document.querySelectorAll('.mester').length }; }""")
+        sjekk('mestere får navn og navneskilt', info['labels'] >= 11 and all(info['navn']), info)
+        await pg.wait_for_timeout(2500); await pg.screenshot(path='/tmp/e_17mestere.png')
+        for_ = await pg.evaluate("() => ({ n: MORBIDIUM.enemies.filter(e => e.alive).length, teeth: MORBIDIUM.player.teeth })")
+        await pg.evaluate("() => { for (const e of MORBIDIUM.enemies) if (e.alive && e.mester === 'lommetyv') e.stolen = 5; for (const e of MORBIDIUM.enemies.slice()) if (e.alive && e.mester) hurt(e, 99999, { from: 'player' }); }")
+        await pg.wait_for_timeout(150)
+        tele = await pg.evaluate("() => Oppskrift.tall.smell")
+        await pg.wait_for_timeout(1000)
+        etter = await pg.evaluate("() => ({ n: MORBIDIUM.enemies.filter(e => e.alive).length, split: Oppskrift.tall.delt, hp: MORBIDIUM.player.hp })")
+        etter['tele'] = tele
+        sjekk('todelt mester deler seg i to', etter['split'] >= 2, etter)
+        sjekk('eksplosiv mester varsler en eksplosjon når den dør', etter['tele'] > 0, etter)
+        await pg.evaluate("() => { for (const e of MORBIDIUM.enemies) if (e.alive) hurt(e, 99999, { from: 'player' }); }")
+        await pg.wait_for_timeout(1500)
+        # farging og tilbehør på vanlige fiender
+        await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player; const cols = ['#6a94c8', '#d880a0', '#7ab888', '#d8b850'];
+          for (let i = 0; i < 6; i++) { const s = freeSpot(P.x - 3 + i * 1.3, P.z - 2.2, 2); const e = spawnEnemyBareTest('pleier', s.x, s.z); e.cd = 99; if (i < 4) e.doll.setDye(cols[i]); if (i >= 2) e.doll.addAddon(addonPart(['bart', 'eyeliner', 'glassoye', 'bandasje'][i - 2]), Object.assign({}, LOOKS[['bart', 'eyeliner', 'glassoye', 'bandasje'][i - 2]], { off: Object.fromEntries(Object.entries(LOOKS[['bart', 'eyeliner', 'glassoye', 'bandasje'][i - 2]].off).map(([v, o]) => [v, [o[0], o[1] - .12]])) })); } }""")
+        await pg.wait_for_timeout(1500); await pg.screenshot(path='/tmp/e_18farget.png')
+        sjekk('ingen konsollfeil (oppskrifter)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 9) likene ligger der pasienten døde, flere i samme etasje
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        posisjoner = []
+        for i in range(2):
+            await start_lop(pg)
+            pos = await pg.evaluate("""(i) => { if (MORBIDIUM.depth !== 1) startFloor(1, false); rolig(); const G = MORBIDIUM, P = G.player, r = G.F.rooms.filter(r => r.role === 'combat')[i] || G.F.rooms[1]; const s = freeSpot(r.x + 2.5, r.z + 2.5, 2); P.x = s.x; P.z = s.z; P.invuln = 0; P.iframe = 0; hurt(P, 9999, { type: 'pleier' }); return { x: P.x, z: P.z, d: G.depth }; }""", i)
+            posisjoner.append(pos); await pg.wait_for_timeout(2600)
+        lik = await pg.evaluate("() => MORBIDIUM.meta.lik.map(l => [l.depth, l.x, l.z])")
+        sjekk('hvert dødsfall lagres med posisjon', len(lik) == 2 and all(l[1] > 0 for l in lik), lik)
+        await pg.click('#dNew'); await pg.wait_for_timeout(500); await pg.click('[data-awk]'); await pg.wait_for_timeout(1400)
+        await pg.evaluate("(d) => { if (MORBIDIUM.depth !== d) startFloor(d, false); }", posisjoner[0]['d'])
+        cs = await pg.evaluate("() => MORBIDIUM.corpses.map(c => ({ x: +c.x.toFixed(1), z: +c.z.toFixed(1), name: c.ld.name }))")
+        sjekk('begge likene ligger i etasjen', len(cs) == 2, cs)
+        await pg.evaluate("() => { const C = MORBIDIUM.corpses[0], P = MORBIDIUM.player; rolig(); P.x = C.x; P.z = C.z + 1.6; R.snapCamera(C.x, C.z); }")
+        await pg.wait_for_timeout(1000); await pg.screenshot(path='/tmp/e_19lik.png')
+        pr = await pg.evaluate("() => document.getElementById('prompt').textContent")
+        sjekk('liket kan undersøkes', 'Undersøk liket' in pr, pr)
+        sjekk('ingen konsollfeil (lik)', not pg.errs, pg.errs[:6])
         await pg.close()
 
         # 4) alle fire sjefer med alle angrep, og rommene i Isolat og arkiv

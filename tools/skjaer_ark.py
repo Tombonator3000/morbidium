@@ -81,7 +81,7 @@ def main():
                     nøkkel = f'{kat}_{serie}_{j + 1}_{VIS[i]}'; c.save(mappe / f'{nøkkel}.png'); n += 1
                     cw, ch = c.size  # festepunkt: nakke/hofte-krysset nederst midt i ruta (22 px over kanten på en 1024-mal)
                     meta[nøkkel] = {'fil': f'{kat}/{nøkkel}.png', 'kategori': kat, 'serie': serie, 'del': j + 1, 'visning': VIS[i],
-                                    'feste': [cw / 2, ch - 22 * im.size[1] / 1024 + 3], 'px_per_enhet': 78 * im.size[1] / 1024 / .4}
+                                    'feste': [cw / 2, ch - 22 * im.size[1] / 1024 + 3], 'px_per_enhet': 78 * im.size[1] / 1024 / .4, 'storrelse': [cw, ch]}
             shutil.move(str(p), INN / 'behandlet' / p.name)
             print(f'{p.name}: {n} deler')
         except Exception as e:
