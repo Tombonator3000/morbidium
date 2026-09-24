@@ -9,7 +9,7 @@
 const CAM_PITCH = 52 * Math.PI / 180;
 const BILL_Y = 1 / Math.cos(CAM_PITCH);
 const R = {
-  renderer: null, scene: null, camera: null, level: null, dyn: null, lscene: null, basicCache: new Map(), geoCache: new Map(), tex: {},
+  renderer: null, scene: null, camera: null, level: null, dyn: null, lscene: null, geoCache: new Map(), tex: {},
   camT: { x: 0, z: 0 }, trauma: 0, shakeOn: true, flashOn: true, distortOn: true, lightsOn: true, view: 11.5,
   rt: null, lrt: null, post: null, postScene: null, postCam: null,
   fx: { hurt: 0, flash: 0, morb: 0, low: 0 },
@@ -102,11 +102,7 @@ const R = {
     r.setRenderTarget(null); r.render(this.postScene, this.postCam);
   },
   /* ---------- hjelpere ---------- */
-  basic(color, opt) {
-    const key = color + JSON.stringify(opt || {});
-    if (!this.basicCache.has(key)) this.basicCache.set(key, new THREE.MeshBasicMaterial(Object.assign({ color }, opt || {})));
-    return this.basicCache.get(key);
-  },
+
   geo(key, make) { if (!this.geoCache.has(key)) this.geoCache.set(key, make()); return this.geoCache.get(key); },
   plane1() { return this.geo('plane1', () => new THREE.PlaneGeometry(1, 1)); },
   canvasTex(w, h, draw, repeat) {
@@ -226,7 +222,7 @@ const R = {
   updateCamera(tx, tz, dt) {
     this.camT.x = lerp(this.camT.x, tx, 1 - Math.pow(.004, dt)); this.camT.z = lerp(this.camT.z, tz, 1 - Math.pow(.004, dt));
     this.trauma = Math.max(0, this.trauma - dt * 1.9);
-    const s = this.shakeOn ? this.trauma * this.trauma * .32 : 0, t = performance.now() * .05;
+    const s = this.shakeOn ? this.trauma * this.trauma * .32 * (this.shakeK ?? 1) : 0, t = performance.now() * .05;
     const ox = s * (Math.sin(t * 1.3) + Math.sin(t * 2.9) * .5), oz = s * (Math.cos(t * 1.7) + Math.sin(t * 3.3) * .5), D = 60;
     this.camera.position.set(this.camT.x + ox, Math.sin(CAM_PITCH) * D, this.camT.z + oz + Math.cos(CAM_PITCH) * D);
     this.camera.lookAt(this.camT.x + ox, 0, this.camT.z + oz);

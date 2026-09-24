@@ -17,7 +17,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 
 ## Teknikk
 - Én selvstendig HTML-fil, Three.js r128 fra cdnjs.
-- Kilder i src/, satt sammen av build.py til dist/morbidium.html. Rekkefølge: 00_head, 01_core, 02_data, 03_generator, 04_render, 05_world, 10_art, 11_doll, 12_paint, 13_rom, 14_pasient, 20_actors, 22_sjefer, 25_items, 26_fiender, 27_utstyr, 28_oppskrift, 30_game.
+- Kilder i src/, satt sammen av build.py til dist/morbidium.html. Rekkefølge: 00_head, 01_core, 02_data, 03_generator, 04_render, 05_world, 06_musikk, 10_art, 11_doll, 12_paint, 13_rom, 14_pasient, 20_actors, 22_sjefer, 25_items, 26_fiender, 27_utstyr, 28_oppskrift, 32_meny, 33_merknader, 30_game. 32_meny og 33_merknader ligger før 30_game fordi konstantene der må finnes når 30_game starter.
 - Fire etasjer (MAX_DEPTH 4): Mottak (Krok), Underetasjen (Rust), Kjelleren: Isolat og arkiv (Overarkivar Gunhild Paragraf), Under grunnmuren: Dypet (Journalen). Signaturangrepene står i BOSS_MOVES i 22_sjefer.js.
 - Render: ortografisk kamera, scenen tegnes til et mål, lys i eget lag (R.light), så ett etterbehandlingspass (gradering, papir, korn, vignett, blekkboiling, Morbidium, skade). Dukkene har egen shader (blink, kontur, oppløsning).
 - Spillflyt i 30_game.js: tilstander title, panel, play, journal, dead. G.run holder løpet (pasient, egenskaper, kort i slots og reserve), G.meta lagres i localStorage under morbidium_meta_v2.
@@ -70,6 +70,32 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Pasient.deler(look) gir alt som trengs; Pasient.dukke lager figuren. Brukes av spilleren, medaljen, innleggelseskortet, journalen, dødskortet, utskrivningskortet og likene. Lik i likhuset får tilfeldige utseender. Menn i morgenkåpe blir liggende som ChatGPT-liket (lik.png) farget om, alle andre som et sammensatt lik.
 - Nøkler for bilder fra ChatGPT: hode_pasient_kvinne_*, kropp_tvang_*, kropp_skjorte_*, kropp_pyjamas_*, sko_barfot, sko_sokk, pynt_*. Nattserken har ingen bildenøkkel ennå (den går under hofta, og bildebehandlingen fester alt ved hofta).
 - Doll tar opt.rig (farger og mål) og opt.shoeP. Båndene til armer og bein har plass til 3200 punkter; med 900 ble fyllfargen kuttet og lemmene tegnet nesten bare i blekk (feil fra første versjon, rettet 2026-09-24).
+
+## Merknader og slutten (33_merknader.js)
+- G.meta.merk = { id: tidspunkt }. MERKNADER har navn, krav, gir og eventuelt kur (kuriositeter som er låst til merknaden er fortjent). Merknad.laast(id) brukes av Items.pickFrom.
+- Kroker: onDeath (showDeath), onBoss (bossDie), onWin (visUtskrevet), onKill (enemyDie, teller meta.drap og meta.mestere), onLoot, onTransform, onFragment, tick (tenner, diagnoser, Morbidium).
+- Oppvåkningssteder kan låses med unlock: 'merk:<id>' (Kapellet: merk:rust, Vaktmesterens bod: merk:tenner). lockText(k) gir teksten.
+- showWin viser først utskrivningsbrevet (utskrivningsbrev), så visUtskrevet med kortet. Gjeninnleggelse: G.run.gjen (valget huskes i meta.gjenValg). Ganger fiende- og sjefshelse 1,3, skade 1,2, mestersjanse 1,6, tenner 1,25.
+
+## Spor, byggeanimasjon og tips (33_merknader.js)
+- Spor.onFloor legger opptil to krittrablinger fra meta.historie på gulvet i kamprom; Spor.interact gir «Les rablingen».
+- Bygg.onFloor gjør møblene utenfor startrommet flate (scale nesten 0, byggS husker skalaen); Bygg.tick bygger et rom når pasienten er innen seks ruter. Bygg.alt() bygger alt (brukes av rolig() i testene). Av med R.lowTex eller enkel grafikk.
+- Tips.vis(id, forsinkelse) viser en lapp én gang (meta.tips); innstillingen tips slår dem av.
+- Manifestet oppdateres med tools/lag_manifest.py (fletter inn, fjerner aldri). ART_BRIEF.md lages av tools/lag_brief.py og viser hva som er levert.
+
+## Musikk og lyd (06_musikk.js, Sound i 01_core.js)
+- Musikk er et sekvenseringsverk i åttendeler med forhåndsplanlegging (0,22 s). Stykker i STYKKER: tittel (spilledåsevals), e1 (vals i d-moll), e2 (sakte orgel med drypp), e3 (frygisk marsj med cembalo og skrivemaskin), e4 (kor og klokker), tjeneste (grammofonvals i dur, filtrert som en gammel grammofon).
+- Tre lag: grunn (alltid), kamp (trommer og sagbass) og sjef (messing og pauker). Musikk.settNiva(0/1/2) toner lagene inn og øker tempoet litt. Morbidium (Musikk.morb) drar tonene skjeve og gir halvtonefeil.
+- Lydbusser: sfx, amb (drone og stemningslyder), mus (musikken). Innstillinger: vol, sfx, mus, amb.
+- Sound.tick spiller nå tilfeldige stemningslyder per etasje (klokke, knirk, drypp, rør, skrivemaskin, rotte, skrik, hjerteslag). Tonerekka fra the-deep-ones er erstattet av musikken.
+- Hjerteslag under 25 % helse, raskere jo mindre helse. Stikk ved død (fallende orgel og gongong) og utskrivning (spilledåse i dur).
+
+## Menyer (32_meny.js)
+- Alt er papir og skaleres til skjermen med CSS zoom (fitPanel), ingenting ruller. Smale skjermer (under 700 px eller stående) får egne smale varianter.
+- Tittelen: innleggelsesskjema med avkrysning. Pause: utklippstavle med portrett. Innstillinger: kartotekkort med fanene Lyd, Bilde, Spill, Styring, Data. Pasienthåndboka: hefte med åtte kapitler og notater i margen. Arkivet: skap med tre skuffer (pasientmapper med portrett og stempel, journalfragmenter, årsrapport).
+- Innstillinger (G.meta.settings, normSettings): vol, sfx, amb, kamera (ganger R.view 11.5), shake (styrke 0 til 1, var av/på før), flash, distort, lights, simple, tall, bobler, skilt, ui (størrelse på HUD via CSS-variabelen --ui og scale).
+- Data-fanen kan slette lagret løp og brenne arkivet (to trykk). Innstillingene beholdes.
+- Etasje 3 har alltid minst ett isolat eller kartotek (generatoren, testet i test_gen).
 
 ## Apparater og lommerusk (27_utstyr.js)
 - Aktiv: G.run.akt = { id, charge, max }, lades per ryddet rom (sjef to, batteri dobler). Lomme: G.run.trinket. Begge lagres med løpet.

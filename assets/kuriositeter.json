@@ -158,5 +158,93 @@
  "karantene": {
   "name": "Karantenebånd",
   "desc": "Fiender i låste rom har 20 % mindre helse."
+ },
+ "akt:defib": {
+  "name": "Bærbar defibrillator",
+  "desc": "Et elektrisk støt rundt deg. Alle i nærheten tar skade og blir stående. Pytter får strøm."
+ },
+ "akt:bor": {
+  "name": "Tannlegebor",
+  "desc": "Du snurrer med boret i to sekunder. Alt rundt deg tar skade og mister tenner."
+ },
+ "akt:stempelpute": {
+  "name": "Stempelpute",
+  "desc": "AVSLÅTT på alle i rommet. De tar skade og står og venter i to sekunder."
+ },
+ "akt:adrenalin": {
+  "name": "Adrenalinsprøyte",
+  "desc": "Seks sekunder med fart og kraft, og et lite plaster på såret."
+ },
+ "akt:blodpose": {
+  "name": "Blodpose",
+  "desc": "Fyller på 40 prosent helse. Gruppe ukjent."
+ },
+ "akt:blits": {
+  "name": "Kamera med magnesiumblits",
+  "desc": "SI APPELSIN. Alle fiender du ser, blir blendet. Sjefer myser."
+ },
+ "akt:stoppeklokke": {
+  "name": "Forstanderens stoppeklokke",
+  "desc": "Fiendene går i sakte film i fem sekunder. Du gjør ikke det."
+ },
+ "akt:duebur": {
+  "name": "Duebur",
+  "desc": "Slipper ut fire duer som kjemper for deg en stund."
+ },
+ "akt:meisel": {
+  "name": "Vaktmesterens meisel",
+  "desc": "Tegner hele etasjen på kartet, med det hemmelige rommet, og knuser sprekker i nærheten."
+ },
+ "akt:grammofon": {
+  "name": "Grammofon med vuggevise",
+  "desc": "Alle i nærheten sovner. Musikken er ikke god."
+ },
+ "lomme:hestesko": {
+  "name": "Hestesko",
+  "desc": "Flere kritiske treff."
+ },
+ "lomme:tannspeil": {
+  "name": "Tannlegespeil",
+  "desc": "Tenner og hjerter trekkes til deg fra dobbelt så langt unna."
+ },
+ "lomme:knappenal": {
+  "name": "Knappenål i fôret",
+  "desc": "10 prosent mer skade når du har full helse."
+ },
+ "lomme:lanekort": {
+  "name": "Lånekort med stempel",
+  "desc": "Alt koster 15 prosent mindre. Ingen sjekker datoen."
+ },
+ "lomme:batteri": {
+  "name": "Lekkende batteri",
+  "desc": "Apparatet ditt lades dobbelt så fort."
+ },
+ "lomme:kaninpote": {
+  "name": "Kaninpote fra tøffelen",
+  "desc": "Rullingen lades 25 prosent raskere. Tøffelen savner den."
+ },
+ "lomme:morfin": {
+  "name": "Morfindråpe",
+  "desc": "Tre helse hver gang et rom er ryddet."
+ },
+ "lomme:monokkel": {
+  "name": "Sprukket monokkel",
+  "desc": "Du ser straks hvor den sprukne veggen er i hver etasje."
+ },
+ "lomme:skalpell": {
+  "name": "Rusten skalpell",
+  "desc": "Slag gir ofte blødning. Stivkrampevaksinen er utgått."
+ },
+ "lomme:frosk": {
+  "name": "Tørket frosk",
+  "desc": "Én gang per etasje tar frosken et dødelig slag for deg."
+ },
+ "lomme:kolapp": {
+  "name": "Kølapp nummer 1",
+  "desc": "Første treff på hver fiende gjør 50 prosent mer skade. Du var først."
+ },
+ "lomme:pastill": {
+  "name": "Halspastill",
+  "desc": "Morbidium stiger 30 prosent saktere. Smaker mint og angst."
  }
 }

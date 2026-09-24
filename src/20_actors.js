@@ -30,8 +30,8 @@ function addMorb(v) {
   const P = G.player; if (!P) return;
   P.morb = clamp(P.morb + v * (hasDiag('hovedperson') ? 1.3 : 1) * (1 - (P.stats.fatteevne - 1) * .05) * (v > 0 && Lomme.has('pastill') ? .7 : 1), 0, 100);
 }
-function healPlayer(v, silent) {
-  const P = G.player; const h = Math.min(P.maxHp - P.hp, v * (hasDiag('hypokonder') ? 1.4 : 1)); if (h <= 0) return;
+function healPlayer(v, silent, blod) {
+  const P = G.player; const h = Math.min(P.maxHp - P.hp, v * (hasDiag('hypokonder') ? 1.4 : 1) * (hasDiag('blodtorst') && !blod ? .75 : 1)); if (h <= 0) return;
   P.hp += h; if (!silent) { numText(P.x, P.z, '+' + Math.round(h), 'info', 2.2); Sound.play('heal'); Particles.spawn(P.x, 1.2, P.z, 8, 0x9cc7a4, { speed: 2, up: 4, g: 2 }); }
 }
 
@@ -115,7 +115,7 @@ function updatePlayer(dt, A) {
     if (k.p >= 1) { P.atk = null; if (P.queued) { P.queued = false; startSwing(false); } else P.chain = .3; }
   } else if (P.chain > 0) { P.chain -= dt; if (P.chain <= 0) P.combo = 0; }
   // bevegelse
-  let spd = (5 + P.stats.smidighet * .15) * (P.gasT > 0 ? .6 : 1) * (P.adrenT > 0 ? 1.4 : 1) * (hasDiag('ruging') ? .9 : 1) * (P.fastT > 0 ? 1.4 : 1) * (P.coffee ? 1.1 : 1) * Items.stat('speed'), mx = stunned ? 0 : A.mx, mz = stunned ? 0 : A.mz;
+  let spd = (5 + P.stats.smidighet * .15) * (P.gasT > 0 ? .6 : 1) * (P.adrenT > 0 ? 1.4 : 1) * (hasDiag('ruging') ? .9 : 1) * (hasDiag('samlemani') ? .95 : 1) * (P.fastT > 0 ? 1.4 : 1) * (P.coffee ? 1.1 : 1) * Items.stat('speed'), mx = stunned ? 0 : A.mx, mz = stunned ? 0 : A.mz;
   if (P.roll > 0) { P.roll -= dt; mx = Math.sin(P.rollA); mz = Math.cos(P.rollA); spd = 11 + P.stats.smidighet * .3; if (Math.random() < dt * 20) puff(P.x, P.z, 1, .45); }
   else if (P.atk) spd *= .3; else if (P.charging) spd *= .4;
   P.vx = lerp(P.vx, mx * spd, 1 - Math.exp(-dt * 16)); P.vz = lerp(P.vz, mz * spd, 1 - Math.exp(-dt * 16));
@@ -175,17 +175,17 @@ function useConsumable() {
 }
 function playerDie() {
   const P = G.player; if (!P.alive) return;
-  P.alive = false; P.hp = 0; Sound.play('die', 1, .7); R.shake(.7); puff(P.x, P.z, 5); slowMo(1.2, .25);
+  P.alive = false; P.hp = 0; Sound.play('die', 1, .7); R.shake(.7); puff(P.x, P.z, 5); slowMo(1.2, .25); Musikk.stopp(.6);
   setTimeout(() => showDeath(), 1600);
 }
 function gainXp(v) {
   const P = G.player; P.xp += v * (1 + (P.stats.fatteevne - 1) * .1);
   const need = () => 40 + (P.level - 1) * 55;
-  while (P.xp >= need()) { P.xp -= need(); P.level++; P.points++; Sound.play('level'); toast('Nytt nivå', 'Et poeng å fordele i journalen (Tab)'); numText(P.x, P.z, 'NIVÅ ' + P.level, 'crit', 2.8); }
+  while (P.xp >= need()) { P.xp -= need(); P.level++; P.points++; Sound.play('level'); toast('Nytt nivå', 'Et poeng å fordele i journalen (Tab)'); Tips.vis('niva', 2500); numText(P.x, P.z, 'NIVÅ ' + P.level, 'crit', 2.8); }
 }
 function checkDiagnoses() {
   const P = G.player, c = P.counters; if (P.diag.length >= 3) return;
-  const tests = [['rulling', c.dodge >= 45], ['ruging', c.heavy >= 22], ['hovedperson', c.monolog >= 4 || P.morb >= 85], ['nysgjerrighet', c.props >= 18], ['innsikt', c.ability >= 30], ['hypokonder', c.heal >= 4]];
+  const tests = [['rulling', c.dodge >= 45], ['ruging', c.heavy >= 22], ['hovedperson', c.monolog >= 4 || P.morb >= 85], ['nysgjerrighet', c.props >= 18], ['innsikt', c.ability >= 30], ['hypokonder', c.heal >= 4], ['samlemani', (G.run.items || []).length >= 8], ['gradig', P.teeth >= 120], ['blodtorst', G.run.kills >= 60]];
   for (const [id, ok] of tests) if (ok && !P.diag.includes(id) && DIAGNOSES[id]) { P.diag.push(id); stampBig('DIAGNOSE', DIAGNOSES[id].name); Sound.play('stamp'); return; }
 }
 
@@ -369,17 +369,17 @@ function enemyTarget(e) {
    FIENDER
    ============================================================ */
 function spawnEnemy(type, x, z, elite, depth) {
-  const D = ENEMIES[type], hpK = 1 + (depth - 1) * .3;
+  const D = ENEMIES[type], gj = G.run && G.run.gjen, hpK = (1 + (depth - 1) * .3) * (gj ? 1.3 : 1);
   const doll = new Doll(type, { elite, weapon: type === 'oppasser' ? 'sproyte' : D.weapon || null, shadow: type === 'pleier' ? .55 : D.r > .45 ? .5 : .42, scale: elite ? 1.2 : 1 });
   R.scene.add(doll.root); doll.root.position.set(x, 0, z); doll.root.scale.setScalar(.01);
-  const e = { kind: 'enemy', type, x, z, r: D.r * (elite ? 1.15 : 1), face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, elite, hp: D.hp * hpK * (elite ? 2.2 : 1), dmg: D.dmg * (1 + (depth - 1) * .17) * (elite ? 1.3 : 1), sp: D.speed, state: 'spawn', t: .5, cd: rnd(.8, 2), stun: 0, slip: 0, sleep: 0, speechT: rnd(3, 8), teles: [], bubbleH: D.bubbleH || (type === 'yngel' ? 1.7 : type === 'pleier' ? 3.3 : 3.1), blood: D.blood || (type === 'yngel' ? 0x6b2d8c : 0xb3261e), depth };
+  const e = { kind: 'enemy', type, x, z, r: D.r * (elite ? 1.15 : 1), face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, elite, hp: D.hp * hpK * (elite ? 2.2 : 1), dmg: D.dmg * (1 + (depth - 1) * .17) * (elite ? 1.3 : 1) * (gj ? 1.2 : 1), sp: D.speed, state: 'spawn', t: .5, cd: rnd(.8, 2), stun: 0, slip: 0, sleep: 0, speechT: rnd(3, 8), teles: [], bubbleH: D.bubbleH || (type === 'yngel' ? 1.7 : type === 'pleier' ? 3.3 : 3.1), blood: D.blood || (type === 'yngel' ? 0x6b2d8c : 0xb3261e), depth };
   e.max = e.hp; G.enemies.push(e); puff(x, z, 2, .8, type === 'yngel' ? '#6b3a82' : null);
   if (type === 'yngel') Particles.spawn(x, .2, z, 8, 0x6b2d8c, { speed: 2, up: 5 });
   return e;
 }
 function enemySlip(e) { if (e.slip > 0 || e.kind === 'boss') return; e.slip = 1.2; cancelTeles(e); e.state = 'recover'; e.t = 1.2; numText(e.x, e.z, 'SKLI!', 'info', 2.4); Sound.play('bonk', .6, .7); }
 function enemyDie(e, src) {
-  const P = G.player; P.counters.kills++; G.run.kills++;
+  const P = G.player; P.counters.kills++; G.run.kills++; Merknad.onKill(e); if (hasDiag('blodtorst')) healPlayer(1, true, true);
   e.deadT = .5; puff(e.x, e.z, 5, 1.2); Sound.play('die'); R.shake(.25); G.hitstop = Math.max(G.hitstop, .06);
   const D = ENEMIES[e.type]; dropTeeth(e.x, e.z, rndi(D.teeth[0], D.teeth[1]) * (e.elite ? 3 : 1));
   if (Math.random() < (e.elite ? .5 : .08)) dropPickup(e.x, e.z, 'heart');
@@ -471,7 +471,7 @@ function spawnBoss(depth, x, z) {
   const B0 = BOSSES[depth] || BOSSES[MAX_DEPTH], type = B0.type, tome = type === 'journalen';
   const doll = new Doll(type, { fixedView: 'f', weapon: B0.weapon, shadow: 1, scale: 1 });
   R.scene.add(doll.root); doll.root.position.set(x, 0, z);
-  const B = { kind: 'boss', type, depth, name: B0.name, x, z, r: tome ? 1.1 : .9, face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, hp: B0.hp, max: B0.hp, B0, state: 'intro', t: 2.6, cd: 1.5, phase: 'fight', phasesDone: 0, stagger: 0, slowT: 0, teles: [], bubbleH: tome ? 4.2 : 4.6, enraged: false, anchored: true, blood: tome ? 0x6b2d8c : 0xb3261e, q: [] };
+  const B = { kind: 'boss', type, depth, name: B0.name, x, z, r: tome ? 1.1 : .9, face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, hp: B0.hp * (G.run && G.run.gjen ? 1.3 : 1), max: B0.hp * (G.run && G.run.gjen ? 1.3 : 1), B0, state: 'intro', t: 2.6, cd: 1.5, phase: 'fight', phasesDone: 0, stagger: 0, slowT: 0, teles: [], bubbleH: tome ? 4.2 : 4.6, enraged: false, anchored: true, blood: tome ? 0x6b2d8c : 0xb3261e, q: [] };
   B.glow = R.light(x, z, 5, tome ? '#b36be0' : type === 'arkivar' ? '#ffe0b0' : '#ffcc88', .3);
   G.boss = B; FX.bubble(B, pick(LINES.bossIntro[depth]), 2.6, 'boss');
   $('bossName').textContent = B0.name; $('bossTitle').textContent = B0.title; $('bossBar').classList.remove('hidden');
@@ -490,7 +490,7 @@ function bossDie(B) {
   B.deadT = 1.6; cancelTeles(B); slowMo(1.2, .2); R.shake(.8); R.fx.flash = .6; Sound.play('clear'); Sound.play('die', 1, .5);
   for (let i = 0; i < 8; i++) setTimeout(() => puff(B.x + rnd(-1, 1), B.z + rnd(-1, 1), 3, 1.5), i * 90);
   dropTeeth(B.x, B.z, 25 + B.depth * 10); for (let i = 0; i < 2; i++) dropPickup(B.x, B.z, 'heart'); dropPickup(B.x, B.z, 'card', pick(ABILITY_IDS));
-  G.meta.bossKills++; saveMeta(); gainXp(80 * B.depth);
+  G.meta.bossKills++; saveMeta(); Merknad.onBoss(B); gainXp(80 * B.depth);
   $('bossBar').classList.add('hidden'); stampBig('BEHANDLET', B.name); clearCage();
   for (const e of G.enemies) if (e.alive) { e.hp = 0; killEntity(e, {}); }
   setTimeout(openTrapdoor, 1400);
@@ -551,6 +551,7 @@ function bossAttack(B, kind, dist, toP) {
   }
 }
 function openTrapdoor() {
+  Tips.vis('luke', 800);
   const room = G.F.rooms[G.F.bossId], x = room.cx + .5, z = room.cz + .5;
   const p = { k: 'trapdoor', x, z, rot: 0, opened: true }, g = propSprite('trapdoor', x, z, { P: propArt(p), flat: true }); R.level.add(g);
   G.trapdoor = { x, z }; R.light(x, z, 2.5, '#ffe2a0', .5, R.levelL);

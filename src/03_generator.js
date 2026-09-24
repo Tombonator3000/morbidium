@@ -135,8 +135,11 @@ function buildFloor(seed, depth, opts) {
   }
   // 8) innhold
   const tmplByDepth = { 1: ['venterom', 'sovesal', 'kapell', 'arkiv', 'venterom'], 2: ['bad', 'behandling', 'bad', 'kapell', 'behandling'], 3: ['isolat', 'kartotek', 'isolat', 'arkiv', 'kartotek', 'kapell'], 4: ['kjeller', 'kapell', 'arkiv', 'kjeller', 'bad'] };
+  // etasjen skal leve opp til navnet: Isolat og arkiv får alltid minst ett isolat eller kartotek
+  const kamp = F.rooms.filter(r => r.role === 'combat' || r.role === 'risk'), sist = kamp[kamp.length - 1], tema = { 3: ['isolat', 'kartotek'] }[depth];
+  let harTema = false;
   for (const r of F.rooms) {
-    if (r.role === 'combat' || r.role === 'risk') r.template = rng.pick(tmplByDepth[depth] || tmplByDepth[4]);
+    if (r.role === 'combat' || r.role === 'risk') { r.template = rng.pick(tmplByDepth[depth] || tmplByDepth[4]); if (tema) { if (tema.includes(r.template)) harTema = true; else if (r === sist && !harTema) r.template = tema[0]; } }
     else if (r.role === 'start') r.template = opts.startTemplate || 'eget';
     else if (r.role === 'service') r.template = r.service;
     else r.template = r.role;
@@ -255,6 +258,7 @@ function decorateRoom(F, r, rng) {
     case 'soppel': ent('garbage', 6); ent('crate', 2); drains(1); break;
     case 'vask': ent('basket', 5); put('chute', r.cx, r.z, 0); ent('puddle', 1); break;
     case 'operasjon': put('optable', r.cx, r.cz, 0, { tiles: [[0, 0], [0, 1]] }); ent('lamp', 2); ent('trolley', 1); break;
+    case 'vaktbod': along('verktoytavle', 2, { long: true }); put('locker', r.x + r.w - 2, r.z, 0); ent('botte', 2); ent('crate', 3, { data: { brk: 2 } }); drains(1); break;
     case 'begravelse': put('coffin', r.cx, r.z + 2, 0, { tiles: [[0, 0], [0, 1]] }); for (const s of [-3, 3]) put('pew', r.cx + s - 1, r.cz + 1, 0, { tiles: [[0, 0], [1, 0]] }); ent('candles', 3); break;
   }
   // gyteplasser
