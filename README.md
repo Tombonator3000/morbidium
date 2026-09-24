@@ -3,7 +3,7 @@
 Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og Hellraiser, men med mørk humor som gjør narr av edgelords. Tegnet i en stil som låner fra Conan Chop Chop og Castle Crashers. Hver pasient våkner et nytt sted, kjemper seg gjennom tre genererte etasjer, samler groteske kuriositeter som kombineres til stadig merkeligere angrep, og dør som regel på en pinlig måte.
 
 ## Spill
-- Nettleser: GitHub Pages-adressen til repoet (settes opp første gang under Settings, Pages).
+- Nettleser: https://tombonator3000.github.io/morbidium/
 - Tastatur og mus: WASD, mus for å sikte, venstreklikk slag, høyreklikk tungt slag, mellomrom rull, 1 til 4 evner, F flaske, E snakk, Tab journal, Esc pause.
 - Håndkontroll og berøring virker også.
 
