@@ -5,7 +5,7 @@
 - [ ] Bekrefte egenskapsnavnene fra journalskissen.
 - [ ] Bekrefte regelen om at kort i eget hjerneområde får bonus.
 - [ ] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt).
-- [ ] Flette grenen claude/funny-newton-cgnzav inn i main og slå på Pages (Settings, Pages, Source: GitHub Actions), så spillet publiseres.
+- [ ] Flette pull request 1 (https://github.com/Tombonator3000/morbidium/pull/1) inn i main og slå på Pages (Settings, Pages, Source: GitHub Actions), så spillet publiseres.
 
 ## Kjente svakheter
 - [ ] Claude-appen på Android viser ingen publiserte sider (hvit skjerm), heller ikke en enkel testside. Meldt inn av Tom. Spill i Chrome inntil videre.
