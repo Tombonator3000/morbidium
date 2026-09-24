@@ -49,7 +49,7 @@
 - [x] Resten av de 51 rekvisittene og møblene i kunstlisten. Alle ligger nå i gpt-grafikk/.
 - [x] Alle 54 figurdelene i kunstlisten, inkludert personale, sjefer, kultist, småfiender og spillerens døde ansikt.
 - [x] De ni ekstra ansiktstilbehørene, slimskuddet og kortplukk. Hele den gjeldende kunstlisten har bilder.
-- [ ] Flere bilder fra ChatGPT etter DESIGN_BRIEF.md: andre figurer, rekvisitter og effekter. Lastes opp til gpt-grafikk/.
+- [x] Alle bildene i den gjeldende kunstlisten er laget etter DESIGN_BRIEF.md og ligger i gpt-grafikk/.
 - [x] ChatGPT: ni pasientplagg som enkeltbilder i tre retninger, sju pyntbilder, bare føtter og ullsokk i gpt-grafikk/.
 - [x] Claude: Behold pasientens valgte fargevarianter når de nye PNG-bildene for klær og pynt brukes (gjort i 73b702a).
 - [x] Etappe 7: musikk (seks stykker i lag som følger kampen) og stemningslyder.
@@ -60,4 +60,4 @@
 - [x] Byggeanimasjon når pasienten nærmer seg et rom (idé fra threejs-architecture-effects).
 - [x] Rydde bort ubrukt kode (ICONS, STATS, R.basic). Mappa old/ finnes ikke lenger.
 - [x] Utvide tools/lag_manifest.py og ART_BRIEF.md med alt det nye. ART_BRIEF viser nå hva som er levert (150 av 287).
-- [ ] ChatGPT: de 20 figurbildene som gjenstår i ART_BRIEF.md (267 av 287 levert): Overarkivaren, byråkrat, narkoselege, pasient i tvangstrøye, arkivrotte, øyeblomst, Journalen og to nye visninger av slukyngelen.
+- [x] ChatGPT: de siste 20 figurbildene i ART_BRIEF.md: Overarkivaren, byråkrat, narkoselege, pasient i tvangstrøye, arkivrotte, øyeblomst, Journalen og to nye visninger av slukyngelen. Kunstlisten er komplett med 287 av 287 bilder.

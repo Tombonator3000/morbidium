@@ -371,3 +371,9 @@ Alle tidspunkt er UTC.
 - Strekarmer og strekbein: tynne mørke blekkstreker med små runde hender, på spilleren, fiendene, personalet, portrettene i journalen og på kortene, og på likene. Det er standard nå. Under Innstillinger, Bilde kan det byttes tilbake til de tykke armene og beina i klesfargen.
 - Rettet en feil i innstillingene: panelet mistet alle endringer etter den første til det ble åpnet på nytt, fordi innstillingene ble byttet ut med et nytt objekt hver gang. Nå oppdateres det samme objektet.
 - Testene er oppdatert: 3D-testen sjekker lister og pilastre, støv, at tingene er tegningene og kaster skygge, og at alt er som før når 3D slås av. Ny test for strekarmene (standard, bytte til tykke og tilbake).
+
+## 2026-09-24 23:19 Hele den utvidede kunstlisten er levert
+- Tegnet de siste 20 figurfilene: Journalen, øyeblomsten, arkivrotta og tvangstrøyepasienten fra tre vinkler, slukyngelen bakfra og fra siden, og hode og kropp til Overarkivaren, byråkraten og narkoselegen.
+- Kontrollerte at alle 64 bilder som manglet ved starten av arbeidet ligger i gpt-grafikk/ som PNG med gjennomsiktig bakgrunn. De omfatter 22 ikoner, 22 rombilder og 20 figurbilder.
+- Kjørte utskjæring, bildebehandling og bygging i en separat kopi av den nyeste hovedgrenen. 287 bilder ble behandlet uten feil, og 287 bilder samt 27 personaldeler ble bygget inn. Sjekket flere ferdig skalerte figurer visuelt.
+- Genererte ART_BRIEF.md på nytt. Den viser 287 av 287 leverte bilder. Ingen spillkode ble endret.
