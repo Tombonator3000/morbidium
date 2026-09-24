@@ -10,7 +10,7 @@ Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke red
 4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).
 5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.
 
-Status: 205 av 287 bilder er levert. Kolonnen «Levert» viser hvilke.
+Status: 223 av 287 bilder er levert. Kolonnen «Levert» viser hvilke.
 
 ## Stilblokk (lim inn i ChatGPT)
 
@@ -202,7 +202,7 @@ Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbele
 | `verktoytavle1.png` | a pegboard with hanging tools (hammers, saws, keys), 1 tiles wide, front view | stående |  |
 | `verktoytavle2.png` | a pegboard with hanging tools (hammers, saws, keys), 2 tiles wide, front view | liggende |  |
 
-## Runde 4: plukk, effekter, tillegg og pynt (33 bilder, 25 levert)
+## Runde 4: plukk, effekter, tillegg og pynt (33 bilder, 32 levert)
 
 Små ting. Enkle former, tydelig kontur.
 
@@ -219,13 +219,13 @@ Små ting. Enkle former, tydelig kontur.
 | `puff0.png` | a small cartoon dust cloud puff, beige with a brown outline | kvadrat | ja |
 | `puff1.png` | a small cartoon dust cloud puff, beige with a brown outline | kvadrat | ja |
 | `puff2.png` | a small cartoon dust cloud puff, beige with a brown outline | kvadrat | ja |
-| `pynt_harnett.png` | a thin dark hair net shaped like a dome (drawn alone) | liggende |  |
-| `pynt_hjelm.png` | a padded brown leather protective helmet with brass rivets (drawn alone) | liggende |  |
-| `pynt_nattlue.png` | a striped red and white nightcap with a pompom, drooping to the side (worn on a head, drawn alone) | kvadrat |  |
-| `pynt_papiljotter.png` | five pastel hair curlers in a row, as worn on top of a head (drawn alone) | liggende |  |
-| `pynt_plaster.png` | a crossed pair of beige sticking plasters | kvadrat |  |
-| `pynt_rosett.png` | a small red hair bow | liggende |  |
-| `pynt_sting.png` | a short stitched scar with black stitches | liggende |  |
+| `pynt_harnett.png` | a thin dark hair net shaped like a dome (drawn alone) | liggende | ja |
+| `pynt_hjelm.png` | a padded brown leather protective helmet with brass rivets (drawn alone) | liggende | ja |
+| `pynt_nattlue.png` | a striped red and white nightcap with a pompom, drooping to the side (worn on a head, drawn alone) | kvadrat | ja |
+| `pynt_papiljotter.png` | five pastel hair curlers in a row, as worn on top of a head (drawn alone) | liggende | ja |
+| `pynt_plaster.png` | a crossed pair of beige sticking plasters | kvadrat | ja |
+| `pynt_rosett.png` | a small red hair bow | liggende | ja |
+| `pynt_sting.png` | a short stitched scar with black stitches | liggende | ja |
 | `skudd_slim.png` | a small glob of green-yellow phlegm (projectile) | kvadrat | ja |
 | `skyggehand_p.png` | a purple smoky shadow hand flying forward (projectile) | kvadrat | ja |
 | `stempelmerke.png` | a smudged red rectangular rubber-stamp imprint | liggende | ja |
@@ -256,7 +256,7 @@ Våpenet står loddrett med håndtaket nederst og tuppen opp. Spillet roterer de
 | `vaapen_sproyte.png` | a large glass syringe | stående | ja |
 | `vaapen_stativ.png` | an IV drip stand: metal pole with an empty drip bag | stående | ja |
 
-## Runde 6: figurer (91 bilder, 60 levert)
+## Runde 6: figurer (91 bilder, 71 levert)
 
 Vanskeligst. Be først om et figurark (samme figur forfra, bakfra, fra siden), og deretter om hode og kropp hver for seg fra arket. Armer og bein tegner spillet selv som tykke streker, så de skal ikke være med.
 
@@ -337,19 +337,19 @@ Vanskeligst. Be først om et figurark (samme figur forfra, bakfra, fra siden), o
 | `kropp_pleier_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. back view, facing away | liggende | ja |
 | `kropp_pleier_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. front view, facing the viewer | liggende | ja |
 | `kropp_pleier_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. side view, facing right | liggende | ja |
-| `kropp_pyjamas_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing white pyjamas with vertical blue stripes, a lapel collar, buttons and a breast pocket (the clothes only). back view, facing away | liggende |  |
-| `kropp_pyjamas_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing white pyjamas with vertical blue stripes, a lapel collar, buttons and a breast pocket (the clothes only). front view, facing the viewer | liggende |  |
-| `kropp_pyjamas_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing white pyjamas with vertical blue stripes, a lapel collar, buttons and a breast pocket (the clothes only). side view, facing right | liggende |  |
+| `kropp_pyjamas_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing white pyjamas with vertical blue stripes, a lapel collar, buttons and a breast pocket (the clothes only). back view, facing away | liggende | ja |
+| `kropp_pyjamas_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing white pyjamas with vertical blue stripes, a lapel collar, buttons and a breast pocket (the clothes only). front view, facing the viewer | liggende | ja |
+| `kropp_pyjamas_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing white pyjamas with vertical blue stripes, a lapel collar, buttons and a breast pocket (the clothes only). side view, facing right | liggende | ja |
 | `kropp_rust_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of BOSS: hydrotherapist Ragnvald Rust, rubber diving-style helmet with round goggles, black rubber apron, big and damp. front view, facing the viewer | liggende | ja |
-| `kropp_skjorte_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing a pale blue hospital gown with a tiny diamond pattern and short sleeves; seen from behind it is open with ties and white polka-dot underpants (the clothes only). back view, facing away | liggende |  |
-| `kropp_skjorte_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing a pale blue hospital gown with a tiny diamond pattern and short sleeves; seen from behind it is open with ties and white polka-dot underpants (the clothes only). front view, facing the viewer | liggende |  |
-| `kropp_skjorte_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing a pale blue hospital gown with a tiny diamond pattern and short sleeves; seen from behind it is open with ties and white polka-dot underpants (the clothes only). side view, facing right | liggende |  |
-| `kropp_tvang_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing an off-white canvas straitjacket with brown leather straps and brass buckles, one loose strap dangling (the clothes only). back view, facing away | liggende |  |
-| `kropp_tvang_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing an off-white canvas straitjacket with brown leather straps and brass buckles, one loose strap dangling (the clothes only). front view, facing the viewer | liggende |  |
-| `kropp_tvang_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing an off-white canvas straitjacket with brown leather straps and brass buckles, one loose strap dangling (the clothes only). side view, facing right | liggende |  |
-| `sko_barfot.png` | ONE bare human foot with toes, side view | liggende |  |
+| `kropp_skjorte_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing a pale blue hospital gown with a tiny diamond pattern and short sleeves; seen from behind it is open with ties and white polka-dot underpants (the clothes only). back view, facing away | liggende | ja |
+| `kropp_skjorte_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing a pale blue hospital gown with a tiny diamond pattern and short sleeves; seen from behind it is open with ties and white polka-dot underpants (the clothes only). front view, facing the viewer | liggende | ja |
+| `kropp_skjorte_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing a pale blue hospital gown with a tiny diamond pattern and short sleeves; seen from behind it is open with ties and white polka-dot underpants (the clothes only). side view, facing right | liggende | ja |
+| `kropp_tvang_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing an off-white canvas straitjacket with brown leather straps and brass buckles, one loose strap dangling (the clothes only). back view, facing away | liggende | ja |
+| `kropp_tvang_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing an off-white canvas straitjacket with brown leather straps and brass buckles, one loose strap dangling (the clothes only). front view, facing the viewer | liggende | ja |
+| `kropp_tvang_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing an off-white canvas straitjacket with brown leather straps and brass buckles, one loose strap dangling (the clothes only). side view, facing right | liggende | ja |
+| `sko_barfot.png` | ONE bare human foot with toes, side view | liggende | ja |
 | `sko_hvit.png` | ONE white nurse clog, side view | liggende | ja |
 | `sko_klogg.png` | ONE black clog, side view | liggende | ja |
-| `sko_sokk.png` | ONE grey wool sock with a red band, side view | liggende |  |
+| `sko_sokk.png` | ONE grey wool sock with a red band, side view | liggende | ja |
 | `sko_stovel.png` | ONE black pointy boot, side view | liggende | ja |
 | `sko_tofler.png` | ONE pink bunny slipper with little ears, front view | liggende | ja |

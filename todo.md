@@ -46,7 +46,8 @@
 - [x] Alle 54 figurdelene i kunstlisten, inkludert personale, sjefer, kultist, småfiender og spillerens døde ansikt.
 - [x] De ni ekstra ansiktstilbehørene, slimskuddet og kortplukk. Hele den gjeldende kunstlisten har bilder.
 - [ ] Flere bilder fra ChatGPT etter DESIGN_BRIEF.md: andre figurer, rekvisitter og effekter. Lastes opp til gpt-grafikk/.
-- [ ] ChatGPT: pasientplagg som figurark med bare kroppsraden (figur_tvang.png, figur_skjorte.png, figur_pyjamas.png) og pynt som enkeltbilder (pynt_nattlue.png osv., se gpt-grafikk/LESMEG.md). Koden tegner dem til da.
+- [x] ChatGPT: ni pasientplagg som enkeltbilder i tre retninger, sju pyntbilder, bare føtter og ullsokk i gpt-grafikk/.
+- [ ] Claude: Behold pasientens valgte fargevarianter når de nye PNG-bildene for klær og pynt brukes. src/14_pasient.js viser dem nå i faste PNG-farger.
 - [x] Etappe 7: musikk (seks stykker i lag som følger kampen) og stemningslyder.
 - [x] Etappe 8: merknader som låser opp kuriositeter og oppvåkningssteder, utskrivningsbrev, gjeninnleggelse, tre diagnoser og sju fragmenter.
 - [x] Spor etter tidligere pasienter (rablinger med kritt signert med navn fra arkivet).
@@ -55,4 +56,4 @@
 - [x] Byggeanimasjon når pasienten nærmer seg et rom (idé fra threejs-architecture-effects).
 - [x] Rydde bort ubrukt kode (ICONS, STATS, R.basic). Mappa old/ finnes ikke lenger.
 - [x] Utvide tools/lag_manifest.py og ART_BRIEF.md med alt det nye. ART_BRIEF viser nå hva som er levert (150 av 287).
-- [ ] ChatGPT: de 82 bildene som gjenstår i ART_BRIEF.md (205 av 287 levert): nye figurer (Overarkivaren, byråkrat, narkoselege, pasient i tvangstrøye, arkivrotte, øyeblomst, Journalen, pasientplaggene), apparater og lommerusk, de nyeste møblene og pynten.
+- [ ] ChatGPT: de 64 bildene som gjenstår i ART_BRIEF.md (223 av 287 levert): nye figurer (Overarkivaren, byråkrat, narkoselege, pasient i tvangstrøye, arkivrotte, øyeblomst, Journalen), apparater og lommerusk og de nyeste møblene.

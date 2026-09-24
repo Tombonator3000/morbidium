@@ -327,3 +327,9 @@ Alle tidspunkt er UTC.
 - Tom leverte figurark for personale og sjefer, småfiender, kappe, dødt spillerhode og ansiktstilbehør. Bygget med alle 205 bilder uten feil, og figurene fungerer sammen med oppskriftssystemet og de fargede lemmene.
 - ART_BRIEF.md er generert på nytt: 205 av 287 bilder er levert. Det som gjenstår står uten «ja» i Levert-kolonnen.
 - Merknader som fortjenes mens døds- eller utskrivningskortet vises, stemples ikke lenger over overskriften. De står på selve kortet («Merknad: Innlagt for godt» og hva den åpner). Under spill stemples de som før.
+
+## 2026-09-24 20:15 Flere varianter av pasienten
+- Tegnet ni separate kroppsbilder for tvangstrøye, sykehusskjorte og stripete pyjamas, hver sett forfra, bakfra og fra høyre side. Tvangstrøyen har en løs stropp, og sykehusskjorten viser knyting og prikkete underbukse bakfra.
+- Tegnet nattlue, papiljotter, gjennomsiktig hårnett, beskyttelseshjelm, sløyfe, plaster og sting, samt en bar fot og en ullsokk. Alle 18 nye PNG-filer ligger i gpt-grafikk/ med navn fra manifestet.
+- Kjørte utskjæring, bildebehandling og bygging i en kopi av repoet. 223 bilder ble behandlet uten feil og bygget inn sammen med 27 personaldeler. Kontrollerte de ferdige bildene i spillstørrelse. ART_BRIEF.md er generert på nytt og viser 223 av 287 leverte bilder.
+- Bildene for klær og pynt brukes foreløpig uten omfarging i src/14_pasient.js. Spillets eksisterende fargevalg for disse delene blir derfor ikke synlige på PNG-bildene før Claude kobler dem på. Bare føtter farges etter hudtonen.
