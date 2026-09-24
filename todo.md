@@ -5,6 +5,7 @@
 - [ ] Bekrefte egenskapsnavnene fra journalskissen.
 - [ ] Bekrefte regelen om at kort i eget hjerneområde får bonus.
 - [ ] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt).
+- [ ] Slette grenen claude/funny-newton-cgnzav på GitHub (Claude Code får ikke lov til det). Alt på den finnes i main.
 
 ## Kjente svakheter
 - [ ] Claude-appen på Android viser ingen publiserte sider (hvit skjerm), heller ikke en enkel testside. Meldt inn av Tom. Spill i Chrome inntil videre.
