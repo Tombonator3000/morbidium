@@ -257,3 +257,9 @@ Alle tidspunkt er UTC.
 - Oppskriftssystemet (fra etappe 6, klart før tilbakemeldingen) er tatt med: fiender kan få farget klær, tilbehør i ansiktet og ulik størrelse, og av og til bli navngitte mestere med en egenskap (tykkhudet, oppjaget, eksplosiv, todelt, blodsuger, pestbærer, oppblåst, krympet, gjennomsiktig, lommetyv, pansret) og navneskilt. Delene fra ChatGPT (assets/deler/) bygges inn av build.py og brukes når de finnes.
 - Flettet inn Toms fire nye leveranser fra ChatGPT (personaldeler, sko og småting, våpen, plukk og effekter, grovere ansikter og to nye spillerfigurer).
 - Tester: generator 1200 av 1200, gjennomspilling uten feil, test_ekstra alt bestått (nye tester for lik og oppskrifter; tre tester gjort uavhengige av tilfeldigheter).
+
+## 2026-09-24 18:41 Personaldelene fra ChatGPT får riktig størrelse
+- Hodene på personalarket er tegnet omtrent 1,6 ganger større enn hjelpesirkelen i malen. I spillet ble de dobbelt så store som kroppen, og hattene havnet ved siden av hodet.
+- build.py klipper nå hver del til det som faktisk er tegnet (gjennomsiktige kanter bort) og lagrer bredde og høyde. Oppskriftssystemet skalerer hoder og kropper inn i spillets egne rammer for figurdeler, og hatter, hår og tilbehør plasseres og skaleres etter hodet de sitter på.
+- Sjekket med skjermbilde av åtte pleiere, oppassere, byråkrater og narkoseleger: hodene passer kroppen og hattene sitter på hodet.
+- Tester: generator 1200 av 1200, gjennomspilling uten feil, test_ekstra alt bestått.
