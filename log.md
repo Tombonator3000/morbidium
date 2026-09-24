@@ -188,3 +188,8 @@ Alle tidspunkt er UTC.
 - Tegnet fem bildeark med alle 40 kuriositetene fra manifestet, ett ark med åtte piller og et tomt preparatglass. Bildene har gjennomsiktig bakgrunn og følger den varme, håndtegnede sanatoriestilen.
 - Kontrollerte rutene for motiver som krysser grensene, og rettet de tre arkene som trengte det.
 - Prøvde hele bildeflyten i en egen kopi av repoet. Alle 40 kuriositeter, åtte piller og glasset ble behandlet, og byggingen tok med 62 bilder totalt uten feil.
+
+## 2026-09-24 16:51 Spillerfigur fra ChatGPT
+- Tegnet figur_pasient.png med tre vinkler av hode og tre vinkler av gul morgenkåpe uten armer og bein. Justerte plasseringen for å holde hodene og kroppene i hver sin rad.
+- Prøvde arket i en egen kopi med samme bildebehandling og bygging som GitHub bruker. Seks figurdeler ble laget; 68 bilder ble behandlet uten feil og tatt med i spillfila.
+- GitHub Pages bygde og publiserte den forrige leveransen med kuriositeter og piller uten feil.
