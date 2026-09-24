@@ -6,10 +6,12 @@ kort_due.png eller prop_lamp.png. For hvert bilde:
   2. Bildet beskjæres til innholdet.
   3. Det skaleres og plasseres slik at festepunktet treffer: kort og effekter midtstilles,
      alt annet står med bunnen midt på festepunktet (føtter, bunn av møbelet, grepet på våpenet).
-  4. Resultatet lagres som PNG i 256 piksler per spillenhet.
+  4. Resultatet lagres som PNG i 128 piksler per spillenhet (det spillet tegner i, se PX i 10_art.js),
+     med en palett på 256 farger. Det gjør fila rundt fire ganger mindre uten synlig forskjell.
+     --full-farge hopper over paletten.
 
 Krever Pillow:  pip install pillow
-Bruk:           python3 tools/behandle_bilder.py [--sjekk]
+Bruk:           python3 tools/behandle_bilder.py [--sjekk] [--full-farge]
 """
 import json, sys
 from pathlib import Path
@@ -17,7 +19,7 @@ from PIL import Image
 
 ROT = Path(__file__).resolve().parent.parent
 INN, UT = ROT / 'gpt-grafikk', ROT / 'assets' / 'ferdig'
-PXU = 256  # piksler per spillenhet i ferdige bilder
+PXU = 128  # piksler per spillenhet i ferdige bilder, samme som PX i spillet
 FYLL = {'hode': .9, 'kropp': .95, 'kort': .9, 'vaapen': .97, 'sko': .9}  # hvor mye av plassen tegningen får
 
 def fjern_bakgrunn(im):
@@ -76,6 +78,7 @@ def main():
             print(f'UKJENT  {f.name}: filnavnet må være en nøkkel fra assets/manifest.json'); feil += 1; continue
         try:
             ut = behandle(f, man[k])
+            if '--full-farge' not in sys.argv: ut = ut.quantize(colors=256, method=Image.Quantize.FASTOCTREE)
             if '--sjekk' not in sys.argv: ut.save(UT / f'{k}.png', optimize=True)
             print(f'OK      {f.name} -> assets/ferdig/{k}.png ({ut.size[0]}x{ut.size[1]})'); ok += 1
         except Exception as e:

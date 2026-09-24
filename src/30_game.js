@@ -267,7 +267,7 @@ function findInteract() {
     if (o.kind === 'locker' && !o.opened) consider(d, { t: 'Be Olsen åpne skapet', fn: () => olsenLocker(o) });
   }
   Spesial.interact(consider);
-  for (const pd of Items.pedestals) if (!pd.taken) consider(Math.hypot(pd.x - P.x, pd.z - P.z) - .9, { t: 'Ta ' + ITEMS[pd.id].name + Items.priceText(pd), fn: () => Items.take(pd) });
+  for (const pd of Items.pedestals) if (!pd.taken && ITEMS[pd.id]) consider(Math.hypot(pd.x - P.x, pd.z - P.z) - .9, { t: 'Ta ' + ITEMS[pd.id].name + Items.priceText(pd), fn: () => Items.take(pd) });
   if (G.corpse && !G.corpse.ld.looted) consider(Math.hypot(G.corpse.x - P.x, G.corpse.z - P.z) - .5, { t: 'Undersøk liket', fn: lootCorpse });
   if (G.trapdoor) consider(Math.hypot(G.trapdoor.x - P.x, G.trapdoor.z - P.z) - .6, { t: G.depth >= MAX_DEPTH ? 'Gå ut av bygget' : 'Klatre ned', fn: descend });
   for (const k of G.pickups) if (k.kind === 'weapon' || k.kind === 'card' || k.kind === 'cons') consider(Math.hypot(k.x - P.x, k.z - P.z) + .2, { t: k.kind === 'weapon' ? 'Ta ' + WEAPONS[k.val].name : k.kind === 'card' ? 'Plukk opp kortet' : 'Ta ' + CONSUMABLES[k.val].name, fn: () => takePickup(k) });

@@ -201,3 +201,9 @@ Alle tidspunkt er UTC.
 - Kartet viser spesialrommene med egne farger og tegn (* for skatt og hemmelig rom, ! for forbannet, O for offer).
 - Generatoren: validering tar hensyn til den sprukne veggen, sløyfekravet teller ikke det hemmelige rommet, og midten holdes ikke lenger fri i spesialrom. 1200 av 1200 gyldige, 1,01 forsøk i snitt.
 - Test: tungt slag knuser veggen, tornene tar et hjerte, kuriositeten utløser bakhold som kan ryddes, alteret tar imot én gave. Ingen konsollfeil.
+
+## 2026-09-24 16:54 Kuriositetene fra ChatGPT i spillet, og mindre spillfil
+- Flettet inn Toms commit med fem kuriositetsark, et pilleark og et tomt preparatglass. Kjørte bildeflyten slik Pages-bygget gjør (i en kopi, så arkene i repoet ikke flyttes): 62 bilder, ingen feil.
+- Problem: med alle bildene ble spillfila 6,6 MB, tungt på mobil. Spillet tegner uansett alle deler i 128 piksler per enhet (PX i 10_art.js), så 256 var bortkastet. tools/behandle_bilder.py lagrer nå i 128 piksler per enhet og med en palett på 256 farger (--full-farge slår paletten av). Forskjellen synes ikke. Spillfila er nå 0,95 MB med alle 62 bildene.
+- Fylte preparatglass bruker nå glasset fra ChatGPT: formalin og kuriositeten tegnes bak, glassbildet legges over. Før ble fylte glass tegnet av koden og tomme av ChatGPT.
+- Feil funnet og rettet: et glass uten innhold ga en feil hvert bilde i samhandlingen. Spillet lager ikke slike glass selv, men vakten er lagt inn.

@@ -134,6 +134,14 @@ function itemIcon(id) {
 }
 /* preparatglass med formalin og kuriositeten inni */
 function jarPart(id) {
+  // med glasset fra ChatGPT: formalin og kuriositeten bak, glassbildet over, så fylte og tomme glass ser like ut
+  const img = Art.img && Art.img.glass_tomt;
+  if (id && img && img.complete && img.naturalWidth) return Art.part('glassbilde_' + id, 1, 1.5, .5, .05, g => {
+    A.flat(g, A.rr(-.31, -.98, .62, .74, .1), 'rgba(150,210,120,.34)', 0);
+    g.save(); g.translate(0, -.62); g.scale(.56, .56); const P = itemIcon(id); g.drawImage(P.canvas, -.5, -.5, 1, 1); g.restore();
+    for (const [x, y] of [[-.18, -.84], [.14, -.5], [.2, -.9]]) A.flat(g, A.ell(x, y, .025, .025), 'rgba(255,255,255,.6)', .01, '#2f4a3a');
+    g.drawImage(img, -.5, -1.45, 1, 1.5);
+  });
   return Art.part('glass_' + (id || 'tomt'), 1, 1.5, .5, .05, g => {
     A.cel(g, A.rr(-.38, -.18, .76, .18, .04), '#5a4a3a', { line: '#2a1a10' });
     A.flat(g, A.rr(-.32, -1.2, .64, 1.02, .12), 'rgba(170,220,190,.35)', .045, '#2f4a3a');
