@@ -41,7 +41,7 @@
 - [x] De siste ni bildene for plukk og effekter fra ChatGPT: kamfer, levertran, luktesalt, tre støvpuff, skyggehånd, stempelmerke og treffstjerne.
 - [x] De sju våpenbildene fra ChatGPT i ett ark.
 - [x] Første gruppe rekvisitter og møbler fra ChatGPT: alter, tre disker, benk, bord og stol forfra og bakfra.
-- [ ] Resten av de 51 rekvisittene og møblene i kunstlisten.
+- [x] Resten av de 51 rekvisittene og møblene i kunstlisten. Alle ligger nå i gpt-grafikk/.
 - [ ] Flere bilder fra ChatGPT etter DESIGN_BRIEF.md: andre figurer, rekvisitter og effekter. Lastes opp til gpt-grafikk/.
 - [ ] Musikk og flere lyder.
 - [ ] Byggeanimasjon når et rom avsløres (idé fra threejs-architecture-effects).
