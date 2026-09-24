@@ -202,6 +202,10 @@ Alle tidspunkt er UTC.
 ## 2026-09-24 17:14 Resten av plukk og effekter fra ChatGPT
 - Tegnet og kontrollerte de siste ni småbildene: tre beholdere, tre støvpuff, skyggehånd, stempelmerke og treffstjerne. Krympet skyggehånden så ingen motiv krysser rutekanten.
 - Prøvde arket med bildebehandling og bygging i en egen kopi. 86 bilder ble behandlet uten feil og tatt med i spillfila. Hele den opprinnelige runden med 14 plukk og effekter er nå tegnet.
+
+## 2026-09-24 17:16 Våpen fra ChatGPT
+- Tegnet de sju våpnene i ett ni ruters ark med de to siste rutene tomme. Skaftene vender ned og virkedelen opp, slik at spillet kan rotere våpnene selv.
+- Prøvde klipping, bildebehandling og bygging i en egen kopi. Alle sju våpen ble laget; 93 bilder ble behandlet uten feil og tatt med i spillfila.
 ## 2026-09-24 16:50 Etappe 4: spesialrom
 - Hemmelig rom i hver etasje: generatoren legger et lite rom i en tom celle ved siden av et vanlig rom, med en korridor som er stengt av en sprukken murvegg der den møter rommet. Tre vanlige slag, ett tungt slag, en eksplosjon (nitroglyserin, eksplosiv pille) eller et stempel knuser veggen. Det støver fra sprekken når pasienten er i nærheten. Inni: en kuriositet i preparatglass, en journalside, tenner og en pille.
 - Forbannet rom (rundt hver femte etasje, i en blindvei): tornemerker og rødt lys ved døra, og tornene tar ett hjerte hver gang pasienten går inn (aldri det siste). Midt i rommet står en kuriositet fra blodhylla på et skjevt tegnet pentagram («IKKE TRÅKK»). Tar du den, låses dørene og et bakhold med to eliter kommer.
