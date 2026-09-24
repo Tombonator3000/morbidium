@@ -109,3 +109,9 @@ Alle tidspunkt er UTC.
 
 ## 2026-09-24 15:40 Pull request for grenen
 - Tom opprettet pull request fra Claude Code for grenen claude/funny-newton-cgnzav: https://github.com/Tombonator3000/morbidium/pull/1. Nye commits på grenen oppdaterer den.
+
+## 2026-09-24 15:43 Alt flyttet til main
+- Tom ba om at alt legges på main, og at arbeidet heretter skjer direkte på main.
+- main ble spolt fram til grenen claude/funny-newton-cgnzav (ingen flettecommit, historikken er rett linje) og pushet. GitHub merket pull request 1 som flettet.
+- Pushen til main startet arbeidsflyten «Bygg og publiser på GitHub Pages» for første gang.
+- memory.md og todo.md oppdatert: jobb på main, pull request-punktet er ferdig.
