@@ -86,7 +86,7 @@ function partMesh(P, U) {
   const m = new THREE.Mesh(quadGeo(P), spriteMat(P.tex, U || makeU()));
   m.userData.P = P; return m;
 }
-function setPart(m, P) { if (m.userData.P === P) return; m.userData.P = P; m.geometry = quadGeo(P); m.material.uniforms.map.value = P.tex; m.material.uniforms.uTexel.value.set(1 / P.canvas.width, 1 / P.canvas.height); }
+function setPart(m, P) { if (m.userData.P === P) return; m.userData.P = P; m.geometry = quadGeo(P); m.material.uniforms.map.value = P.tex; m.material.uniforms.uTexel.value.set(1 / P.canvas.width, 1 / P.canvas.height); if (m.customDepthMaterial) m.customDepthMaterial.map = P.tex; }
 
 class Doll {
   constructor(type, opt = {}) {

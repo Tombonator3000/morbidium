@@ -358,6 +358,19 @@ async def main():
         sjekk('ingen konsollfeil (bygging og tips)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 15) rom i 3D (prøve): kan slås på og av, og følger med til neste etasje
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg)
+        d3 = await pg.evaluate("""async () => { rolig(); MORBIDIUM.meta.settings.d3 = true; applySettings(); await new Promise(r => setTimeout(r, 800));
+          const a = { on: D3.on, modeller: D3.modeller.length, lys: D3.pool.filter(l => l.intensity > 0).length, gulv: Paint.mesh.gulv.material.type, glod: R.post.uniforms.uBloom.value > 0 };
+          startFloor(2, false); rolig(); await new Promise(r => setTimeout(r, 800)); a.etasje2 = D3.modeller.length > 0 && Paint.mesh.gulv.material.type === 'MeshToonMaterial';
+          MORBIDIUM.meta.settings.d3 = false; applySettings(); await new Promise(r => setTimeout(r, 300));
+          a.av = { gulv: Paint.mesh.gulv.material.type, lys: R.post.uniforms.uLights.value, modeller: D3.modeller.length, synlig: MORBIDIUM.props.every(o => !o.g || !o.g.userData.m || o.g.userData.m.visible) }; return a; }""")
+        sjekk('rom i 3D slås på med modeller, punktlys og glød, følger med til neste etasje og kan slås av igjen', d3['on'] and d3['modeller'] > 5 and d3['lys'] > 0 and d3['gulv'] == 'MeshToonMaterial' and d3['glod'] and d3['etasje2'] and d3['av'] == {'gulv': 'MeshBasicMaterial', 'lys': 1, 'modeller': 0, 'synlig': True}, d3)
+        sjekk('ingen konsollfeil (3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         # 4) alle fire sjefer med alle angrep, og rommene i Isolat og arkiv
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await start_lop(pg)

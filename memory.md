@@ -85,6 +85,13 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Tips.vis(id, forsinkelse) viser en lapp én gang (meta.tips); innstillingen tips slår dem av.
 - Manifestet oppdateres med tools/lag_manifest.py (fletter inn, fjerner aldri). ART_BRIEF.md lages av tools/lag_brief.py og viser hva som er levert.
 
+## Rom i 3D, prøve (15_rom3d.js)
+- D3.sett(på) fra applySettings (innstillingen d3, eller #3d). D3.onFloor() etter hver etasje og på tittelen. D3.tick(dt) hvert bilde.
+- R.light registrerer lysplatene i R.kilder; D3 gir de åtte nærmeste et PointLight (spillerens lykt først). Månen er et DirectionalLight med skyggekart som følger kameraet.
+- Paint.mesh { gulv, topp, vegg } får MeshToonMaterial (gradient i fire trinn) og normaler. Vanlige MeshBasic-materialer i nivået blir Lambert. Alt huskes i D3.byttet og settes tilbake.
+- D3.modell(p) lager lavpoly-møbler per p.k, hengt på rekvisittens gruppe (o.g), så de fjernes og bygges sammen med den. Plater og dukker kaster skygge med MeshDepthMaterial med alfatest (setPart oppdaterer kartet).
+- Glød: R.renderBloom (lyse deler i kvart oppløsning, uskarpt to ganger), lagt til i etterbehandlingen når D3 er på. Den tegnede lysbufferen er av i 3D.
+
 ## Musikk og lyd (06_musikk.js, Sound i 01_core.js)
 - Musikk er et sekvenseringsverk i åttendeler med forhåndsplanlegging (0,22 s). Stykker i STYKKER: tittel (spilledåsevals), e1 (vals i d-moll), e2 (sakte orgel med drypp), e3 (frygisk marsj med cembalo og skrivemaskin), e4 (kor og klokker), tjeneste (grammofonvals i dur, filtrert som en gammel grammofon).
 - Tre lag: grunn (alltid), kamp (trommer og sagbass) og sjef (messing og pauker). Musikk.settNiva(0/1/2) toner lagene inn og øker tempoet litt. Morbidium (Musikk.morb) drar tonene skjeve og gir halvtonefeil.
