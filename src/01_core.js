@@ -70,8 +70,12 @@ const Input = {
   initTouch() {
     const stick = $('stick'), knob = stick.querySelector('i');
     let sid = null, cx = 0, cy = 0;
-    const show = () => { if (!this.touch.active) { this.touch.active = true; $('touch').classList.remove('hidden'); } this.lastDevice = 'touch'; };
+    const show = () => { if (!this.touch.active) { this.touch.active = true; $('touch').classList.remove('hidden'); document.body.classList.add('touch'); } this.lastDevice = 'touch'; };
     addEventListener('touchstart', show, { passive: true });
+    // et ekte tastetrykk betyr tastatur: da skjules berøringsknappene til neste berøring
+    addEventListener('keydown', () => { if (this.touch.active) { this.touch.active = false; $('touch').classList.add('hidden'); document.body.classList.remove('touch'); } });
+    // evnekortene i HUD-en er selve knappene på berøringsskjerm
+    $('cards').addEventListener('touchstart', e => { const c = e.target.closest('.acard'); if (!c) return; const i = +c.id.slice(2); this.touch.pressed['ab' + i] = true; c.classList.add('tap'); setTimeout(() => c.classList.remove('tap'), 120); e.preventDefault(); }, { passive: false });
     stick.addEventListener('touchstart', e => {
       const t = e.changedTouches[0]; sid = t.identifier;
       const r = stick.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; e.preventDefault();
@@ -87,7 +91,11 @@ const Input = {
     }, { passive: false });
     const end = e => { for (const t of e.changedTouches) if (t.identifier === sid) { sid = null; knob.style.transform = ''; this.touch.mx = this.touch.mz = 0; } };
     stick.addEventListener('touchend', end); stick.addEventListener('touchcancel', end);
-    document.querySelectorAll('#tbtns button').forEach(b => {
+    this.bindTouchButtons();
+  },
+  bindTouchButtons() {
+    document.querySelectorAll('#tbtns button:not([data-bound])').forEach(b => {
+      b.dataset.bound = 1;
       const k = b.dataset.t;
       b.addEventListener('touchstart', e => { this.touch.btn[k] = true; this.touch.pressed[k] = true; e.preventDefault(); }, { passive: false });
       b.addEventListener('touchend', e => { this.touch.btn[k] = false; this.touch.released[k] = true; e.preventDefault(); }, { passive: false });

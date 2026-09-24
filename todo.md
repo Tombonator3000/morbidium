@@ -10,13 +10,11 @@
 ## Kjente svakheter
 - [ ] Claude-appen på Android viser ingen publiserte sider (hvit skjerm), heller ikke en enkel testside. Meldt inn av Tom. Spill i Chrome inntil videre.
 - [ ] Ytelse er ikke målt på ekte maskinvare. Testmaskinen har bare programvaregrafikk.
-- [ ] Fiender kan sette seg fast bak møbler i trange rom; strømningsfeltet brukes, men ikke overalt.
-- [ ] Stående mobil: berøringsknappene dekker nedre halvdel av skjermen.
-- [ ] Kortplassene i journalen dekker deler av hjerneområdene.
 - [ ] Balanse (skade, priser, antall fiender) er grovt satt og ikke spilltestet.
 
-## Neste
+## Neste (plan for et ferdig spill, 2026-09-24)
 - [x] Legge de 13 evnekortene fra ChatGPT i gpt-grafikk/ med den første duen som kort_due.png.
+- [x] Etappe 1: testoppsett, lagring og fortsettelse, berøring på mobil, journalplasser, fiender rundt møbler.
 - [ ] Aktive gjenstander (med lading ved romrydding) og småtrinkets, som i Isaac.
 - [ ] Egne rom: forbannet rom, hemmelig rom, blodofferrom med flere valg.
 - [ ] Balansere kuriositetene etter spilltesting; noen kombinasjoner blir trolig altfor sterke.
@@ -29,4 +27,3 @@
 - [ ] Byggeanimasjon når et rom avsløres (idé fra threejs-architecture-effects).
 - [ ] Flere diagnoser og oppvåkningssteder, flere spor etter tidligere pasienter.
 - [ ] Rydde bort ubrukt kode i old/ og ubrukte deler av 04_render.js.
-- [ ] Gi tools/test_spill.py et valg for å servere three.min.js lokalt, så testen virker i miljøer uten nett i nettleseren (som Claude Code-skyen).

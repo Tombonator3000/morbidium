@@ -11,7 +11,7 @@
 ## Bygg og test
 - `python3 build.py` bygger alt i `src/` til én selvstendig fil, `dist/morbidium.html`. Rediger aldri `dist/`.
 - `node tools/test_gen.js` tester etasjegeneratoren (900 etasjer, gyldighet og determinisme).
-- `python3 tools/test_spill.py` spiller gjennom i headless Chromium (krever Playwright).
+- `python3 tools/test_spill.py` spiller gjennom i headless Chromium (krever Playwright). `python3 tools/test_ekstra.py` tester enkeltfunksjoner (lagring, mobil, journal og nyere systemer). Begge tar `--three STI` for å bruke en lokal three.min.js når nettleseren ikke når nettet.
 - Filen må forbli selvstendig: eksterne skript bare fra cdnjs (Three.js r128), ingen andre nettressurser. Bilder bygges inn som data-URI-er.
 - «Enkel grafikk» og oppstartsbrødsmulene (`morbidium_boot`) skal alltid virke. De er det som hindrer hvit skjerm på svake mobiler.
 

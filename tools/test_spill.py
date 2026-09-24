@@ -1,10 +1,22 @@
-import pathlib
+"""Spiller gjennom Morbidium i headless Chromium og skriver ut feil fra konsollen.
+
+Bruk:  python3 tools/test_spill.py [--three STI]
+  --three STI   serverer three.min.js fra en lokal fil i stedet for cdnjs. Nyttig der
+                nettleseren ikke når nettet (som i Claude Code-skyen). Hent fila med
+                curl -o three.min.js https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
+                Miljøvariabelen MORBIDIUM_THREE gjør det samme.
+Skjermbilder havner i /tmp/p_*.png.
+"""
+import pathlib, os
 import asyncio, sys
 from playwright.async_api import async_playwright
+THREE = os.environ.get('MORBIDIUM_THREE') or (sys.argv[sys.argv.index('--three') + 1] if '--three' in sys.argv else None)
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(args=['--use-gl=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'])
         pg = await b.new_page(viewport={'width':1280,'height':720})
+        if THREE: await pg.route('**/three.min.js', lambda r: r.fulfill(path=THREE, content_type='application/javascript'))
+        if THREE: await pg.route('https://fonts.googleapis.com/**', lambda r: r.fulfill(body='', content_type='text/css'))  # uten nett: tom skriftfil i stedet for feil
         errs=[]
         pg.on('pageerror', lambda e: errs.append('PAGEERROR: '+str(e)))
         pg.on('console', lambda m: errs.append(m.type+': '+m.text) if m.type=='error' else None)

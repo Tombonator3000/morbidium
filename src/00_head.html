@@ -108,11 +108,32 @@ body{ height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:
 #toast{ position:fixed; left:50%; top:26%; transform:translate(-50%,-50%) rotate(-4deg); pointer-events:none; font-family:var(--display); font-size:46px; color:#f2c230; -webkit-text-stroke:3px var(--ink); paint-order:stroke fill; text-shadow:4px 5px 0 var(--ink); opacity:0; transition:opacity .25s; white-space:nowrap; }
 #toast.on{ opacity:1; }
 
-#touch{ position:fixed; inset:0; pointer-events:none; }
-#stick{ position:absolute; left:calc(34px + env(safe-area-inset-left,0px)); bottom:calc(120px + env(safe-area-inset-bottom,0px)); width:124px; height:124px; border-radius:50%; border:3px solid rgba(236,217,168,.55); pointer-events:auto; }
+#touch{ position:fixed; inset:0; pointer-events:none; z-index:5; }
+#stick{ position:absolute; left:calc(18px + env(safe-area-inset-left,0px)); bottom:calc(20px + env(safe-area-inset-bottom,0px)); width:124px; height:124px; border-radius:50%; border:3px solid rgba(236,217,168,.55); background:rgba(20,12,8,.18); pointer-events:auto; }
 #stick i{ position:absolute; left:50%; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; border-radius:50%; background:rgba(236,217,168,.6); border:3px solid var(--ink); }
-#tbtns{ position:absolute; right:calc(16px + env(safe-area-inset-right,0px)); bottom:calc(128px + env(safe-area-inset-bottom,0px)); display:grid; grid-template-columns:repeat(3,58px); gap:9px; pointer-events:auto; }
-#tbtns button{ width:58px; height:58px; border-radius:50%; border:3px solid var(--ink); background:rgba(236,217,168,.88); font-family:var(--display); font-size:12px; color:var(--ink); }
+/* handlingsknappene i en klynge rundt det store slagknappen, nede til høyre */
+#tbtns{ position:absolute; right:calc(12px + env(safe-area-inset-right,0px)); bottom:calc(14px + env(safe-area-inset-bottom,0px)); width:200px; height:190px; pointer-events:none; }
+#tbtns button{ position:absolute; width:54px; height:54px; border-radius:50%; border:3px solid var(--ink); background:rgba(236,217,168,.88); font-family:var(--display); font-size:12px; color:var(--ink); pointer-events:auto; box-shadow:2px 3px 0 rgba(20,12,8,.45); padding:0; }
+#tbtns button:active{ transform:scale(.92); background:var(--gold); }
+#tbtns [data-t=attack]{ right:4px; bottom:6px; width:80px; height:80px; font-size:15px; background:rgba(232,185,58,.92); }
+#tbtns [data-t=heavy]{ right:92px; bottom:0; }
+#tbtns [data-t=dodge]{ right:12px; bottom:96px; }
+#tbtns [data-t=interact]{ right:78px; bottom:70px; width:48px; height:48px; font-size:11px; }
+#tbtns [data-t=use]{ right:146px; bottom:40px; width:44px; height:44px; font-size:11px; }
+#tbtns [data-t=active]{ right:58px; bottom:128px; width:46px; height:46px; font-size:11px; }
+body.touch #weapon, body.touch #cons, body.touch #help{ display:none; }
+body.touch #cards{ pointer-events:auto; bottom:calc(20px + env(safe-area-inset-bottom,0px)); gap:8px; }
+body.touch #cards .acard{ pointer-events:auto; }
+body.touch #mapring{ top:calc(60px + env(safe-area-inset-top,0px)); bottom:auto; width:104px; height:104px; border-width:6px; }
+body.touch #tools{ top:calc(172px + env(safe-area-inset-top,0px)); bottom:auto; left:auto; right:calc(12px + env(safe-area-inset-right,0px)); flex-direction:column; }
+body.touch #prompt{ bottom:calc(214px + env(safe-area-inset-bottom,0px)); }
+@media (orientation:portrait){
+  body.touch #cards{ bottom:calc(214px + env(safe-area-inset-bottom,0px)); }
+  body.touch #cards .acard{ width:54px; height:70px; } body.touch #cards .acard .nm{ font-size:8.5px; }
+  body.touch #mapring{ top:calc(126px + env(safe-area-inset-top,0px)); width:92px; height:92px; }
+  body.touch #tools{ top:calc(228px + env(safe-area-inset-top,0px)); }
+  body.touch #prompt{ bottom:calc(300px + env(safe-area-inset-bottom,0px)); }
+}
 
 /* ---------- felles: papir med ujevn kant (SVG-filter) ---------- */
 .paper{ position:relative; }
@@ -135,6 +156,7 @@ body{ height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:
 #cons{ position:absolute; left:calc(196px + env(safe-area-inset-left,0px)); bottom:calc(14px + env(safe-area-inset-bottom,0px)); width:64px; height:80px; transform:rotate(2deg); text-align:center; font-weight:800; font-size:11px; padding-top:4px; }
 #cons canvas{ width:40px; height:52px; display:block; margin:0 auto; } #cons .n{ position:absolute; right:-6px; top:-8px; font-family:var(--display); font-size:13px; background:var(--ink); color:var(--gold); border-radius:10px; padding:0 6px; }
 .acard.match{ box-shadow:0 0 0 3px var(--gold), 4px 4px 0 rgba(20,12,8,.5); }
+.acard.tap{ background-color:#fff4c8; filter:brightness(1.1); }
 .acard .dots{ position:absolute; left:4px; top:4px; display:flex; gap:2px; } .acard .dots i{ width:6px; height:6px; border-radius:50%; background:var(--ink); } .acard .dots i.off{ background:transparent; border:1px solid var(--ink); }
 .acard.empty{ background:rgba(236,217,168,.35); border-style:dashed; }
 .acard canvas{ position:absolute; left:50%; top:10px; width:48px; height:48px; transform:translateX(-50%); }
@@ -201,7 +223,7 @@ body{ height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:
 .motto{ position:absolute; left:24px; bottom:10px; font-weight:800; font-size:10px; letter-spacing:.08em; }
 .map{ position:relative; margin:6px auto 0; width:min(500px,100%); aspect-ratio:1/1; }
 .map > canvas{ position:absolute; inset:0; width:100%; height:100%; }
-.slot{ position:absolute; width:22%; aspect-ratio:3/4; transform:translate(-50%,-50%); }
+.slot{ position:absolute; width:17%; aspect-ratio:3/4; transform:translate(-50%,-28%); }
 .jcard{ position:absolute; inset:0; background:#f6ead0; border:3px solid var(--ink); border-radius:5px; box-shadow:3px 4px 0 rgba(0,0,0,.35); cursor:grab; touch-action:none; }
 .jcard::before{ content:""; position:absolute; left:50%; top:-9px; width:16px; height:16px; margin-left:-8px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #ffe28a, var(--gold) 55%, var(--gold-d)); border:2px solid var(--ink); }
 .jcard canvas{ position:absolute; left:8%; top:6%; width:84%; aspect-ratio:1/1; height:auto; border:2px solid rgba(42,26,20,.3); background:#fbf3de; }
@@ -284,7 +306,7 @@ body{ height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:
   <div id="prompt" class="hidden"></div>
   <div id="tools"><button class="btn" id="bJournal">Journal</button><button class="btn" id="bPause">Pause</button></div>
 </div>
-<div id="touch" class="hidden"><div id="stick"><i></i></div><div id="tbtns"><button data-t="ab2">3</button><button data-t="ab3">4</button><button data-t="use">Bruk</button><button data-t="ab0">1</button><button data-t="ab1">2</button><button data-t="interact">Snakk</button><button data-t="heavy">Tungt</button><button data-t="dodge">Rull</button><button data-t="attack">Slag</button></div></div>
+<div id="touch" class="hidden"><div id="stick"><i></i></div><div id="tbtns"><button data-t="use">Bruk</button><button data-t="interact">Snakk</button><button data-t="heavy">Tungt</button><button data-t="dodge">Rull</button><button data-t="attack">Slag</button></div></div>
 <div id="toast"></div><div id="bigstamp"></div>
 <div id="title" class="screen"></div>
 <div id="panel" class="screen dim hidden"></div>
