@@ -250,6 +250,13 @@ const Pasient = {
     if (L.klaer === 'tvang' || L.klaer === 'serk') D.rig.armW = RIG.pasient.armW + .02;
     this.cache.set(key, D); return D;
   },
+  /* liket fra ChatGPT (mann i morgenkåpe) farget som pasienten */
+  likBilde(L) {
+    const P = Art.part('lik', 1.6, .8, .8, .05, () => { }), H = PAS_HAR[L.har], hud = PAS_HUD[L.hud], m = PAS_KAPE[L.farge];
+    let Q = H.map || hud ? omfargHode(P, 'lik~' + L.har + '.' + L.hud, H.map, hud) : P; if (m) Q = omfargPart(Q, Q.key + '~' + L.farge, klaerMap(m));
+    // like stort som det sammensatte liket, med blodpøl under
+    const k = 1.35; return Art.part('likb~' + L.har + '.' + L.hud + '.' + L.farge, 2.4, 1.2, 1.2, .08, g => { A.flat(g, A.ell(0, -.2, 1.05, .2), 'rgba(90,10,10,.38)', 0); g.drawImage(Q.canvas, -Q.ax * k, -(Q.h - Q.ay) * k, Q.w * k, Q.h * k); });
+  },
   dukke(look, opt = {}) {
     const D = this.deler(look), d = new Doll('pasient', Object.assign({}, opt, { rig: D.rig, shoeP: D.sko }));
     d.setParts(D.hode, D.kropp); for (const p of D.pynt) d.addAddon(p.P, p.L); return d;

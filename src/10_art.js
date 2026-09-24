@@ -609,6 +609,7 @@ function chestArt(open) {
 }
 function corpseArt(look) {
   const D = Pasient.deler(look), key = 'lik_' + D.key;
+  if (D.look.kjonn === 'm' && D.look.klaer === 'kape' && spriteReady('lik')) return Pasient.likBilde(D.look);
   return Art.part(key, 2.7, 1.2, 1.35, .08, g => {
     A.flat(g, A.ell(-.05, -.08, 1.2, .18), 'rgba(90,10,10,.38)', 0);
     const R0 = Object.assign({}, RIG.pasient, D.rig), L = D.rig, part = (piece, v) => piece === 'hode' ? D.hode[v] : D.kropp[v];
