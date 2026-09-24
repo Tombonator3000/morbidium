@@ -17,7 +17,7 @@
 
 ## Kode
 - `src/01_core.js` kjerne, input, lyd · `02_data.js` alt innhold · `03_generator.js` etasjer · `04_render.js` renderer, lys og etterbehandling
-- `05_world.js` kollisjon, skade, pytter, rekvisitter, plukk · `10_art.js` tegninger i kode · `11_doll.js` papirdukker · `12_paint.js` malte nivåer · `13_rom.js` rekvisitter for nyere rom
+- `05_world.js` kollisjon, skade, pytter, rekvisitter, plukk · `10_art.js` tegninger i kode · `11_doll.js` papirdukker · `12_paint.js` malte nivåer · `13_rom.js` rekvisitter for nyere rom · `14_pasient.js` pasientens utseende (kjønn, hår, hud, klær, pynt)
 - `20_actors.js` spiller, fiender, sjefer, evner · `22_sjefer.js` Overarkivaren og sjefenes signaturangrep · `25_items.js` kuriositeter, piller, groteske fiender · `26_fiender.js` nyere fiender · `27_utstyr.js` apparater og lommerusk · `30_game.js` flyt, rom, tjenester, journal, HUD, hovedløkke · `00_head.html` HTML og CSS
 
 ## Kunst

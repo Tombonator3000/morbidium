@@ -85,16 +85,17 @@ function showArchive() {
 function unlocked(k) { const a = AWAKENINGS[k]; return !a.unlock || (a.unlock === 'bossKill' && G.meta.bossKills >= 1) || (a.unlock === 'deaths3' && G.meta.deaths >= 3); }
 function showIntake() {
   show('title', false);
-  G.patient = { name: pick(FIRST) + ' ' + pick(LAST), nr: rndi(1000, 9999), age: rndi(19, 74), complaint: pick(COMPLAINTS) };
+  const kj = Math.random() < .5 ? 'k' : 'm', age = rndi(19, 74);
+  G.patient = { name: pick(kj === 'k' ? FIRST_K : FIRST_M) + ' ' + pick(LAST), nr: rndi(1000, 9999), age, complaint: pick(COMPLAINTS), look: Pasient.lag({ kjonn: kj, alder: age }) };
   const avail = shuf(Object.keys(AWAKENINGS).filter(k => unlocked(k) && k !== G.meta.lastStart)).slice(0, 3);
   const locked = Object.keys(AWAKENINGS).filter(k => !unlocked(k)).slice(0, 1);
   const p = G.patient;
   openPanel(`<div class="hdr">Innleggelse</div><div class="pickrow">
-    <div class="intake paper"><h2>${esc(p.name)}</h2><div class="who">Pasient ${p.nr}, ${p.age} år</div><canvas id="inPort" width="200" height="240"></canvas><div class="who">${esc(p.complaint)}</div></div>
+    <div class="intake paper"><h2>${esc(p.name)}</h2><div class="who">Pasient ${p.nr}, ${p.age} år</div><canvas id="inPort" width="200" height="240"></canvas><div class="who">${esc(p.complaint)}</div><div class="who dim">${esc(Pasient.beskriv(p.look))}</div></div>
     ${avail.map(k => { const a = AWAKENINGS[k]; return `<button class="pickcard paper" data-awk="${k}"><h3>Våkner: ${esc(a.name)}</h3><div class="good">${esc(a.perk)}</div><div class="bad">${esc(a.problem)}</div></button>`; }).join('')}
     ${locked.map(k => `<div class="pickcard paper locked"><h3>Låst</h3><div>${AWAKENINGS[k].unlock === 'bossKill' ? 'Behandle en overlege for å låse opp.' : 'Dø tre ganger for å låse opp.'}</div></div>`).join('')}
   </div><div class="hint" style="color:var(--parch-l)">Du våkner aldri to ganger på samme sted.</div>`, { back: true, onBack: showTitle });
-  const g = $('inPort').getContext('2d'); drawDollPortrait(g, 'pasient', 100, 228, 110);
+  const g = $('inPort').getContext('2d'); drawDollPortrait(g, 'pasient', 100, 228, 110, p.look);
   document.querySelectorAll('[data-awk]').forEach(b => b.onclick = () => { G.panelO = null; show('panel', false); newRun(b.dataset.awk); });
   const f = document.querySelector('[data-awk]'); f && f.focus();
 }
@@ -108,7 +109,7 @@ function giveCard(id, quiet) {
   hudCardsKey = ''; return card;
 }
 function newRun(awk) {
-  const run = G.run = { awk, patient: G.patient, seed: rndi(1, 2e9), stats: { helse: 2, styrke: 2, smidighet: 2, forstand: 2, fatteevne: 2 }, weapon: 'mopp', slots: [null, null, null, null], reserve: [], diag: [], teeth: 0, morb: 0, hpFrac: 1, kills: 0, rooms: 0, t0: performance.now(), price: 1 };
+  const run = G.run = { awk, patient: G.patient, look: G.patient.look, seed: rndi(1, 2e9), stats: { helse: 2, styrke: 2, smidighet: 2, forstand: 2, fatteevne: 2 }, weapon: 'mopp', slots: [null, null, null, null], reserve: [], diag: [], teeth: 0, morb: 0, hpFrac: 1, kills: 0, rooms: 0, t0: performance.now(), price: 1 };
   Items.newRun();
   let n = 2;
   if (awk === 'eget') n = 3;
@@ -163,7 +164,7 @@ function startFloor(depth, first) {
     G.player = makePlayer(run); const Rs = G.restore; G.restore = null;
     if (Rs) { Object.assign(G.player, Rs, { dodge: Rs.dodgeMax || 2 }); G.player.doll.setWeapon(Rs.weapon); run.diag = G.player.diag; }
     recalcPlayer(); if (Rs) G.player.hp = clamp(Rs.hp, 1, G.player.maxHp);
-    const md = $('medal'); md.innerHTML = ''; md.appendChild(portraitCanvas('pasient')); Items.clearLook(); Items.itemsKey = '';
+    const md = $('medal'); md.innerHTML = ''; md.appendChild(portraitCanvas('pasient', G.run.look)); Items.clearLook(); Items.itemsKey = '';
   }
   const P = G.player, sp = freeSpot(sr.x + sr.w / 2, sr.z + sr.h / 2 + 1, 4); P.x = sp.x; P.z = sp.z; P.vx = P.vz = P.kvx = P.kvz = 0;
   P.doll.root.position.set(P.x, 0, P.z); P.coffee = false;
@@ -516,7 +517,7 @@ function renderJournal() {
   emb.fillStyle = '#efe4c4'; emb.beginPath(); emb.arc(0, 0, 44, 0, TAU); emb.fill(); emb.stroke();
   emb.fillStyle = '#e8dcc8'; emb.beginPath(); emb.ellipse(0, 2, 22, 30, 0, 0, TAU); emb.fill(); emb.stroke(); emb.fillStyle = INK; emb.beginPath(); emb.ellipse(-9, -4, 6, 4, .3, 0, TAU); emb.ellipse(9, -4, 6, 4, -.3, 0, TAU); emb.fill(); emb.fillRect(-2, 6, 4, 18);
   const mg = $('jMug').getContext('2d'); mg.font = 'bold 20px Georgia, serif'; mg.fillStyle = 'rgba(42,26,20,.75)'; for (let i = 0; i < 7; i++) { mg.fillText(String(170 - i * 10), 238, 36 + i * 52); mg.fillRect(222, 30 + i * 52, 12, 3); }
-  drawDollPortrait(mg, 'pasient', 130, 362, 190);
+  drawDollPortrait(mg, 'pasient', 130, 362, 190, G.run.look);
   const wp = weaponPart(P.weapon), wg = $('jWp').getContext('2d'), wk = Math.min(226 / wp.canvas.height, 92 / wp.canvas.width); wg.save(); wg.translate(120, 48); wg.rotate(-Math.PI / 2 - .12); wg.drawImage(wp.canvas, -wp.canvas.width * wk / 2, -wp.canvas.height * wk / 2, wp.canvas.width * wk, wp.canvas.height * wk); wg.restore();
   document.querySelectorAll('[data-jart]').forEach(el => el.replaceWith(cardArtCanvas(el.dataset.jart, 120)));
   document.querySelectorAll('[data-kart]').forEach(el => el.replaceWith(partCanvas(itemIcon(el.dataset.kart), 56, 56, 1)));
@@ -647,7 +648,7 @@ function showDeath() {
   $('panel').innerHTML = `<div class="hdr" style="font-size:clamp(44px,9vw,76px)">DU ER DØD.</div><div class="dcard"><div class="slab"><canvas id="deadc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Dødsårsak</dt><dd class="cause">${esc(cause)}</dd></dl><div class="stamp">AVDØD</div></div>
     <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div>`;
   show('panel', true);
-  const g = $('deadc').getContext('2d'); g.save(); g.translate(150, 58); g.rotate(-Math.PI / 2 + .06); drawDollPortrait(g, 'pasient', 0, 110, 92); g.restore();
+  const g = $('deadc').getContext('2d'); g.save(); g.translate(150, 58); g.rotate(-Math.PI / 2 + .06); drawDollPortrait(g, 'pasient', 0, 110, 92, G.run.look); g.restore();
   $('dNew').onclick = () => { show('panel', false); resetRun(); showIntake(); }; $('dTitle').onclick = () => { show('panel', false); resetRun(); showTitle(); };
   $('dNew').focus();
 }
@@ -656,7 +657,7 @@ function showWin() {
   const P = G.player; G.meta.wins++; G.meta.historie = (G.meta.historie || []).concat([{ name: G.run.patient.name, nr: G.run.patient.nr, age: G.run.patient.age, depth: G.depth, cause: 'Utskrevet. Frisk nok.', kills: G.run.kills, rooms: G.run.rooms, awk: G.run.awk, look: G.run.look || null, utskrevet: true }]).slice(-40); saveMeta(); clearRun(); G.state = 'dead'; show('hud', false); Sound.play('level'); Sound.stopAmbience();
   $('panel').innerHTML = `<div class="hdr">UTSKREVET</div><div class="dcard"><div class="slab" style="background:linear-gradient(#b8c8a8,#8aa07a)"><canvas id="winc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Legens konklusjon</dt><dd class="cause">Pasienten er friskmeldt. Ingen vet helt hva det betyr lenger.</dd></dl><div class="stamp">FRISK NOK</div></div>
     <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div>`;
-  show('panel', true); drawDollPortrait($('winc').getContext('2d'), 'pasient', 150, 112, 58);
+  show('panel', true); drawDollPortrait($('winc').getContext('2d'), 'pasient', 150, 112, 58, G.run.look);
   $('dNew').onclick = () => { show('panel', false); resetRun(); showIntake(); }; $('dTitle').onclick = () => { show('panel', false); resetRun(); showTitle(); };
 }
 
@@ -729,7 +730,7 @@ function boot() {
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };
-  Object.assign(window, { rolig, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { rolig, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
   step('Pakker ut bilder');
   Art.preload().then(() => { step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }

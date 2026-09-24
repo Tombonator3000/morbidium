@@ -103,9 +103,11 @@ const RIG = {
 };
 
 /* ---------- pasienten (fra Toms journalskisse) ---------- */
-function drawPasientHead(v) {
+function drawPasientHead(v, o = {}) {
   return g => {
-    const S = SKIN.pasient, HAIR = '#1f1714', cy = -.46, r = .4;
+    const S = o.hud || SKIN.pasient, HAIR = o.har || '#1f1714', cy = -.46, r = .4;
+    // langt hår (kvinnevarianten) ligger bak alt annet
+    if (o.lang) A.cel(g, A.blob(v === 's' ? [[-.44, cy + .42], [-.5, cy], [-.34, cy - .4], [.1, cy - .46], [.36, cy - .3], [.2, cy + .1], [-.1, cy + .44]] : [[-.48, cy + .44], [-.52, cy + .02], [-.4, cy - .38], [0, cy - .47], [.4, cy - .38], [.52, cy + .02], [.48, cy + .44], [.2, cy + .38], [-.2, cy + .38]]), HAIR, { sk: .6 });
     if (v === 'b') {
       A.cel(g, A.ell(-.39, cy + .02, .07, .09), S); A.cel(g, A.ell(.39, cy + .02, .07, .09), S);
       A.cel(g, A.blob(A.spikes(0, cy, r * 1.02, Math.PI * .95, Math.PI * 2.05, 9, .13, .05).concat([[.3, cy + .3], [0, cy + .38], [-.3, cy + .3]])), HAIR, { sk: .6 });
@@ -139,9 +141,9 @@ function drawPasientHead(v) {
     A.flat(g, A.ell(0, cy + .25, .045, .035), '#8a3a32', .025);
   };
 }
-function drawPasientBody(v) {
+function drawPasientBody(v, o = {}) {
   return g => {
-    const Y = '#e0a33a', B = '#8a5427';
+    const Y = o.Y || '#e0a33a', B = '#8a5427';
     const w0 = v === 's' ? .24 : .37, w1 = v === 's' ? .2 : .28, top = -.56;
     const robe = A.blob([[-w0, 0], [-w0 * .5, .03], [w0 * .5, .03], [w0, 0], [w1 + .03, top + .15], [w1 - .02, top + .01], [0, top - .02], [-w1 + .02, top + .01], [-w1 - .03, top + .15]]);
     A.cel(g, robe, Y);
@@ -293,6 +295,8 @@ function drawShoe(kind) {
       A.cel(g, A.ell(0, -.04, .16, .08), P, { lw: .04 });
       A.dot(g, -.05, -.06, .016); A.dot(g, .05, -.06, .016); A.dot(g, 0, -.03, .014, '#b3261e');
     } else if (kind === 'klogg') { A.cel(g, A.blob([[-.14, 0], [.16, 0], [.16, -.1], [.06, -.12], [-.14, -.1]]), '#2a2624', { lw: .04 }); }
+    else if (kind === 'sokk') { A.cel(g, A.blob([[-.13, 0], [.16, 0], [.17, -.07], [.06, -.1], [.04, -.2], [-.1, -.2], [-.13, -.08]]), '#8a8a86', { lw: .035 }); A.line(g, [[-.1, -.17], [.05, -.17]], .035, '#b3261e'); A.line(g, [[-.08, -.05], [-.02, -.09], [.04, -.05], [.1, -.09]], .015, '#6a6a66'); }
+    else if (kind.startsWith('barfot')) { const H = kind.split(':')[1] || SKIN.pasient; A.cel(g, A.blob([[-.12, 0], [.16, 0], [.18, -.06], [.06, -.08], [.02, -.16], [-.1, -.16], [-.13, -.06]]), H, { lw: .035 }); for (let i = 0; i < 4; i++) A.dot(g, .06 + i * .03, -.07 + i * .01, .018, Col.dark(H, .72)); }
     else if (kind === 'stovel') { A.cel(g, A.blob([[-.1, 0], [.2, 0], [.24, -.04], [.08, -.08], [.06, -.18], [-.1, -.18]]), '#16121a', { lw: .04 }); }
     else { A.cel(g, A.blob([[-.13, 0], [.15, 0], [.15, -.08], [-.13, -.1]]), '#f2f2ee', { lw: .04 }); }
   };
@@ -345,7 +349,7 @@ function charPart(type, piece, v) {
   if (piece === 'kappe') return Art.part(key, 1.2, 1.1, .6, .08, drawKultistCape(v));
   if (piece === 'blob') return type === 'journalen' ? Art.part(key, 1.6, 1.1, .8, .15, drawJournalen(v)) : Art.part(key, 1.2, .8, .6, .08, drawYngel(v));
 }
-function shoePart(kind) { return Art.part('sko_' + kind, .5, .32, .25, .06, drawShoe(kind)); }
+function shoePart(kind) { return Art.part('sko_' + kind.replace(':', '~'), .5, .32, .25, .06, drawShoe(kind)); }
 
 /* ============================================================
    REKVISITTER: tegnet i 3/4-perspektiv, festet i forkant midt på.
@@ -431,9 +435,12 @@ const PROPS = {
 function propPart(k) { const d = PROPS[k]; return Art.part('prop_' + k, d[0], d[1], d[2], d[3], d[4]); }
 
 /* portrett til HUD: hodet i front-visning, beskåret */
-function portraitCanvas(type) {
-  const P = charPart(type, 'hode', 'f'), c = document.createElement('canvas'); c.width = c.height = 128;
-  const g = c.getContext('2d'), s = .94, w = P.canvas.width * s, h = P.canvas.height * s; g.drawImage(P.canvas, (128 - w) / 2, 8, w, h); return c;
+function portraitCanvas(type, look) {
+  const D = type === 'pasient' ? Pasient.deler(look) : null, P = D ? D.hode.f : charPart(type, 'hode', 'f'), c = document.createElement('canvas'); c.width = c.height = 128;
+  const hatt = D && D.pynt.some(p => !p.L.face), s = hatt ? .8 : .94, y0 = hatt ? 24 : 8, g = c.getContext('2d'), w = P.canvas.width * s, h = P.canvas.height * s, x0 = (128 - w) / 2; g.drawImage(P.canvas, x0, y0, w, h);
+  // pynt i samme skala: hodet er P.w enheter bredt, festepunktet ligger P.ay over bunnen
+  if (D) { const u = w / P.w, ax = x0 + P.ax * u, ay = y0 + (P.h - P.ay) * u; for (const p of D.pynt) { const Q = p.P, o = p.L.off.f; g.drawImage(Q.canvas, ax + (o[0] - Q.ax) * u, ay - (o[1] + Q.h - Q.ay) * u, Q.w * u, Q.h * u); } }
+  return c;
 }
 
 /* effekter: støvsky (Castle Crashers), tann, treffstjerne */
@@ -501,15 +508,16 @@ function cardArtCanvas(id, size = 120) {
   const c = document.createElement('canvas'); c.width = c.height = size; c.getContext('2d').drawImage(P.canvas, 0, 0, size, size); return c;
 }
 /* hel figur til portrett (journal og dødskort): lemmer som blekkstreker */
-function drawDollPortrait(g, type, cx, cy, S) {
-  const R0 = RIG[type], L = (a, b, w, col) => { for (const [ww, cc] of [[w + .09, INK], [w, col]]) { g.beginPath(); g.moveTo(cx + a[0] * S, cy - a[1] * S); g.quadraticCurveTo(cx + (a[0] + b[0]) / 2 * S + 3, cy - (a[1] + b[1]) / 2 * S, cx + b[0] * S, cy - b[1] * S); g.lineWidth = ww * S; g.strokeStyle = cc; g.lineCap = 'round'; g.stroke(); } };
+function drawDollPortrait(g, type, cx, cy, S, look) {
+  const D = type === 'pasient' ? Pasient.deler(look) : null, R0 = D ? Object.assign({}, RIG[type], D.rig) : RIG[type], L = (a, b, w, col) => { for (const [ww, cc] of [[w + .09, INK], [w, col]]) { g.beginPath(); g.moveTo(cx + a[0] * S, cy - a[1] * S); g.quadraticCurveTo(cx + (a[0] + b[0]) / 2 * S + 3, cy - (a[1] + b[1]) / 2 * S, cx + b[0] * S, cy - b[1] * S); g.lineWidth = ww * S; g.strokeStyle = cc; g.lineCap = 'round'; g.stroke(); } };
   const img = (P, x, y) => g.drawImage(P.canvas, cx + (x - P.ax) * S, cy - (y + P.h - P.ay) * S, P.w * S, P.h * S);
   const hip = R0.hip, sh = hip + R0.shY, neck = hip + R0.neck, hw = R0.hipW;
   L([-hw, hip + .04], [-hw - .04, .08], R0.legW, R0.leg); L([hw, hip + .04], [hw + .04, .08], R0.legW, R0.leg);
-  img(shoePart(R0.shoe), -hw - .05, 0); img(shoePart(R0.shoe), hw + .05, 0);
-  img(charPart(type, 'kropp', 'f'), 0, hip);
+  const sko = D ? D.sko : shoePart(R0.shoe); img(sko, -hw - .05, 0); img(sko, hw + .05, 0);
+  img(D ? D.kropp.f : charPart(type, 'kropp', 'f'), 0, hip);
   for (const s of [-1, 1]) { L([s * R0.shW, sh], [s * (R0.shW + .08), sh - .4], R0.armW, R0.arm); g.beginPath(); g.arc(cx + s * (R0.shW + .08) * S, cy - (sh - .4) * S, (R0.handR + .045) * S, 0, TAU); g.fillStyle = INK; g.fill(); g.beginPath(); g.arc(cx + s * (R0.shW + .08) * S, cy - (sh - .4) * S, R0.handR * S, 0, TAU); g.fillStyle = R0.hand; g.fill(); }
-  img(charPart(type, 'hode', 'f'), 0, neck - .02);
+  img(D ? D.hode.f : charPart(type, 'hode', 'f'), 0, neck - .02);
+  if (D) for (const p of D.pynt) img(p.P, p.L.off.f[0], neck - .02 + p.L.off.f[1]); // pynten har festepunktet midt i
 }
 
 /* ============================================================
@@ -585,7 +593,7 @@ function propArt(p) {
     case 'chest': return chestArt(!!p.opened);
     case 'trapdoor': return Art.part(p.opened ? 'prop_luke_open' : 'prop_luke', 1.6, 1.6, .8, .8, g => { if (p.opened) { A.flat(g, A.rr(-.6, -.45, 1.2, .9, .05), '#0c0806', .05); for (let i = 0; i < 4; i++) A.line(g, [[-.25, -.35 + i * .22], [.25, -.35 + i * .22]], .05, '#6b4a2c'); A.line(g, [[-.25, -.4], [-.25, .45]], .05, '#6b4a2c'); A.line(g, [[.25, -.4], [.25, .45]], .05, '#6b4a2c'); } else { A.cel(g, A.rr(-.6, -.45, 1.2, .9, .05), '#6b4a2c', { line: WOODL }); for (const x of [-.2, .2]) A.line(g, [[x, -.42], [x, .42]], .03, WOODL); A.flat(g, A.ell(.4, 0, .06, .06), null, .03, '#d4b048'); } });
     case 'drain': return propPart('drain');
-    case 'corpse': return corpseArt();
+    case 'corpse': return corpseArt(Pasient.lag({ rng: mulberry32(Math.abs((p.x | 0) * 73 + (p.z | 0) * 131) % 9 + 1) }));
     default: return PROPS[k] ? propPart(k) : propPart('crate');
   }
 }
@@ -600,19 +608,20 @@ function chestArt(open) {
   });
 }
 function corpseArt(look) {
-  const L = look || {}, key = 'lik_' + (L.key || 'std');
+  const D = Pasient.deler(look), key = 'lik_' + D.key;
   return Art.part(key, 2.7, 1.2, 1.35, .08, g => {
     A.flat(g, A.ell(-.05, -.08, 1.2, .18), 'rgba(90,10,10,.38)', 0);
-    const R0 = RIG.pasient, part = (piece, v) => (L.parts && L.parts[piece] && (L.parts[piece][v] || L.parts[piece].f)) || charPart('pasient', piece, v);
+    const R0 = Object.assign({}, RIG.pasient, D.rig), L = D.rig, part = (piece, v) => piece === 'hode' ? D.hode[v] : D.kropp[v];
     g.save(); g.translate(.98, -.36); g.rotate(-Math.PI / 2); g.scale(.78, .78);
     const draw = (P, x, y) => g.drawImage(P.canvas, x - P.ax, y - (P.h - P.ay), P.w, P.h);
     const limb2 = (a, b, w, col) => { g.lineCap = 'round'; g.beginPath(); g.moveTo(a[0], -a[1]); g.lineTo(b[0], -b[1]); g.lineWidth = w + .09; g.strokeStyle = INK; g.stroke(); g.lineWidth = w; g.strokeStyle = col; g.stroke(); };
     const hip = R0.hip, sh = hip + R0.shY, neck = hip + R0.neck;
     for (const s of [-1, 1]) limb2([s * R0.hipW, hip], [s * (R0.hipW + .06), .1], R0.legW, (L.leg || R0.leg));
-    for (const s of [-1, 1]) { g.save(); g.translate(s * (R0.hipW + .06), -.02); g.rotate(s * .3); draw(shoePart(L.shoe || R0.shoe), 0, 0); g.restore(); }
+    for (const s of [-1, 1]) { g.save(); g.translate(s * (R0.hipW + .06), -.02); g.rotate(s * .3); draw(D.sko, 0, 0); g.restore(); }
     draw(part('kropp', 'f'), 0, -hip);
     for (const s of [-1, 1]) { limb2([s * R0.shW, sh], [s * (R0.shW + .1), hip - .02], R0.armW, L.arm || R0.arm); A.dot(g, s * (R0.shW + .1), -(hip - .02), R0.handR, INK); A.dot(g, s * (R0.shW + .1), -(hip - .02), R0.handR - .03, L.hand || R0.hand); }
     draw(part('hode', 'f'), 0, -neck + .02);
+    for (const p of D.pynt) draw(p.P, p.L.off.f[0], -(neck - .02 + p.L.off.f[1]));
     g.restore();
     // lapp på tåa
     g.save(); g.translate(1.2, -.56); g.rotate(.4); A.line(g, [[-.12, .12], [0, 0]], .012, INK); A.cel(g, A.rr(-.02, -.1, .2, .12, .02), '#f4ecd0', { lw: .02, hi: false }); A.line(g, [[.02, -.06], [.14, -.06]], .012, '#b3261e'); A.line(g, [[.02, -.03], [.11, -.03]], .012, '#6a5a4a'); g.restore();

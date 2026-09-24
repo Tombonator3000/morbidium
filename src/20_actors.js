@@ -62,7 +62,7 @@ function clearVFX() { for (const k of ['puffs', 'stars', 'slashes']) { for (cons
 function makePlayer(run) {
   const P = {
     kind: 'player', x: 0, z: 0, r: .36, face: Math.PI, vx: 0, vz: 0, kvx: 0, kvz: 0, alive: true, bubbleH: 2.8,
-    doll: new Doll('pasient', { weapon: run.weapon }), stats: Object.assign({}, run.stats), weapon: run.weapon, weaponLvl: 0,
+    doll: Pasient.dukke(run.look, { weapon: run.weapon }), stats: Object.assign({}, run.stats), weapon: run.weapon, weaponLvl: 0,
     hp: 0, maxHp: 0, cons: null, slots: run.slots, reserve: run.reserve, cds: [0, 0, 0, 0],
     dodge: 2, dodgeMax: 2, dodgeT: 0, roll: 0, rollA: 0, iframe: 0, invuln: 0, atk: null, combo: 0, chain: 0, queued: false, chargeT: -1, charging: false,
     deny: null, denied: [], fastT: 0, kamferT: 0, stunT: 0, coffee: false, diag: run.diag || [], counters: { dodge: 0, heavy: 0, ability: 0, monolog: 0, props: 0, hurt: 0, heal: 0, kills: 0 },

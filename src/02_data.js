@@ -129,7 +129,9 @@ const STATS = {
   tryne: { name: 'Tryne', desc: 'Lavere priser og flere gulltenner' }
 };
 
-const FIRST = ['Ingvald', 'Borghild', 'Asbjørn', 'Magnhild', 'Torleif', 'Ragna', 'Halvard', 'Solveig', 'Eilert', 'Gudrun', 'Sigvart', 'Oddny', 'Kasper', 'Signe', 'Leopold', 'Jenny', 'Ansgar', 'Petra', 'Olaus', 'Dagny'];
+const FIRST_M = ['Ingvald', 'Asbjørn', 'Torleif', 'Halvard', 'Eilert', 'Sigvart', 'Kasper', 'Leopold', 'Ansgar', 'Olaus', 'Reidar', 'Kornelius', 'Gottfred', 'Alf', 'Edvin', 'Tobias', 'Ivar', 'Mikkel'];
+const FIRST_K = ['Borghild', 'Magnhild', 'Ragna', 'Solveig', 'Gudrun', 'Oddny', 'Signe', 'Jenny', 'Petra', 'Dagny', 'Hulda', 'Aslaug', 'Klara', 'Edle', 'Tordis', 'Bergljot', 'Ingeborg', 'Martha'];
+const FIRST = FIRST_M.concat(FIRST_K);
 const LAST = ['Brekke', 'Moe', 'Tveit', 'Haugen', 'Skogstad', 'Lien', 'Sæther', 'Rønning', 'Aas', 'Bakken', 'Nygaard', 'Kvam', 'Strand', 'Viken', 'Dahl', 'Hovde'];
 const COMPLAINTS = ['innlagt for nervøs uro', 'innlagt for overdreven dramatikk', 'innlagt for mistanke om poesi', 'innlagt for å ha lest feil bok', 'innlagt etter en misforståelse på postkontoret', 'innlagt for kronisk mørk kledning', 'innlagt for å ha stirret på månen i arbeidstiden'];
 
