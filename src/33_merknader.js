@@ -23,13 +23,16 @@ const MERKNADER = {
   gjen: { navn: 'Gjengangeren', krav: 'Bli utskrevet etter gjeninnleggelse.', gir: 'Æren, og et enda rødere stempel.' }
 };
 const Merknad = {
+  nye: [],
   har(id) { return !!((G.meta && G.meta.merk) || {})[id]; },
+  kortHtml() { return this.nye.length ? `<div class="nymerk">${this.nye.map(id => `<div><b>Merknad: ${esc(MERKNADER[id].navn)}</b><span>${esc(MERKNADER[id].gir)}</span></div>`).join('')}</div>` : ''; },
   /* kuriositeter som ennå ikke er låst opp, skal ikke dukke opp */
   laast(kur) { for (const id in MERKNADER) { const M = MERKNADER[id]; if (M.kur && M.kur.includes(kur) && !this.har(id)) return true; } return false; },
   gi(id) {
     const m = G.meta; if (!MERKNADER[id]) return; m.merk = m.merk || {}; if (m.merk[id]) return;
-    m.merk[id] = Date.now(); saveMeta();
-    const M = MERKNADER[id]; setTimeout(() => { stampBig('MERKNAD', M.navn); toast(M.navn, M.gir); }, 1100);
+    m.merk[id] = Date.now(); saveMeta(); this.nye.push(id);
+    // under spill stemples merknaden på skjermen; på døds- og utskrivningskortet står den på kortet i stedet
+    const M = MERKNADER[id]; setTimeout(() => { if (G.state === 'play') { stampBig('MERKNAD', M.navn); toast(M.navn, M.gir); } }, 1100);
   },
   antall() { return Object.keys((G.meta && G.meta.merk) || {}).filter(k => MERKNADER[k]).length; },
   onDeath() { this.gi('dod1'); },
