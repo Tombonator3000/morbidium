@@ -60,6 +60,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Ni nye pasientplagg i tre retninger, sju hodeplagg og ansiktsmerker samt bare føtter og ullsokk ligger som enkeltbilder i gpt-grafikk/. ART_BRIEF.md viser 223 av 287 leverte bilder. Hele bildeflyten er kontrollert i en kopi med 223 bilder uten feil og 27 personaldeler.
 - De ti aktive apparatene og tolv små lommerusk har nå egne PNG-ikoner i gpt-grafikk/. ART_BRIEF.md viser 245 av 287 leverte bilder. Kontrollbyggingen behandlet alle 245 uten feil.
 - De 22 siste rombildene er også tegnet: arkiv, celle, kafeteria, vaskerom, gulvfarer og øvrige rekvisitter. ART_BRIEF.md viser 267 av 287 leverte bilder. Kontrollbyggingen behandlet alle 267 uten feil.
+- De siste 20 figurfilene er tegnet, med flere retninger for Journalen, øyeblomsten, arkivrotta, tvangstrøyepasienten og slukyngelen, samt hoder og kropper for Overarkivaren, byråkraten og narkoselegen. ART_BRIEF.md viser 287 av 287 leverte bilder. Hele bildeflyten behandlet 287 bilder uten feil og bygget dem inn sammen med 27 personaldeler.
 
 ## Kuriositeter (Isaac-systemet)
 - src/25_items.js: 40 kuriositeter som stables, ti navngitte synergier, fem forvandlinger (tre i samme gruppe), åtte ukjente piller per løp, preparatglass som leveringsform, blodoffer etter sjefen (koster ett hjerte).
