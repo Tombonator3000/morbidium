@@ -130,7 +130,7 @@ function clearFloor() {
   for (const f of G.fxl) R.remove(f.obj); G.fxl = [];
   for (const b of G.barriers) R.remove(b.g); G.barriers = [];
   if (G.titleDolls) { G.titleDolls.forEach(d => d.dispose()); G.titleDolls = null; }
-  G.props = []; Items.clear(); clearVFX(); Particles.clear(); FX.clear(); G.lock = null; G.trapdoor = null; G.flow = null; G.combat = null; G.corpse = null;
+  G.props = []; clearCage(); Items.clear(); clearVFX(); Particles.clear(); FX.clear(); G.lock = null; G.trapdoor = null; G.flow = null; G.combat = null; G.corpse = null;
 }
 function decorateLevel() {
   const F = G.F, rng = mulberry32(F.seed || 7);
@@ -600,7 +600,7 @@ function drawMap() {
 function runStats() { const P = G.player, secs = Math.round((performance.now() - G.run.t0) / 1000); return `<div class="alive">Innlagt i ${Math.floor(secs / 60)} min ${secs % 60} s, nådde etasje ${G.depth}</div><dl><dt>Lagt i seng for godt</dt><dd>${G.run.kills}</dd><dt>Rom ryddet</dt><dd>${G.run.rooms}</dd><dt>Gulltenner i lomma</dt><dd>${P.teeth}</dd>`; }
 function showDeath() {
   const P = G.player; if (G.state === 'dead') return;
-  const cause = pick(DEATH_CAUSES[P.lastCause] || DEATH_CAUSES.any), m = G.meta;
+  const ck = P.lastCause === 'boss' && G.boss && DEATH_CAUSES['boss_' + G.boss.type] ? 'boss_' + G.boss.type : P.lastCause, cause = pick(DEATH_CAUSES[ck] || DEATH_CAUSES.any), m = G.meta;
   m.deaths++; m.lastDeath = { depth: G.depth, name: G.run.patient.name, teeth: P.teeth, cause, looted: false }; saveMeta(); clearRun();
   G.state = 'dead'; show('hud', false); Sound.stopAmbience();
   $('panel').innerHTML = `<div class="hdr" style="font-size:clamp(44px,9vw,76px)">DU ER DØD.</div><div class="dcard"><div class="slab"><canvas id="deadc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Dødsårsak</dt><dd class="cause">${esc(cause)}</dd></dl><div class="stamp">AVDØD</div></div>
@@ -638,7 +638,7 @@ function loop(now) {
     updatePlayer(sdt, A);
     for (const e of G.enemies) updateEnemy(e, sdt); G.enemies = G.enemies.filter(e => !e.gone);
     if (G.boss) { updateBoss(G.boss, sdt); if (G.boss.gone) G.boss = null; }
-    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); updateBarriers(sdt); updateNPCs(sdt);
+    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt);
     if (hallucinate) hallucinate(sdt);
     G.flowT = (G.flowT || 0) - sdt; if (G.flowT <= 0 && P.alive) { G.flowT = .25; buildFlow(Math.floor(P.x), Math.floor(P.z)); }
     roomLogic(sdt); interactLogic(A);
@@ -685,7 +685,7 @@ function boot() {
   $('bJournal').onclick = () => openJournal(); $('bPause').onclick = () => openPause();
   window.MORBIDIUM = G; Object.assign(window, { Items, ITEMS, spawnEnemy, itemIcon, jarPart, pillPart, addonPart, shotPart, LOOKS, PILL_COL, BLOBS, R, hurt, descend, finishCombat, openService, killEntity, Art, RIG, PROPS, CARD_ART, WEAPONS, THEMES, charPart, propArt, weaponPart, shoePart, cardArtCanvas, generateFloor, CONSUMABLES, heartPart, morbPart, bottlePart, cardPart, pigeonPart, stampDecal, handPart, toothPart, starPart, puffPart, barrierArt });
   // til testene
-  Object.assign(window, { freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
   step('Pakker ut bilder');
   Art.preload().then(() => { step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }

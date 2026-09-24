@@ -76,24 +76,29 @@ const ENEMIES = {
   oppasser: { name: 'Oppasser', hp: 24, speed: 2.5, r: .4, dmg: 8, xp: 10, teeth: [1, 3], look: 'oppasser' },
   yngel: { name: 'Avløpsyngel', hp: 16, speed: 4.3, r: .36, dmg: 6, xp: 6, teeth: [0, 1], look: 'yngel', morb: 3 }
 };
-const DEPTH_ENEMIES = { 1: ['pleier', 'kultist', 'oppasser', 'pleier', 'kultist'], 2: ['pleier', 'oppasser', 'yngel', 'kultist', 'oppasser', 'yngel'], 3: ['yngel', 'kultist', 'pleier', 'yngel', 'oppasser', 'kultist'] };
+const DEPTH_ENEMIES = { 1: ['pleier', 'kultist', 'oppasser', 'pleier', 'kultist'], 2: ['pleier', 'oppasser', 'yngel', 'kultist', 'oppasser', 'yngel'], 3: ['pleier', 'kultist', 'oppasser', 'kultist', 'pleier'], 4: ['yngel', 'kultist', 'pleier', 'yngel', 'oppasser', 'kultist'] };
 
+/* Sjefene. attacks trekkes tilfeldig; signaturangrepene (hookpull, chainspin, flood, jet, stamprain, paperstorm,
+   isolate, pages, ink, rewrite) ligger i 22_sjefer.js. */
 const BOSSES = {
-  1: { name: 'Overlege Hektor Krok', title: 'Smertens saksbehandler', hp: 650, color: 0xe8e2d0, accent: 0x7a1d18, minion: 'kultist', minions: 2, attacks: ['slam', 'hooks', 'summon'], puddle: null },
-  2: { name: 'Hydroterapeut Ragnvald Rust', title: 'Badevakt for de fortapte', hp: 950, color: 0x9cc7b4, accent: 0x2c5a5c, minion: 'oppasser', minions: 2, attacks: ['slam', 'hooks', 'summon', 'sweep'], puddle: 'wet' },
-  3: { name: 'Journalen', title: 'Den som opprettet deg', hp: 1300, color: 0x4a2d5a, accent: 0xb36be0, minion: 'yngel', minions: 4, attacks: ['slam', 'hooks', 'summon', 'sweep'], puddle: 'morb', tome: true }
+  1: { type: 'krok', weapon: 'krok', name: 'Overlege Hektor Krok', title: 'Smertens saksbehandler', hp: 650, color: 0xe8e2d0, accent: 0x7a1d18, minion: 'kultist', minions: 2, attacks: ['slam', 'hooks', 'summon', 'hookpull', 'chainspin', 'hookpull'], puddle: null },
+  2: { type: 'rust', weapon: 'slange', name: 'Hydroterapeut Ragnvald Rust', title: 'Badevakt for de fortapte', hp: 950, color: 0x9cc7b4, accent: 0x2c5a5c, minion: 'oppasser', minions: 2, attacks: ['slam', 'hooks', 'summon', 'sweep', 'flood', 'jet', 'jet'], puddle: 'wet' },
+  3: { type: 'arkivar', weapon: 'stempelboss', name: 'Overarkivar Gunhild Paragraf', title: 'Hun som arkiverer alt, også deg', hp: 1150, color: 0x3a3440, accent: 0xb3261e, minion: 'kultist', minions: 2, attacks: ['stamprain', 'paperstorm', 'isolate', 'summon', 'sweep', 'stamprain', 'paperstorm'], puddle: null },
+  4: { type: 'journalen', weapon: null, name: 'Journalen', title: 'Den som opprettet deg', hp: 1500, color: 0x4a2d5a, accent: 0xb36be0, minion: 'yngel', minions: 4, attacks: ['slam', 'hooks', 'summon', 'sweep', 'pages', 'ink', 'rewrite', 'pages'], puddle: 'morb', tome: true, float: true }
 };
 
 const THEMES = {
   1: { name: '1. etasje: Mottak og bosted', tileA: '#d2cb86', tileB: '#8fa35e', grout: '#5d6a3a', wall: '#ddd4ad', wains: '#6f8a55', base: '#3b3322', top: '#1b140e', fog: 0x16130c, sky: 0xfff1c8, ground: 0x3a3524, pool: '#ffe6a0', corridor: .82 },
   2: { name: 'Underetasjen: Behandling og hydroterapi', tileA: '#a8d6c4', tileB: '#5e9488', grout: '#2f5650', wall: '#c4ddd3', wains: '#3f6e6a', base: '#1e3331', top: '#0f1a19', fog: 0x0c1616, sky: 0xd8fff2, ground: 0x1e302d, pool: '#bfffe8', corridor: .78 },
-  3: { name: 'Kjelleren: Dypet', tileA: '#6a5478', tileB: '#2f2340', grout: '#1a1024', wall: '#57445f', wains: '#2c1d36', base: '#140c1a', top: '#07040a', fog: 0x0a0610, sky: 0xd9b8ff, ground: 0x1a0f22, pool: '#c98cff', corridor: .7 }
+  3: { name: 'Kjelleren: Isolat og arkiv', tileA: '#cbbf9c', tileB: '#a6997a', grout: '#4a3f2c', wall: '#e6dcc2', wains: '#8a7a5a', base: '#2e2618', top: '#120e08', fog: 0x120e0a, sky: 0xfff0d0, ground: 0x2e281c, pool: '#fff0c0', corridor: .75 },
+  4: { name: 'Under grunnmuren: Dypet', tileA: '#6a5478', tileB: '#2f2340', grout: '#1a1024', wall: '#57445f', wains: '#2c1d36', base: '#140c1a', top: '#07040a', fog: 0x0a0610, sky: 0xd9b8ff, ground: 0x1a0f22, pool: '#c98cff', corridor: .7 }
 };
 // Malte temaer: dempet palett, veggtopper og fargegradering per etasje (brukes av etterbehandlingen)
 Object.assign(THEMES[1], { tileA: '#d8d08e', tileB2: '#aebb74', grout: '#5d6a3a', corr: '#b9a878', cap: '#8a7d62', grade: { amb: '#f2ead8', lift: '#0a0604', gain: '#fff4e4', vig: .5 } });
 Object.assign(THEMES[2], { tileA: '#b4d8c8', tileB2: '#86b4a4', grout: '#2f5650', corr: '#8aa89c', cap: '#5f7a72', grade: { amb: '#a8c4c0', lift: '#040a0a', gain: '#e8fff8', vig: .6 } });
-Object.assign(THEMES[3], { tileA: '#7a6488', tileB2: '#5a4668', grout: '#1a1024', corr: '#4e3e58', cap: '#4a3a52', grade: { amb: '#5a4a6e', lift: '#08030c', gain: '#f0e0ff', vig: .7 } });
-const MAX_DEPTH = 3;
+Object.assign(THEMES[3], { tileB2: '#b3a684', corr: '#8f8268', cap: '#3a3024', grade: { amb: '#cfc4ae', lift: '#070503', gain: '#fff6e6', vig: .66 } });
+Object.assign(THEMES[4], { tileA: '#7a6488', tileB2: '#5a4668', grout: '#1a1024', corr: '#4e3e58', cap: '#4a3a52', grade: { amb: '#5a4a6e', lift: '#08030c', gain: '#f0e0ff', vig: .7 } });
+const MAX_DEPTH = 4;
 
 /* Oppvåkningssteder. unlock: hvordan de låses opp i metaprogresjonen */
 const AWAKENINGS = {
@@ -137,17 +142,20 @@ const LINES = {
   bossIntro: {
     1: ['Ah. En pasient som går på egne bein. Det må vi rette på.', 'Smerte er bare byråkrati for kroppen.'],
     2: ['Velkommen til badet. Vannet er rent. Det meste av det.', 'Vi skal skylle ut alt som er deg.'],
-    3: ['Hvem opprettet denne journalen?', 'Du gjorde. Hver gang du døde.']
+    3: ['Navn? Fødselsdato? Dødsdato? Den siste fyller vi inn selv.', 'Alt skal arkiveres. Du også.'],
+    4: ['Hvem opprettet denne journalen?', 'Du gjorde. Hver gang du døde.']
   },
   boss: {
     1: ['Kjetting er et livssyn.', 'Mine studenter! Mer dramatikk!', 'Jeg har åpnet dører du ikke engang har søkt om.', 'Dette vil gjøre vondt, og det er dokumentert.'],
     2: ['Hold pusten.', 'Strøm og vann. Klassisk behandling.', 'Mine oppassere! Rengjøring!', 'Skyll. Gjenta.'],
-    3: ['Du er en fotnote.', 'Jeg har lest slutten din. Den er kort.', 'Dere er lunsj.', 'Signer her. Og her. Og her.']
+    3: ['Feil skjema.', 'AVSLÅTT.', 'Til isolatet med deg.', 'Dette går rett i arkivet.', 'Har du kvittering for den kappen?'],
+    4: ['Du er en fotnote.', 'Jeg har lest slutten din. Den er kort.', 'Dere er lunsj.', 'Signer her. Og her. Og her.']
   },
   monolog: {
     1: ['La meg forklare min tragiske bakgrunn.', 'Det begynte i 1887, da jeg fikk avslag på permisjon...', '...og siden har jeg båret smerten. I tre ringpermer.'],
     2: ['Vann husker alt, vet du.', 'Jeg var en gang en helt vanlig badevakt...', '...helt til jeg så hva som bor i avløpet. Og det så meg.'],
-    3: ['Hver pasient er en side.', 'Hver side er et forsøk.', 'Og du har aldri lest deg selv ferdig.']
+    3: ['Vet du hvor mange skjemaer jeg har stemplet?', 'Førti år uten en eneste feilarkivering...', '...bortsett fra deg. Du ble arkivert feil. Det retter jeg opp nå.'],
+    4: ['Hver pasient er en side.', 'Hver side er et forsøk.', 'Og du har aldri lest deg selv ferdig.']
   },
   interrupted: ['Unnskyld, jeg var ikke ferdig!', 'Du avbrøt meg midt i det beste!', 'Dette er svært uprofesjonelt.'],
   playerMonolog: ['Hør her. Mørket? Jeg ER mørket. Og i dag er jeg i dårlig humør.', 'Dere forstår ikke min smerte. Men dere skal få høre om den.', 'Jeg har skrevet et dikt. Det har 14 vers.', 'Hvis dere bare visste hvor lite jeg sov i 1923.'],
@@ -157,7 +165,8 @@ const LINES = {
 const PA = {
   1: ['God morgen, kjære pasienter. Husk at det er forbudt å dø i korridorene.', 'Kafeteriaen minner om at suppe ikke er en diagnose.', 'Pasienter med kappe bes melde seg i resepsjonen for utlevering av perspektiv.', 'Besøkstiden er avlyst. Besøkende er også avlyst.', 'Husk: et smil koster ingenting. Tannbehandling koster mye.'],
   2: ['Hydroterapi er obligatorisk. Strøm er valgfritt.', 'Vannet i badene er rent. Det som bor i det, er en annen sak.', 'Kjære pasienter. Kjære pasienter. Husk å puste. Bygget gjør det allerede.', 'Vi minner om at elektriske apparater og badekar ikke er venner.'],
-  3: ['Kjære. Pasienter. Dere. Er. Hjemme.', 'Journalen er oppdatert. Journalen er oppdatert. Journalen er sulten.', 'Lunsj serveres nå. Dere er lunsj.', 'Utskrivning krever skjema null. Skjema null finnes ikke. Ennå.']
+  3: ['Arkivet minner om at alle pasienter arkiveres alfabetisk. Også de levende.', 'Isolatet er stille. Det er hele poenget. Slutt å banke.', 'Mistet skjema? Mistet sjel? Henvend dere til arkivet i åpningstiden, som er avlyst.', 'Tvangstrøyer leveres tilbake knyttet. Takk for forståelsen.', 'Overarkivaren minner om at hysj også gjelder skrik.'],
+  4: ['Kjære. Pasienter. Dere. Er. Hjemme.', 'Journalen er oppdatert. Journalen er oppdatert. Journalen er sulten.', 'Lunsj serveres nå. Dere er lunsj.', 'Utskrivning krever skjema null. Skjema null finnes ikke. Ennå.']
 };
 
 const POSTERS = ['SMIL.\nDET ER\nOBLIGATORISK', 'HAR DU HUSKET\nSKJEMA 13-B?', 'MØRKET ER\nIKKE EN\nPERSONLIGHET', 'HOLD KAPPEN\nUNNA\nMASKINENE', 'SUPPE\nER\nMEDISIN', 'FRISK LUFT\nKUN MED\nTILLATELSE', 'IKKE MAT\nDUENE', 'SKJEMA FØRST\nSMERTE\nETTERPÅ'];
@@ -168,6 +177,10 @@ const DEATH_CAUSES = {
   oppasser: ['Fikk mer medisin enn anbefalt.', 'Sprøyten var ikke steril. Den var dødelig.'],
   yngel: ['Spist av noe fra avløpet. Avløpet har ingen kommentar.', 'Tråkket i noe som tråkket tilbake.'],
   boss: ['Ble behandlet. Grundig.', 'Fikk avslag på søknad om å leve.', 'Journalført.'],
+  boss_krok: ['Ble hektet og henvist. Til likhuset.', 'Fikk en second opinion fra en krok.'],
+  boss_rust: ['Skylt ut. Grundig.', 'Druknet i terapi.', 'Strøm og vann. Klassisk behandling.'],
+  boss_arkivar: ['Arkivert under D, for død.', 'Stemplet AVSLÅTT. Anken ble også avslått.', 'Sendt til isolatet. For godt.'],
+  boss_journalen: ['Skrevet ut. Av historien.', 'Journalført. Siste side.', 'Ble en fotnote.'],
   zap: ['Stod i vann og lekte med strøm. En klassiker.', 'Oppdaget elektrisitet. Den oppdaget ham tilbake.'],
   morb: ['Tråkket i noe som tråkket tilbake.', 'For mye Morbidium, for lite forstand.'],
   self: ['Skadet av egen oppfinnsomhet.', 'Blunket for lenge.'],
@@ -192,6 +205,9 @@ const LORE = [
   { t: 'Rundskriv 13-B', b: 'All smerte skal registreres i tre eksemplarer. Ett til pasienten, ett til arkivet og ett til det som bor under arkivet.' },
   { t: 'Badevaktens dagbok', b: 'Vannet husker. Jeg hørte det si navnet mitt. Så sa det navnet til en pasient som ikke er født ennå.' },
   { t: 'Uten avsender', b: 'Journalen ble ikke skrevet om deg. Du ble skrevet ut av journalen. Hver død er en ny side. Den vil ha flere sider.' },
+  { t: 'Arkivets regler, punkt 1 til 400', b: 'Punkt 1: Alt skal arkiveres. Punkt 2: Den som arkiverer, arkiveres også. Punkt 3 til 400 er arkivert og kan ikke leses uten skjema 1.' },
+  { t: 'Innskrevet på veggen i isolat 4', b: 'De sier det er stille her. Det er ikke stille. Arkivet under meg skriver hele natten. Jeg hører pennen.' },
+  { t: 'Overarkivarens lommebok', b: 'Kvittering for 40 000 stempler. Et fotografi av et stempel. En lapp: «Glem ikke å arkivere deg selv før du går hjem.»' },
   { t: 'Siste side', b: 'Utskrivning krever at pasienten leser sin egen journal til slutten. Ingen pasient har gjort det. Ingen pasient har vært en pasient lenge nok.' }
 ];
 
@@ -214,4 +230,4 @@ const NPC_LINES = {
 const OLSEN_LOCKER = ['Olsen prøver alle nøklene. Ingen passer. «Det er det samme hver dag,» sier han.', 'Olsen sparker i skapet. Skapet sparker tilbake.', 'Olsen legger øret mot døra. «Den puster,» hvisker han. «Eller så er det meg.»', 'Døra går opp. Den var ulåst hele tiden. Olsen sier ingenting på en lang stund.'];
 
 // mørkere veggtopper, så de ikke forveksles med korridorgulv
-Object.assign(THEMES[1], { cap: '#4a3f31' }); Object.assign(THEMES[2], { cap: '#2a3a37' }); Object.assign(THEMES[3], { cap: '#2c2034' });
+Object.assign(THEMES[1], { cap: '#4a3f31' }); Object.assign(THEMES[2], { cap: '#2a3a37' }); Object.assign(THEMES[3], { cap: '#3a3024' }); Object.assign(THEMES[4], { cap: '#2c2034' });

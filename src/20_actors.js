@@ -362,10 +362,10 @@ function enemyTarget(e) {
    FIENDER
    ============================================================ */
 function spawnEnemy(type, x, z, elite, depth) {
-  const D = ENEMIES[type], hpK = 1 + (depth - 1) * .35;
+  const D = ENEMIES[type], hpK = 1 + (depth - 1) * .3;
   const doll = new Doll(type, { elite, weapon: type === 'oppasser' ? 'sproyte' : null, shadow: type === 'pleier' ? .55 : .42, scale: elite ? 1.2 : 1 });
   R.scene.add(doll.root); doll.root.position.set(x, 0, z); doll.root.scale.setScalar(.01);
-  const e = { kind: 'enemy', type, x, z, r: D.r * (elite ? 1.15 : 1), face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, elite, hp: D.hp * hpK * (elite ? 2.2 : 1), dmg: D.dmg * (1 + (depth - 1) * .2) * (elite ? 1.3 : 1), sp: D.speed, state: 'spawn', t: .5, cd: rnd(.8, 2), stun: 0, slip: 0, sleep: 0, speechT: rnd(3, 8), teles: [], bubbleH: type === 'yngel' ? 1.7 : type === 'pleier' ? 3.3 : 3.1, blood: type === 'yngel' ? 0x6b2d8c : 0xb3261e, depth };
+  const e = { kind: 'enemy', type, x, z, r: D.r * (elite ? 1.15 : 1), face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, elite, hp: D.hp * hpK * (elite ? 2.2 : 1), dmg: D.dmg * (1 + (depth - 1) * .17) * (elite ? 1.3 : 1), sp: D.speed, state: 'spawn', t: .5, cd: rnd(.8, 2), stun: 0, slip: 0, sleep: 0, speechT: rnd(3, 8), teles: [], bubbleH: type === 'yngel' ? 1.7 : type === 'pleier' ? 3.3 : 3.1, blood: type === 'yngel' ? 0x6b2d8c : 0xb3261e, depth };
   e.max = e.hp; G.enemies.push(e); puff(x, z, 2, .8, type === 'yngel' ? '#6b3a82' : null);
   if (type === 'yngel') Particles.spawn(x, .2, z, 8, 0x6b2d8c, { speed: 2, up: 5 });
   return e;
@@ -458,11 +458,11 @@ function updateEnemy(e, dt) {
    og 12 prosent skade eller Våpenisert monolog (b) avbryter talen.
    ============================================================ */
 function spawnBoss(depth, x, z) {
-  const B0 = BOSSES[depth], type = depth === 1 ? 'krok' : depth === 2 ? 'rust' : 'journalen';
-  const doll = new Doll(type, { fixedView: 'f', weapon: depth === 1 ? 'krok' : depth === 2 ? 'slange' : null, shadow: 1, scale: 1 });
+  const B0 = BOSSES[depth] || BOSSES[MAX_DEPTH], type = B0.type, tome = type === 'journalen';
+  const doll = new Doll(type, { fixedView: 'f', weapon: B0.weapon, shadow: 1, scale: 1 });
   R.scene.add(doll.root); doll.root.position.set(x, 0, z);
-  const B = { kind: 'boss', type, depth, name: B0.name, x, z, r: depth === 3 ? 1.1 : .9, face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, hp: B0.hp, max: B0.hp, B0, state: 'intro', t: 2.6, cd: 1.5, phase: 'fight', phasesDone: 0, stagger: 0, slowT: 0, teles: [], bubbleH: depth === 3 ? 4.2 : 4.6, enraged: false, anchored: true, blood: depth === 3 ? 0x6b2d8c : 0xb3261e };
-  B.glow = R.light(x, z, 5, depth === 3 ? '#b36be0' : '#ffcc88', .3);
+  const B = { kind: 'boss', type, depth, name: B0.name, x, z, r: tome ? 1.1 : .9, face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, hp: B0.hp, max: B0.hp, B0, state: 'intro', t: 2.6, cd: 1.5, phase: 'fight', phasesDone: 0, stagger: 0, slowT: 0, teles: [], bubbleH: tome ? 4.2 : 4.6, enraged: false, anchored: true, blood: tome ? 0x6b2d8c : 0xb3261e, q: [] };
+  B.glow = R.light(x, z, 5, tome ? '#b36be0' : type === 'arkivar' ? '#ffe0b0' : '#ffcc88', .3);
   G.boss = B; FX.bubble(B, pick(LINES.bossIntro[depth]), 2.6, 'boss');
   $('bossName').textContent = B0.name; $('bossTitle').textContent = B0.title; $('bossBar').classList.remove('hidden');
   Sound.play('boss'); return B;
@@ -481,14 +481,15 @@ function bossDie(B) {
   for (let i = 0; i < 8; i++) setTimeout(() => puff(B.x + rnd(-1, 1), B.z + rnd(-1, 1), 3, 1.5), i * 90);
   dropTeeth(B.x, B.z, 25 + B.depth * 10); for (let i = 0; i < 2; i++) dropPickup(B.x, B.z, 'heart'); dropPickup(B.x, B.z, 'card', pick(ABILITY_IDS));
   G.meta.bossKills++; saveMeta(); gainXp(80 * B.depth);
-  $('bossBar').classList.add('hidden'); stampBig('BEHANDLET', B.name);
+  $('bossBar').classList.add('hidden'); stampBig('BEHANDLET', B.name); clearCage();
   for (const e of G.enemies) if (e.alive) { e.hp = 0; killEntity(e, {}); }
   setTimeout(openTrapdoor, 1400);
 }
 function updateBoss(B, dt) {
   const P = G.player;
-  if (!B.alive) { B.deadT -= dt; B.doll.update(dt, { down: B.depth !== 3 }); B.doll.dissolve(1 - Math.max(0, B.deadT) / 1.6); if (B.glow) R.setLight(B.glow, B.deadT); if (B.deadT <= 0 && !B.gone) { B.gone = true; B.doll.dispose(); if (B.glow) R.remove(B.glow); } return; }
+  if (!B.alive) { B.deadT -= dt; B.doll.update(dt, { down: B.type !== 'journalen' }); B.doll.dissolve(1 - Math.max(0, B.deadT) / 1.6); if (B.glow) R.setLight(B.glow, B.deadT); if (B.deadT <= 0 && !B.gone) { B.gone = true; B.doll.dispose(); if (B.glow) R.remove(B.glow); } return; }
   const sl = B.slowT > 0 ? .6 : 1; dt *= sl; B.slowT -= dt;
+  for (let i = B.q.length - 1; i >= 0; i--) { const j = B.q[i]; j.t -= dt; if (j.t <= 0) { B.q.splice(i, 1); j.fn(); } }
   B.t -= dt; B.cd -= dt; B.stagger -= dt;
   const dx = P.x - B.x, dz = P.z - B.z, dist = Math.hypot(dx, dz), toP = Math.atan2(dx, dz);
   let mv = 0;
@@ -505,7 +506,7 @@ function updateBoss(B, dt) {
     if (dist > 2.2) mv = 1;
     if (B.cd <= 0 && P.alive) bossAttack(B, pick(B.B0.attacks), dist, toP);
   }
-  if (mv) { const sp = (B.depth === 3 ? 2.3 : 1.9) * (B.enraged ? 1.3 : 1); B.vx = lerp(B.vx, Math.sin(toP) * sp, dt * 4); B.vz = lerp(B.vz, Math.cos(toP) * sp, dt * 4); } else { B.vx *= Math.pow(.02, dt); B.vz *= Math.pow(.02, dt); }
+  if (mv) { const sp = (B.type === 'journalen' ? 2.3 : B.type === 'arkivar' ? 2.1 : 1.9) * (B.enraged ? 1.3 : 1); B.vx = lerp(B.vx, Math.sin(toP) * sp, dt * 4); B.vz = lerp(B.vz, Math.cos(toP) * sp, dt * 4); } else { B.vx *= Math.pow(.02, dt); B.vz *= Math.pow(.02, dt); }
   moveEnt(B, B.vx * dt, B.vz * dt);
   if (P.alive && d2(P.x, P.z, B.x, B.z) < (B.r + P.r) ** 2) { const a = Math.atan2(P.x - B.x, P.z - B.z); P.kvx = Math.sin(a) * 5; P.kvz = Math.cos(a) * 5; }
   B.face = toP; B.doll.setFacing(toP);
@@ -516,8 +517,9 @@ function updateBoss(B, dt) {
   $('bossFill').style.width = (B.hp / B.max * 100) + '%';
 }
 function bossAttack(B, kind, dist, toP) {
-  const P = G.player, d = B.depth, dmg = 14 + d * 4, puddle = B.B0.puddle;
+  const P = G.player, d = B.depth, dmg = bossDmg(B), puddle = B.B0.puddle, tome = B.type === 'journalen';
   B.state = 'act'; B.atkAnim = true;
+  if (BOSS_MOVES[kind]) { BOSS_MOVES[kind](B, dist, toP, dmg); return; }
   if (kind === 'slam') {
     const o = { x: P.x, z: P.z, r: 2.4 }; B.t = B.atkDur = 1.1;
     addTele('circle', o, .95, () => {
@@ -526,17 +528,17 @@ function bossAttack(B, kind, dist, toP) {
       if (puddle) addPuddle(o.x, o.z, puddle, 1.8, 20);
     }, B);
     addFx(B.doll.root, 0, null);
-    FX.bubble(B, d === 3 ? 'SIDE ÉN.' : 'Hold stille, dette gjør vondt.', 1.2, 'boss');
+    FX.bubble(B, tome ? 'SIDE ÉN.' : B.type === 'arkivar' ? 'Stille, takk.' : 'Hold stille, dette gjør vondt.', 1.2, 'boss');
   } else if (kind === 'hooks') {
     const n = d === 1 ? 3 : 5; B.t = B.atkDur = 1.1;
-    for (let i = 0; i < n; i++) { const a = toP + (i - (n - 1) / 2) * .38; addTele('rect', { x: B.x, z: B.z, a, w: .8, len: 10 }, .85, o => { hitShape('rect', o, dmg * .8, { type: 'boss', x: B.x, z: B.z, kb: 6 }, 'enemy'); beam(o.x, o.z, o.x + Math.sin(o.a) * o.len, o.z + Math.cos(o.a) * o.len, d === 3 ? 0x3a1a4a : 0x6a6a70, .18, .35, .9); Sound.play('chain'); }, B); }
+    for (let i = 0; i < n; i++) { const a = toP + (i - (n - 1) / 2) * .38; addTele('rect', { x: B.x, z: B.z, a, w: .8, len: 10 }, .85, o => { hitShape('rect', o, dmg * .8, { type: 'boss', x: B.x, z: B.z, kb: 6 }, 'enemy'); beam(o.x, o.z, o.x + Math.sin(o.a) * o.len, o.z + Math.cos(o.a) * o.len, tome ? 0x3a1a4a : 0x6a6a70, .18, .35, .9); Sound.play('chain'); }, B); }
   } else if (kind === 'summon') {
     B.t = B.atkDur = .9; FX.bubble(B, pick(['Mine studenter!', 'Personalet, til meg!', 'Kom, små sider.']), 1.6, 'boss');
     const room = G.F.rooms[G.F.bossId];
     for (let i = 0; i < B.B0.minions + (B.enraged ? 1 : 0); i++) { const sp = room.spawns[i % room.spawns.length] || [B.x + rnd(-3, 3), B.z + rnd(-3, 3)]; const f = freeSpot(sp[0], sp[1]); setTimeout(() => { if (B.alive) spawnEnemy(B.B0.minion, f.x, f.z, false, d); }, i * 250); }
   } else if (kind === 'sweep') {
     B.t = B.atkDur = 1.0; const o = { x: B.x, z: B.z, a: toP, r: 4.4, arc: 2.6 };
-    addTele('cone', o, .8, () => { hitShape('cone', o, dmg, { type: 'boss', x: B.x, z: B.z, kb: 9 }, 'enemy'); slashFx(B.x, B.z, o.a, o.r, o.arc, true, d === 3 ? 0xb36be0 : 0xfff2d0); Sound.play('swingHeavy', 1, .6); R.shake(.3); if (puddle) for (let k = 0; k < 3; k++) addPuddle(B.x + Math.sin(o.a + (k - 1) * .6) * 3, B.z + Math.cos(o.a + (k - 1) * .6) * 3, puddle, 1, 14); }, B);
+    addTele('cone', o, .8, () => { hitShape('cone', o, dmg, { type: 'boss', x: B.x, z: B.z, kb: 9 }, 'enemy'); slashFx(B.x, B.z, o.a, o.r, o.arc, true, tome ? 0xb36be0 : 0xfff2d0); Sound.play('swingHeavy', 1, .6); R.shake(.3); if (puddle) for (let k = 0; k < 3; k++) addPuddle(B.x + Math.sin(o.a + (k - 1) * .6) * 3, B.z + Math.cos(o.a + (k - 1) * .6) * 3, puddle, 1, 14); }, B);
   }
 }
 function openTrapdoor() {

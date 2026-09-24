@@ -93,6 +93,33 @@ async def main():
         sjekk('ingen konsollfeil (journal)', not pg.errs, pg.errs[:5])
         await pg.close()
 
+        # 4) alle fire sjefer med alle angrep, og rommene i Isolat og arkiv
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        for depth in [1, 2, 3, 4]:
+            info = await pg.evaluate("""(d) => { const G = MORBIDIUM; G.player.hp = G.player.maxHp = 9999; startFloor(d, false); const r = G.F.rooms[G.F.bossId]; G.player.x = r.x + r.w / 2; G.player.z = r.z + r.h - 2; return { theme: G.th.name, tpl: G.F.rooms.map(r => r.template) }; }""", depth)
+            if depth == 3:
+                sjekk('Isolat og arkiv har egne rom', 'isolat' in info['tpl'] or 'kartotek' in info['tpl'], info['tpl'])
+                await pg.evaluate("""() => { const G = MORBIDIUM, r = G.F.rooms.find(r => r.template === 'kartotek') || G.F.rooms.find(r => r.template === 'isolat'); if (r) { G.player.x = r.x + r.w / 2; G.player.z = r.z + r.h / 2; G.rooms[r.id].cleared = true; } }""")
+                await pg.wait_for_timeout(1200); await pg.screenshot(path='/tmp/e_5arkiv.png')
+                await pg.evaluate("""() => { const G = MORBIDIUM, r = G.F.rooms.find(r => r.template === 'isolat'); if (r) { G.player.x = r.x + r.w / 2; G.player.z = r.z + r.h / 2; G.rooms[r.id].cleared = true; } }""")
+                await pg.wait_for_timeout(1000); await pg.screenshot(path='/tmp/e_6isolat.png')
+                await pg.evaluate("""() => { const G = MORBIDIUM, r = G.F.rooms[G.F.bossId]; G.player.x = r.x + r.w / 2; G.player.z = r.z + r.h - 2; }""")
+            await pg.wait_for_timeout(3500)
+            bnavn = await pg.evaluate("() => MORBIDIUM.boss && MORBIDIUM.boss.type")
+            sjekk(f'sjef i etasje {depth}', bnavn is not None, bnavn)
+            kinds = await pg.evaluate("() => MORBIDIUM.boss ? [...new Set(MORBIDIUM.boss.B0.attacks)] : []")
+            for k in kinds:
+                await pg.evaluate("(k) => { const B = MORBIDIUM.boss, P = MORBIDIUM.player; if (!B) return; B.state = 'chase'; B.cd = 99; P.hp = P.maxHp; bossAttackTest(B, k); }", k)
+                await pg.wait_for_timeout(1700)
+                if (depth, k) in [(3, 'isolate'), (4, 'pages'), (2, 'flood'), (1, 'hookpull')]:
+                    await pg.screenshot(path=f'/tmp/e_7sjef_{depth}_{k}.png')
+            await pg.evaluate("() => { const B = MORBIDIUM.boss; if (B) hurt(B, 99999, { from: 'player' }); }")
+            await pg.wait_for_timeout(2500)
+            sjekk(f'luken åpner seg i etasje {depth}', await pg.evaluate("() => !!MORBIDIUM.trapdoor"))
+        sjekk('ingen konsollfeil (sjefer)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

@@ -110,9 +110,9 @@ function buildFloor(seed, depth, opts) {
     }
   }
   // 8) innhold
-  const tmplByDepth = { 1: ['venterom', 'sovesal', 'kapell', 'arkiv', 'venterom'], 2: ['bad', 'behandling', 'bad', 'kapell', 'behandling'], 3: ['kjeller', 'kapell', 'arkiv', 'kjeller', 'bad'] };
+  const tmplByDepth = { 1: ['venterom', 'sovesal', 'kapell', 'arkiv', 'venterom'], 2: ['bad', 'behandling', 'bad', 'kapell', 'behandling'], 3: ['isolat', 'kartotek', 'isolat', 'arkiv', 'kartotek', 'kapell'], 4: ['kjeller', 'kapell', 'arkiv', 'kjeller', 'bad'] };
   for (const r of F.rooms) {
-    if (r.role === 'combat' || r.role === 'risk') r.template = rng.pick(tmplByDepth[depth] || tmplByDepth[3]);
+    if (r.role === 'combat' || r.role === 'risk') r.template = rng.pick(tmplByDepth[depth] || tmplByDepth[4]);
     else if (r.role === 'start') r.template = opts.startTemplate || 'eget';
     else if (r.role === 'service') r.template = r.service;
     else r.template = r.role;
@@ -173,9 +173,19 @@ function decorateRoom(F, r, rng) {
       put('altar', r.cx - 1, r.z, 0, { tiles: [[0, 0], [1, 0], [2, 0]] }); ent('candles', 3); ent('lamp', 1); drains(1); break;
     }
     case 'arkiv': along('cabinet', rng.int(6, 10), { data: { brk: 2 } }); ent('crate', rng.int(1, 3)); ent('trolley', 1); ent('lamp', 1); drains(1); break;
-    case 'bad': along('tub', rng.int(3, 5), { long: true, data: { dark: F.depth >= 3 } }); ent('lamp', 2, { data: { faulty: rng.chance(.6) } }); ent('puddle', rng.int(2, 3)); drains(2); ent('trolley', 1); break;
+    case 'bad': along('tub', rng.int(3, 5), { long: true, data: { dark: F.depth >= 4 } }); ent('lamp', 2, { data: { faulty: rng.chance(.6) } }); ent('puddle', rng.int(2, 3)); drains(2); ent('trolley', 1); break;
     case 'behandling': along('gurney', rng.int(3, 5), { long: true }); ent('lamp', 2); ent('trolley', 2); along('cabinet', 2, { data: { brk: 2 } }); drains(1); break;
     case 'kjeller': ent('chain', rng.int(3, 6)); ent('crate', rng.int(2, 4)); free('pillar', 2); drains(3); ent('lamp', 1, { data: { faulty: true } }); ent('puddle', 1, { data: { kind: 'morb' } }); break;
+    case 'isolat': {
+      // polstrede celler langs veggene, madrasser og tvangstrøyer
+      for (const [ox, oz] of [[1, 1], [r.w - 3, 1], [1, r.h - 3], [r.w - 3, r.h - 3]]) if (rng.chance(.7)) put('celle', r.x + ox, r.z + oz, 0, { tiles: [[0, 0], [1, 0], [0, 1], [1, 1]] });
+      ent('madrass', rng.int(2, 3)); ent('tvangstroye', rng.int(1, 2)); drains(1); ent('lamp', 1, { data: { faulty: rng.chance(.5) } }); break;
+    }
+    case 'kartotek': {
+      // rader med arkivhyller som danner smug, papirhauger på gulvet
+      for (let z = r.z + 2; z < r.z + r.h - 2; z += 3) for (let x = r.x + 1; x < r.x + r.w - 3; x += 4) put('arkivhylle', x, z, 0, { tiles: [[0, 0], [1, 0], [2, 0]] });
+      free('papirhaug', rng.int(3, 5), { data: { brk: 1 } }); ent('lamp', 1); ent('trolley', 1); drains(1); break;
+    }
     case 'boss': {
       for (const [ox, oz] of [[2, 2], [r.w - 3, 2], [2, r.h - 3], [r.w - 3, r.h - 3]]) put('pillar', r.x + ox, r.z + oz);
       ent('chain', 4); drains(3); break;
@@ -216,12 +226,12 @@ function decorateRoom(F, r, rng) {
 function planWaves(F, r, rng, depth, opts) {
   if (!['combat', 'risk', 'start'].includes(r.role)) return;
   if (r.role === 'start' && !opts.startCombat) return;
-  const pool = DEPTH_ENEMIES[depth] || DEPTH_ENEMIES[3];
-  const bias = { kapell: 'kultist', bad: 'yngel', behandling: 'oppasser', sovesal: 'pleier', kjeller: 'yngel' }[r.template];
+  const pool = DEPTH_ENEMIES[depth] || DEPTH_ENEMIES[4];
+  const bias = { kapell: 'kultist', bad: 'yngel', behandling: 'oppasser', sovesal: 'pleier', kjeller: 'yngel', isolat: 'pleier', kartotek: 'kultist' }[r.template];
   const d = F.dist ? F.dist[r.id] : 2;
   const nWaves = r.role === 'risk' ? 2 : r.role === 'start' ? 1 : (d >= 3 && rng.chance(.55) ? 2 : 1) + (depth >= 3 && rng.chance(.3) ? 1 : 0);
   for (let w = 0; w < nWaves; w++) {
-    const n = r.role === 'start' ? 2 : 2 + Math.floor(depth * .8) + rng.int(0, 2) + (d >= 4 ? 1 : 0);
+    const n = r.role === 'start' ? 2 : 2 + [0, 0, 1, 2, 2][Math.min(4, depth)] + rng.int(0, 2) + (d >= 4 ? 1 : 0) + (depth >= 4 && rng.chance(.4) ? 1 : 0);
     const wave = [];
     for (let i = 0; i < n; i++) {
       let t = bias && rng.chance(.35) ? bias : rng.pick(pool);

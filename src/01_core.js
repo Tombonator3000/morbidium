@@ -254,7 +254,7 @@ const Sound = {
   },
   startAmbience(depth) {
     this.stopAmbience(); if (!this.ready) return;
-    const now = this.ctx.currentTime, base = [55, 55, 46, 36.7][depth] || 36.7;
+    const now = this.ctx.currentTime, base = [55, 55, 46, 41.2, 36.7][depth] || 36.7;
     const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = depth >= 3 ? 220 : 320; lp.Q.value = 3;
     const lfo = this.ctx.createOscillator(), lfoG = this.ctx.createGain(); lfo.frequency.value = 0.07; lfoG.gain.value = 90;
     lfo.connect(lfoG); lfoG.connect(lp.frequency); lfo.start(now);
