@@ -13,7 +13,7 @@
 - [x] 7: lik ligger der pasienten døde, synlige, flere per etasje.
 - [x] 1: journalen uten rulling.
 - [x] 2: tjenesterom med egne rekvisitter, hovedrekvisitten alltid på plass.
-- [ ] 3: varierte pasienter (kjønn, hoder, klær, de nye figurene fra ChatGPT).
+- [x] 3: varierte pasienter (kjønn, hår, hud, fem plagg, sko og pynt; kvinnefiguren fra ChatGPT er tatt i bruk).
 - [ ] 4: bruksanvisning og bedre innstillinger.
 - [ ] 5: nytt arkiv og UI-løft.
 
@@ -35,7 +35,7 @@
 - [x] Bilder av 40 kuriositeter, åtte piller og et tomt preparatglass fra ChatGPT i gpt-grafikk/.
 - [x] Spillerens figurark fra ChatGPT i gpt-grafikk/.
 - [x] To nye spillerfigurvarianter, kvinne og mann, med grovere ansikter. Standardfiguren og personalansiktene er også tegnet om.
-- [ ] Claude: Registrere spillerfigurvariantene fra gpt-grafikk/varianter/ i manifestet og legge inn valg i spillet.
+- [x] Claude: Registrere spillerfigurvariantene i manifestet og ta dem i bruk (kvinnefiguren er med, mannsarket var en kopi av standardfiguren).
 - [x] Tre delark fra ChatGPT for personale: hoder, hatter og uniformer.
 - [x] Fire sko og fem småobjekter fra ChatGPT: hjerte, Morbidiumdråpe, gulltann, due og eterflaske.
 - [x] De siste ni bildene for plukk og effekter fra ChatGPT: kamfer, levertran, luktesalt, tre støvpuff, skyggehånd, stempelmerke og treffstjerne.

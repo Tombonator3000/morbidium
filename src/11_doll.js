@@ -90,7 +90,7 @@ function setPart(m, P) { if (m.userData.P === P) return; m.userData.P = P; m.geo
 
 class Doll {
   constructor(type, opt = {}) {
-    this.type = type; this.rig = RIG[type] || RIG.pasient; this.opt = opt;
+    this.type = type; this.rig = opt.rig ? Object.assign({}, RIG[type] || RIG.pasient, opt.rig) : RIG[type] || RIG.pasient; this.opt = opt;
     this.root = new THREE.Group(); this.plane = new THREE.Group(); this.root.add(this.plane);
     this.U = makeU({ outline: opt.elite ? 1 : 0, outlineCol: opt.outlineCol, tint: opt.tint });
     this.sc = (opt.scale || 1) * this.rig.scale; this.plane.scale.set(this.sc, this.sc * BILL_Y, this.sc);
@@ -98,12 +98,12 @@ class Doll {
     this.headOff = { x: 0, y: 0, vx: 0, vy: 0 }; this.squash = 0; this.lean = 0; this.spin = 0;
     this.attack = null; this.flashT = 0; this.wpId = opt.weapon || null;
     this.shadow = Doll.blob(opt.shadow || .42); if (!opt.noShadow) this.root.add(this.shadow);
-    this.back = new Ribbon(900, this.U); this.front = new Ribbon(900, this.U); this.plane.add(this.back.mesh); this.plane.add(this.front.mesh);
+    this.back = new Ribbon(3200, this.U); this.front = new Ribbon(3200, this.U); this.plane.add(this.back.mesh); this.plane.add(this.front.mesh);
     if (this.rig.blob) { this.body = partMesh(charPart(type, 'blob', 'f'), this.U); this.plane.add(this.body); }
     else {
       if (this.rig.cape) { this.cape = partMesh(charPart(type, 'kappe', 'f'), this.U); this.plane.add(this.cape); }
       this.body = partMesh(charPart(type, 'kropp', 'f'), this.U); this.head = partMesh(charPart(type, 'hode', 'f'), this.U);
-      this.shoeL = partMesh(shoePart(this.rig.shoe), this.U); this.shoeR = partMesh(shoePart(this.rig.shoe), this.U);
+      this.shoeL = partMesh(opt.shoeP || shoePart(this.rig.shoe), this.U); this.shoeR = partMesh(opt.shoeP || shoePart(this.rig.shoe), this.U);
       this.plane.add(this.body, this.head, this.shoeL, this.shoeR);
       this.wp = new THREE.Group(); this.plane.add(this.wp);
       if (this.wpId) this.setWeapon(this.wpId);

@@ -23,7 +23,7 @@ Eksempel på et «ni ting»-ark med de ni første kuriositetene:
 
 Et bilde med et navn som ikke finnes i manifestet, blir hoppet over med en melding. Det ødelegger ikke bygget.
 
-Spillerfigurene i `varianter/` er ferdige figurark, men er ennå ikke registrert i manifestet. De ligger i undermappa så bildebehandlingen ikke rapporterer ukjente filnavn ved hver publisering. Claude kan flytte dem opp hit når figurvalget og nøklene er på plass.
+Spilleren settes sammen på nytt ved hver innleggelse. `figur_pasient.png` er mannen og `figur_pasient_kvinne.png` kvinnen; hårfarge, hudtone og kåpefarge legges på av spillet. Andre plagg er foreløpig tegnet i koden og kan erstattes med figurark som bare har kroppsraden fylt ut: `figur_tvang.png` (tvangstrøye), `figur_skjorte.png` (sykehusskjorte) og `figur_pyjamas.png` (stripete pyjamas). Småting til hodet kan leveres som enkeltbilder: `pynt_nattlue.png`, `pynt_papiljotter.png`, `pynt_harnett.png`, `pynt_hjelm.png`, `pynt_rosett.png`, `pynt_plaster.png` og `pynt_sting.png`, og fottøy som `sko_barfot.png` og `sko_sokk.png`.
 
 ## Krav til bildene
 - PNG, helst med gjennomsiktig bakgrunn. Hvit eller ensfarget bakgrunn går også, den fjernes fra kantene og innover.
