@@ -18,7 +18,7 @@
 - [x] Etappe 2: etasjen Kjelleren: Isolat og arkiv med Overarkivar Gunhild Paragraf, og signaturangrep for alle sjefer.
 - [x] Etappe 3: fem nye fiender (tvangstrøye, byråkrat, narkoselege, arkivrotter, øyeblomst).
 - [x] Etappe 4: spesialrom (hemmelig rom bak sprukken vegg, forbannet rom med bakhold, blodofferrom med tre handler).
-- [ ] Aktive gjenstander (med lading ved romrydding) og småtrinkets, som i Isaac.
+- [x] Etappe 5: apparater (ti aktive gjenstander som lades ved romrydding) og lommerusk (tolv små gjenstander med én plass).
 - [ ] Balansere kuriositetene etter spilltesting; noen kombinasjoner blir trolig altfor sterke.
 - [ ] Oppskriftssystemet i motoren: sette sammen fiender av deler fra assets/deler/ (rolle, hode, hatt/hår, tilbehør, kropp, farging, størrelse, elitemerker, navn).
 - [ ] Utseendetest av 3D-verden med 2D-figurer (ett rom, vegglamper, måneskygger, bloom), hvis Tom vil.
@@ -29,3 +29,4 @@
 - [ ] Byggeanimasjon når et rom avsløres (idé fra threejs-architecture-effects).
 - [ ] Flere diagnoser og oppvåkningssteder, flere spor etter tidligere pasienter.
 - [ ] Rydde bort ubrukt kode i old/ og ubrukte deler av 04_render.js.
+- [ ] Utvide tools/lag_manifest.py og ART_BRIEF.md med alt det nye (fjerde etasje, nye fiender, Overarkivaren, apparater, lommerusk, spesialrom), så ChatGPT kan tegne dem.

@@ -13,6 +13,8 @@ function hasDiag(id) { return G.player && G.player.diag.includes(id); }
 function playerDmgMult() {
   const P = G.player; let m = 1 + (P.stats.styrke - 1) * .1 + P.weaponLvl * .25;
   if (P.kamferT > 0) m *= 1.5;
+  if (P.adrenT > 0) m *= 1.3;
+  if (Lomme.has('knappenal') && P.hp >= P.maxHp) m *= 1.1;
   if (hasDiag('hovedperson') && P.hp < P.maxHp / 2) m *= 1.25;
   m *= 1 + Math.min(.3, P.morb * .003);
   m *= Items.stat('dmg');
@@ -26,7 +28,7 @@ function slotEff(i) {
 function abilityPower() { return 1 + (G.player.stats.forstand - 1) * .12; }
 function addMorb(v) {
   const P = G.player; if (!P) return;
-  P.morb = clamp(P.morb + v * (hasDiag('hovedperson') ? 1.3 : 1) * (1 - (P.stats.fatteevne - 1) * .05), 0, 100);
+  P.morb = clamp(P.morb + v * (hasDiag('hovedperson') ? 1.3 : 1) * (1 - (P.stats.fatteevne - 1) * .05) * (v > 0 && Lomme.has('pastill') ? .7 : 1), 0, 100);
 }
 function healPlayer(v, silent) {
   const P = G.player; const h = Math.min(P.maxHp - P.hp, v * (hasDiag('hypokonder') ? 1.4 : 1)); if (h <= 0) return;
@@ -91,7 +93,7 @@ function updatePlayer(dt, A) {
   if (aim !== null && !busy) P.face = aim;
   const stunned = P.stunT > 0;
   // rulle
-  const rech = (1.6 - (P.stats.smidighet - 1) * .1) * (hasDiag('rulling') ? .7 : 1);
+  const rech = (1.6 - (P.stats.smidighet - 1) * .1) * (hasDiag('rulling') ? .7 : 1) * (Lomme.has('kaninpote') ? .75 : 1);
   if (P.dodge < P.dodgeMax) { P.dodgeT += dt; if (P.dodgeT >= rech) { P.dodge++; P.dodgeT = 0; } }
   if (!stunned && A.dodgeP && P.dodge > 0 && P.roll <= 0) {
     P.dodge--; P.dodgeT = 0; P.roll = .34; P.iframe = .3; P.atk = null; P.chargeT = -1; P.charging = false; P.counters.dodge++; Items.onDodge();
@@ -104,6 +106,7 @@ function updatePlayer(dt, A) {
     if (P.charging) { P.chargeT += dt; if (!A.heavyD || P.chargeT > 1.1) { startSwing(true, Math.min(1, P.chargeT / .6)); P.chargeT = -1; P.charging = false; } }
     else if (A.attackP) { if (!P.atk) startSwing(false); else P.queued = true; }
     for (let i = 0; i < 4; i++) if (A.abP[i]) useAbility(i);
+    if (A.aktP) Aktiv.use();
     if (A.useP) useConsumable();
   }
   if (P.atk) {
@@ -112,7 +115,7 @@ function updatePlayer(dt, A) {
     if (k.p >= 1) { P.atk = null; if (P.queued) { P.queued = false; startSwing(false); } else P.chain = .3; }
   } else if (P.chain > 0) { P.chain -= dt; if (P.chain <= 0) P.combo = 0; }
   // bevegelse
-  let spd = (5 + P.stats.smidighet * .15) * (P.gasT > 0 ? .6 : 1) * (hasDiag('ruging') ? .9 : 1) * (P.fastT > 0 ? 1.4 : 1) * (P.coffee ? 1.1 : 1) * Items.stat('speed'), mx = stunned ? 0 : A.mx, mz = stunned ? 0 : A.mz;
+  let spd = (5 + P.stats.smidighet * .15) * (P.gasT > 0 ? .6 : 1) * (P.adrenT > 0 ? 1.4 : 1) * (hasDiag('ruging') ? .9 : 1) * (P.fastT > 0 ? 1.4 : 1) * (P.coffee ? 1.1 : 1) * Items.stat('speed'), mx = stunned ? 0 : A.mx, mz = stunned ? 0 : A.mz;
   if (P.roll > 0) { P.roll -= dt; mx = Math.sin(P.rollA); mz = Math.cos(P.rollA); spd = 11 + P.stats.smidighet * .3; if (Math.random() < dt * 20) puff(P.x, P.z, 1, .45); }
   else if (P.atk) spd *= .3; else if (P.charging) spd *= .4;
   P.vx = lerp(P.vx, mx * spd, 1 - Math.exp(-dt * 16)); P.vz = lerp(P.vz, mz * spd, 1 - Math.exp(-dt * 16));
@@ -377,6 +380,7 @@ function enemyDie(e, src) {
   const D = ENEMIES[e.type]; dropTeeth(e.x, e.z, rndi(D.teeth[0], D.teeth[1]) * (e.elite ? 3 : 1));
   if (Math.random() < (e.elite ? .5 : .08)) dropPickup(e.x, e.z, 'heart');
   if (e.elite && Math.random() < .5) dropPickup(e.x, e.z, 'cons', pick(Object.keys(CONSUMABLES)));
+  if (e.elite && Math.random() < .12) dropPickup(e.x, e.z, 'trinket', Lomme.pick());
   if (D.morb) { for (let i = 0; i < D.morb; i++) dropPickup(e.x, e.z, 'morb'); addPuddle(e.x, e.z, 'morb', .8, 24); }
   gainXp(D.xp * (e.elite ? 2.5 : 1)); checkDiagnoses(); Items.onKill(e);
 }

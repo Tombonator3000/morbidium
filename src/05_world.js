@@ -153,6 +153,7 @@ function hurt(e, dmg, src = {}) {
     if (Math.random() < .06 + (P.stats.fatteevne - 1) * .025 + Items.stat('luck') * .01) { d *= 1.6; crit = true; }
   }
   if (src.shrunk) d *= .5;
+  if (src.from === 'player' && !e.hitOnce) { e.hitOnce = true; if (Lomme.has('kolapp')) d *= 1.5; }
   e.hp -= d; e.lastHit = src.from;
   if (e.doll) { const ha = src.a !== undefined ? src.a : Math.atan2(e.x - (src.x ?? e.x), e.z - (src.z ?? e.z) + 1e-4); e.doll.flash(.09); e.doll.hit(Math.sin(ha) >= 0 ? 1 : -1); }
   if (src.from === 'player' && typeof starBurst === 'function') starBurst(e.x, e.kind === 'boss' ? 2 : 1.2, e.z + .1, crit ? 1.4 : 1);
@@ -193,7 +194,7 @@ function hurtPlayer(dmg, src) {
   if (src.kb) { const a = Math.atan2(P.x - (src.x ?? P.x), P.z - (src.z ?? P.z) + 1e-4); P.kvx = Math.sin(a) * src.kb; P.kvz = Math.cos(a) * src.kb; }
   if (src.stun) P.stunT = Math.max(P.stunT, src.stun * .6);
   P.lastCause = src.type || 'any';
-  if (P.hp <= 0) playerDie();
+  if (P.hp <= 0 && !Lomme.saveFromDeath()) playerDie();
   return d;
 }
 function nearestEnemy(x, z, maxD = 99, filter) {
@@ -310,6 +311,7 @@ function breakProp(o, src) {
   const nys = hasDiag('nysgjerrighet');
   if (Math.random() < (nys ? .7 : .35)) dropTeeth(o.x, o.z, rndi(1, 2) * (nys ? 2 : 1));
   if (Math.random() < .06) dropPickup(o.x, o.z, 'heart');
+  if (Math.random() < .015) dropPickup(o.x, o.z, 'trinket', Lomme.pick());
 }
 function hitProps(x, z, face, range, arc, dmg, kb) {
   let n = 0;
@@ -371,10 +373,10 @@ function dropTeeth(x, z, n) {
   for (let i = 0; i < n; i++) dropPickup(x, z, 'tooth', 1);
 }
 function dropPickup(x, z, kind, val, extra) {
-  const P = kind === 'tooth' ? toothPart() : kind === 'morb' ? morbPart() : kind === 'heart' ? heartPart() : kind === 'cons' ? bottlePart(val) : kind === 'weapon' ? weaponPart(val) : cardPart();
+  const P = kind === 'tooth' ? toothPart() : kind === 'morb' ? morbPart() : kind === 'heart' ? heartPart() : kind === 'cons' ? bottlePart(val) : kind === 'weapon' ? weaponPart(val) : kind === 'trinket' ? lommePart(val) : cardPart();
   const g = propSprite(null, x, z, { P, shadow: false, depthWrite: true });
   if (kind === 'weapon') { g.userData.m.rotation.z = -1.1; g.userData.m.scale.multiplyScalar(.7); g.userData.m.position.y = .3; }
-  if (kind === 'card' || kind === 'weapon' || kind === 'cons') g.userData.U.uOutline.value = 1, g.userData.U.uOutlineCol.value.set('#fff2b0');
+  if (kind === 'card' || kind === 'weapon' || kind === 'cons' || kind === 'trinket') g.userData.U.uOutline.value = 1, g.userData.U.uOutlineCol.value.set('#fff2b0');
   const a = Math.random() * TAU, sp = kind === 'tooth' || kind === 'morb' ? rnd(1.5, 4) : 1.2;
   const pk = { kind, val, extra, x, z, y: .6, vx: Math.cos(a) * sp, vz: Math.sin(a) * sp, vy: rnd(3, 5), mesh: g, t: 0, r: .25, alive: true };
   R.dyn.add(g); G.pickups.push(pk); return pk;
@@ -386,7 +388,8 @@ function updatePickups(dt) {
     if (k.y > .25 || k.vy > 0) { k.vy -= 16 * dt; k.y += k.vy * dt; k.x += k.vx * dt; k.z += k.vz * dt; if (solid(Math.floor(k.x), Math.floor(k.z))) { k.x -= k.vx * dt; k.z -= k.vz * dt; k.vx *= -.5; k.vz *= -.5; } if (k.y < .25) { k.y = .25; k.vy = Math.abs(k.vy) > 2 ? -k.vy * .35 : 0; k.vx *= .5; k.vz *= .5; } }
     const auto = k.kind === 'tooth' || k.kind === 'morb' || k.kind === 'heart';
     const d = Math.hypot(P.x - k.x, P.z - k.z);
-    if (auto && P.alive && k.t > .35 && d < 2.6 && (k.kind !== 'heart' || P.hp < P.maxHp)) { const s = (1 - d / 2.6) * 14 + 3; k.x += (P.x - k.x) / (d || 1) * s * dt; k.z += (P.z - k.z) / (d || 1) * s * dt; }
+    const mag = Lomme.has('tannspeil') ? 5.2 : 2.6;
+    if (auto && P.alive && k.t > .35 && d < mag && (k.kind !== 'heart' || P.hp < P.maxHp)) { const s = (1 - d / mag) * 14 + 3; k.x += (P.x - k.x) / (d || 1) * s * dt; k.z += (P.z - k.z) / (d || 1) * s * dt; }
     k.mesh.position.set(k.x, k.y + Math.abs(Math.sin(k.t * 4)) * .08, k.z); k.mesh.userData.m.rotation.z = (k.kind === 'weapon' ? -1.1 : 0) + Math.sin(k.t * 3) * .12;
     if (auto && P.alive && k.t > .35 && d < .55 && (k.kind !== 'heart' || P.hp < P.maxHp)) {
       if (k.kind === 'tooth') { P.teeth += k.val || 1; Sound.play('tooth', .7, 1 + Math.random() * .2); }
@@ -406,6 +409,7 @@ function takePickup(k) {
     const old = P.weapon; P.weapon = k.val; P.weaponLvl = 0; P.doll.setWeapon(P.weapon);
     dropPickup(P.x, P.z, 'weapon', old); toast(WEAPONS[k.val].name, WEAPONS[k.val].desc); Sound.play('pickup');
   } else if (k.kind === 'card') { openLearn(k.val, 'Et kartotekkort fra gulvet'); }
+  else if (k.kind === 'trinket') { Lomme.give(k.val); }
   R.remove(k.mesh); G.pickups.splice(G.pickups.indexOf(k), 1);
 }
 

@@ -212,3 +212,12 @@ Alle tidspunkt er UTC.
 - Flettet inn figur_pasient.png. Bildeflyten klipper arket til seks deler (hode og kropp forfra, bakfra og fra siden), 68 bilder totalt, spillfila 1,0 MB.
 - Så på pasienten i spillet forfra, bakfra, fra begge sider, i gange og i tungt slag: delene sitter riktig på festepunktene, og armene og beina som koden tegner, passer til morgenkåpen.
 - Alle tester kjørt med alle 68 bildene bygd inn: gjennomspilling og test_ekstra uten feil.
+
+## 2026-09-24 17:07 Etappe 5: apparater og lommerusk
+- Ny fil src/27_utstyr.js.
+- Apparater (aktive gjenstander, én plass): defibrillator, tannlegebor, stempelpute, adrenalinsprøyte, blodpose, kamera med magnesiumblits, forstanderens stoppeklokke (fiendene går i sakte film), duebur, vaktmesterens meisel (hele kartet og knuser sprekker) og grammofon med vuggevise. De lades ett streik per ryddet rom, sjefen gir to. Brukes med V (eller X), D-pad opp eller Aktiv-knappen på berøringsskjerm. Et nytt apparat bytter ut det gamle, som blir stående igjen i et glass.
+- Lommerusk (én plass): hestesko, tannlegespeil, knappenål i fôret, lånekort med stempel, lekkende batteri, kaninpote fra tøffelen, morfindråpe, sprukket monokkel, rusten skalpell, tørket frosk (tar ett dødelig slag per etasje), kølapp nummer 1 og halspastill.
+- Hvor de finnes: skatterom (hvert fjerde glass er et apparat), hemmelige rom (annethvert), kister (nytt valg), vaktmesteren (ett apparat og ett hittegods), eliter og knuste møbler (lommerusk av og til).
+- HUD: apparatet vises ved siden av lomma med ladestreker og tast V, lommerusket med gullring først i gjenstandsraden. På berøringsskjerm dukker Aktiv-knappen opp i klyngen når pasienten har et apparat. Journalens kuriositetsfane viser begge.
+- Begge lagres med løpet. README har fått V i kontrollene.
+- Test: defibrillatoren skader og tømmer ladningen, ett streik per ryddet rom, bytte gir glass med det gamle, frosken redder fra døden, lommerusk byttes, og alt overlever lagring. Ingen konsollfeil.
