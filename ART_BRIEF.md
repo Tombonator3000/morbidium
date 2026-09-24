@@ -10,7 +10,7 @@ Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke red
 4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).
 5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.
 
-Status: 150 av 287 bilder er levert. Kolonnen «Levert» viser hvilke.
+Status: 205 av 287 bilder er levert. Kolonnen «Levert» viser hvilke.
 
 ## Stilblokk (lim inn i ChatGPT)
 
@@ -202,7 +202,7 @@ Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbele
 | `verktoytavle1.png` | a pegboard with hanging tools (hammers, saws, keys), 1 tiles wide, front view | stående |  |
 | `verktoytavle2.png` | a pegboard with hanging tools (hammers, saws, keys), 2 tiles wide, front view | liggende |  |
 
-## Runde 4: plukk, effekter, tillegg og pynt (33 bilder, 14 levert)
+## Runde 4: plukk, effekter, tillegg og pynt (33 bilder, 25 levert)
 
 Små ting. Enkle former, tydelig kontur.
 
@@ -214,7 +214,7 @@ Små ting. Enkle former, tydelig kontur.
 | `flaske_levertran.png` | a small brown glass bottle of cod liver oil with a cork | stående | ja |
 | `flaske_luktesalt.png` | a small white smelling-salts jar with a red cap | stående | ja |
 | `hjerte.png` | a small red cartoon heart (health pickup) | kvadrat | ja |
-| `kortplukk.png` | an ability card lying on the floor, slightly tilted, face down with a purple back (pickup) | stående |  |
+| `kortplukk.png` | an ability card lying on the floor, slightly tilted, face down with a purple back (pickup) | stående | ja |
 | `morbdrape.png` | a glowing purple liquid droplet (pickup) | kvadrat | ja |
 | `puff0.png` | a small cartoon dust cloud puff, beige with a brown outline | kvadrat | ja |
 | `puff1.png` | a small cartoon dust cloud puff, beige with a brown outline | kvadrat | ja |
@@ -226,20 +226,20 @@ Små ting. Enkle former, tydelig kontur.
 | `pynt_plaster.png` | a crossed pair of beige sticking plasters | kvadrat |  |
 | `pynt_rosett.png` | a small red hair bow | liggende |  |
 | `pynt_sting.png` | a short stitched scar with black stitches | liggende |  |
-| `skudd_slim.png` | a small glob of green-yellow phlegm (projectile) | kvadrat |  |
+| `skudd_slim.png` | a small glob of green-yellow phlegm (projectile) | kvadrat | ja |
 | `skyggehand_p.png` | a purple smoky shadow hand flying forward (projectile) | kvadrat | ja |
 | `stempelmerke.png` | a smudged red rectangular rubber-stamp imprint | liggende | ja |
 | `stjerne.png` | a white and yellow comic impact star burst | kvadrat | ja |
 | `tann.png` | a single gold tooth (currency pickup) | kvadrat | ja |
-| `tillegg_bandasje.png` | a tiny add-on worn by the player character: a head bandage with a red spot. Tiny, drawn alone | liggende |  |
-| `tillegg_bart.png` | a tiny add-on worn by the player character: a glued-on mustache. Tiny, drawn alone | liggende |  |
-| `tillegg_eyeliner.png` | a tiny add-on worn by the player character: heavy black eyeliner around two eyes. Tiny, drawn alone | liggende |  |
-| `tillegg_glassoye.png` | a tiny add-on worn by the player character: a glass eye. Tiny, drawn alone | kvadrat |  |
-| `tillegg_horn.png` | a tiny add-on worn by the player character: two small devil horns. Tiny, drawn alone | liggende |  |
-| `tillegg_igler.png` | a tiny add-on worn by the player character: three leeches. Tiny, drawn alone | kvadrat |  |
-| `tillegg_lys.png` | a tiny add-on worn by the player character: a lit candle stuck on the head. Tiny, drawn alone | stående |  |
-| `tillegg_svulst.png` | a tiny add-on worn by the player character: a pink lump on the head. Tiny, drawn alone | kvadrat |  |
-| `tillegg_tunge.png` | a tiny add-on worn by the player character: a tongue sticking out. Tiny, drawn alone | stående |  |
+| `tillegg_bandasje.png` | a tiny add-on worn by the player character: a head bandage with a red spot. Tiny, drawn alone | liggende | ja |
+| `tillegg_bart.png` | a tiny add-on worn by the player character: a glued-on mustache. Tiny, drawn alone | liggende | ja |
+| `tillegg_eyeliner.png` | a tiny add-on worn by the player character: heavy black eyeliner around two eyes. Tiny, drawn alone | liggende | ja |
+| `tillegg_glassoye.png` | a tiny add-on worn by the player character: a glass eye. Tiny, drawn alone | kvadrat | ja |
+| `tillegg_horn.png` | a tiny add-on worn by the player character: two small devil horns. Tiny, drawn alone | liggende | ja |
+| `tillegg_igler.png` | a tiny add-on worn by the player character: three leeches. Tiny, drawn alone | kvadrat | ja |
+| `tillegg_lys.png` | a tiny add-on worn by the player character: a lit candle stuck on the head. Tiny, drawn alone | stående | ja |
+| `tillegg_svulst.png` | a tiny add-on worn by the player character: a pink lump on the head. Tiny, drawn alone | kvadrat | ja |
+| `tillegg_tunge.png` | a tiny add-on worn by the player character: a tongue sticking out. Tiny, drawn alone | stående | ja |
 | `torner.png` | a tangle of black thorny vines (a hazard lying on the floor) | kvadrat |  |
 
 ## Runde 5: våpen (7 bilder, 7 levert)
@@ -256,91 +256,91 @@ Våpenet står loddrett med håndtaket nederst og tuppen opp. Spillet roterer de
 | `vaapen_sproyte.png` | a large glass syringe | stående | ja |
 | `vaapen_stativ.png` | an IV drip stand: metal pole with an empty drip bag | stående | ja |
 
-## Runde 6: figurer (91 bilder, 16 levert)
+## Runde 6: figurer (91 bilder, 60 levert)
 
 Vanskeligst. Be først om et figurark (samme figur forfra, bakfra, fra siden), og deretter om hode og kropp hver for seg fra arket. Armer og bein tegner spillet selv som tykke streker, så de skal ikke være med.
 
 | Filnavn | Beskrivelse til ChatGPT | Format | Levert |
 |---|---|---|---|
-| `blob_flue_b.png` | a fat bluebottle meat fly with big red eyes. back view, facing away | liggende |  |
-| `blob_flue_f.png` | a fat bluebottle meat fly with big red eyes. front view, facing the viewer | liggende |  |
-| `blob_flue_s.png` | a fat bluebottle meat fly with big red eyes. side view, facing right | liggende |  |
+| `blob_flue_b.png` | a fat bluebottle meat fly with big red eyes. back view, facing away | liggende | ja |
+| `blob_flue_f.png` | a fat bluebottle meat fly with big red eyes. front view, facing the viewer | liggende | ja |
+| `blob_flue_s.png` | a fat bluebottle meat fly with big red eyes. side view, facing right | liggende | ja |
 | `blob_journalen_b.png` | FINAL BOSS: the Journal, a huge floating leather-bound patient journal with tentacles and teeth, pages flapping. back view, facing away | liggende |  |
 | `blob_journalen_f.png` | FINAL BOSS: the Journal, a huge floating leather-bound patient journal with tentacles and teeth, pages flapping. front view, facing the viewer | liggende |  |
 | `blob_journalen_s.png` | FINAL BOSS: the Journal, a huge floating leather-bound patient journal with tentacles and teeth, pages flapping. side view, facing right | liggende |  |
-| `blob_lunge_b.png` | a pink human lung walking on its own, tar spots, tiny sad face. back view, facing away | kvadrat |  |
-| `blob_lunge_f.png` | a pink human lung walking on its own, tar spots, tiny sad face. front view, facing the viewer | kvadrat |  |
-| `blob_lunge_s.png` | a pink human lung walking on its own, tar spots, tiny sad face. side view, facing right | kvadrat |  |
+| `blob_lunge_b.png` | a pink human lung walking on its own, tar spots, tiny sad face. back view, facing away | kvadrat | ja |
+| `blob_lunge_f.png` | a pink human lung walking on its own, tar spots, tiny sad face. front view, facing the viewer | kvadrat | ja |
+| `blob_lunge_s.png` | a pink human lung walking on its own, tar spots, tiny sad face. side view, facing right | kvadrat | ja |
 | `blob_oyeblomst_b.png` | an eye flower: a fleshy stalk rooted in the floor with a big bloodshot eye as its bloom. back view, facing away | stående |  |
 | `blob_oyeblomst_f.png` | an eye flower: a fleshy stalk rooted in the floor with a big bloodshot eye as its bloom. front view, facing the viewer | stående |  |
 | `blob_oyeblomst_s.png` | an eye flower: a fleshy stalk rooted in the floor with a big bloodshot eye as its bloom. side view, facing right | stående |  |
 | `blob_rotte_b.png` | a fat grey archive rat with a paper slip in its mouth. back view, facing away | liggende |  |
 | `blob_rotte_f.png` | a fat grey archive rat with a paper slip in its mouth. front view, facing the viewer | liggende |  |
 | `blob_rotte_s.png` | a fat grey archive rat with a paper slip in its mouth. side view, facing right | liggende |  |
-| `blob_svulst_b.png` | a walking pink tumor with veins, one eye and a grin. back view, facing away | liggende |  |
-| `blob_svulst_f.png` | a walking pink tumor with veins, one eye and a grin. front view, facing the viewer | liggende |  |
-| `blob_svulst_s.png` | a walking pink tumor with veins, one eye and a grin. side view, facing right | liggende |  |
+| `blob_svulst_b.png` | a walking pink tumor with veins, one eye and a grin. back view, facing away | liggende | ja |
+| `blob_svulst_f.png` | a walking pink tumor with veins, one eye and a grin. front view, facing the viewer | liggende | ja |
+| `blob_svulst_s.png` | a walking pink tumor with veins, one eye and a grin. side view, facing right | liggende | ja |
 | `blob_tvang_b.png` | an enemy patient in a straitjacket, arms bound, hopping, wild eyes. back view, facing away | stående |  |
 | `blob_tvang_f.png` | an enemy patient in a straitjacket, arms bound, hopping, wild eyes. front view, facing the viewer | stående |  |
 | `blob_tvang_s.png` | an enemy patient in a straitjacket, arms bound, hopping, wild eyes. side view, facing right | stående |  |
 | `blob_yngel_b.png` | drain spawn: a small purple slime creature with mismatched eyes and a toothy grin. back view, facing away | liggende |  |
-| `blob_yngel_f.png` | drain spawn: a small purple slime creature with several mismatched eyes and a toothy grin, front view | liggende |  |
+| `blob_yngel_f.png` | drain spawn: a small purple slime creature with several mismatched eyes and a toothy grin, front view | liggende | ja |
 | `blob_yngel_s.png` | drain spawn: a small purple slime creature with mismatched eyes and a toothy grin. side view, facing right | liggende |  |
 | `hode_arkivar_f.png` | HEAD ONLY (no neck, no body) of BOSS: chief archivist Gunhild Paragraf, tall and severe, grey hair bun, pince-nez, dusty grey suit covered in stamps and paper slips. front view, facing the viewer | kvadrat |  |
-| `hode_bibliotekar_f.png` | HEAD ONLY (no neck, no body) of Ask the librarian, hair in a bun, small glasses, purple cardigan. front view, facing the viewer | kvadrat |  |
+| `hode_bibliotekar_f.png` | HEAD ONLY (no neck, no body) of Ask the librarian, hair in a bun, small glasses, purple cardigan. front view, facing the viewer | kvadrat | ja |
 | `hode_byrakrat_f.png` | HEAD ONLY (no neck, no body) of a hollow-eyed bureaucrat in a black suit and red tie, arms full of forms. front view, facing the viewer | kvadrat |  |
-| `hode_hansen_f.png` | HEAD ONLY (no neck, no body) of Sister Hansen, a strict older nurse with a white cap. front view, facing the viewer | kvadrat |  |
-| `hode_kokk_f.png` | HEAD ONLY (no neck, no body) of Fru Ruud, a round friendly cafeteria cook lady with a tall white chef hat and an apron. front view, facing the viewer | kvadrat |  |
-| `hode_krok_f.png` | HEAD ONLY (no neck, no body) of BOSS: Chief surgeon Hektor Krok, huge and menacing, head mirror on his forehead, white coat with a blood-stained red apron. front view, facing the viewer | kvadrat |  |
-| `hode_kultist_b.png` | HEAD ONLY (no neck, no body) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. back view, facing away | kvadrat |  |
-| `hode_kultist_f.png` | HEAD ONLY (no neck, no body) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. front view, facing the viewer | kvadrat |  |
-| `hode_kultist_s.png` | HEAD ONLY (no neck, no body) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. side view, facing right | kvadrat |  |
+| `hode_hansen_f.png` | HEAD ONLY (no neck, no body) of Sister Hansen, a strict older nurse with a white cap. front view, facing the viewer | kvadrat | ja |
+| `hode_kokk_f.png` | HEAD ONLY (no neck, no body) of Fru Ruud, a round friendly cafeteria cook lady with a tall white chef hat and an apron. front view, facing the viewer | kvadrat | ja |
+| `hode_krok_f.png` | HEAD ONLY (no neck, no body) of BOSS: Chief surgeon Hektor Krok, huge and menacing, head mirror on his forehead, white coat with a blood-stained red apron. front view, facing the viewer | kvadrat | ja |
+| `hode_kultist_b.png` | HEAD ONLY (no neck, no body) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. back view, facing away | kvadrat | ja |
+| `hode_kultist_f.png` | HEAD ONLY (no neck, no body) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. front view, facing the viewer | kvadrat | ja |
+| `hode_kultist_s.png` | HEAD ONLY (no neck, no body) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. side view, facing right | kvadrat | ja |
 | `hode_narkose_f.png` | HEAD ONLY (no neck, no body) of an anesthetist in a green surgical gown with a rubber ether mask and a big glass bottle. front view, facing the viewer | kvadrat |  |
-| `hode_olsen_f.png` | HEAD ONLY (no neck, no body) of Olsen the janitor, grey cap, bushy grey mustache, grey overalls. front view, facing the viewer | kvadrat |  |
-| `hode_oppasser_b.png` | HEAD ONLY (no neck, no body) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. back view, facing away | kvadrat |  |
-| `hode_oppasser_f.png` | HEAD ONLY (no neck, no body) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. front view, facing the viewer | kvadrat |  |
-| `hode_oppasser_s.png` | HEAD ONLY (no neck, no body) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. side view, facing right | kvadrat |  |
+| `hode_olsen_f.png` | HEAD ONLY (no neck, no body) of Olsen the janitor, grey cap, bushy grey mustache, grey overalls. front view, facing the viewer | kvadrat | ja |
+| `hode_oppasser_b.png` | HEAD ONLY (no neck, no body) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. back view, facing away | kvadrat | ja |
+| `hode_oppasser_f.png` | HEAD ONLY (no neck, no body) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. front view, facing the viewer | kvadrat | ja |
+| `hode_oppasser_s.png` | HEAD ONLY (no neck, no body) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. side view, facing right | kvadrat | ja |
 | `hode_pasient_b.png` | HEAD ONLY (no neck, no body) of the player: a small patient with messy black hair, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt and an ID badge. back view, facing away | kvadrat | ja |
 | `hode_pasient_f.png` | HEAD ONLY (no neck, no body) of the player: a small patient with messy black hair, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt and an ID badge. front view, facing the viewer | kvadrat | ja |
 | `hode_pasient_kvinne_b.png` | HEAD ONLY (no neck, no body) of the player, female version: a small patient woman with messy long dark hair, a white hair clip, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt. back view, facing away | kvadrat | ja |
 | `hode_pasient_kvinne_f.png` | HEAD ONLY (no neck, no body) of the player, female version: a small patient woman with messy long dark hair, a white hair clip, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt. front view, facing the viewer | kvadrat | ja |
 | `hode_pasient_kvinne_s.png` | HEAD ONLY (no neck, no body) of the player, female version: a small patient woman with messy long dark hair, a white hair clip, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt. side view, facing right | kvadrat | ja |
 | `hode_pasient_s.png` | HEAD ONLY (no neck, no body) of the player: a small patient with messy black hair, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt and an ID badge. side view, facing right | kvadrat | ja |
-| `hode_pasient_x.png` | HEAD ONLY (no neck, no body) of the player: a small patient with messy black hair, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt and an ID badge. front view, dead with X marks over the eyes (comedic) | kvadrat |  |
-| `hode_pleier_b.png` | HEAD ONLY (no neck, no body) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. back view, facing away | kvadrat |  |
-| `hode_pleier_f.png` | HEAD ONLY (no neck, no body) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. front view, facing the viewer | kvadrat |  |
-| `hode_pleier_s.png` | HEAD ONLY (no neck, no body) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. side view, facing right | kvadrat |  |
-| `hode_rust_f.png` | HEAD ONLY (no neck, no body) of BOSS: hydrotherapist Ragnvald Rust, rubber diving-style helmet with round goggles, black rubber apron, big and damp. front view, facing the viewer | kvadrat |  |
-| `kappe_kultist_b.png` | the long black cape with purple lining ALONE, hanging of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. back view, facing away | kvadrat |  |
-| `kappe_kultist_f.png` | the long black cape with purple lining ALONE, hanging of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. front view, facing the viewer | kvadrat |  |
-| `kappe_kultist_s.png` | the long black cape with purple lining ALONE, hanging of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. side view, facing right | kvadrat |  |
+| `hode_pasient_x.png` | HEAD ONLY (no neck, no body) of the player: a small patient with messy black hair, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt and an ID badge. front view, dead with X marks over the eyes (comedic) | kvadrat | ja |
+| `hode_pleier_b.png` | HEAD ONLY (no neck, no body) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. back view, facing away | kvadrat | ja |
+| `hode_pleier_f.png` | HEAD ONLY (no neck, no body) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. front view, facing the viewer | kvadrat | ja |
+| `hode_pleier_s.png` | HEAD ONLY (no neck, no body) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. side view, facing right | kvadrat | ja |
+| `hode_rust_f.png` | HEAD ONLY (no neck, no body) of BOSS: hydrotherapist Ragnvald Rust, rubber diving-style helmet with round goggles, black rubber apron, big and damp. front view, facing the viewer | kvadrat | ja |
+| `kappe_kultist_b.png` | the long black cape with purple lining ALONE, hanging of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. back view, facing away | kvadrat | ja |
+| `kappe_kultist_f.png` | the long black cape with purple lining ALONE, hanging of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. front view, facing the viewer | kvadrat | ja |
+| `kappe_kultist_s.png` | the long black cape with purple lining ALONE, hanging of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. side view, facing right | kvadrat | ja |
 | `kropp_arkivar_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of BOSS: chief archivist Gunhild Paragraf, tall and severe, grey hair bun, pince-nez, dusty grey suit covered in stamps and paper slips. front view, facing the viewer | liggende |  |
-| `kropp_bibliotekar_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Ask the librarian, hair in a bun, small glasses, purple cardigan. front view, facing the viewer | liggende |  |
+| `kropp_bibliotekar_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Ask the librarian, hair in a bun, small glasses, purple cardigan. front view, facing the viewer | liggende | ja |
 | `kropp_byrakrat_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a hollow-eyed bureaucrat in a black suit and red tie, arms full of forms. front view, facing the viewer | liggende |  |
-| `kropp_hansen_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Sister Hansen, a strict older nurse with a white cap. front view, facing the viewer | liggende |  |
-| `kropp_kokk_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Fru Ruud, a round friendly cafeteria cook lady with a tall white chef hat and an apron. front view, facing the viewer | liggende |  |
-| `kropp_krok_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of BOSS: Chief surgeon Hektor Krok, huge and menacing, head mirror on his forehead, white coat with a blood-stained red apron. front view, facing the viewer | liggende |  |
-| `kropp_kultist_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. back view, facing away | liggende |  |
-| `kropp_kultist_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. front view, facing the viewer | liggende |  |
-| `kropp_kultist_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. side view, facing right | liggende |  |
+| `kropp_hansen_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Sister Hansen, a strict older nurse with a white cap. front view, facing the viewer | liggende | ja |
+| `kropp_kokk_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Fru Ruud, a round friendly cafeteria cook lady with a tall white chef hat and an apron. front view, facing the viewer | liggende | ja |
+| `kropp_krok_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of BOSS: Chief surgeon Hektor Krok, huge and menacing, head mirror on his forehead, white coat with a blood-stained red apron. front view, facing the viewer | liggende | ja |
+| `kropp_kultist_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. back view, facing away | liggende | ja |
+| `kropp_kultist_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. front view, facing the viewer | liggende | ja |
+| `kropp_kultist_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a pale gloomy edgelord teenager cultist, dark hood, black eye makeup, skinny black robe with four leather belts with gold buckles. side view, facing right | liggende | ja |
 | `kropp_narkose_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of an anesthetist in a green surgical gown with a rubber ether mask and a big glass bottle. front view, facing the viewer | liggende |  |
-| `kropp_olsen_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Olsen the janitor, grey cap, bushy grey mustache, grey overalls. front view, facing the viewer | liggende |  |
-| `kropp_oppasser_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. back view, facing away | liggende |  |
-| `kropp_oppasser_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. front view, facing the viewer | liggende |  |
-| `kropp_oppasser_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. side view, facing right | liggende |  |
+| `kropp_olsen_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Olsen the janitor, grey cap, bushy grey mustache, grey overalls. front view, facing the viewer | liggende | ja |
+| `kropp_oppasser_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. back view, facing away | liggende | ja |
+| `kropp_oppasser_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. front view, facing the viewer | liggende | ja |
+| `kropp_oppasser_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a tall thin hospital orderly in mint-green scrubs, surgical cap and white face mask, tired squinting eyes. side view, facing right | liggende | ja |
 | `kropp_pasient_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player: a small patient with messy black hair, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt and an ID badge. back view, facing away | liggende | ja |
 | `kropp_pasient_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player: a small patient with messy black hair, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt and an ID badge. front view, facing the viewer | liggende | ja |
 | `kropp_pasient_kvinne_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player, female version: a small patient woman with messy long dark hair, a white hair clip, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt. back view, facing away | liggende | ja |
 | `kropp_pasient_kvinne_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player, female version: a small patient woman with messy long dark hair, a white hair clip, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt. front view, facing the viewer | liggende | ja |
 | `kropp_pasient_kvinne_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player, female version: a small patient woman with messy long dark hair, a white hair clip, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt. side view, facing right | liggende | ja |
 | `kropp_pasient_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player: a small patient with messy black hair, big round glasses, rosy cheeks, mustard-yellow bathrobe with a brown belt and an ID badge. side view, facing right | liggende | ja |
-| `kropp_pleier_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. back view, facing away | liggende |  |
-| `kropp_pleier_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. front view, facing the viewer | liggende |  |
-| `kropp_pleier_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. side view, facing right | liggende |  |
+| `kropp_pleier_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. back view, facing away | liggende | ja |
+| `kropp_pleier_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. front view, facing the viewer | liggende | ja |
+| `kropp_pleier_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a big stern nurse, square jaw, angry brows, hair in a bun, white cap with a red cross, boxy white uniform with apron. side view, facing right | liggende | ja |
 | `kropp_pyjamas_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing white pyjamas with vertical blue stripes, a lapel collar, buttons and a breast pocket (the clothes only). back view, facing away | liggende |  |
 | `kropp_pyjamas_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing white pyjamas with vertical blue stripes, a lapel collar, buttons and a breast pocket (the clothes only). front view, facing the viewer | liggende |  |
 | `kropp_pyjamas_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing white pyjamas with vertical blue stripes, a lapel collar, buttons and a breast pocket (the clothes only). side view, facing right | liggende |  |
-| `kropp_rust_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of BOSS: hydrotherapist Ragnvald Rust, rubber diving-style helmet with round goggles, black rubber apron, big and damp. front view, facing the viewer | liggende |  |
+| `kropp_rust_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of BOSS: hydrotherapist Ragnvald Rust, rubber diving-style helmet with round goggles, black rubber apron, big and damp. front view, facing the viewer | liggende | ja |
 | `kropp_skjorte_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing a pale blue hospital gown with a tiny diamond pattern and short sleeves; seen from behind it is open with ties and white polka-dot underpants (the clothes only). back view, facing away | liggende |  |
 | `kropp_skjorte_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing a pale blue hospital gown with a tiny diamond pattern and short sleeves; seen from behind it is open with ties and white polka-dot underpants (the clothes only). front view, facing the viewer | liggende |  |
 | `kropp_skjorte_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the player patient wearing a pale blue hospital gown with a tiny diamond pattern and short sleeves; seen from behind it is open with ties and white polka-dot underpants (the clothes only). side view, facing right | liggende |  |

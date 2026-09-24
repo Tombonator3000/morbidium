@@ -322,3 +322,7 @@ Alle tidspunkt er UTC.
 - tools/lag_manifest.py dekker nå alle fire etasjer, alle maler (også Kapellet og Vaktmesterens bod), de nye fiendene, sjefene, apparatene, lommerusket og spesialrommene. Den fletter inn nye nøkler og beholder de gamle, så ingen levert ChatGPT-tegning blir foreldreløs. 64 nye nøkler.
 - tools/lag_brief.py skriver ART_BRIEF.md med beskrivelse av alt det nye og en kolonne som viser hva ChatGPT allerede har levert: 150 av 287 bilder. Det som gjenstår er mest figurer (fiender, personale, sjefer), apparater og lommerusk, pynt og de nyeste møblene.
 - Testrunden med alt dette gikk grønt bortsett fra én for streng grense i musikktesten (den krevde flere enn 8 åttendeler på 2,5 sekunder, som i 84 slag i minuttet er på kanten). Grensen er rettet og testen består. Fjernet ubrukt kode fra første versjon: SVG-ikonene ICONS, de gamle egenskapsnavnene STATS og R.basic. Innleggelseskortene er litt smalere, så alle får plass på én rad. Gjennomspilling og hele bildeflyten med 150 bilder går uten feil.
+
+## 2026-09-24 19:55 Kunstlista oppdatert etter Toms siste leveranse
+- Tom leverte figurark for personale og sjefer, småfiender, kappe, dødt spillerhode og ansiktstilbehør. Bygget med alle 205 bilder uten feil, og figurene fungerer sammen med oppskriftssystemet og de fargede lemmene.
+- ART_BRIEF.md er generert på nytt: 205 av 287 bilder er levert. Det som gjenstår står uten «ja» i Levert-kolonnen.
