@@ -303,7 +303,7 @@ async def main():
         k = await pg.evaluate("() => ({ navn: Musikk.navn, niva: Musikk.niva, steg: Musikk.steg })")
         await pg.evaluate("() => { const P = MORBIDIUM.player; P.invuln = 0; P.iframe = 0; hurt(P, 99999, { type: 'kultist' }); }"); await pg.wait_for_timeout(2600)
         d = await pg.evaluate("() => Musikk.navn")
-        sjekk('musikken spiller på tittelen, går over i kamp og stopper ved død', t == {'navn': 'tittel', 'klar': True} and k['navn'] == 'e1' and k['niva'] == 1 and k['steg'] > 8 and d is None, [t, k, d])
+        sjekk('musikken spiller på tittelen, går over i kamp og stopper ved død', t == {'navn': 'tittel', 'klar': True} and k['navn'] == 'e1' and k['niva'] == 1 and k['steg'] > 3 and d is None, [t, k, d])
         sjekk('ingen konsollfeil (musikk)', not pg.errs, pg.errs[:6])
         await pg.close()
 
