@@ -24,6 +24,8 @@
 - [ ] Utseendetest av 3D-verden med 2D-figurer (ett rom, vegglamper, måneskygger, bloom), hvis Tom vil.
 - [x] Bilder av 40 kuriositeter, åtte piller og et tomt preparatglass fra ChatGPT i gpt-grafikk/.
 - [x] Spillerens figurark fra ChatGPT i gpt-grafikk/.
+- [x] To nye spillerfigurvarianter, kvinne og mann, med grovere ansikter. Standardfiguren og personalansiktene er også tegnet om.
+- [ ] Claude: Registrere spillerfigurvariantene fra gpt-grafikk/varianter/ i manifestet og legge inn valg i spillet.
 - [x] Tre delark fra ChatGPT for personale: hoder, hatter og uniformer.
 - [x] Fire sko og fem småobjekter fra ChatGPT: hjerte, Morbidiumdråpe, gulltann, due og eterflaske.
 - [x] De siste ni bildene for plukk og effekter fra ChatGPT: kamfer, levertran, luktesalt, tre støvpuff, skyggehånd, stempelmerke og treffstjerne.

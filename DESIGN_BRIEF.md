@@ -19,6 +19,10 @@ Style: hand-drawn cartoon game art in the style of Conan Chop Chop mixed with Ca
 Technical: PNG with a TRANSPARENT background. No text unless asked, no ground shadows, no frames, no background scenery.
 ```
 
+## Ansikter
+
+Tom ønsker at ansiktene er grovere, styggere og mer morbide enn de første figurarkene. Tegn skjeve silhuetter, ujevne øyne og tenner, tydelige poser under øynene, skranglete hår og røffe blekkstreker med litt skravering. Figurene kan være groteske og komiske, men må fortsatt være lette å kjenne igjen fra alle vinkler. Unngå glatte hudoverganger, symmetrisk portrettpreg og blankt, polert uttrykk. Ikoner og utstyr beholder stilen i blokken over.
+
 ## Faste regler for alle bilder
 
 1. Gjennomsiktig bakgrunn. Går ikke det, bruk helt hvit bakgrunn.
