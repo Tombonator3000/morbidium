@@ -135,3 +135,9 @@ Alle tidspunkt er UTC.
 - Tom ba om at den gamle grenen slettes. Sjekket først at alt på grenen (175a92b) finnes i main.
 - Den lokale grenen er slettet. Slettingen på GitHub ble avvist med HTTP 403: tilgangen Claude Code har i denne økta, kan pushe commits, men ikke slette grener. GitHub-verktøyene her har heller ingen måte å slette en gren på.
 - Grenen må slettes av Tom på GitHub (Branches, søppelbøtta ved grenen, eller «Delete branch» nederst i pull request 1).
+
+## 2026-09-24 16:04 Første evnekort fra ChatGPT
+- Hentet originalbildene fra samtalen «Skriv sanatorium roguelite RPG» og la 13 PNG-filer i gpt-grafikk/ med navn fra manifestet.
+- Brukte den første, mer detaljerte duen som kort_due.png etter Toms valg.
+- Alle bildene er kvadratiske PNG-filer på 1254 ganger 1254 piksler med gjennomsiktig bakgrunn.
+- Kjørte bildeverktøyets sjekk: 13 behandlet, 0 feil. Bilder for senere runder er ikke laget ennå.
