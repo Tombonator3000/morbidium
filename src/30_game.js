@@ -7,6 +7,23 @@ function loadMeta() {
   const m = Store.get(META_KEY, null); return m ? Object.assign(d, m, { settings: Object.assign(d.settings, m.settings || {}) }) : d;
 }
 function saveMeta() { Store.set(META_KEY, G.meta); }
+/* ---------- lagret løp: tas ved starten av hver etasje, så en lukket fane ikke koster hele løpet ---------- */
+const RUN_KEY = 'morbidium_run_v1';
+function saveRun(first) {
+  const P = G.player, run = G.run; if (!P || !run || !P.alive) return;
+  run.diag = P.diag;
+  Store.set(RUN_KEY, { v: 1, depth: G.depth, first: !!first, elapsed: performance.now() - run.t0, run: Object.assign({}, run, { t0: 0 }),
+    p: { stats: P.stats, weapon: P.weapon, weaponLvl: P.weaponLvl, hp: P.hp, cons: P.cons, teeth: P.teeth, morb: P.morb, xp: P.xp, level: P.level, points: P.points, diag: P.diag, counters: P.counters, dodgeMax: P.dodgeMax } });
+}
+function savedRun() { const s = Store.get(RUN_KEY, null); return s && s.v === 1 && s.run && s.p ? s : null; }
+function clearRun() { try { localStorage.removeItem(RUN_KEY); } catch (e) { } }
+function continueRun() {
+  const s = savedRun(); if (!s) return;
+  show('title', false); resetRun();
+  G.run = s.run; G.patient = s.run.patient; G.run.t0 = performance.now() - (s.elapsed || 0);
+  for (const id of Object.keys(PILL_COL)) { const k = G.run.pillKnown && G.run.pillKnown[id]; CONSUMABLES[id].name = PILL_COL[id][0] + (k ? ': ' + PILLS[k][0] : ''); CONSUMABLES[id].desc = k ? PILLS[k][1] : 'Ukjent virkning. Bare prøv.'; }
+  G.restore = s.p; startFloor(s.depth, s.first);
+}
 function applySettings() { const s = G.meta.settings; R.safe = !!s.simple; Sound.setVolume(s.vol); R.shakeOn = s.shake; R.flashOn = s.flash; R.distortOn = s.distort; R.lightsOn = s.lights; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -37,15 +54,16 @@ function showTitle() {
   const r = G.F.rooms[G.F.startId], cx = r.x + r.w / 2, cz = r.z + r.h / 2;
   if (!R.lowTex) G.titleDolls = [['kultist', -1.5, 0, 's'], ['pleier', 1.6, .6, 'f'], ['yngel', .2, 1.8, 'f']].map(([t, dx, dz, v]) => { const d = new Doll(t, {}); d.root.position.set(cx + dx, 0, cz + dz); d.view = v; d.flip = -1; R.scene.add(d.root); return d; });
   R.snapCamera(cx, cz);
-  const m = G.meta;
+  const m = G.meta, sv = savedRun();
   const bt = $('boot'); if (bt) bt.style.display = 'none';
   $('title').innerHTML = `<h1>MORBIDIUM</h1><div class="sub">Sanatorium for oppstyrret sinn, 1923</div>
-    <div class="menu"><button class="btn big" id="tNew">Ny pasient</button><button class="btn" id="tArch">Arkivet</button><button class="btn" id="tSet">Innstillinger</button></div>
+    <div class="menu">${sv ? `<button class="btn big" id="tCont">Fortsett: ${esc(sv.run.patient.name)}, ${esc((THEMES[sv.depth] || THEMES[1]).name.split(':')[0])}</button>` : ''}<button class="btn ${sv ? '' : 'big'}" id="tNew">Ny pasient</button><button class="btn" id="tArch">Arkivet</button><button class="btn" id="tSet">Innstillinger</button></div>
     <div class="meta">${m.deaths ? `${m.deaths} pasienter er skrevet ut på den ene eller andre måten. ${m.bossKills} overleger behandlet.` : 'Ingen pasienter har ennå forlatt bygningen.'}<br>Tastatur og mus, håndkontroll eller berøring.</div>`;
   $('tNew').onclick = () => { Sound.init(); applySettings(); showIntake(); };
+  if (sv) $('tCont').onclick = () => { Sound.init(); applySettings(); continueRun(); };
   $('tArch').onclick = () => { Sound.init(); showArchive(); };
   $('tSet').onclick = () => { Sound.init(); openSettings(true); };
-  setTimeout(() => $('tNew') && $('tNew').focus(), 50);
+  setTimeout(() => ($('tCont') || $('tNew')) && ($('tCont') || $('tNew')).focus(), 50);
 }
 function showArchive() {
   const m = G.meta, frags = m.fragments.map(i => LORE[i]).filter(Boolean);
@@ -136,7 +154,12 @@ function startFloor(depth, first) {
   G.F = generateFloor(run.seed + depth * 7919, depth, opts);
   decorateLevel();
   const F = G.F, sr = F.rooms[F.startId];
-  if (!G.player) { G.player = makePlayer(run); recalcPlayer(); const md = $('medal'); md.innerHTML = ''; md.appendChild(portraitCanvas('pasient')); Items.clearLook(); }
+  if (!G.player) {
+    G.player = makePlayer(run); const Rs = G.restore; G.restore = null;
+    if (Rs) { Object.assign(G.player, Rs, { dodge: Rs.dodgeMax || 2 }); G.player.doll.setWeapon(Rs.weapon); run.diag = G.player.diag; }
+    recalcPlayer(); if (Rs) G.player.hp = clamp(Rs.hp, 1, G.player.maxHp);
+    const md = $('medal'); md.innerHTML = ''; md.appendChild(portraitCanvas('pasient')); Items.clearLook(); Items.itemsKey = '';
+  }
   const P = G.player, sp = freeSpot(sr.x + sr.w / 2, sr.z + sr.h / 2 + 1, 4); P.x = sp.x; P.z = sp.z; P.vx = P.vz = P.kvx = P.kvz = 0;
   P.doll.root.position.set(P.x, 0, P.z); P.coffee = false;
   Items.onFloor(); Items.updateLook();
@@ -157,7 +180,7 @@ function startFloor(depth, first) {
   R.snapCamera(P.x, P.z);
   toast(G.th.name, first ? 'Du våkner: ' + A0.name : 'Luken smeller igjen over deg');
   if (first) setTimeout(() => FX.bubble(P, pick(['Hvor er tøflene mine? Å. Der.', 'Dette er ikke rommet mitt.', 'Noen har skrevet navnet mitt feil.']), 2.4), 900);
-  $('game').focus();
+  $('game').focus(); saveRun(first);
 }
 function descend() {
   const P = G.player; if (!P.alive) return;
@@ -351,7 +374,7 @@ function closePanel() {
   $('game').focus();
 }
 function openPause() {
-  openPanel(`<div class="hdr">Pause</div><div class="list paper" id="settings" style="width:min(420px,92vw);padding:16px 18px">${settingsHtml()}<div class="btnrow"><button class="btn big" data-close>Fortsett</button><button class="btn" id="pJ">Journal</button><button class="btn" id="pQ">Avslutt til tittel</button></div></div>`);
+  openPanel(`<div class="hdr">Pause</div><div class="list paper" id="settings" style="width:min(420px,92vw);padding:16px 18px">${settingsHtml()}<div class="btnrow"><button class="btn big" data-close>Fortsett</button><button class="btn" id="pJ">Journal</button><button class="btn" id="pQ">Avslutt til tittel</button></div><div class="hint">Løpet lagres ved starten av hver etasje.</div></div>`);
   bindSettings(); $('pJ').onclick = () => { closePanel(); openJournal(); }; $('pQ').onclick = () => { closePanel(); showTitle(); };
 }
 function openSettings(fromTitle) {
@@ -406,6 +429,9 @@ function drawHeadMap(c) {
     g.save(); g.clip(); g.globalAlpha = .35; for (let i = 0; i < 6; i++) { g.beginPath(); const y = cy - ry + (i + .5) * ry * 2 / 6; g.moveTo(cx - rx, y); for (let x = -rx; x <= rx; x += 16) g.quadraticCurveTo(cx + x + 8, y + (rn() - .5) * 18, cx + x + 16, y); ink(2, Col.dark(col, .5)); } g.restore();
   };
   REGIONS.forEach((r, i) => cloud(HEADMAP.cx[i] * 600, HEADMAP.cy[i] * 600, 98, 84, r.color, i * 7 + 1));
+  // navnet på området øverst i skyen, over kortplassen
+  g.textAlign = 'center'; g.font = '26px "Alfa Slab One", Georgia, serif'; g.lineJoin = 'round';
+  REGIONS.forEach((r, i) => { const x = HEADMAP.cx[i] * 600, y = HEADMAP.cy[i] * 600 - 68; g.lineWidth = 7; g.strokeStyle = '#f6ead0'; g.strokeText(r.name.toUpperCase(), x, y); g.fillStyle = Col.dark(r.dark, .8); g.fillText(r.name.toUpperCase(), x, y); });
   // ord rundt hodet med ledestreker
   g.font = '600 25px Caveat, cursive'; g.fillStyle = INK;
   const L = [['Orden', 150, 58, 0], ['Frykt', 70, 150, 0], ['Tvang', 48, 222, 0], ['Flukt', 40, 290, 0], ['Erindring', 196, 270, 0], ['Kontroll', 520, 70, 1], ['Plikt', 572, 150, 1], ['Tap', 580, 220, 1], ['Håp', 572, 280, 1], ['Drømmer', 190, 462, 2], ['Hva hvis?', 255, 560, 2], ['Stillhet', 390, 505, 3], ['Mening', 575, 390, 3], ['Tilpasning', 560, 450, 3], ['Frigjøring', 520, 510, 3]];
@@ -478,7 +504,7 @@ function renderJournal() {
   document.querySelectorAll('[data-kart]').forEach(el => el.replaceWith(partCanvas(itemIcon(el.dataset.kart), 56, 56, 1)));
   document.querySelectorAll('[data-wart]').forEach(el => el.replaceWith(partCanvas(weaponPart(el.dataset.wart), 60, 80)));
   const ca = document.querySelector('[data-cart]'); if (ca) ca.replaceWith(P.cons ? partCanvas(bottlePart(P.cons.id), 60, 60) : cardArtCanvas('ukjent', 60));
-  if ($('jHead')) { const draw = () => $('jHead') && drawHeadMap($('jHead')); draw(); document.fonts && document.fonts.load('600 25px Caveat').then(draw).catch(() => { }); }
+  if ($('jHead')) { const draw = () => $('jHead') && drawHeadMap($('jHead')); draw(); document.fonts && Promise.all([document.fonts.load('600 25px Caveat'), document.fonts.load('26px "Alfa Slab One"')]).then(draw).catch(() => { }); }
   // hendelser
   $('jClose').onclick = closeJournal;
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { G.jtab = b.dataset.tab; Sound.play('paper', .6); renderJournal(); });
@@ -575,7 +601,7 @@ function runStats() { const P = G.player, secs = Math.round((performance.now() -
 function showDeath() {
   const P = G.player; if (G.state === 'dead') return;
   const cause = pick(DEATH_CAUSES[P.lastCause] || DEATH_CAUSES.any), m = G.meta;
-  m.deaths++; m.lastDeath = { depth: G.depth, name: G.run.patient.name, teeth: P.teeth, cause, looted: false }; saveMeta();
+  m.deaths++; m.lastDeath = { depth: G.depth, name: G.run.patient.name, teeth: P.teeth, cause, looted: false }; saveMeta(); clearRun();
   G.state = 'dead'; show('hud', false); Sound.stopAmbience();
   $('panel').innerHTML = `<div class="hdr" style="font-size:clamp(44px,9vw,76px)">DU ER DØD.</div><div class="dcard"><div class="slab"><canvas id="deadc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Dødsårsak</dt><dd class="cause">${esc(cause)}</dd></dl><div class="stamp">AVDØD</div></div>
     <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div>`;
@@ -586,7 +612,7 @@ function showDeath() {
 }
 function resetRun() { Items.clearLook(); if (G.player) { G.player.doll.dispose(); R.remove(G.player.lantern); G.player = null; } }
 function showWin() {
-  const P = G.player; G.meta.wins++; saveMeta(); G.state = 'dead'; show('hud', false); Sound.play('level'); Sound.stopAmbience();
+  const P = G.player; G.meta.wins++; saveMeta(); clearRun(); G.state = 'dead'; show('hud', false); Sound.play('level'); Sound.stopAmbience();
   $('panel').innerHTML = `<div class="hdr">UTSKREVET</div><div class="dcard"><div class="slab" style="background:linear-gradient(#b8c8a8,#8aa07a)"><canvas id="winc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Legens konklusjon</dt><dd class="cause">Pasienten er friskmeldt. Ingen vet helt hva det betyr lenger.</dd></dl><div class="stamp">FRISK NOK</div></div>
     <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div>`;
   show('panel', true); drawDollPortrait($('winc').getContext('2d'), 'pasient', 150, 112, 58);
@@ -658,6 +684,8 @@ function boot() {
   addEventListener('pointerdown', () => { Sound.init(); applySettings(); }, { once: true }); addEventListener('keydown', () => { Sound.init(); applySettings(); }, { once: true });
   $('bJournal').onclick = () => openJournal(); $('bPause').onclick = () => openPause();
   window.MORBIDIUM = G; Object.assign(window, { Items, ITEMS, spawnEnemy, itemIcon, jarPart, pillPart, addonPart, shotPart, LOOKS, PILL_COL, BLOBS, R, hurt, descend, finishCombat, openService, killEntity, Art, RIG, PROPS, CARD_ART, WEAPONS, THEMES, charPart, propArt, weaponPart, shoePart, cardArtCanvas, generateFloor, CONSUMABLES, heartPart, morbPart, bottlePart, cardPart, pigeonPart, stampDecal, handPart, toothPart, starPart, puffPart, barrierArt });
+  // til testene
+  Object.assign(window, { freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
   step('Bygger tittelrommet');
   setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40);
 }

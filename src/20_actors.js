@@ -425,7 +425,11 @@ function updateEnemy(e, dt) {
   let vx = 0, vz = 0;
   if (mv) {
     let fx = Math.sin(toT), fz = Math.cos(toT);
-    if (mv > 0 && T === P && dist > 2.2 && !los(e.x, e.z, T.x, T.z)) { const f = flowDir(e); if (f) { fx = f.x; fz = f.z; } }
+    // rundt møbler: strømningsfeltet når sikten er blokkert for kroppen (ikke bare midtpunktet), eller når fienden står fast
+    if (mv > 0 && dist > 1.6 && (e.stuckT > 0 || !losWide(e.x, e.z, T.x, T.z, e.r))) {
+      const f = T === P ? flowDir(e) : null;
+      if (f) { fx = f.x; fz = f.z; } else if (e.stuckT > 0) { const a = toT + e.sideSign * 1.35; fx = Math.sin(a); fz = Math.cos(a); }
+    }
     const sp = e.sp * (e.shrink > 0 ? 1.2 : 1) * (e.bloat > 0 ? .7 : 1);
     vx = fx * sp * mv; vz = fz * sp * mv;
   }
@@ -433,6 +437,9 @@ function updateEnemy(e, dt) {
   if (P.alive) { const d = Math.hypot(e.x - P.x, e.z - P.z), m = e.r + P.r; if (d < m && d > 0) { vx += (e.x - P.x) / d * (m - d) * 6; vz += (e.z - P.z) / d * (m - d) * 6; } }
   e.vx = lerp(e.vx, vx, 1 - Math.exp(-dt * 10)); e.vz = lerp(e.vz, vz, 1 - Math.exp(-dt * 10));
   moveEnt(e, (e.vx + e.kvx) * dt, (e.vz + e.kvz) * dt); const kb = Math.hypot(e.kvx, e.kvz); e.kvx *= Math.pow(.015, dt); e.kvz *= Math.pow(.015, dt);
+  // står fienden fast mens den vil fram, prøver den en annen vei en stund
+  e.stuckT = (e.stuckT || 0) - dt; e.progT = (e.progT || 0) + dt;
+  if (e.progT > .5) { if (mv > 0 && e.state === 'chase' && dist > 1.8 && Math.hypot(e.x - (e.px0 ?? e.x), e.z - (e.pz0 ?? e.z)) < .22) { e.stuckT = 1.4; e.sideSign = Math.random() < .5 ? -1 : 1; } e.px0 = e.x; e.pz0 = e.z; e.progT = 0; }
   e.face = e.face + angDiff(want, e.face) * Math.min(1, dt * 10);
   groundEffects(e, dt, Math.hypot(e.vx, e.vz) + kb);
   for (const w of G.walls) if (w.alive && w.up === 'b' && d2(e.x, e.z, w.x, w.z) < (w.w / 2) ** 2 && e.stun <= 0) { e.stun = 2.5; numText(e.x, e.z, 'venter på stempel', 'info', 2.5); }

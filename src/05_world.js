@@ -42,6 +42,12 @@ function los(ax, az, bx, bz) {
   for (let i = 1; i < n; i++) { const t = i / n; if (solid(Math.floor(lerp(ax, bx, t)), Math.floor(lerp(az, bz, t)))) return false; }
   return true;
 }
+/* sikt for en kropp med radius r: midtlinjen og begge sidelinjene må være frie */
+function losWide(ax, az, bx, bz, r) {
+  if (!los(ax, az, bx, bz)) return false;
+  const L = Math.hypot(bx - ax, bz - az) || 1, nx = -(bz - az) / L * r * .9, nz = (bx - ax) / L * r * .9;
+  return los(ax + nx, az + nz, bx + nx, bz + nz) && los(ax - nx, az - nz, bx - nx, bz - nz);
+}
 function freeSpot(x, z, rad = 3) {
   for (let r = 0; r <= rad; r += .5) for (let k = 0; k < 12; k++) {
     const a = k / 12 * TAU, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r;

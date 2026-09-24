@@ -141,3 +141,14 @@ Alle tidspunkt er UTC.
 - Brukte den første, mer detaljerte duen som kort_due.png etter Toms valg.
 - Alle bildene er kvadratiske PNG-filer på 1254 ganger 1254 piksler med gjennomsiktig bakgrunn.
 - Kjørte bildeverktøyets sjekk: 13 behandlet, 0 feil. Bilder for senere runder er ikke laget ennå.
+## 2026-09-24 16:15 Tom: «lag spillet ferdig». Plan og etappe 1
+- Tom ba om å fortsette prosjektet og gjøre spillet ferdig. Leste hele kodebasen først. Kjernen (tre etasjer, sjefer, utskrivning, journal, kuriositeter) finnes; det som mangler, står i todo.md.
+- Plan i ni etapper, hver testet og pushet til main: 1) testoppsett og kjente svakheter, 2) etasjen Isolat og arkiv med egen sjef og egne sjefsangrep, 3) nye fiender, 4) spesialrom, 5) aktive gjenstander og lommerusk, 6) oppskriftssystem for fiender, 7) musikk, 8) slutt og metaprogresjon, 9) finpuss.
+- Etappe 1:
+  - tools/test_spill.py tar --three STI (eller MORBIDIUM_THREE) og serverer Three.js lokalt, så testen virker uten nett i nettleseren.
+  - Ny test tools/test_ekstra.py: lagring og fortsettelse, stående mobil med berøring, journalen. Flere spillfunksjoner er lagt ut på window for testene.
+  - Lagring: løpet lagres ved starten av hver etasje (localStorage, morbidium_run_v1). Tittelen får «Fortsett». Død og utskrivning sletter lagringen.
+  - Berøring: evnekortene i HUD-en er nå selve evneknappene. Resten (slag, tungt, rull, snakk, bruk) ligger i en klynge nede til høyre. Kart og menyknapper flyttes opp. På stående mobil dekker kontrollene 34 % av høyden, før rundt halvparten. Et ekte tastetrykk skjuler berøringsknappene.
+  - Journalen: kortplassene er mindre og står litt under midten av hjerneområdene, og hvert område har fått navnet sitt skrevet øverst, så fargen og navnet synes.
+  - Fiender: sikt sjekkes nå for hele kroppen, ikke bare midtpunktet, og en fiende som står fast i et halvt sekund prøver en annen vei. I en målt test nådde alle 48 fiender fram både før og etter, så svakheten var sjelden; den nye koden fanger resten.
+- Tester: generator 900 av 900, gjennomspilling uten feil, test_ekstra alt bestått.
