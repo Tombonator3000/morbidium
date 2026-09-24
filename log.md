@@ -183,3 +183,8 @@ Alle tidspunkt er UTC.
 - Fordeling: tvangstrøye fra etasje 1, narkoselege fra etasje 2, alle i Isolat og arkiv, øyeblomst og rotter i Dypet. Isolat-rom trekker mot tvangstrøyer og kartotek mot byråkrater. Overarkivaren kaller inn byråkrater.
 - Motoren: fiendeskudd kan være målsøkende, fiender kan ha egen kø for forsinkede handlinger, og oppførselslistene (trekke seg unna, snakke, holde ting, hoppe) er gjort generelle.
 - Test: alle fem satt ut rundt pasienten i fem sekunder. Rottene kom i flokk, gass-skyen oppstod, pasienten tok skade, ingen konsollfeil. Rettet: tvangstrøye-pasienten så ut som en bamse bakfra.
+
+## 2026-09-24 16:44 Kuriositeter og piller fra ChatGPT
+- Tegnet fem bildeark med alle 40 kuriositetene fra manifestet, ett ark med åtte piller og et tomt preparatglass. Bildene har gjennomsiktig bakgrunn og følger den varme, håndtegnede sanatoriestilen.
+- Kontrollerte rutene for motiver som krysser grensene, og rettet de tre arkene som trengte det.
+- Prøvde hele bildeflyten i en egen kopi av repoet. Alle 40 kuriositeter, åtte piller og glasset ble behandlet, og byggingen tok med 62 bilder totalt uten feil.
