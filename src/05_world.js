@@ -433,6 +433,7 @@ function updateProjectiles(dt) {
       if (t >= 1) { p.alive = false; p.land && p.land(p); }
       continue;
     }
+    if (p.home > 0 && p.from === 'enemy' && P.alive) { p.home -= dt; const cur = Math.atan2(p.vx, p.vz), sp = Math.hypot(p.vx, p.vz), na = cur + angDiff(Math.atan2(P.x - p.x, P.z - p.z), cur) * Math.min(1, dt * 2.4); p.vx = Math.sin(na) * sp; p.vz = Math.cos(na) * sp; }
     const ox = p.x, oz = p.z; p.x += p.vx * dt; p.z += p.vz * dt;
     p.mesh.position.set(p.x, p.y, p.z); if (p.spin) p.mesh.userData.m.rotation.z += dt * p.spin;
     if (p.life <= 0 || solid(Math.floor(p.x), Math.floor(p.z))) { p.alive = false; Particles.spawn(ox, p.y, oz, 4, 0xdfeff0, { speed: 2, up: 2, life: .3 }); if (p.wallHit) p.wallHit(p); continue; }
