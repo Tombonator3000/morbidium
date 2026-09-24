@@ -393,6 +393,40 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
 .bslutt{ display:flex; justify-content:space-between; align-items:center; } .bstempel{ transform:rotate(-14deg); margin-right:20px; font-family:var(--display); font-size:30px; color:#2a6a2a; border:5px double #2a6a2a; padding:2px 14px; opacity:.85; pointer-events:none; }
 .bps{ font-family:var(--hand); font-size:20px; color:#2a4a8a; margin-top:10px !important; }
 .intake .gjen{ display:block; margin-top:10px; text-align:left; font-weight:800; font-size:15px; border-top:2px dashed rgba(42,26,20,.35); padding-top:8px; cursor:pointer; } .intake .gjen small{ display:block; font-weight:500; font-size:13px; } .intake .gjen input{ -webkit-appearance:none; appearance:none; width:20px; height:20px; margin:0 6px -4px 0; border:3px solid var(--ink); border-radius:3px; background:var(--parch-l); position:relative; cursor:pointer; } .intake .gjen input:checked::after{ content:"X"; position:absolute; inset:-6px 0 0 1px; font-family:var(--hand); font-size:24px; color:var(--red); line-height:1; }
+/* innleggelsen: innleggelsesskjema og legeerklæring */
+.skjema.intake{ position:relative; width:880px; padding:20px 30px 18px; text-align:left; color:var(--ink); background:#f3ecd6; border:3px solid var(--ink); border-radius:2px; box-shadow:8px 10px 0 rgba(0,0,0,.5); transform:rotate(-.4deg);
+  background-image:radial-gradient(circle at 88% 82%, transparent 34px, rgba(140,90,40,.16) 35px 39px, transparent 40px), radial-gradient(ellipse at 12% 8%, rgba(160,120,60,.12), transparent 50%), repeating-linear-gradient(180deg, transparent 0 27px, rgba(90,120,170,.10) 27px 28px); }
+.skhode{ display:flex; align-items:center; gap:14px; border-bottom:3px double var(--ink); padding-bottom:8px; }
+.skhode .logo{ width:50px; height:50px; flex:none; border:3px solid var(--ink); border-radius:50%; display:grid; place-items:center; font-family:var(--display); font-size:26px; box-shadow:inset 0 0 0 3px #f3ecd6, inset 0 0 0 5px var(--ink); }
+.skhode .inst b{ display:block; font-family:var(--display); font-weight:normal; font-size:24px; letter-spacing:.08em; line-height:1.1; } .skhode .inst span{ font-size:13px; font-weight:800; letter-spacing:.05em; }
+.sknr{ margin-left:auto; border:2px solid var(--ink); padding:3px 12px; text-align:center; font-size:11px; font-weight:800; letter-spacing:.08em; } .sknr b{ display:block; font-family:var(--hand); font-size:26px; color:var(--red); letter-spacing:0; line-height:1; } .sknr span{ display:block; font-family:var(--hand); font-size:17px; letter-spacing:0; }
+.skjema h2{ margin:9px 0 6px; font-family:var(--display); font-weight:normal; font-size:21px; text-transform:uppercase; letter-spacing:.07em; text-align:center; }
+.skrad{ display:flex; gap:24px; align-items:flex-start; } .felter{ flex:1; min-width:0; }
+.felt{ display:flex; align-items:baseline; gap:10px; border-bottom:1.5px solid rgba(42,26,20,.55); padding:7px 0 3px; }
+.felt span,.vurd > span,.plass > span{ flex:none; font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#5a4232; }
+.skjema .hand{ font-family:var(--hand); font-weight:600; color:#23407e; font-size:25px; line-height:1.05; } .skjema .hand.liten{ font-size:19px; }
+.felt.to{ gap:34px; } .felt.to > div{ display:flex; gap:10px; align-items:baseline; } .felt em{ font-style:normal; font-weight:800; font-size:14px; display:flex; gap:6px; align-items:center; }
+.skjema .boks{ display:inline-grid; place-items:center; flex:none; width:20px; height:20px; border:2px solid var(--ink); background:#fbf6e8; font-style:normal; font-family:var(--hand); font-size:26px; font-weight:600; color:#23407e; line-height:1; }
+.foto{ position:relative; width:168px; flex:none; background:#e8dfc8; border:2px solid var(--ink); padding:6px 6px 3px; transform:rotate(2.5deg); box-shadow:3px 4px 0 rgba(0,0,0,.3); margin-top:6px; }
+.skjema .foto canvas{ display:block; width:100%; height:auto; margin:0; background:repeating-linear-gradient(180deg,#9c9486 0 1px,#a8a092 1px 22px); }
+.foto small{ display:block; text-align:center; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin-top:2px; }
+.foto .klips{ position:absolute; top:-15px; left:24px; width:15px; height:44px; border:3px solid #8a8a86; border-radius:9px; z-index:2; }
+.vurd{ margin-top:10px; } .vurd p{ margin:2px 0 0; font-size:22px; }
+.plass{ margin-top:10px; } .valg{ display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin-top:6px; }
+.pvalg{ display:grid; grid-template-columns:24px 1fr; gap:1px 8px; align-content:start; text-align:left; background:none; border:1.5px dashed rgba(42,26,20,.5); border-radius:3px; padding:6px 8px; cursor:pointer; color:var(--ink); font-family:var(--body); }
+.pvalg .boks{ grid-row:1 / span 3; margin-top:1px; } .pvalg b{ font-family:var(--display); font-weight:normal; font-size:16px; } .pvalg em{ font-style:normal; font-size:13px; line-height:1.25; }
+.pvalg .pluss{ color:#2a5a2a; font-weight:800; } .pvalg .minus{ color:#8a1a14; font-weight:800; }
+.pvalg:hover,.pvalg:focus-visible{ background:rgba(232,185,58,.22); border-color:var(--ink); outline:none; } .pvalg.laast{ opacity:.5; cursor:default; } .pvalg.laast:hover{ background:none; }
+.skjema .gjen{ margin-top:10px; border-top:none; }
+.skfot{ display:flex; align-items:flex-end; gap:22px; margin-top:10px; }
+.sign b{ display:block; font-size:34px !important; transform:rotate(-4deg); border-bottom:1.5px solid var(--ink); padding:0 26px 0 6px; } .sign small{ font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+.rundst{ width:88px; height:88px; flex:none; border:4px double #6a2a8a; border-radius:50%; color:#6a2a8a; display:grid; place-items:center; align-content:center; text-align:center; font-family:var(--display); font-size:10px; line-height:1.2; transform:rotate(-14deg); opacity:.75; } .rundst i{ font-style:normal; font-size:13px; }
+.skfot .nb{ margin-left:auto; text-align:right; font-size:12px; font-style:italic; }
+.skjema .tilbake{ position:absolute; right:-12px; top:-16px; transform:rotate(3deg); }
+.innlagt{ position:absolute; left:50%; top:46%; transform:translate(-50%,-50%) rotate(-12deg) scale(2.2); font-family:var(--display); font-size:68px; color:var(--red); border:8px double var(--red); padding:4px 28px; background:rgba(243,236,214,.35); opacity:0; pointer-events:none; transition:transform .22s cubic-bezier(.2,1.6,.4,1), opacity .12s; }
+.skjema.stemplet .innlagt{ opacity:.88; transform:translate(-50%,-50%) rotate(-12deg) scale(1); }
+.skjema.intake.smal{ width:470px; padding:16px 18px 14px; } .smal .skhode .inst b{ font-size:16px; } .smal .skhode .inst span{ font-size:11px; } .smal .skhode .logo{ width:38px; height:38px; font-size:19px; }
+.smal .foto{ width:112px; } .smal .valg{ grid-template-columns:1fr; } .smal .skjema h2, .skjema.smal h2{ font-size:16px; } .smal .rundst{ width:66px; height:66px; font-size:8px; } .smal .skfot .nb{ font-size:10px; }
 .skap.smal{ width:480px; } .skap.smal .mapper{ grid-template-columns:repeat(2,1fr); } .skap.smal .frags{ grid-template-columns:1fr; } .skap.smal .rgrid{ grid-template-columns:repeat(2,1fr); } .skap.smal .skuff .skilt{ font-size:12px; width:86%; } .skap.smal .skuff .skilt small{ font-size:13px; }
 
 @media (max-width:720px){

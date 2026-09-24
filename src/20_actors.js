@@ -85,7 +85,12 @@ function updatePlayer(dt, A) {
   // sikte
   let aim = null;
   if (A.pad && Math.hypot(A.aimStickX, A.aimStickZ) > .3) aim = Math.atan2(A.aimStickX, A.aimStickZ);
-  else if (Input.lastDevice === 'kb' && Input.mouse.moved) { const g = R.mouseToGround(Input.mouse.x, Input.mouse.y); aim = Math.atan2(g.x - P.x, g.z - P.z); P.aimX = g.x; P.aimZ = g.z; }
+  else if (Input.lastDevice === 'kb' && Input.mouse.moved) {
+    // musa sikter, men figuren ser dit den går når musa har ligget i ro en stund og du ikke slår
+    const g = R.mouseToGround(Input.mouse.x, Input.mouse.y); P.aimX = g.x; P.aimZ = g.z;
+    const bruker = performance.now() - Input.mouse.movedT < 1200 || A.attackD || A.heavyD || A.attackP || A.abP.some(Boolean) || !(A.mx || A.mz);
+    if (bruker) aim = Math.atan2(g.x - P.x, g.z - P.z);
+  }
   else if (A.touch) { const t = nearestEnemy(P.x, P.z, 8); aim = t ? Math.atan2(t.x - P.x, t.z - P.z) : null; }
   if (aim === null && (A.mx || A.mz)) aim = Math.atan2(A.mx, A.mz);
   if (Input.lastDevice !== 'kb' || !Input.mouse.moved) { const t = nearestEnemy(P.x, P.z, 7); P.aimX = t ? t.x : P.x + Math.sin(P.face) * 4; P.aimZ = t ? t.z : P.z + Math.cos(P.face) * 4; }

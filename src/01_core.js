@@ -39,7 +39,7 @@ const Store = {
 /* ---------- input ---------- */
 const Input = {
   keys: {}, pressed: {}, released: {},
-  mouse: { x: 0, y: 0, l: false, r: false, lp: false, rp: false, lr: false, rr: false, moved: false },
+  mouse: { x: 0, y: 0, l: false, r: false, lp: false, rp: false, lr: false, rr: false, moved: false, movedT: -1e9 },
   gp: { connected: false, prev: [], cur: [], lx: 0, ly: 0, rx: 0, ry: 0 },
   touch: { active: false, mx: 0, mz: 0, btn: {}, pressed: {}, released: {} },
   lastDevice: 'kb',
@@ -52,7 +52,7 @@ const Input = {
     });
     addEventListener('keyup', e => { this.keys[e.code] = false; this.released[e.code] = true; });
     addEventListener('blur', () => { this.keys = {}; this.mouse.l = this.mouse.r = false; });
-    canvas.addEventListener('mousemove', e => { this.mouse.x = e.clientX; this.mouse.y = e.clientY; this.mouse.moved = true; this.lastDevice = 'kb'; });
+    canvas.addEventListener('mousemove', e => { if (Math.hypot(e.clientX - this.mouse.x, e.clientY - this.mouse.y) > 2) this.mouse.movedT = performance.now(); this.mouse.x = e.clientX; this.mouse.y = e.clientY; this.mouse.moved = true; this.lastDevice = 'kb'; });
     canvas.addEventListener('mousedown', e => {
       canvas.focus();
       if (e.button === 0) { this.mouse.l = true; this.mouse.lp = true; }
