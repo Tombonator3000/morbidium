@@ -13,10 +13,13 @@
    silhuetten ved å se på alfa i åtte retninger (elitefiender, valgt ting). */
 const SHADER_NOISE = 'float h1(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); } float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h1(i), h1(i+vec2(1,0)), f.x), mix(h1(i+vec2(0,1)), h1(i+vec2(1,1)), f.x), f.y); }';
 const SPRITE_VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
-const SPRITE_FS = `uniform sampler2D map; uniform float uFlash, uDissolve, uOutline, uAlpha; uniform vec3 uOutlineCol, uTint; uniform vec2 uTexel; varying vec2 vUv;
+const SPRITE_FS = `uniform sampler2D map; uniform float uFlash, uDissolve, uOutline, uAlpha, uDyeOn; uniform vec3 uOutlineCol, uTint, uDye; uniform vec2 uTexel; varying vec2 vUv;
   ${SHADER_NOISE}
   void main(){
-    vec4 c = texture2D(map, vUv); float a = c.a; c.rgb *= uTint;
+    vec4 c = texture2D(map, vUv); float a = c.a;
+    // farging: grå og hvite flater (lav metning, ikke blekk) får klesfargen, hud og metall beholder sin
+    if (uDyeOn > 0.5) { float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), l = dot(c.rgb, vec3(0.299, 0.587, 0.114)); float k = (1.0 - smoothstep(0.07, 0.17, mx - mn)) * smoothstep(0.14, 0.32, l); c.rgb = mix(c.rgb, uDye * (0.45 + l * 0.6), k); }
+    c.rgb *= uTint;
     if (uOutline > 0.0) { float o = 0.0; for (int i = 0; i < 8; i++) { float an = float(i) * 0.7854; o = max(o, texture2D(map, vUv + vec2(cos(an), sin(an)) * uTexel * 5.0).a); } float e = clamp(o - a, 0.0, 1.0); c.rgb = mix(c.rgb, uOutlineCol, e); a = max(a, e * uOutline); }
     if (uDissolve > 0.0) { float n = vn(vUv * 9.0) * 0.7 + vn(vUv * 27.0) * 0.3; if (n < uDissolve) discard; float e = 1.0 - smoothstep(uDissolve, uDissolve + 0.08, n); c.rgb = mix(c.rgb, vec3(0.8, 0.45, 1.0), e); }
     c.rgb = mix(c.rgb, vec3(1.0, 0.99, 0.94), uFlash * step(0.3, a));
@@ -26,10 +29,10 @@ const SPRITE_FS = `uniform sampler2D map; uniform float uFlash, uDissolve, uOutl
 const RIB_VS = 'varying vec3 vCol; varying vec2 vP; void main(){ vCol = color; vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
 const RIB_FS = `uniform float uFlash, uDissolve; uniform vec3 uTint; varying vec3 vCol; varying vec2 vP; ${SHADER_NOISE}
   void main(){ if (uDissolve > 0.0) { float n = vn(vP * 7.0 + 3.0); if (n < uDissolve) discard; } gl_FragColor = vec4(mix(vCol * uTint, vec3(1.0, 0.99, 0.94), uFlash), 1.0); }`;
-function makeU(o = {}) { return { uFlash: { value: 0 }, uDissolve: { value: 0 }, uOutline: { value: o.outline || 0 }, uOutlineCol: { value: new THREE.Color(o.outlineCol || '#b36be0') }, uTint: { value: new THREE.Color(o.tint || '#ffffff') }, uAlpha: { value: 1 } }; }
+function makeU(o = {}) { return { uFlash: { value: 0 }, uDissolve: { value: 0 }, uOutline: { value: o.outline || 0 }, uOutlineCol: { value: new THREE.Color(o.outlineCol || '#b36be0') }, uTint: { value: new THREE.Color(o.tint || '#ffffff') }, uAlpha: { value: 1 }, uDye: { value: new THREE.Color(o.dye || '#ffffff') }, uDyeOn: { value: o.dye ? 1 : 0 } }; }
 function spriteMat(tex, U, o = {}) {
   const img = tex.image || { width: 64, height: 64 };
-  return new THREE.ShaderMaterial({ uniforms: { map: { value: tex }, uTexel: { value: new THREE.Vector2(1 / img.width, 1 / img.height) }, uFlash: U.uFlash, uDissolve: U.uDissolve, uOutline: U.uOutline, uOutlineCol: U.uOutlineCol, uTint: U.uTint, uAlpha: U.uAlpha },
+  return new THREE.ShaderMaterial({ uniforms: { map: { value: tex }, uTexel: { value: new THREE.Vector2(1 / img.width, 1 / img.height) }, uFlash: U.uFlash, uDissolve: U.uDissolve, uOutline: U.uOutline, uOutlineCol: U.uOutlineCol, uTint: U.uTint, uAlpha: U.uAlpha, uDye: U.uDye || { value: new THREE.Color(1, 1, 1) }, uDyeOn: U.uDyeOn || { value: 0 } },
     vertexShader: SPRITE_VS, fragmentShader: SPRITE_FS, transparent: true, side: THREE.DoubleSide, depthWrite: o.depthWrite !== false });
 }
 
@@ -117,6 +120,17 @@ class Doll {
     if (!id) return; const m = partMesh(weaponPart(id), this.U); this.wp.add(m); this.wpMesh = m;
     this.meshes = []; this.plane.traverse(o => { if (o.isMesh && o.material.map) this.meshes.push(o); });
   }
+  /* oppskrifter: egne hode- og kroppsdeler per visning, tillegg som følger hode eller kropp, farget kropp */
+  setParts(head, body) { this.headOv = head || null; this.bodyOv = body || null; }
+  addAddon(P, L, dye) { const U = dye ? Object.assign({}, this.U, { uDye: { value: new THREE.Color(dye) }, uDyeOn: { value: 1 } }) : this.U, m = partMesh(P, U); this.plane.add(m); (this.addons || (this.addons = [])).push({ m, L, P }); this.meshes.push(m); return m; }
+  setDye(col) { if (!this.body) return; const U = Object.assign({}, this.U, { uDye: { value: new THREE.Color(col) }, uDyeOn: { value: 1 } }); this.body.material = spriteMat(this.body.userData.P.tex, U); this.body.userData.P = null; }
+  placeAddons(v) {
+    for (const a of this.addons || []) {
+      const base = a.L.at === 'body' || !this.head ? this.body : this.head, off = a.L.off[v] || a.L.off.f;
+      if (a.L.views) { const P = a.L.views[v] || a.L.views.f; if (P) setPart(a.m, P); a.m.visible = !!(a.L.views[v] || (v !== 'b' && a.L.views.f)); } else a.m.visible = !(a.L.face && v === 'b');
+      a.m.position.set(base.position.x + off[0], base.position.y + off[1], base.position.z + (a.L.behind ? -.004 : .004)); a.m.rotation.z = base.rotation.z;
+    }
+  }
   flash(t = .09) { this.flashT = t; }
   hit(dir = 1) { this.squash = 1; this.headOff.vx += dir * 1.2; }
   /* face: vinkel i verden, der (sin a, cos a) er retningen */
@@ -148,9 +162,9 @@ class Doll {
       this.back.begin();
       const nt = this.rig.tentacles || 5, tw = this.rig.tentW || .09, tc = this.rig.tentCol || '#3a1a4a', y0 = this.body.position.y + .12;
       for (let i = 0; i < nt; i++) { const x = (-.5 + i / Math.max(1, nt - 1)) * (this.rig.tentSpread || .64), w = Math.sin(this.t * 9 + i * 1.7) * (this.rig.tentWave || .1) + (moving ? sp * .12 * (i % 2 ? 1 : -1) : 0); this.back.add(limb(x, y0, x + w * 1.4, y0 - (this.rig.tentLen || .14), w, 4), tw, tc, -.02); }
-      this.back.end(.04); this.front.begin(); this.front.end(); this.applyFlash(dt); return;
+      this.back.end(.04); this.front.begin(); this.front.end(); this.placeAddons(v === 'b' ? 'b' : v === 's' ? 's' : 'f'); this.applyFlash(dt); return;
     }
-    setPart(this.head, charPart(this.type, 'hode', v)); setPart(this.body, charPart(this.type, 'kropp', v));
+    setPart(this.head, this.headOv ? this.headOv[v] || this.headOv.f : charPart(this.type, 'hode', v)); setPart(this.body, this.bodyOv ? this.bodyOv[v] || this.bodyOv.f : charPart(this.type, 'kropp', v));
     if (this.cape) setPart(this.cape, charPart(this.type, 'kappe', v === 'b' ? 'b' : 'f'));
     const hipY = R0.hip + bob, neckY = hipY + R0.neck, shY = hipY + R0.shY;
     // hodet henger litt etter (fjær)
@@ -200,7 +214,7 @@ class Doll {
     this.front.circle(hR[0], hR[1], R0.handR, R0.hand, z.frontArm + .002);
     this.back.end(.045); this.front.end(.045);
     if (this.wpId) { this.wp.position.set(hR[0], hR[1], wpBehind ? z.wpBack : z.wp); this.wp.rotation.z = wpAngle; }
-    this.applyFlash(dt);
+    this.placeAddons(v); this.applyFlash(dt);
   }
   applyFlash(dt) { this.flashT -= dt; this.U.uFlash.value = this.flashT > 0 && R.flashOn ? 1 : 0; }
   dissolve(p) { this.U.uDissolve.value = p; this.shadow.material.opacity = 1 - p; }

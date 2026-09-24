@@ -186,6 +186,20 @@ function decorateRoom(F, r, rng) {
     }
   };
   const ent = (k, n, opt = {}) => free(k, n, Object.assign({ block: false }, opt));
+  /* hovedrekvisitten i et tjenesterom: prøver fra midten av overveggen og utover (en dør i veggen skal ikke stoppe den),
+     så nederst. row 1 = disk på rad to med personalet bak, mot veggen; row 0 = rett mot veggen, samhandling foran. */
+  const desk = (k, len, svc, o = {}) => {
+    const row0 = o.row ?? 1, xs = [];
+    for (let d = 0; d < r.w; d++) for (const s of d ? [-1, 1] : [1]) { const x = Math.floor(r.cx - len / 2 + .5) + s * d; if (x >= r.x && x + len <= r.x + r.w && !xs.includes(x)) xs.push(x); }
+    const rows = [[r.z + row0, r.z + row0 - .45, r.z + row0 + 1.35], [r.z + row0 + 1, r.z + row0 + .55, r.z + row0 + 2.35], [r.z + r.h - 1 - row0, r.z + r.h - row0 + .55, r.z + r.h - 1 - row0 - .4]];
+    for (let L = len; L >= (o.min || Math.min(len, 2)); L--) for (const [z, behind, front] of rows) for (const x0 of xs) {
+      const x = Math.min(x0, r.x + r.w - L), p = put(k, x, z, 0, { tiles: Array.from({ length: L }, (_, i) => [i, 0]), data: Object.assign({ len: L, svc, service: svc }, o.data || {}) });
+      if (!p) continue;
+      r.props.push({ k: 'npc', x: x + L / 2, z: o.invisible || !row0 ? front : behind, rot: 0, service: svc, invisible: !!o.invisible });
+      r.desk = true; return p;
+    }
+    return null;
+  };
   const drains = n => ent('drain', n);
   const T = r.template;
   const topMid = () => [r.cx, r.z];
@@ -218,17 +232,22 @@ function decorateRoom(F, r, rng) {
     case 'offer': put('offeralter', r.cx - 1, r.cz, 0, { tiles: [[0, 0], [1, 0], [2, 0]] }); ent('candles', 4); ent('puddle', rng.int(2, 3), { data: { kind: 'blod' } }); drains(1); break;
     case 'secret': put('lore', r.cx + 1, r.cz + 1, 0, { block: false }); ent('crate', rng.int(2, 3)); ent('candles', 1); break;
     case 'treasure': put('chest', r.cx, r.cz, 0, { block: false, data: { chest: 'treasure' } }); put('lore', r.cx + 1, r.cz + 1, 0, { block: false }); ent('crate', 3); break;
+    // tjenesterom: hovedrekvisitten (disk, vaskemaskin, journalskap) langs overveggen med personalet bak
     case 'kafeteria': {
-      put('counter', r.cx - 2, r.z, 0, { tiles: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]], data: { len: 5, svc: 'kafeteria' } });
-      r.props.push({ k: 'npc', x: r.cx + .5, z: r.z + 1.35, rot: 0, service: 'kafeteria' });
-      for (const [ox, oz] of [[-3, 2], [3, 2], [-3, -2], [3, -2]]) if (ok(r.cx + ox, r.cz + oz)) put('table', r.cx + ox, r.cz + oz);
-      ent('trolley', 1, { data: { soup: true } }); ent('chair', 3, { data: { brk: 1 } }); break;
+      desk('counter', r.w >= 10 ? 5 : 4, 'kafeteria', { min: 3 });
+      for (const [ox, oz] of [[-3, 2], [3, 2], [-3, -1], [3, -1]]) if (put('table', r.cx + ox, r.cz + oz)) { for (const [cx, cz, rot] of [[-1, 0, Math.PI / 2], [1, 0, -Math.PI / 2]]) put('chair', r.cx + ox + cx, r.cz + oz + cz, rot, { block: false, data: { brk: 1 } }); }
+      ent('menytavle', 1); ent('trolley', 1, { data: { soup: true } }); ent('botte', 1); break;
     }
-    case 'medisin': put('counter', r.cx - 1, r.z, 0, { tiles: [[0, 0], [1, 0], [2, 0]], data: { len: 3, svc: 'medisin' } }); r.props.push({ k: 'npc', x: r.cx + .5, z: r.z + 1.35, rot: 0, service: 'medisin' }); along('shelf', 3); ent('trolley', 1); ent('lamp', 1); break;
-    case 'vaktmester': put('counter', r.cx - 1, r.z, 0, { tiles: [[0, 0], [1, 0], [2, 0]], data: { len: 3, svc: 'vaktmester' } }); r.props.push({ k: 'npc', x: r.cx + .5, z: r.z + 1.35, rot: 0, service: 'vaktmester' }); ent('crate', 3); along('cabinet', 2, { data: { brk: 2 } }); put('locker', r.x + r.w - 2, r.z, 0); break;
-    case 'journal': put('journalskap', r.cx, r.z, 0, { data: { service: 'journal' } }); r.props.push({ k: 'npc', x: r.cx + .5, z: r.z + 1.4, rot: 0, service: 'journal', invisible: true }); along('cabinet', 5, { data: { brk: 2 } }); break;
-    case 'bibliotek': along('shelf', 8); put('desk', r.cx, r.cz, 0); r.props.push({ k: 'npc', x: r.cx + .5, z: r.cz + 1.4, rot: Math.PI, service: 'bibliotek' }); break;
-    case 'vaskeri': put('washer', r.cx - 1, r.z, 0, { tiles: [[0, 0], [1, 0]] }); r.props.push({ k: 'npc', x: r.cx, z: r.z + 1.5, rot: 0, service: 'vaskeri', invisible: true }); ent('basket', 4); ent('puddle', 1); break;
+    case 'medisin': desk('counter', 3, 'medisin'); along('medisinskap', 3); ent('vekt', 1); along('bed', 1, { long: true }); ent('trolley', 1); ent('lamp', 1); break;
+    case 'vaktmester': desk('counter', 3, 'vaktmester'); along('verktoytavle', 2, { long: true }); put('locker', r.x + r.w - 2, r.z, 0); ent('botte', 2); ent('crate', 2, { data: { brk: 2 } }); break;
+    case 'journal': desk('journalskap', 1, 'journal', { row: 0, invisible: true }); along('cabinet', 5, { data: { brk: 2 } }); ent('candles', 2); ent('papirhaug', 2, { block: true, data: { brk: 1 } }); break;
+    case 'bibliotek': {
+      along('shelf', 8);
+      for (let dz = -1; dz < 3 && !r.desk; dz++) for (const dx of [0, -2, 2, -3, 3]) { if (put('desk', r.cx - 1 + dx, r.cz + dz, 0, { tiles: [[0, 0], [1, 0]] })) { r.props.push({ k: 'npc', x: r.cx + dx, z: r.cz + dz - .45, rot: 0, service: 'bibliotek' }); r.desk = true; break; } }
+      if (!r.desk) desk('desk', 2, 'bibliotek');
+      ent('lesestol', 2); ent('bokstabel', 3, { block: true, data: { brk: 1 } }); ent('lamp', 1); break;
+    }
+    case 'vaskeri': desk('washer', r.w >= 10 ? 3 : 2, 'vaskeri', { row: 0, invisible: true }); ent('basket', 3); ent('linhaug', 2, { block: true, data: { brk: 1 } }); free('torkesnor', 1, { tiles: [[0, 0], [1, 0], [2, 0]], block: false }); ent('strykebrett', 1); ent('botte', 1); ent('puddle', 2); break;
     // oppvåkningssteder
     case 'eget': put('bed', r.cx, r.z, 0, { tiles: [[0, 0], [0, 1]] }); put('wardrobe', r.x, r.z, Math.PI / 2); ent('lamp', 1); ent('chair', 1, { data: { brk: 1 } }); break;
     case 'likhus': along('gurney', 4, { long: true }); put('drawers', r.cx - 1, r.z, 0, { tiles: [[0, 0], [1, 0], [2, 0]] }); ent('lamp', 1); drains(1); break;
@@ -282,6 +301,7 @@ function validateFloor(F) {
   if (F.edges.length < F.rooms.filter(r => r.role !== 'secret').length) reasons.push('ingen sløyfe');
   const svc = F.rooms.filter(r => r.role === 'service').map(r => r.service);
   if (!svc.includes('journal')) reasons.push('mangler journalskap');
+  for (const r of F.rooms) if (r.role === 'service' && !r.desk) reasons.push('tjenesterommet ' + r.service + ' fikk ikke plass til disken');
   if (!svc.includes('kafeteria') && !svc.includes('medisin')) reasons.push('ingen helbredelse før sjefen');
   if (F.rooms.filter(r => r.role === 'combat' || r.role === 'risk').length < 3) reasons.push('for få møter');
   if (!F.rooms.some(r => r.role === 'risk')) reasons.push('ingen frivillig risiko');

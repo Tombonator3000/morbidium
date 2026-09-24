@@ -153,8 +153,11 @@ function hurt(e, dmg, src = {}) {
     if (Math.random() < .06 + (P.stats.fatteevne - 1) * .025 + Items.stat('luck') * .01) { d *= 1.6; crit = true; }
   }
   if (src.shrunk) d *= .5;
+  if (e.mArmor) d *= e.mArmor;
   if (src.from === 'player' && !e.hitOnce) { e.hitOnce = true; if (Lomme.has('kolapp')) d *= 1.5; }
-  e.hp -= d; e.lastHit = src.from;
+  if (!isFinite(d)) d = dmg > 0 && isFinite(dmg) ? dmg : 1;
+  e.hp -= d; e.lastHit = src.from; e.hitsTaken = (e.hitsTaken || 0) + 1;
+  if (!isFinite(e.hp)) e.hp = 0;
   if (e.doll) { const ha = src.a !== undefined ? src.a : Math.atan2(e.x - (src.x ?? e.x), e.z - (src.z ?? e.z) + 1e-4); e.doll.flash(.09); e.doll.hit(Math.sin(ha) >= 0 ? 1 : -1); }
   if (src.from === 'player' && typeof starBurst === 'function') starBurst(e.x, e.kind === 'boss' ? 2 : 1.2, e.z + .1, crit ? 1.4 : 1);
   numText(e.x, e.z, d, crit ? 'crit' : '', e.kind === 'boss' ? 3.2 : 1.7);
@@ -162,7 +165,7 @@ function hurt(e, dmg, src = {}) {
     const a = src.a !== undefined ? src.a : Math.atan2(e.x - (src.x ?? e.x), e.z - (src.z ?? e.z) + 1e-4), k = src.kb * (e.elite ? .6 : 1) * (e.kbMult || 1);
     e.kvx = Math.sin(a) * k; e.kvz = Math.cos(a) * k;
   }
-  if (src.stun && e.kind !== 'boss') { e.stun = Math.max(e.stun || 0, src.stun); cancelTeles(e); }
+  if (src.stun && e.kind !== 'boss' && !e.steady) { e.stun = Math.max(e.stun || 0, src.stun); cancelTeles(e); }
   if (src.bleed) e.bleed = Math.max(e.bleed || 0, 2.5);
   if (e.kind === 'enemy' && e.sleep > 0) e.sleep = 0;
   if (e.kind === 'boss') bossOnHurt(e, d);
@@ -187,7 +190,7 @@ function hurtPlayer(dmg, src) {
     } else { P.denied.push({ d: d * (up === 'a' ? .3 : .5), t: up === 'a' ? 30 : 3, cause: src.type, clear: up === 'a' }); numText(P.x, P.z, up === 'a' ? 'Bortforklart' : 'Benektet', 'info', 2.2); }
     P.deny = null; P.invuln = .35; return 0;
   }
-  P.hp -= d; P.doll.flash(.12); P.doll.hit(1); R.fx.hurt = 1; P.invuln = .45; P.counters.hurt++; Items.onHurt(src);
+  P.hp -= d; P.doll.flash(.12); P.doll.hit(1); R.fx.hurt = 1; P.invuln = .45; P.counters.hurt++; Items.onHurt(src); Oppskrift.onPlayerHurt(d, src);
   if (P.charging) { P.charging = false; P.chargeT = 0; numText(P.x, P.z, 'Avbrutt', 'info', 2.2); }
   numText(P.x, P.z, d, 'hurt', 1.9);
   Sound.play('hurt'); R.shake(.35); $('vignette').style.opacity = .9; P.vigT = .35;
@@ -265,7 +268,7 @@ function groundEffects(e, dt, speed) {
 }
 
 /* ---------- rekvisitter i drift ---------- */
-const BREAK = { chair: 1, cabinet: 2, crate: 2, garbage: 1, basket: 1, plant: 1, candles: 1, table: 2, papirhaug: 1 };
+const BREAK = { chair: 1, cabinet: 2, crate: 2, garbage: 1, basket: 1, plant: 1, candles: 1, table: 2, papirhaug: 1, bokstabel: 1, linhaug: 1 };
 function spawnProps() {
   G.props = []; G.npcs = [];
   const F = G.F, th = G.th;
@@ -296,13 +299,13 @@ function spawnProps() {
 function spawnNPC(p, r) {
   const who = { kafeteria: 'kokk', medisin: 'hansen', vaktmester: 'olsen', bibliotek: 'bibliotekar' }[p.service];
   const n = { kind: 'npc', service: p.service, x: p.x, z: p.z, r: .5, alive: true, face: 0, room: r.id, invisible: p.invisible || !who, bubbleH: 2.9, talkT: rnd(4, 9) };
-  if (!n.invisible) { n.doll = new Doll(who, { fixedView: 'f' }); n.doll.root.position.set(p.x, 0, p.z); R.level.add(n.doll.root); }
+  if (!n.invisible) { n.doll = new Doll(who, { fixedView: 'f' }); n.doll.root.position.set(p.x, 0, p.z); R.level.add(n.doll.root); FX.label(n, SERVICES[p.service].npc, 'npc'); }
   G.npcs.push(n);
 }
 function propTiles(o) { return [tIdx(o.x, o.z)]; }
 function breakProp(o, src) {
   o.alive = false; const P = G.player; P.counters.props++;
-  const colors = { chair: 0x7a5a3a, cabinet: 0x6f7a55, crate: 0x9a7040, garbage: 0x5a5040, basket: 0xb8904a, plant: 0x4f7a3a, candles: 0xf0e8d0, table: 0xf0ece0, papirhaug: 0xf4ecd8 };
+  const colors = { chair: 0x7a5a3a, cabinet: 0x6f7a55, crate: 0x9a7040, garbage: 0x5a5040, basket: 0xb8904a, plant: 0x4f7a3a, candles: 0xf0e8d0, table: 0xf0ece0, papirhaug: 0xf4ecd8, bokstabel: 0x8a2a1a, linhaug: 0xeef0f2 };
   Particles.spawn(o.x, .6, o.z, 10, colors[o.kind] || 0x7a5a3a, { speed: 5, up: 5, life: .8 });
   Particles.spawn(o.x, .6, o.z, 5, 0xefe4c4, { flat: true, speed: 3, up: 4, g: 5, life: 1.4 });
   Sound.play(o.kind === 'cabinet' || o.kind === 'papirhaug' ? 'paper' : 'bonk', .8, .7);

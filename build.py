@@ -8,14 +8,38 @@ fila fortsatt er selvstendig og virker både som publisert artefakt og på GitHu
 import base64, json, pathlib
 ROT = pathlib.Path(__file__).resolve().parent
 S = ROT / 'src'
-parts = ['01_core.js', '02_data.js', '03_generator.js', '04_render.js', '05_world.js', '10_art.js', '11_doll.js', '12_paint.js', '13_rom.js', '20_actors.js', '22_sjefer.js', '25_items.js', '26_fiender.js', '27_utstyr.js', '30_game.js']
+parts = ['01_core.js', '02_data.js', '03_generator.js', '04_render.js', '05_world.js', '10_art.js', '11_doll.js', '12_paint.js', '13_rom.js', '20_actors.js', '22_sjefer.js', '25_items.js', '26_fiender.js', '27_utstyr.js', '28_oppskrift.js', '30_game.js']
 ferdig = ROT / 'assets' / 'ferdig'
 sprites = {p.stem: 'data:image/png;base64,' + base64.b64encode(p.read_bytes()).decode() for p in sorted(ferdig.glob('*.png'))} if ferdig.exists() else {}
+# deler til oppskriftssystemet (assets/deler/, laget av tools/skjaer_ark.py): skaleres til spillets
+# 128 piksler per enhet og får palett, og festepunktene bygges inn som DELER_META
+deler_meta, deler_sprites = {}, {}
+meta_sti = ROT / 'assets' / 'deler' / 'deler.json'
+if meta_sti.exists():
+    try:
+        from PIL import Image
+        import io
+    except ImportError:
+        Image = None
+    for k, m in json.loads(meta_sti.read_text(encoding='utf-8')).items():
+        f = ROT / 'assets' / 'deler' / m['fil']
+        if not f.exists() or 'storrelse' not in m: continue
+        s = 128 / m['px_per_enhet']
+        if Image:
+            im = Image.open(f).convert('RGBA'); im = im.resize((max(1, round(im.width * s)), max(1, round(im.height * s))), Image.LANCZOS).quantize(colors=256, method=Image.Quantize.FASTOCTREE)
+            b = io.BytesIO(); im.save(b, 'PNG', optimize=True); data = b.getvalue()
+        else:
+            data = f.read_bytes()
+        deler_sprites[k] = 'data:image/png;base64,' + base64.b64encode(data).decode()
+        cw, ch = m['storrelse']; u = m['px_per_enhet']
+        deler_meta[k] = {'kategori': m['kategori'], 'serie': m['serie'], 'del': m['del'], 'visning': m['visning'], 'w': cw / u, 'h': ch / u, 'ax': m['feste'][0] / u, 'ay': (ch - m['feste'][1]) / u}
 game = ''
 for p in parts:
     game += (S / p).read_text(encoding='utf-8') + '\n'
-    if p == '10_art.js' and sprites:
-        game += 'Object.assign(SPRITES, ' + json.dumps(sprites) + ');\n'
+    if p == '10_art.js':
+        if sprites: game += 'Object.assign(SPRITES, ' + json.dumps(sprites) + ');\n'
+        if deler_sprites: game += 'Object.assign(SPRITES, ' + json.dumps(deler_sprites) + ');\n'
+        game += 'const DELER_META = ' + json.dumps(deler_meta) + ';\n'
 loader = r'''
 </script>
 <script>
@@ -34,4 +58,4 @@ loader = r'''
 out = (S / '00_head.html').read_text(encoding='utf-8') + 'window.__game = function () {\n' + game + '\n};\n' + loader
 d = ROT / 'dist'; d.mkdir(exist_ok=True)
 (d / 'morbidium.html').write_text(out, encoding='utf-8')
-print('skrev dist/morbidium.html,', len(out), 'tegn,', len(sprites), 'innebygde bilder')
+print('skrev dist/morbidium.html,', len(out), 'tegn,', len(sprites), 'innebygde bilder,', len(deler_sprites), 'deler')

@@ -599,12 +599,23 @@ function chestArt(open) {
     A.flat(g, A.rr(-.07, -.52, .14, .14, .02), '#d4b048', .03, L);
   });
 }
-function corpseArt() {
-  return Art.part('lik', 1.6, .8, .8, .05, g => {
-    g.save(); g.rotate(-Math.PI / 2 + .1); g.scale(.62, .62);
+function corpseArt(look) {
+  const L = look || {}, key = 'lik_' + (L.key || 'std');
+  return Art.part(key, 2.7, 1.2, 1.35, .08, g => {
+    A.flat(g, A.ell(-.05, -.08, 1.2, .18), 'rgba(90,10,10,.38)', 0);
+    const R0 = RIG.pasient, part = (piece, v) => (L.parts && L.parts[piece] && (L.parts[piece][v] || L.parts[piece].f)) || charPart('pasient', piece, v);
+    g.save(); g.translate(.98, -.36); g.rotate(-Math.PI / 2); g.scale(.78, .78);
     const draw = (P, x, y) => g.drawImage(P.canvas, x - P.ax, y - (P.h - P.ay), P.w, P.h);
-    draw(shoePart('tofler'), -.2, -.05); draw(shoePart('tofler'), .18, -.05); draw(charPart('pasient', 'kropp', 'f'), 0, -.5); draw(Art.part('hode_pasient_x', 1.2, 1.1, .6, .1, drawPasientHead('x')), 0, -1.05);
-    g.restore(); A.flat(g, A.ell(.5, -.1, .18, .06), 'rgba(179,38,30,.4)', 0);
+    const limb2 = (a, b, w, col) => { g.lineCap = 'round'; g.beginPath(); g.moveTo(a[0], -a[1]); g.lineTo(b[0], -b[1]); g.lineWidth = w + .09; g.strokeStyle = INK; g.stroke(); g.lineWidth = w; g.strokeStyle = col; g.stroke(); };
+    const hip = R0.hip, sh = hip + R0.shY, neck = hip + R0.neck;
+    for (const s of [-1, 1]) limb2([s * R0.hipW, hip], [s * (R0.hipW + .06), .1], R0.legW, (L.leg || R0.leg));
+    for (const s of [-1, 1]) { g.save(); g.translate(s * (R0.hipW + .06), -.02); g.rotate(s * .3); draw(shoePart(L.shoe || R0.shoe), 0, 0); g.restore(); }
+    draw(part('kropp', 'f'), 0, -hip);
+    for (const s of [-1, 1]) { limb2([s * R0.shW, sh], [s * (R0.shW + .1), hip - .02], R0.armW, L.arm || R0.arm); A.dot(g, s * (R0.shW + .1), -(hip - .02), R0.handR, INK); A.dot(g, s * (R0.shW + .1), -(hip - .02), R0.handR - .03, L.hand || R0.hand); }
+    draw(part('hode', 'f'), 0, -neck + .02);
+    g.restore();
+    // lapp på tåa
+    g.save(); g.translate(1.2, -.56); g.rotate(.4); A.line(g, [[-.12, .12], [0, 0]], .012, INK); A.cel(g, A.rr(-.02, -.1, .2, .12, .02), '#f4ecd0', { lw: .02, hi: false }); A.line(g, [[.02, -.06], [.14, -.06]], .012, '#b3261e'); A.line(g, [[.02, -.03], [.11, -.03]], .012, '#6a5a4a'); g.restore();
   });
 }
 function barrierArt() {

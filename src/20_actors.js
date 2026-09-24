@@ -159,6 +159,8 @@ function meleeHit(k) {
     if (W0.wet && Math.random() < W0.wet) addPuddle(e.x, e.z, 'wet', .9, 14);
     hits++;
   }
+  for (let i = G.halluc.length - 1; i >= 0; i--) { const h = G.halluc[i], dx = h.x - P.x, dz = h.z - P.z, d = Math.hypot(dx, dz); if (d < range + .5 && (d < .8 || Math.abs(angDiff(Math.atan2(dx, dz), P.face)) < arc / 2)) { puff(h.x, h.z, 3, 1, '#3a2250'); numText(h.x, h.z, 'ikke ekte', 'info', 2.4); h.doll.dispose(); G.halluc.splice(i, 1); } }
+  for (const n of G.npcs) if (n.doll && Math.hypot(n.x - P.x, n.z - P.z) < range + .6 && (n.hitT || 0) < G.time) { n.hitT = G.time + 3; n.doll.flash(.1); n.doll.hit(1); FX.bubble(n, pick(['Au! Jeg er personalet!', 'Dette går i journalen din.', 'Vi slår ikke personalet. Vi sender regning.', 'Hei! Jeg har pause!']), 2); Sound.play('bonk', .6, 1.3); }
   hits += hitProps(P.x, P.z, P.face, range, arc, dmg, 12) + Spesial.hitCrack(P.x, P.z, P.face, range, arc, k.heavy ? 3 : 1);
   if (hits) { G.hitstop = k.heavy || k.combo === 2 ? .085 : .045; R.shake(k.heavy ? .45 : .2); Sound.play(W0.sound, 1, 1 + rnd(-.1, .1)); }
 }
@@ -195,7 +197,9 @@ function whisper() {
   el.style.left = rnd(10, 80) + '%'; el.style.top = rnd(15, 75) + '%'; $('fx').appendChild(el); setTimeout(() => el.remove(), 2600);
 }
 function hallucinate(dt) {
-  const P = G.player; if (!R.distortOn || !P || !P.alive) return;
+  const P = G.player; if (!P) return;
+  // uten forvrengning, eller når pasienten er død, forsvinner alle hallusinasjoner
+  if (!R.distortOn || !P.alive) { for (const h of G.halluc) h.doll.dispose(); G.halluc = []; return; }
   const want = P.morb >= 75 || (hasDiag('innsikt') && P.morb >= 40);
   if (want && G.halluc.length < 2 && Math.random() < dt * .3) {
     const a = Math.random() * TAU, d = rnd(5, 7), x = P.x + Math.sin(a) * d, z = P.z + Math.cos(a) * d;
@@ -382,7 +386,7 @@ function enemyDie(e, src) {
   if (e.elite && Math.random() < .5) dropPickup(e.x, e.z, 'cons', pick(Object.keys(CONSUMABLES)));
   if (e.elite && Math.random() < .12) dropPickup(e.x, e.z, 'trinket', Lomme.pick());
   if (D.morb) { for (let i = 0; i < D.morb; i++) dropPickup(e.x, e.z, 'morb'); addPuddle(e.x, e.z, 'morb', .8, 24); }
-  gainXp(D.xp * (e.elite ? 2.5 : 1)); checkDiagnoses(); Items.onKill(e);
+  gainXp(D.xp * (e.elite ? 2.5 : 1)); checkDiagnoses(); Items.onKill(e); Oppskrift.onDie(e);
 }
 function updateEnemy(e, dt) {
   const P = G.player;
@@ -533,7 +537,6 @@ function bossAttack(B, kind, dist, toP) {
       hitShape('circle', o, dmg, { type: 'boss', x: o.x, z: o.z, kb: 10 }, 'enemy'); R.shake(.6); Sound.play('slam'); puff(o.x, o.z, 6, 1.8); flashLight(o.x, o.z, 3.5, '#ffd0a0', .3);
       if (puddle) addPuddle(o.x, o.z, puddle, 1.8, 20);
     }, B);
-    addFx(B.doll.root, 0, null);
     FX.bubble(B, tome ? 'SIDE ÉN.' : B.type === 'arkivar' ? 'Stille, takk.' : 'Hold stille, dette gjør vondt.', 1.2, 'boss');
   } else if (kind === 'hooks') {
     const n = d === 1 ? 3 : 5; B.t = B.atkDur = 1.1;

@@ -7,6 +7,16 @@
 - [ ] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt).
 - [ ] Slette grenen claude/funny-newton-cgnzav på GitHub (Claude Code får ikke lov til det). Alt på den finnes i main.
 
+## Toms tilbakemelding 2026-09-24 (åtte punkter)
+- [x] 8: sjefer ble usynlige (feil i slag-angrepet).
+- [x] 6: fiender som ikke dør (personale uten disk, hallusinasjoner som ble stående, vern mot ugyldig helse).
+- [x] 7: lik ligger der pasienten døde, synlige, flere per etasje.
+- [x] 1: journalen uten rulling.
+- [x] 2: tjenesterom med egne rekvisitter, hovedrekvisitten alltid på plass.
+- [ ] 3: varierte pasienter (kjønn, hoder, klær, de nye figurene fra ChatGPT).
+- [ ] 4: bruksanvisning og bedre innstillinger.
+- [ ] 5: nytt arkiv og UI-løft.
+
 ## Kjente svakheter
 - [ ] Claude-appen på Android viser ingen publiserte sider (hvit skjerm), heller ikke en enkel testside. Meldt inn av Tom. Spill i Chrome inntil videre.
 - [ ] Ytelse er ikke målt på ekte maskinvare. Testmaskinen har bare programvaregrafikk.
