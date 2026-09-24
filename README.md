@@ -15,7 +15,8 @@ node tools/test_gen.js    # tester generatoren
 
 ## Mapper
 - `src/` kildekode, satt sammen av `build.py`
-- `assets/` bilder: `innboks/` (nye), `ferdig/` (behandlet), `deler/` (byggeklosser til figurer), `manifest.json`
+- `gpt-grafikk/` bilder fra ChatGPT legges her (se `gpt-grafikk/LESMEG.md`)
+- `assets/` behandlede bilder: `ferdig/` (klare for spillet), `deler/` (byggeklosser til figurer), `manifest.json`
 - `maler/` maler som lastes opp til ChatGPT
 - `tools/` verktøy for bilder, tester og manifest
 - `DESIGN_BRIEF.md` og `ART_BRIEF.md` for bildegenerering, `AGENTS.md` for regler

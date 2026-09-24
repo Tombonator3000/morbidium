@@ -22,7 +22,7 @@
 - [ ] Flere groteske fiender og sjefer med egne mønstre.
 - [ ] Oppskriftssystemet i motoren: sette sammen fiender av deler fra assets/deler/ (rolle, hode, hatt/hår, tilbehør, kropp, farging, størrelse, elitemerker, navn).
 - [ ] Utseendetest av 3D-verden med 2D-figurer (ett rom, vegglamper, måneskygger, bloom), hvis Tom vil.
-- [ ] Første bilder fra ChatGPT etter DESIGN_BRIEF.md: figur_pasient, evnekort, personale.
+- [ ] Første bilder fra ChatGPT etter DESIGN_BRIEF.md: kuriositetene, figur_pasient, evnekort, personale. Lastes opp til gpt-grafikk/.
 - [ ] Musikk og flere lyder.
 - [ ] Etasjen "Isolat og arkiv" fra designdokumentet.
 - [ ] Byggeanimasjon når et rom avsløres (idé fra threejs-architecture-effects).

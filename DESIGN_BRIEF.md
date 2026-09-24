@@ -5,7 +5,7 @@ Denne briefen forklarer hva ChatGPT skal tegne til Morbidium, og hvordan bildene
 ## Arbeidsdelingen
 
 - **ChatGPT** tegner. Bare bilder, ingen kode.
-- **Tom** laster bildene opp til `assets/innboks/` i repoet, eller i chatten med Claude.
+- **Tom** laster bildene opp til `gpt-grafikk/` i repoet, eller i chatten med Claude.
 - **Claude** klipper, renser, plasserer og bygger bildene inn i spillet (`tools/skjaer_ark.py`, `tools/behandle_bilder.py`, `build.py`), og skriver all kode, lyd og musikk.
 
 ## Spillet i korte trekk
@@ -157,7 +157,7 @@ Animasjonsark med mange bilder per bevegelse. Spillet animerer ved å flytte del
 
 ## Levering
 
-Last ned som PNG, gi fila nøyaktig filnavnet fra denne briefen, og last den opp til `assets/innboks/`. Kjør så (eller be Claude kjøre):
+Last ned som PNG, gi fila nøyaktig filnavnet fra denne briefen, og last den opp til `gpt-grafikk/`. Ved push til main klipper og bygger GitHub Actions bildene inn av seg selv. Lokalt kjører du (eller Claude):
 
 ```
 python3 tools/skjaer_ark.py

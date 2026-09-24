@@ -1,4 +1,4 @@
-"""Behandler bilder fra assets/innboks/ til ferdige spilldeler i assets/ferdig/.
+"""Behandler bilder fra gpt-grafikk/ til ferdige spilldeler i assets/ferdig/.
 
 Filnavnet (uten endelse) må være en nøkkel i assets/manifest.json, for eksempel
 kort_due.png eller prop_lamp.png. For hvert bilde:
@@ -16,7 +16,7 @@ from pathlib import Path
 from PIL import Image
 
 ROT = Path(__file__).resolve().parent.parent
-INN, UT = ROT / 'assets' / 'innboks', ROT / 'assets' / 'ferdig'
+INN, UT = ROT / 'gpt-grafikk', ROT / 'assets' / 'ferdig'
 PXU = 256  # piksler per spillenhet i ferdige bilder
 FYLL = {'hode': .9, 'kropp': .95, 'kort': .9, 'vaapen': .97, 'sko': .9}  # hvor mye av plassen tegningen får
 
@@ -68,7 +68,7 @@ def main():
     UT.mkdir(parents=True, exist_ok=True)
     filer = sorted(p for p in INN.iterdir() if p.suffix.lower() in ('.png', '.webp', '.jpg', '.jpeg'))
     if not filer:
-        print('Innboksen er tom.'); return
+        print('gpt-grafikk/ har ingen bilder.'); return
     ok = feil = 0
     for f in filer:
         k = f.stem.lower()

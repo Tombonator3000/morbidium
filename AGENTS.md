@@ -22,7 +22,8 @@
 
 ## Kunst
 - ChatGPT lager bare bilder, etter `DESIGN_BRIEF.md`. Detaljliste per bildedel: `ART_BRIEF.md` (generert, rediger `tools/lag_brief.py` i stedet).
-- Flyt: bilder i `assets/innboks/` → `python3 tools/skjaer_ark.py` (klipper ark) → `python3 tools/behandle_bilder.py` (renser og plasserer) → `python3 build.py`.
+- Alt ChatGPT leverer legges i `gpt-grafikk/` (se `gpt-grafikk/LESMEG.md`). Ingenting annet skal ligge der.
+- Flyt: bilder i `gpt-grafikk/` → `python3 tools/skjaer_ark.py` (klipper ark) → `python3 tools/behandle_bilder.py` (renser og plasserer) → `python3 build.py`. GitHub Actions gjør de samme stegene ved push til main.
 - Filnavnet er nøkkelen. Gyldige nøkler står i `assets/manifest.json` (lages med `tools/lag_manifest.py`).
 - Alt som mangler bilde, tegnes av koden. Det skal aldri bli hull i spillet fordi et bilde mangler.
 

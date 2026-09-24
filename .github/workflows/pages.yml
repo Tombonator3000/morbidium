@@ -19,6 +19,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install pillow
+      - run: python3 tools/skjaer_ark.py
       - run: python3 tools/behandle_bilder.py
       - run: python3 build.py
       - run: mkdir -p _site && cp dist/morbidium.html _site/index.html
