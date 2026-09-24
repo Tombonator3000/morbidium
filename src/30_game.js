@@ -95,6 +95,7 @@ function giveCard(id, quiet) {
   hudCardsKey = ''; return card;
 }
 function newRun(awk) {
+  Merknad.nye = [];
   const run = G.run = { awk, patient: G.patient, look: G.patient.look, gjen: !!G.patient.gjen, seed: rndi(1, 2e9), stats: { helse: 2, styrke: 2, smidighet: 2, forstand: 2, fatteevne: 2 }, weapon: 'mopp', slots: [null, null, null, null], reserve: [], diag: [], teeth: 0, morb: 0, hpFrac: 1, kills: 0, rooms: 0, t0: performance.now(), price: 1 };
   Items.newRun();
   let n = 2;
@@ -612,7 +613,7 @@ function showDeath() {
   m.historie = (m.historie || []).concat([{ name: G.run.patient.name, nr: G.run.patient.nr, age: G.run.patient.age, depth: G.depth, cause, kills: G.run.kills, rooms: G.run.rooms, awk: G.run.awk, look: G.run.look || null, utskrevet: false }]).slice(-40);
   saveMeta(); clearRun();
   G.state = 'dead'; show('hud', false); Sound.stopAmbience(); Musikk.stopp(.3); Musikk.stikk('dod');
-  $('panel').innerHTML = `<div class="hdr" style="font-size:clamp(44px,9vw,76px)">DU ER DØD.</div><div class="dcard"><div class="slab"><canvas id="deadc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Dødsårsak</dt><dd class="cause">${esc(cause)}</dd></dl><div class="stamp">AVDØD</div></div>
+  $('panel').innerHTML = `<div class="hdr" style="font-size:clamp(44px,9vw,76px)">DU ER DØD.</div><div class="dcard"><div class="slab"><canvas id="deadc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Dødsårsak</dt><dd class="cause">${esc(cause)}</dd></dl>${Merknad.kortHtml()}<div class="stamp">AVDØD</div></div>
     <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div>`;
   show('panel', true);
   const g = $('deadc').getContext('2d'); g.save(); g.translate(150, 58); g.rotate(-Math.PI / 2 + .06); drawDollPortrait(g, 'pasient', 0, 110, 92, G.run.look); g.restore();
@@ -627,7 +628,7 @@ function showWin() {
 }
 function visUtskrevet() {
   const P = G.player; Merknad.onWin(G.run); G.meta.wins++; G.meta.historie = (G.meta.historie || []).concat([{ name: G.run.patient.name, nr: G.run.patient.nr, age: G.run.patient.age, depth: G.depth, cause: 'Utskrevet. Frisk nok.', kills: G.run.kills, rooms: G.run.rooms, awk: G.run.awk, look: G.run.look || null, utskrevet: true }]).slice(-40); saveMeta(); clearRun(); G.state = 'dead'; show('hud', false); Sound.play('level'); Sound.stopAmbience();
-  $('panel').innerHTML = `<div class="hdr">UTSKREVET</div><div class="dcard"><div class="slab" style="background:linear-gradient(#b8c8a8,#8aa07a)"><canvas id="winc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Legens konklusjon</dt><dd class="cause">Pasienten er friskmeldt. Ingen vet helt hva det betyr lenger.</dd></dl><div class="stamp">FRISK NOK</div></div>
+  $('panel').innerHTML = `<div class="hdr">UTSKREVET</div><div class="dcard"><div class="slab" style="background:linear-gradient(#b8c8a8,#8aa07a)"><canvas id="winc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Legens konklusjon</dt><dd class="cause">Pasienten er friskmeldt. Ingen vet helt hva det betyr lenger.</dd></dl>${Merknad.kortHtml()}<div class="stamp">FRISK NOK</div></div>
     <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div>`;
   show('panel', true); G.state = 'dead'; drawDollPortrait($('winc').getContext('2d'), 'pasient', 150, 112, 58, G.run.look);
   $('dNew').onclick = () => { show('panel', false); resetRun(); showIntake(); }; $('dTitle').onclick = () => { show('panel', false); resetRun(); showTitle(); };
