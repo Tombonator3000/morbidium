@@ -68,22 +68,44 @@ function showTitle() {
 /* ---------- innleggelse og oppvåkning ---------- */
 function unlocked(k) { const a = AWAKENINGS[k]; return !a.unlock || (a.unlock === 'bossKill' && G.meta.bossKills >= 1) || (a.unlock === 'deaths3' && G.meta.deaths >= 3) || (a.unlock.startsWith('merk:') && Merknad.har(a.unlock.slice(5))); }
 function lockText(k) { const u = AWAKENINGS[k].unlock; return u === 'bossKill' ? 'Behandle en overlege for å låse opp.' : u === 'deaths3' ? 'Dø tre ganger for å låse opp.' : u && u.startsWith('merk:') && MERKNADER[u.slice(5)] ? 'Merknad: ' + MERKNADER[u.slice(5)].krav : 'Låst.'; }
+/* innleggelsen er ett dokument: innleggelsesskjema og legeerklæring, der plasseringen krysses av */
+const PAARORENDE = ['ingen oppgitt', 'en tante i Drammen', 'nekter å oppgi', 'en due', 'har ikke svart på brev', 'ukjent adresse'];
+const VURDERING = ['Pasienten fremstår urolig, men høflig.', 'Pasienten snakker om trapper som bare går nedover.', 'Pasienten ble funnet i venteværelset og nektet å gå.', 'Pasienten stirrer på lampene og teller dem.', 'Pasienten har med seg en diktsamling og truer med å lese høyt.', 'Pasienten ber om å få snakke med Journalen. Anmodningen er notert.', 'Pasienten sier at bygget puster. Det gjør det ikke.', 'Pasienten er rolig. Det bekymrer personalet mer enn noe annet.'];
 function showIntake() {
   show('title', false);
   const kj = Math.random() < .5 ? 'k' : 'm', age = rndi(19, 74);
   G.patient = { name: pick(kj === 'k' ? FIRST_K : FIRST_M) + ' ' + pick(LAST), nr: rndi(1000, 9999), age, complaint: pick(COMPLAINTS), look: Pasient.lag({ kjonn: kj, alder: age }) };
   const avail = shuf(Object.keys(AWAKENINGS).filter(k => unlocked(k) && k !== G.meta.lastStart)).slice(0, 3);
   const locked = Object.keys(AWAKENINGS).filter(k => !unlocked(k)).slice(0, 1);
-  const p = G.patient;
-  openPanel(`<div class="hdr">Innleggelse</div><div class="pickrow">
-    <div class="intake paper"><h2>${esc(p.name)}</h2><div class="who">Pasient ${p.nr}, ${p.age} år</div><canvas id="inPort" width="200" height="240"></canvas><div class="who">${esc(p.complaint)}</div><div class="who dim">${esc(Pasient.beskriv(p.look))}</div>${Merknad.har('utskrevet') ? `<label class="gjen"><input type="checkbox" id="inGjen" ${G.meta.gjenValg ? 'checked' : ''}> Gjeninnleggelse<small>Fiender har 30 % mer helse og slår 20 % hardere. Flere mestere. 25 % flere tenner.</small></label>` : ''}</div>
-    ${avail.map(k => { const a = AWAKENINGS[k]; return `<button class="pickcard paper" data-awk="${k}"><h3>Våkner: ${esc(a.name)}</h3><div class="good">${esc(a.perk)}</div><div class="bad">${esc(a.problem)}</div></button>`; }).join('')}
-    ${locked.map(k => `<div class="pickcard paper locked"><h3>Låst</h3><div>${esc(lockText(k))}</div></div>`).join('')}
-  </div><div class="hint" style="color:var(--parch-l)">Du våkner aldri to ganger på samme sted.</div>`, { back: true, onBack: showTitle });
+  const p = G.patient, m = G.meta, arsak = p.complaint.replace(/^innlagt /, ''), smal = narrow();
+  const vurd = (m.deaths ? 'Pasienten hevder å ha vært her før. Journalen bekrefter det, med et annet navn. ' : '') + pick(VURDERING) + ' Anbefales innlagt på ubestemt tid.';
+  const kryss = on => `<i class="boks">${on ? 'X' : ''}</i>`;
+  openPanel(`<div class="fit skjema intake${smal ? ' smal' : ''}">
+    <div class="skhode"><div class="logo">M</div><div class="inst"><b>MORBIDIUM SANATORIUM</b><span>Avdeling for oppstyrret sinn. Grunnlagt 1887.</span></div><div class="sknr">Skjema 13-A<b>Nr. ${p.nr}</b><span>24. september 1923</span></div></div>
+    <h2>Innleggelsesskjema og legeerklæring</h2>
+    <div class="skrad"><div class="felter">
+      <div class="felt"><span>Navn</span><b class="hand">${esc(p.name)}</b></div>
+      <div class="felt to"><div><span>Alder</span><b class="hand">${p.age} år</b></div><div><span>Kjønn</span><em>${kryss(kj === 'm')} Mann ${kryss(kj === 'k')} Kvinne</em></div></div>
+      <div class="felt"><span>Innlagt for</span><b class="hand">${esc(arsak)}</b></div>
+      <div class="felt"><span>Ved ankomst</span><b class="hand liten">${esc(Pasient.beskriv(p.look))}</b></div>
+      <div class="felt to"><div><span>Tidligere innleggelser</span><b class="hand">${(m.deaths || 0) + (m.wins || 0) ? (m.deaths || 0) + (m.wins || 0) + ' (andre navn)' : 'ingen'}</b></div><div><span>Pårørende</span><b class="hand liten">${esc(pick(PAARORENDE))}</b></div></div>
+    </div><div class="foto"><i class="klips"></i><canvas id="inPort" width="200" height="240"></canvas><small>Fotografi ved ankomst</small></div></div>
+    <div class="vurd"><span>Legens vurdering</span><p class="hand">${esc(vurd)}</p></div>
+    <div class="plass"><span>Plassering. Kryss av ett felt.</span><div class="valg">
+      ${avail.map(k => { const a = AWAKENINGS[k]; return `<button class="pvalg" data-awk="${k}">${kryss(false)}<b>${esc(a.name)}</b><em class="pluss">${esc(a.perk)}</em><em class="minus">${esc(a.problem)}</em></button>`; }).join('')}
+      ${locked.map(k => `<div class="pvalg laast"><i class="boks"></i><b>Stengt avdeling</b><em>${esc(lockText(k))}</em></div>`).join('')}
+    </div></div>
+    ${Merknad.har('utskrevet') ? `<label class="gjen"><input type="checkbox" id="inGjen" ${m.gjenValg ? 'checked' : ''}> Gjeninnleggelse<small>Fiender har 30 % mer helse og slår 20 % hardere. Flere mestere. 25 % flere tenner.</small></label>` : ''}
+    <div class="skfot"><div class="sign"><b class="hand">H. Krok</b><small>Innleggende lege</small></div><div class="rundst">MORBIDIUM<br>SANATORIUM<br><i>1887</i></div><small class="nb">Samtykke fra pasienten anses ikke nødvendig.<br>Pasienten plasseres aldri to ganger samme sted.</small></div>
+    <div class="innlagt">INNLAGT</div>
+    <button class="btn tilbake" data-close>Tilbake</button></div>`, { back: true, onBack: showTitle, refit: fitPanel });
   const g = $('inPort').getContext('2d'); drawDollPortrait(g, 'pasient', 100, 228, 110, p.look);
   const gj = $('inGjen'); if (gj) gj.onchange = () => { G.meta.gjenValg = gj.checked; saveMeta(); };
-  document.querySelectorAll('[data-awk]').forEach(b => b.onclick = () => { G.panelO = null; show('panel', false); G.patient.gjen = !!(gj && gj.checked); newRun(b.dataset.awk); });
-  const f = document.querySelector('[data-awk]'); f && f.focus();
+  document.querySelectorAll('[data-awk]').forEach(b => b.onclick = () => {
+    if (G.intakeValgt) return; G.intakeValgt = true; b.querySelector('.boks').textContent = 'X'; document.querySelector('.skjema').classList.add('stemplet'); Sound.play('stamp');
+    setTimeout(() => { G.intakeValgt = false; G.panelO = null; show('panel', false); G.patient.gjen = !!(gj && gj.checked); newRun(b.dataset.awk); }, 650);
+  });
+  const f = document.querySelector('[data-awk]'); f && f.focus(); fitPanel();
 }
 const CARD_POOL = ['due', 'lys', 'skyggehand', 'stempel', 'brekning', 'monolog', 'hydro', 'kappe', 'skjema', 'nokler', 'resept', 'benektelse'];
 function owned(id) { return G.run.slots.some(c => c && c.id === id) || G.run.reserve.some(c => c.id === id); }
