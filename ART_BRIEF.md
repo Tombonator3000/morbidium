@@ -10,7 +10,7 @@ Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke red
 4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).
 5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.
 
-Status: 245 av 287 bilder er levert. Kolonnen «Levert» viser hvilke.
+Status: 267 av 287 bilder er levert. Kolonnen «Levert» viser hvilke.
 
 ## Stilblokk (lim inn i ChatGPT)
 
@@ -123,16 +123,16 @@ Størst gevinst først. Kortene vises i HUD-en og i journalen. Motivet midt i bi
 | `kort_stempel.png` | a red rubber office stamp slamming down with a splash of red ink. Square card illustration, subject centered | kvadrat | ja |
 | `kort_ukjent.png` | a dark silhouette of a person with a question mark. Square card illustration, subject centered | kvadrat | ja |
 
-## Runde 3: rekvisitter og møbler (72 bilder, 51 levert)
+## Runde 3: rekvisitter og møbler (72 bilder, 72 levert)
 
 Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbelet helt nederst i motivet.
 
 | Filnavn | Beskrivelse til ChatGPT | Format | Levert |
 |---|---|---|---|
 | `alter3.png` | a stone altar draped in purple cloth with two lit candles, three tiles wide, front view | liggende | ja |
-| `arkivhylle3.png` | a tall dark archive shelf stuffed with folders and boxes, three tiles wide | liggende |  |
-| `celle.png` | a padded cell corner: quilted white walls, two tiles wide | kvadrat |  |
-| `disk_kafeteria4.png` | a long wooden cafeteria counter with a steel soup pot and bread, 4 tiles wide, front view | liggende |  |
+| `arkivhylle3.png` | a tall dark archive shelf stuffed with folders and boxes, three tiles wide | liggende | ja |
+| `celle.png` | a padded cell corner: quilted white walls, two tiles wide | kvadrat | ja |
+| `disk_kafeteria4.png` | a long wooden cafeteria counter with a steel soup pot and bread, 4 tiles wide, front view | liggende | ja |
 | `disk_kafeteria5.png` | a long wooden cafeteria counter with a steel soup pot and bread, front view | liggende | ja |
 | `disk_medisin3.png` | a wooden medicine counter with small glass bottles, front view | liggende | ja |
 | `disk_vaktmester3.png` | a janitor's workbench counter with tools and a vise, front view | liggende | ja |
@@ -145,38 +145,38 @@ Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbele
 | `kiste_open.png` | the same chest, open, gold teeth inside | kvadrat | ja |
 | `kommodef.png` | a wooden chest of drawers, front view | liggende | ja |
 | `lik.png` | a dead patient in a yellow bathrobe lying on the floor, X eyes, comedic, seen from above at an angle | liggende | ja |
-| `medisinskap.png` | a white enamel medicine cabinet with glass doors and bottles inside | stående |  |
-| `offeralter.png` | a sacrificial altar of dark stone with a bowl of blood and red candles | liggende |  |
+| `medisinskap.png` | a white enamel medicine cabinet with glass doors and bottles inside | stående | ja |
+| `offeralter.png` | a sacrificial altar of dark stone with a bowl of blood and red candles | liggende | ja |
 | `olsenskap.png` | a grey steel locker with a big padlock, front view | stående | ja |
 | `prop_bench.png` | a wooden waiting-room bench, front view | liggende | ja |
-| `prop_bokstabel.png` | a wobbly stack of old leather-bound books | kvadrat |  |
+| `prop_bokstabel.png` | a wobbly stack of old leather-bound books | kvadrat | ja |
 | `prop_bord.png` | a small white enamel hospital table | kvadrat | ja |
-| `prop_botte.png` | a zinc mop bucket with a mop standing in it | stående |  |
+| `prop_botte.png` | a zinc mop bucket with a mop standing in it | stående | ja |
 | `prop_chair.png` | a wooden waiting-room chair, front view | stående | ja |
 | `prop_chair_b.png` | the same wooden chair seen from behind | stående | ja |
 | `prop_crate.png` | a wooden crate | kvadrat | ja |
 | `prop_do.png` | an old porcelain toilet with a wooden seat, front view | stående | ja |
 | `prop_drain.png` | a round iron floor drain seen from straight above (flat on the floor) | liggende | ja |
-| `prop_forbannet.png` | a cursed floor sigil: a red glowing occult circle scratched into the floor, seen from above (flat on the floor) | kvadrat |  |
+| `prop_forbannet.png` | a cursed floor sigil: a red glowing occult circle scratched into the floor, seen from above (flat on the floor) | kvadrat | ja |
 | `prop_kjetting.png` | a rusty iron chain hanging from above with a meat hook at the end | stående | ja |
 | `prop_kurv.png` | a wicker laundry basket full of white sheets | kvadrat | ja |
 | `prop_lamp.png` | a tall standing medical examination lamp | stående | ja |
-| `prop_lesestol.png` | a worn green leather reading armchair | kvadrat |  |
-| `prop_linhaug.png` | a heap of dirty white hospital linen | kvadrat |  |
+| `prop_lesestol.png` | a worn green leather reading armchair | kvadrat | ja |
+| `prop_linhaug.png` | a heap of dirty white hospital linen | kvadrat | ja |
 | `prop_luke.png` | an open wooden trapdoor in the floor with darkness below, seen from above | kvadrat | ja |
 | `prop_lys.png` | three white candles of different heights, lit | kvadrat | ja |
-| `prop_madrass.png` | a thin striped mattress lying on the floor, stained | liggende |  |
-| `prop_menytavle.png` | a small chalkboard menu sign on legs reading nothing (the game adds no text), cafeteria style | stående |  |
-| `prop_papirhaug.png` | a knee-high heap of loose papers and files | kvadrat |  |
+| `prop_madrass.png` | a thin striped mattress lying on the floor, stained | liggende | ja |
+| `prop_menytavle.png` | a small chalkboard menu sign on legs reading nothing (the game adds no text), cafeteria style | stående | ja |
+| `prop_papirhaug.png` | a knee-high heap of loose papers and files | kvadrat | ja |
 | `prop_pillar.png` | a stone pillar with a simple capital | stående | ja |
 | `prop_plant.png` | a potted palm in a terracotta pot | stående | ja |
 | `prop_side.png` | a small wooden side stand | stående | ja |
 | `prop_soppel.png` | a metal trash can overflowing with paper | kvadrat | ja |
-| `prop_strykebrett.png` | an old wooden ironing board with a heavy iron | kvadrat |  |
-| `prop_torkesnor3.png` | a drying line on two poles with white sheets hanging, three tiles wide | liggende |  |
+| `prop_strykebrett.png` | an old wooden ironing board with a heavy iron | kvadrat | ja |
+| `prop_torkesnor3.png` | a drying line on two poles with white sheets hanging, three tiles wide | liggende | ja |
 | `prop_trolley.png` | a steel hospital trolley with bottles and a folded towel | kvadrat | ja |
-| `prop_tvangstroye.png` | an empty straitjacket hanging on a coat stand | stående |  |
-| `prop_vekt.png` | an old upright doctor's weighing scale with a sliding weight bar | stående |  |
+| `prop_tvangstroye.png` | an empty straitjacket hanging on a coat stand | stående | ja |
+| `prop_vekt.png` | an old upright doctor's weighing scale with a sliding weight bar | stående | ja |
 | `pult.png` | a wooden writing desk with papers and an inkwell, front view | kvadrat | ja |
 | `seng_bed12n.png` | an iron hospital bed with white sheets and a blue blanket, lengthwise into the picture, head end far away (top) | stående | ja |
 | `seng_bed12s.png` | an iron hospital bed with white sheets and a blue blanket, lengthwise into the picture, head end nearest the viewer (bottom) | stående | ja |
@@ -196,13 +196,13 @@ Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbele
 | `skapf11.png` | skapf11 | stående | ja |
 | `skaps11.png` | skaps11 | stående | ja |
 | `sperre.png` | a barricade of wooden planks with red and white warning stripes | kvadrat | ja |
-| `sprekkvegg.png` | a cracked section of wall with light shining through the crack | stående |  |
+| `sprekkvegg.png` | a cracked section of wall with light shining through the crack | stående | ja |
 | `vaskemaskin2.png` | two old industrial washing machines side by side with round glass doors, front view | liggende | ja |
-| `vaskemaskin3.png` | old industrial washing machines side by side with round glass doors, 3 tiles wide, front view | liggende |  |
-| `verktoytavle1.png` | a pegboard with hanging tools (hammers, saws, keys), 1 tiles wide, front view | stående |  |
-| `verktoytavle2.png` | a pegboard with hanging tools (hammers, saws, keys), 2 tiles wide, front view | liggende |  |
+| `vaskemaskin3.png` | old industrial washing machines side by side with round glass doors, 3 tiles wide, front view | liggende | ja |
+| `verktoytavle1.png` | a pegboard with hanging tools (hammers, saws, keys), 1 tiles wide, front view | stående | ja |
+| `verktoytavle2.png` | a pegboard with hanging tools (hammers, saws, keys), 2 tiles wide, front view | liggende | ja |
 
-## Runde 4: plukk, effekter, tillegg og pynt (33 bilder, 32 levert)
+## Runde 4: plukk, effekter, tillegg og pynt (33 bilder, 33 levert)
 
 Små ting. Enkle former, tydelig kontur.
 
@@ -240,7 +240,7 @@ Små ting. Enkle former, tydelig kontur.
 | `tillegg_lys.png` | a tiny add-on worn by the player character: a lit candle stuck on the head. Tiny, drawn alone | stående | ja |
 | `tillegg_svulst.png` | a tiny add-on worn by the player character: a pink lump on the head. Tiny, drawn alone | kvadrat | ja |
 | `tillegg_tunge.png` | a tiny add-on worn by the player character: a tongue sticking out. Tiny, drawn alone | stående | ja |
-| `torner.png` | a tangle of black thorny vines (a hazard lying on the floor) | kvadrat |  |
+| `torner.png` | a tangle of black thorny vines (a hazard lying on the floor) | kvadrat | ja |
 
 ## Runde 5: våpen (7 bilder, 7 levert)
 

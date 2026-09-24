@@ -355,3 +355,7 @@ Alle tidspunkt er UTC.
 ## 2026-09-24 20:42 Apparater og lommerusk tegnet
 - Tegnet ti ikoner for aktive apparater og tolv små ikoner for lommerusk som enkeltbilder med gjennomsiktig bakgrunn og nøkkelnavn fra manifestet. De ligger i gpt-grafikk/.
 - Kjørte utskjæring, bildebehandling og bygging i en kopi. 245 bilder ble behandlet og bygget inn uten feil, sammen med 27 personaldeler. ART_BRIEF.md er generert på nytt og viser 245 av 287 leverte bilder.
+
+## 2026-09-24 21:00 Siste rombilder tegnet
+- Tegnet de 22 manglende bildene av rekvisitter, møbler og gulvfarer. De omfatter blant annet arkivhylle, polstret celle, kafeteriadisk, medisinskap, offeralter, vaskerom, sprukken vegg og to verktøytavler i ulik bredde.
+- Kontrollkopien behandlet 267 bilder og bygget dem inn uten feil. Sjekket flere av dem i spillstørrelse. ART_BRIEF.md er generert på nytt og viser 267 av 287 leverte bilder.
