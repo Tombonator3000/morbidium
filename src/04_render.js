@@ -235,7 +235,7 @@ const R = {
     }
     const key = kind + (electric ? '!' : '') + (full ? 'F' : '');
     if (this.water.cache.has(key)) return this.water.cache.get(key);
-    const P = { wet: ['#1f6f9a', '#59b4dc', '#e8fbff', .23, 1], tub: ['#2a7ea8', '#6ac2e0', '#ffffff', .3, 1], vomit: ['#5d6a1c', '#9fae3a', '#e4ec9a', .32, .9], soup: ['#8a5a14', '#d8a040', '#fff0b0', .3, .9], morb: ['#2a0a3a', '#6b2d8c', '#e0a8ff', .28, 1.4], blod: ['#3a0606', '#8a1010', '#e05050', .3, .6] }[kind] || ['#1f6f9a', '#59b4dc', '#fff', .23, 1];
+    const P = { wet: ['#1f6f9a', '#59b4dc', '#e8fbff', .23, 1], tub: ['#2a7ea8', '#6ac2e0', '#ffffff', .3, 1], vomit: ['#5d6a1c', '#9fae3a', '#e4ec9a', .32, .9], soup: ['#8a5a14', '#d8a040', '#fff0b0', .3, .9], morb: ['#2a0a3a', '#6b2d8c', '#e0a8ff', .28, 1.4], blod: ['#3a0606', '#8a1010', '#e05050', .3, .6], mokk: ['#2e1c0a', '#6b4423', '#b08a5a', .34, .45] }[kind] || ['#1f6f9a', '#59b4dc', '#fff', .23, 1];
     const u = this.water.u;
     const mat = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false,

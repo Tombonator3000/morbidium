@@ -152,6 +152,11 @@ body.touch #prompt{ bottom:calc(214px + env(safe-area-inset-bottom,0px)); }
 #bossTitle{ font-family:var(--hand); font-size:18px; color:var(--parch-l); margin-top:-2px; }
 .bbar{ height:18px; border:3px solid var(--ink); border-radius:10px; background:#3a1a1a; overflow:hidden; box-shadow:3px 3px 0 rgba(0,0,0,.5); margin-top:3px; }
 #bossFill{ height:100%; width:100%; background:linear-gradient(180deg,#e84a3a,#9a1a14); transition:width .15s; }
+#miniBar{ position:absolute; left:50%; top:calc(64px + env(safe-area-inset-top,0px)); transform:translateX(-50%); width:min(360px,70vw); text-align:center; scale:var(--ui,1); transform-origin:top center; }
+#miniName{ font-family:var(--display); font-size:17px; color:#e8d0f8; -webkit-text-stroke:2px var(--ink); paint-order:stroke fill; text-shadow:2px 2px 0 var(--ink); }
+#miniTitle{ font-family:var(--hand); font-size:15px; color:var(--parch-l); margin-top:-3px; }
+#miniBar .bbar{ height:13px; border-width:2px; }
+#miniFill{ height:100%; width:100%; background:linear-gradient(180deg,#b36be0,#5a2a7a); transition:width .15s; }
 #items{ display:flex; flex-wrap:wrap; gap:2px; margin-top:5px; max-width:250px; } #items canvas{ width:24px; height:24px; }
 .kurlist{ display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:8px; } .kur{ display:flex; gap:6px; align-items:center; border:2px solid rgba(42,26,20,.4); border-radius:4px; padding:3px 6px; font-size:12px; line-height:1.15; } .kur canvas{ width:44px; height:44px; flex:none; }
 #xpbar{ height:6px; background:#4a3a2a; border-radius:3px; margin-top:5px; overflow:hidden; } #xpbar i{ display:block; height:100%; width:0; background:var(--gold); }
@@ -480,6 +485,7 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
   <div id="roomsign"><div class="ribbon" id="floorName"></div></div>
   <div id="pa"></div>
   <div id="bossBar" class="hidden"><div id="bossName"></div><div id="bossTitle"></div><div class="bbar"><div id="bossFill"></div></div></div>
+  <div id="miniBar" class="hidden"><div id="miniName"></div><div id="miniTitle"></div><div class="bbar"><div id="miniFill"></div></div></div>
   <div id="cards"></div>
   <div id="weapon"><canvas id="wpc" width="88" height="132"></canvas><div><b id="wname"></b><i id="wdesc"></i></div></div>
   <div id="cons" class="paper"><canvas id="consc" width="80" height="104"></canvas><span id="consn">Tom</span><span class="n" id="consk">F</span></div>
