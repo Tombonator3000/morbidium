@@ -481,6 +481,6 @@ Alle tidspunkt er UTC.
 - DESIGN_BRIEF.md og gpt-grafikk/LESMEG.md sier hva som bør bestilles først: figurarkene til de nye fiendene, så figurene uten ansikt og hendelsene.
 - Tester på det ferdige bygget: test_ekstra 131 av 131, generator 1800 av 1800, gjennomspilling uten feil (med drøm mellom etasjene).
 
-## 2026-09-25 21:56 Utvidelsen ferdig, alt ligger i PR #2
+## 2026-09-25 21:53 Utvidelsen ferdig, alt ligger i PR #2
 - Alle fem trinnene i UTVIDELSE.md er gjort og pushet til grenen claude/practical-babbage-nc80bu, som oppdaterer PR #2. Den må flettes inn i main før GitHub Pages viser noe av det.
 - Retting: overskriften på forrige oppføring hadde feil klokkeslett (22:08). Riktig er 21:52.
