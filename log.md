@@ -463,3 +463,14 @@ Alle tidspunkt er UTC.
 - Løpet lagres med neste etasje før drømmen, så Fortsett spiller den på nytt. I innledningen kan du velge å våkne med en gang; det teller som fornektelse.
 - Egen musikk: en spilledåse som går for sakte, og noe langsomt og rødt til slutt. 3D har egen tåke for drømmene og ingen vinduer i forhengene. Dukkene i hendelsene og drømmene lyses nå opp i 3D.
 - Tester: ny del i test_ekstra for drømmene (16 320 tekster fra 240 frø uten hull, flyten gjennom et kapittel, skyggen som tar deg igjen, det røde rommet, slutten, pasientmappa og etterordet), og testene som går ned en etasje, hopper nå ut av drømmen. test_ekstra 122 av 122, generator 1800 av 1800.
+
+## 2026-09-25 21:42 Trinn 4 av utvidelsen: fiendene og sjefene i Parken og Nattskogen
+- Ny fil src/37_utefiender.js. Den ligger etter 32_meny.js og 33_merknader.js i bygget, fordi den legger de nye fiendene inn i fiendeindeksen.
+- Parken: Gartneren (stråhatt, bart og pipe; to klipp med hagesaksa, og riva som drar deg inntil) og Kråka (flyr i flokk, svever og stuper i en rett linje; treffer den veggen, blir den liggende en stund).
+- Nattskogen: Huldra (vakker forfra, en råtten stamme med kuhale bakfra; synger og drar deg mot seg, og snur ryggen til når hun slår), Vedkubbemannen (vedkubbe til hode og lusekofte; flis i vifte, skaller på nært hold, og går til siden når noe står i veien) og Nøkken (usynlig under overflaten, der ingenting biter på ham; kommer opp, drar deg under og spiller fele).
+- Kålhodet: kål med tenner, som Overgartneren planter.
+- Overgartner Ansgar Hekk (sjef): to klipp og et stikk med digre hagesakser, hekker som vokser opp i en ring rundt deg med to åpninger, gjødsel som gjør deg treg og stinker, og kålhoder.
+- Den hvite hjorten (sjef): en enorm hvit hjort med et trist menneskeansikt. Stormer i en rett linje og står svimmel om den treffer veggen, svinger geviret rundt seg, kaller ned rødt månelys, og gjemmer seg i tåka mens kopier stormer fram.
+- Sjefpuljen har seks sjefer, så etasje 1 til 5 trekker fem forskjellige. Fiendeindeksen i håndboka har 22 fiender og 10 sjefer (17 sider).
+- Rettet underveis: hekkene visnet på sjefens egen tidtaker og ble stående for alltid hvis sjefen døde først; nå har de sin egen. Huldras sang drar litt svakere, så du kan løpe deg løs.
+- Tester: ny del for fiendene i Parken og Nattskogen (alle går til angrep, kråka stuper, Huldra drar deg til seg, Nøkken går under og kan ikke treffes der), begge sjefene med alle angrep i sjeftesten, og håndboktestene teller de nye sidene. To tester fra hendelsene og Huldra var ustabile (for få rom av riktig type, og andre fiender som slo spilleren bort under målingen); begge er gjort robuste.
