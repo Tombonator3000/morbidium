@@ -433,7 +433,7 @@ const Items = {
     // statuser på fiender: gift, treghet, karantene
     for (const e of G.enemies) {
       if (!e.alive) continue;
-      if (e.poison && e.poison.t > 0) { e.poison.t -= dt; e.poison.tick -= dt; if (e.poison.tick <= 0) { e.poison.tick = .5; hurt(e, e.poison.dps * .5, { from: 'player' }); Particles.spawn(e.x, 1.1, e.z, 3, 0x7ac84a, { speed: 1, up: 2, life: .5 }); } }
+      if (e.poison && e.poison.t > 0) { e.poison.t -= dt; e.poison.tick -= dt; if (e.poison.tick <= 0) { e.poison.tick = .5; hurt(e, e.poison.dps * .5, { from: 'player', dot: true }); Particles.spawn(e.x, 1.1, e.z, 3, 0x7ac84a, { speed: 1, up: 2, life: .5 }); } }
       if (e.slowT > 0) { e.slowT -= dt; if (!e.baseSp) e.baseSp = e.sp; e.sp = e.baseSp * .55; } else if (e.baseSp) { e.sp = e.baseSp; e.baseSp = 0; }
       if (!e._kar && this.has('karantene') && G.combat) { e._kar = true; e.hp *= .8; e.max *= .8; }
     }

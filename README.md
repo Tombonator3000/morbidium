@@ -18,6 +18,8 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og He
 - Kuriositeter som stables og kombineres, piller med ukjent virkning, apparater og lommerusk, evnekort i et frenologisk hode, diagnoser som følger av måten du spiller på.
 - Tjenesterom, hemmelige rom bak sprukne vegger, forbannede rom og blodoffer. Fiender settes sammen av deler, og noen er navngitte mestere. Pasienthåndboka har en fiendeindeks med bilde av alt som bor i bygget.
 - Blod som spruter på vegger og gulv, kjøttbiter ved tunge slag, og øyne som åpner seg i veggene når Morbidium stiger.
+- Kombo langt over toppen: treffkjeden får nye navn fra «Lett irritert» til «Utenfor journalen», skjermkanten brenner i blodrus, og dobbeltdrap, trippeldrap, firlinger og massakre kommer med orgel, kor, gong, torden, applaus og en dyp kunngjørerstemme. Overkill, miljødrap, perfekte unnvikelser, tre kort på rad, sjefdrap og synergier har sine egne fanfarer. Brister kjeden, spiller en trist trombone.
+- Effekter som regnes ut på skjermkortet: gnister og røyk fra bålet, damp fra kjelene, sporer fra kjempeplanten, Morbidium som stiger fra lilla pytter og møll rundt lyktene. Lynet slår ned i regnværet (med varsel på bakken), teslaspolen slår buer mot fiender som kommer for nær, regnet lager ringer på bakken, og store øyeblikk får sjokkbølger, zoomslag og et bilde i vrengt blekk.
 - Musikk laget i nettleseren som følger kampen, pasienthåndbok, arkiv med pasientmapper, merknader som låser opp nytt innhold, og gjeninnleggelse etter første utskrivning.
 
 ## Bygg
@@ -33,6 +35,7 @@ python3 tools/test_ekstra.py  # enkeltfunksjoner i nettleseren (Playwright)
 - `gpt-grafikk/` bilder fra ChatGPT legges her (se `gpt-grafikk/LESMEG.md`)
 - `assets/` behandlede bilder: `ferdig/` (klare for spillet), `deler/` (byggeklosser til figurer), `manifest.json`
 - `maler/` maler som lastes opp til ChatGPT
+- `tegnelister/` alt som mangler bilde, samlet i ferdige ark med filnavn, mal, prompt og referansebilde (lages av `tools/lag_tegnelister.py`)
 - `tools/` verktøy for bilder, tester og manifest
 - `DESIGN_BRIEF.md` og `ART_BRIEF.md` for bildegenerering, `AGENTS.md` for regler
 
