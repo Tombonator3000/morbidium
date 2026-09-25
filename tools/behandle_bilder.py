@@ -6,6 +6,8 @@ kort_due.png eller prop_lamp.png. For hvert bilde:
   2. Bildet beskjæres til innholdet.
   3. Det skaleres og plasseres slik at festepunktet treffer: kort og effekter midtstilles,
      alt annet står med bunnen midt på festepunktet (føtter, bunn av møbelet, grepet på våpenet).
+     Spriteark (anim_<navn>.png) beskjæres ikke: hele arket skaleres så hver rute får sin størrelse,
+     og alle ruter beholder samme festepunkt.
   4. Resultatet lagres som PNG i 128 piksler per spillenhet (det spillet tegner i, se PX i 10_art.js),
      med en palett på 256 farger. Det gjør fila rundt fire ganger mindre uten synlig forskjell.
      --full-farge hopper over paletten.
@@ -45,7 +47,17 @@ def fjern_bakgrunn(im):
         if y < h - 1: stack.append((x, y + 1))
     return im
 
+def behandle_ark(sti, m):
+    """Spriteark (anim_<navn>): like store ruter med samme festepunkt. Arket beskjæres ikke, for da
+    ville rutene forskyves. Hele arket skaleres så hver rute blir w x h spillenheter."""
+    im = fjern_bakgrunn(Image.open(sti).convert('RGBA'))
+    kol, rad = m['ruter']
+    W, H = max(1, round(m['w'] * PXU)) * kol, max(1, round(m['h'] * PXU)) * rad
+    return im.resize((W, H), Image.LANCZOS)
+
 def behandle(sti, m):
+    if 'ruter' in m and sti.stem.lower().startswith('anim_'):
+        return behandle_ark(sti, m)
     im = fjern_bakgrunn(Image.open(sti).convert('RGBA'))
     bbox = im.getchannel('A').point(lambda v: 255 if v > 12 else 0).getbbox()
     if not bbox:
