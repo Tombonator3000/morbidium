@@ -8,7 +8,7 @@ fila fortsatt er selvstendig og virker både som publisert artefakt og på GitHu
 import base64, json, pathlib
 ROT = pathlib.Path(__file__).resolve().parent
 S = ROT / 'src'
-parts = ['01_core.js', '02_data.js', '03_generator.js', '04_render.js', '05_world.js', '06_musikk.js', '10_art.js', '11_doll.js', '12_paint.js', '13_rom.js', '14_pasient.js', '15_rom3d.js', '16_anim.js', '17_romtyper.js', '20_actors.js', '22_sjefer.js', '25_items.js', '26_fiender.js', '27_utstyr.js', '28_oppskrift.js', '29_monstre.js', '31_sjefpulje.js', '34_blod.js', '32_meny.js', '33_merknader.js', '30_game.js']
+parts = ['01_core.js', '02_data.js', '03_generator.js', '04_render.js', '05_world.js', '06_musikk.js', '10_art.js', '11_doll.js', '12_paint.js', '13_rom.js', '14_pasient.js', '15_rom3d.js', '16_anim.js', '17_romtyper.js', '20_actors.js', '22_sjefer.js', '25_items.js', '26_fiender.js', '27_utstyr.js', '28_oppskrift.js', '29_monstre.js', '31_sjefpulje.js', '34_blod.js', '35_hendelser.js', '32_meny.js', '33_merknader.js', '30_game.js']
 ferdig = ROT / 'assets' / 'ferdig'
 sprites = {p.stem: 'data:image/png;base64,' + base64.b64encode(p.read_bytes()).decode() for p in sorted(ferdig.glob('*.png'))} if ferdig.exists() else {}
 # deler til oppskriftssystemet (assets/deler/, laget av tools/skjaer_ark.py): beskjæres til det som

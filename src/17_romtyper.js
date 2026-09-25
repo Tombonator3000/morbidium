@@ -417,7 +417,7 @@ const Landskap = {
 const Vaer = {
   type: null, obj: null, n: 0, pos: null, fart: null, ripT: 0,
   start(F) {
-    this.stopp(); const type = F && F.vaer; if (!type || type === 'klart' || type === 'taake' || R.lowTex) return;
+    this.stopp(); this.F = F; const type = F && F.vaer; // F settes alltid, så ute() svarer for riktig etasje også i klarvær og tåke if (!type || type === 'klart' || type === 'taake' || R.lowTex) return;
     this.type = type; this.F = F; const N = this.n = type === 'regn' ? 260 : type === 'sno' ? 220 : 60;
     this.p = new Float32Array(N * 3); this.v = new Float32Array(N); for (let i = 0; i < N; i++) this.plasser(i, true);
     const geo = new THREE.BufferGeometry();
@@ -432,7 +432,7 @@ const Vaer = {
     this.obj.frustumCulled = false; this.obj.renderOrder = 6; R.scene.add(this.obj);
     Sound.vaer && Sound.vaer(type === 'regn' ? 'regn' : 'vind');
   },
-  stopp() { if (this.obj) { R.scene.remove(this.obj); this.obj.geometry.dispose(); this.obj.material.dispose(); } this.obj = null; this.type = null; Sound.vaer && Sound.vaer(null); },
+  stopp() { if (this.obj) { R.scene.remove(this.obj); this.obj.geometry.dispose(); this.obj.material.dispose(); } this.obj = null; this.type = null; this.farge = null; Sound.vaer && Sound.vaer(null); },
   /* ute er alt i en uteetasje utenom paviljongene, og uterommene (gårdsrom, lysgård) i inneetasjene */
   ute(x, z) { const F = this.F; if (!F) return false; const tx = Math.floor(x), tz = Math.floor(z); if (tx < 0 || tz < 0 || tx >= F.W || tz >= F.H) return F.ute; const i = tz * F.W + tx; if (!F.tiles[i]) return F.ute; const rid = F.roomId[i]; return rid >= 0 ? !!F.rooms[rid].ute : F.ute; },
   plasser(i, forste) {
