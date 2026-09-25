@@ -21,11 +21,13 @@ const D3 = {
   },
   /* valgt nivå: fast i innstillingene (1 lav, 2 middels, 3 høy) eller automatisk (0) */
   kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse ? 'middels' : 'hoy'); },
-  Q() { return this.NIVA[this.kval()] || this.NIVA.hoy; },
+  /* «Lys og skygge» av (R.lightsOn) gir et jevnt opplyst rom: ingen punktlys, skygger, lysstråler eller kantlys */
+  Q() { const q = this.NIVA[this.kval()] || this.NIVA.hoy; return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },
   /* oppløsningen følger nivået når 3D er på; uten 3D brukes det skjermen tåler */
   dpr() { const k = this.on ? Math.min(R.dprMax || 1, this.Q().dpr) : (R.dprMax || 1); if (Math.abs(k - R.dpr) > .01) { R.dpr = k; R.resize(); } },
   /* kalles fra applySettings: nytt nivå bygger 3D-laget på nytt */
-  kvalitet() { const k = this.kval(); if (k === this.kSist) return; this.kSist = k; if (this.on) { this.dpr(); this.onFloor(); } },
+  nokkel() { return this.kval() + (R.lightsOn ? '' : '-flat'); },
+  kvalitet() { const k = this.nokkel(); if (k === this.kSist) return; this.kSist = k; if (this.on) { this.dpr(); this.onFloor(); } },
   /* automatisk kvalitet: måler bildefrekvensen i spill, to sekunder om gangen. To lave målinger på rad gir et trinn ned.
      Hopper over fanebytter og automatiske testnettlesere, som bare har programvaregrafikk. */
   maal(dt) {
@@ -50,7 +52,7 @@ const D3 = {
   },
   toon(o) { const m = new THREE.MeshToonMaterial(Object.assign({ gradientMap: this.gradient() }, o)); return m; },
   sett(on) {
-    on = !!on && !R.safe; if (on === this.on) return; this.on = on; this.kSist = this.kval();
+    on = !!on && !R.safe; if (on === this.on) return; this.on = on; this.kSist = this.nokkel();
     R.renderer.shadowMap.enabled = true; R.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.dpr(); if (on) this.onFloor(); else this.riv();
   },
@@ -59,11 +61,11 @@ const D3 = {
   bygg() {
     const sc = R.scene, F = G.F, th = G.th || THEMES[1];
     // himmel og måne
-    const amb = new THREE.AmbientLight(new THREE.Color(th.fog || '#1a1622').lerp(new THREE.Color('#3a3450'), .6), .32);
-    const hemi = new THREE.HemisphereLight('#8a90c8', '#2a1a14', .16);
     const Q = this.Q(); this.q = Q;
-    const mane = new THREE.DirectionalLight('#9aaee8', .42); mane.castShadow = true;
-    mane.shadow.mapSize.set(Q.skygge, Q.skygge); const sc2 = mane.shadow.camera; sc2.left = -16; sc2.right = 16; sc2.top = 16; sc2.bottom = -16; sc2.near = 1; sc2.far = 60; mane.shadow.bias = -.0015; mane.shadow.normalBias = .02;
+    const amb = new THREE.AmbientLight(new THREE.Color(th.fog || '#1a1622').lerp(new THREE.Color('#3a3450'), .6), Q.flat ? .95 : .32);
+    const hemi = new THREE.HemisphereLight('#8a90c8', '#2a1a14', Q.flat ? .45 : .16);
+    const mane = new THREE.DirectionalLight('#9aaee8', .42); mane.castShadow = Q.skygge > 0;
+    if (Q.skygge) mane.shadow.mapSize.set(Q.skygge, Q.skygge); const sc2 = mane.shadow.camera; sc2.left = -16; sc2.right = 16; sc2.top = 16; sc2.bottom = -16; sc2.near = 1; sc2.far = 60; mane.shadow.bias = -.0015; mane.shadow.normalBias = .02;
     sc.add(amb, hemi, mane, mane.target); this.mane = mane; this.ting.push(amb, hemi, mane, mane.target);
     this.pool = []; for (let i = 0; i < Q.lys; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); }
     // nivået: materialene byttes til tegneseriebelyste varianter
@@ -293,7 +295,9 @@ const D3 = {
   kilder() { return (R.kilder || []).filter(m => m.parent && (m.parent === R.lscene || m.parent === R.levelL) && (m.parent !== R.levelL || R.levelL.parent)); },
   /* lyset ved et punkt: en farge å gange tegningen med, og (valgfritt i K) den sterkeste lampen, som gir kantlys */
   lysVed(x, z, y = .9, K) {
-    const c = this._c || (this._c = new THREE.Color()); c.setRGB(.26, .25, .34); let best = 0, bl = null;
+    const c = this._c || (this._c = new THREE.Color());
+    if (this.q && this.q.flat) { c.setRGB(.95, .93, .9); if (K) { K.l = null; K.f = 0; } return c; }
+    c.setRGB(.26, .25, .34); let best = 0, bl = null;
     for (const l of this.pool) { if (l.intensity <= 0) continue; const dx = l.position.x - x, dz = l.position.z - z, dy = l.position.y - y, d = Math.sqrt(dx * dx + dz * dz + dy * dy), k = Math.max(0, 1 - d / l.distance); if (k > 0) { const f = k * k * l.intensity * .55; c.r += l.color.r * f; c.g += l.color.g * f; c.b += l.color.b * f; if (f > best) { best = f; bl = l; } } }
     c.r = Math.min(1.5, c.r); c.g = Math.min(1.5, c.g); c.b = Math.min(1.5, c.b); if (K) { K.l = bl; K.f = best; } return c;
   },

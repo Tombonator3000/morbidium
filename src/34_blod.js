@@ -16,7 +16,14 @@ Object.assign(Sound.lib, {
 const hexOf = c => typeof c === 'number' ? '#' + c.toString(16).padStart(6, '0') : c || '#8a1010';
 const Blod = {
   on: true, pools: {}, vegger: [], drypper: [], bitene: [], ferske: [], oyne: [], fall: [], takT: 1, oyeT: 3, _c: null,
-  sett(on) { this.on = on !== false; if (!this.on) { R.fx.blod = 0; R.fx.aarer = 0; for (const o of this.oyne) this.lukk(o, true); } },
+  /* av: blodet på skjermen, øynene, sprutene på veggene, dryppene og kjøttbitene forsvinner med en gang. Vanlige flekker på gulvet blir liggende. */
+  sett(on) {
+    this.on = on !== false; if (this.on) return;
+    R.fx.blod = 0; R.fx.aarer = 0; for (const o of this.oyne) this.lukk(o, true); this.oyne = [];
+    for (const m of this.vegger) this.kast(m); for (const d of this.drypper) this.kast(d.m); for (const f of this.fall) R.remove(f.m);
+    for (const b of this.bitene) Anim.fjern(b.h);
+    this.vegger = []; this.drypper = []; this.fall = []; this.bitene = [];
+  },
   /* ---------- teksturer: hvite former med alfa, fargen kommer fra hver flekk ---------- */
   tex(k) {
     if (this._tex && this._tex[k]) return this._tex[k];

@@ -433,10 +433,13 @@ async def main():
           s.kvAuto = null; s.d3 = true; applySettings(); await new Promise(r => setTimeout(r, 600));
           D3.tvingMaal = true; for (let i = 0; i < 45; i++) D3.maal(.1); D3.tvingMaal = false; a.maalt = D3.kval();
           s.kvalitet = 1; applySettings(); a.fast = D3.kval(); a.lavGlod = D3.Q().glod; s.kvalitet = 0; s.kvAuto = null; applySettings();
+          s.lights = false; applySettings(); await new Promise(r => setTimeout(r, 400)); a.lysAv = { flat: !!D3.q.flat, lys: D3.pool.length, skygge: D3.mane.castShadow };
+          s.lights = true; applySettings(); await new Promise(r => setTimeout(r, 400)); a.lysPaa = { flat: !!D3.q.flat, lys: D3.pool.length > 0, skygge: D3.mane.castShadow };
           return a; }""")
         sjekk('3D er på fra start, og kvaliteten går fra høy til middels til lav før 3D slås av og lagres av',
               q['d3'] and q['on'] and q['niva'] == 'hoy' and q['trinn'] == ['middels', 'lav', 'av'] and q['etter'] == {'d3': False, 'on': False, 'lagret': False}, q)
         sjekk('lav bildefrekvens måles og gir et trinn ned, og fast kvalitet i innstillingene overstyrer', q['maalt'] == 'middels' and q['fast'] == 'lav' and q['lavGlod'] is False, q)
+        sjekk('«Lys og skygge» av gir jevnt lys i 3D uten punktlys og skygger, og på igjen gir dem tilbake', q['lysAv'] == {'flat': True, 'lys': 0, 'skygge': False} and q['lysPaa'] == {'flat': False, 'lys': True, 'skygge': True}, q)
         sjekk('ingen konsollfeil (3D som standard)', not pg.errs, pg.errs[:6])
         await pg.close()
 
@@ -464,9 +467,10 @@ async def main():
           let vegg = false; for (let x = r.x + 1; x < r.x + r.w - 1 && !vegg; x++) for (let z = r.z + .4; z < r.z + 2.5 && !vegg; z += .3) vegg = Blod.vegg(x + .5, z, '#8a1010', 1);
           a.vegg = vegg && Blod.vegger.length > 0 && Blod.drypper.length > 0;
           R.fx.blod = 0; P.hp = P.maxHp; P.iframe = P.invuln = 0; P.deny = null; hurt(P, 2, { type: 'pleier', x: P.x - 1, z: P.z }); a.skjerm = R.fx.blod > 0;
-          Blod.sett(false); a.av = R.fx.blod === 0 && !Blod.on; Blod.sett(true); P.hp = P.maxHp;
+          const gulv = n(); Blod.sett(false); a.av = R.fx.blod === 0 && !Blod.on; a.ryddet = { vegger: Blod.vegger.length, drypp: Blod.drypper.length, biter: Blod.bitene.length, gulvIgjen: n() === gulv }; Blod.sett(true); P.hp = P.maxHp;
           return a; }""")
         sjekk('blod: flekker og kjøttbiter når en fiende knuses, sprut med drypp på veggen og blod på skjermen', bl['flekker'] > 3 and bl['biter'] >= 4 and bl['vegg'] and bl['skjerm'] and bl['av'], bl)
+        sjekk('slås blod og skrekk av, forsvinner sprut på veggene, drypp og kjøttbiter, mens flekkene på gulvet blir liggende', bl['ryddet'] == {'vegger': 0, 'drypp': 0, 'biter': 0, 'gulvIgjen': True}, bl)
         sjekk('ingen konsollfeil (animasjon og blod)', not pg.errs, pg.errs[:6])
         await pg.close()
 
@@ -518,6 +522,8 @@ async def main():
           for (let s = 1; s < 80; s++) { const t = trekkSjefer(s); sett.add(t[1] + t[2] + t[3]); [t[1], t[2], t[3]].forEach(x => alle.add(x)); sist = sist && t[4] === 'journalen' && new Set([t[1], t[2], t[3]]).size === 3; }
           return { lik: a, varianter: sett.size, alle: [...alle].sort(), sist }; }""")
         sjekk('sjefene trekkes fra frøet, alle fire i puljen dukker opp, og Journalen er alltid sist', tr['lik'] and tr['varianter'] >= 10 and tr['alle'] == ['arkivar', 'klumpen', 'krok', 'rust'] and tr['sist'], tr)
+        lagret = await pg.evaluate("() => { Merknad.onBoss({ type: 'klumpen' }); return (JSON.parse(localStorage.getItem('morbidium_meta_v2')).sjefDrap || {}).klumpen; }")
+        sjekk('en slått sjef lagres med en gang (til fiendeindeksen)', lagret == 1, lagret)
 
         # 22) UI-settet fra ChatGPT: uten bilder tegner CSS-en som før, med bilder byttes rammer, ringer, hjerter og ikoner inn uten at boksene endrer størrelse
         await start_lop(pg)
