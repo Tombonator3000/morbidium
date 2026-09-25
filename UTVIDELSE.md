@@ -1,5 +1,7 @@
 # Morbidium: utvidelsen høsten 2026
 
+**Status:** alle fem trinnene ble gjort samme kveld (25.9.2026). Hva som ble gjort i hvert trinn, står i `log.md`, og det som gjenstår, i `todo.md`.
+
 Plan for å gjøre spillet større: flere etasjer, rom som ser forskjellige ut, absurde hendelser, og en historie for hver pasient som spilles ut i drømmer. Skrevet 25.9.2026 etter en idédugnad med Tom. Følg rekkefølgen nederst, og kryss av i `todo.md` etter hvert.
 
 ## Det Tom har bestemt
