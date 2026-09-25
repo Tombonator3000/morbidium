@@ -228,6 +228,7 @@ function useAbility(i) {
   const def = ABILITIES[e.id]; if (!ABIL[e.id]) return;
   const ok = ABIL[e.id](P, e); if (ok === false) return;
   P.cds[i] = def.cd * (1 - (P.stats.forstand - 1) * .07) * (e.match ? .8 : 1) * (hasDiag('innsikt') ? .8 : 1) * (P.morb >= 75 ? .85 : 1);
+  (P.cdMax || (P.cdMax = [1, 1, 1, 1]))[i] = P.cds[i]; // til sektoren som teller ned på kortet
   P.counters.ability++; checkDiagnoses();
 }
 function dirFace(P) { return { fx: Math.sin(P.face), fz: Math.cos(P.face) }; }

@@ -15,9 +15,12 @@ THREE = os.environ.get('MORBIDIUM_THREE') or (sys.argv[sys.argv.index('--three')
 JS = r"""() => {
   const out = {}, safe = f => { try { f(); } catch (e) { } };
   for (const t of Object.keys(RIG)) for (const v of ['f', 'b', 's']) for (const piece of ['hode', 'kropp', 'kappe']) safe(() => charPart(t, piece, v));
+  for (const t of Object.keys(RIG)) if (RIG[t].hjul) safe(() => charPart(t, 'hjul', 'f'));
+  for (const L of Object.values(typeof LAGDUKKE === 'object' ? LAGDUKKE : {})) for (const d of L.deler) safe(() => d.P());
+  for (const f of [portierHode, skarPart, () => Blod.pupill()]) safe(f);
   for (const t of Object.keys(BLOBS).concat(['yngel', 'journalen'])) for (const v of ['f', 'b', 's']) safe(() => charPart(t, 'blob', v));
   for (const id of Object.keys(CARD_ART)) safe(() => cardArtCanvas(id, 8));
-  for (const w of Object.keys(WEAPONS).concat(['sproyte', 'krok', 'slange'])) safe(() => weaponPart(w));
+  for (const w of Object.keys(WEAPON_ART)) safe(() => weaponPart(w));
   for (const t of Object.keys(RIG)) safe(() => shoePart(RIG[t].shoe)); for (const k of ['tofler', 'hvit', 'klogg', 'stovel', 'sokk']) safe(() => shoePart(k));
   const maler = [null, 'eget', 'likhus', 'toalett', 'soppel', 'vask', 'operasjon', 'begravelse', 'kapell', 'vaktbod'];
   for (const tm of maler) for (let d = 1; d <= 4; d++) for (let s = 1; s <= 5; s++) { const F = generateFloor(s * 101 + d * 7 + (tm ? tm.length : 0), d, tm ? { startTemplate: tm, startCombat: true } : {}); for (const r of F.rooms) for (const p of r.props) if (p.k !== 'npc' && p.k !== 'puddle') { safe(() => propArt(p)); safe(() => propArt(Object.assign({}, p, { opened: true }))); } }
@@ -27,8 +30,14 @@ JS = r"""() => {
   for (const id of Object.keys(ITEMS)) safe(() => itemIcon(id)); safe(() => jarPart(null)); for (const id of Object.keys(PILL_COL)) safe(() => pillPart(id));
   for (const id of Object.keys(AKTIVE)) { safe(() => aktIcon(id)); } for (const id of Object.keys(LOMMERUSK)) { safe(() => lommeIcon(id)); safe(() => lommePart(id)); }
   for (const k of Object.keys(LOOKS)) safe(() => addonPart(k)); safe(() => shotPart('slim'));
-  const skip = k => k.includes('~') || k.includes('undefined') || /^(lik_|likb|del_|lommeplukk_|glassakt_|glassbilde_)/.test(k) || (k.startsWith('glass_') && k !== 'glass_tomt') || (k.startsWith('kappe_') && !k.startsWith('kappe_kultist'));
+  const skip = k => k.includes('~') || k.includes('undefined') || /^(lik_|likb|del_|lommeplukk_|glassakt_|glassbilde_|animr_|speilbilde_|ord_|stempelfall|skjemavegg|lokkedue|isolatvegg|pille$|klyse|nokler_p)/.test(k) || (k.startsWith('glass_') && k !== 'glass_tomt') || (k.startsWith('kappe_') && !k.startsWith('kappe_kultist'));
   for (const [k, P] of Art.cache) if (!skip(k)) out[k] = { w: P.w, h: P.h, ax: P.ax, ay: P.ay, px: [P.canvas.width, P.canvas.height] };
+  for (const v of ['f', 'b', 's']) if (out['kropp_trille_' + v]) out['kropp_trille_' + v].bunn = .52; // stolen går ned til gulvet under hofta
+  // spriteark: én rute er w x h enheter, rutene ligger på én rad
+  for (const [k, D] of Object.entries(typeof ANIM === 'object' ? ANIM : {})) out['anim_' + k] = { w: D.w, h: D.h, ax: D.ax, ay: D.ay, ruter: [D.n, 1], n: D.n, fps: D.fps, px: [Math.round(D.w * 128) * D.n, Math.round(D.h * 128)] };
+  // UI-settet (DESIGN_BRIEF.md, del G): paneler og rammer strekkes (9-delt), ringer og ikoner beholder formen
+  const UI = { ui_panel: [4, 2.5, 1], ui_knapp: [1.5, 1.2, 1], ui_kort: [1.25, 1.6, 1], ui_skilt: [3, .75, 1], ui_utklipp: [4, 5.5, 1], ui_ring_portrett: [1.5, 1.5, 0], ui_ring_kart: [2, 2, 0], ui_hjerte_full: [.5, .5, 0], ui_hjerte_halv: [.5, .5, 0], ui_hjerte_tom: [.5, .5, 0], ui_ikon_journal: [.5, .5, 0], ui_ikon_pause: [.5, .5, 0], ui_hode: [4.6875, 4.6875, 0] };
+  for (const [k, [w, h, strekk]] of Object.entries(UI)) out[k] = Object.assign({ w, h, ax: w / 2, ay: h / 2, px: [Math.round(w * 128), Math.round(h * 128)] }, strekk ? { strekk: true, snitt: (UI_SETT[k] || {}).snitt } : {});
   window.__kur = Object.assign(Object.fromEntries(Object.entries(ITEMS).map(([k, v]) => [k, { name: v.name, desc: v.desc }])), Object.fromEntries(Object.entries(AKTIVE).map(([k, v]) => ['akt:' + k, { name: v.name, desc: v.desc }])), Object.fromEntries(Object.entries(LOMMERUSK).map(([k, v]) => ['lomme:' + k, { name: v.name, desc: v.desc }])));
   return out;
 }"""

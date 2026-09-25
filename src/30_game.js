@@ -421,13 +421,16 @@ const HEADMAP = { cx: [.417, .683, .442, .708], cy: [.308, .292, .592, .583] };
 function drawHeadMap(c) {
   const g = c.getContext('2d'), W = c.width, s = W / 600; g.setTransform(s, 0, 0, s, 0, 0); g.clearRect(0, 0, 600, 600); g.lineJoin = 'round'; g.lineCap = 'round';
   const ink = (w, col = INK) => { g.lineWidth = w; g.strokeStyle = col; g.stroke(); };
-  // profil mot venstre
+  // profil mot venstre: ChatGPTs hode (ui_hode) når det finnes, ellers tegnet her. Områdene og ordene tegnes oppå uansett.
+  const uh = Art.img && Art.img.ui_hode;
+  if (uh && uh.complete && uh.naturalWidth) g.drawImage(uh, 0, 0, 600, 600); else {
   g.beginPath(); g.moveTo(440, 600); g.lineTo(452, 470); g.quadraticCurveTo(548, 400, 548, 300); g.bezierCurveTo(560, 140, 430, 40, 300, 46); g.bezierCurveTo(175, 52, 108, 150, 116, 250);
   g.lineTo(110, 300); g.lineTo(98, 330); g.lineTo(52, 396); g.quadraticCurveTo(60, 410, 98, 408); g.lineTo(90, 430); g.quadraticCurveTo(104, 440, 98, 448); g.lineTo(92, 464); g.quadraticCurveTo(100, 505, 118, 510); g.quadraticCurveTo(190, 548, 252, 520); g.lineTo(262, 600);
   g.fillStyle = '#e6d3a4'; g.fill(); ink(5);
   g.beginPath(); g.moveTo(345, 360); g.bezierCurveTo(385, 350, 392, 420, 350, 440); g.bezierCurveTo(338, 428, 356, 410, 340, 396); ink(4);
   g.beginPath(); g.moveTo(140, 322); g.quadraticCurveTo(162, 306, 186, 322); g.quadraticCurveTo(162, 338, 140, 322); ink(3.5); g.beginPath(); g.arc(160, 322, 5, 0, TAU); g.fillStyle = INK; g.fill();
   g.beginPath(); g.moveTo(132, 298); g.quadraticCurveTo(160, 286, 192, 296); ink(3.5);
+  }
   // fire hjerneområder som skyer
   const cloud = (cx, cy, rx, ry, col, seed) => {
     const rn = mulberry32(seed), pts = []; for (let i = 0; i < 14; i++) { const a = i / 14 * TAU, k = i % 2 ? 1.12 : .96 + rn() * .04; pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]); }
@@ -579,7 +582,7 @@ function drawWeaponCard() {
 function hudUpdate() {
   const P = G.player; if (!P) return;
   const nh = Math.ceil(P.maxHp / 10), h = [];
-  for (let i = 0; i < nh; i++) { const v = clamp((P.hp - i * 10) / 10, 0, 1); h.push(HEART(v >= 1 ? '#d8322a' : v > 0 ? '#e88a6a' : '#4a3a36')); }
+  for (let i = 0; i < nh; i++) { const v = clamp((P.hp - i * 10) / 10, 0, 1); h.push(hjerteHtml(v, HEART)); }
   const need = 40 + (P.level - 1) * 55;
   const key = h.join('') + P.teeth + Math.round(P.morb) + P.level + Math.round(P.xp) + P.dodge + P.dodgeMax + G.run.patient.name;
   if (key !== hudKey) {
@@ -596,7 +599,7 @@ function hudUpdate() {
     $('cards').innerHTML = G.run.slots.map((c, i) => { if (!c) return `<div class="acard empty" id="ac${i}"><div class="nm">${REGIONS[i].name}</div><div class="k">${i + 1}</div><div class="cd hidden"></div></div>`; const m = AFFINITY[c.id] === REGIONS[i].id; return `<div class="acard ${m ? 'match' : ''}" id="ac${i}" title="${esc(ABILITIES[c.id].desc)}"><div class="dots">${[0, 1, 2, 3].map(k => `<i class="${k < c.lvl + (m ? 1 : 0) ? '' : 'off'}"></i>`).join('')}</div><span data-hart="${c.id}"></span><div class="nm">${esc(ABILITIES[c.id].name)}</div><div class="k">${i + 1}</div><div class="cd hidden"></div></div>`; }).join('');
     document.querySelectorAll('[data-hart]').forEach(el => el.replaceWith(cardArtCanvas(el.dataset.hart, 96)));
   }
-  for (let i = 0; i < 4; i++) { const el = $('ac' + i); if (!el) continue; const cd = el.querySelector('.cd'), c = P.cds[i]; cd.classList.toggle('hidden', !(c > 0)); if (c > 0) cd.textContent = Math.ceil(c); }
+  for (let i = 0; i < 4; i++) { const el = $('ac' + i); if (!el) continue; const cd = el.querySelector('.cd'), c = P.cds[i]; cd.classList.toggle('hidden', !(c > 0)); if (c > 0) { cd.textContent = Math.ceil(c) + 's'; cd.style.setProperty('--p', clamp(c / ((P.cdMax && P.cdMax[i]) || c), 0, 1).toFixed(3)); } }
   const cons = P.cons ? P.cons.id + P.cons.n : '-';
   if (cons !== hudConsKey) { hudConsKey = cons; const g = $('consc').getContext('2d'); g.clearRect(0, 0, 80, 104); if (P.cons) { const bp = bottlePart(P.cons.id); g.drawImage(bp.canvas, 0, 0, bp.canvas.width, bp.canvas.height, 8, 4, 64, 64 * bp.canvas.height / bp.canvas.width); } $('consn').textContent = P.cons ? CONSUMABLES[P.cons.id].name + (P.cons.n > 1 ? ' x' + P.cons.n : '') : 'Tom lomme'; }
   const ak = G.run.akt, akk = ak ? ak.id + ak.charge + '/' + ak.max : '-';
@@ -722,9 +725,11 @@ function boot() {
   G.meta = loadMeta();
   if (window.__recover) { G.meta.settings.simple = true; R.lowTex = true; R.dpr = R.dprMax = 1; R.resize(); }
   try { if (localStorage.getItem('morbidium_simple') === '1') { G.meta.settings.simple = true; localStorage.removeItem('morbidium_simple'); saveMeta(); } } catch (e) { }
-  if (/enkel/.test(location.hash)) G.meta.settings.simple = true;
-  if (/3d/.test(location.hash)) G.meta.settings.d3 = true;
-  if (/2d/.test(location.hash)) G.meta.settings.d3 = false;
+  // valg i adressen: #2d, #3d og #enkel (eller ?2d osv., som testene bruker fordi de laster siden på nytt)
+  const flagg = location.hash + location.search;
+  if (/enkel/.test(flagg)) G.meta.settings.simple = true;
+  if (/3d/.test(flagg)) G.meta.settings.d3 = true;
+  if (/2d/.test(flagg)) G.meta.settings.d3 = false;
   applySettings();
   R.onSafe = why => { G.meta.settings.simple = true; saveMeta(); toast('Enkel grafikk', 'Skjermkortet ga ' + why + ', så etterbehandlingen er slått av'); };
   $('vignette').style.display = 'none';
@@ -734,8 +739,8 @@ function boot() {
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };
-  Object.assign(window, { rolig, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { rolig, SPRITES, hbSider, saveMeta, brukUIsett, UI_SETT, hjerteHtml, portierHode, skarPart, speilbilde, ordPart, WEAPON_ART, kastKlump, sendOrd, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
   step('Pakker ut bilder');
-  Art.preload().then(() => { step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
+  Art.preload().then(() => { try { brukUIsett(); } catch (e) { } step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }
 try { boot(); } catch (e) { if (window.showErr) showErr((e && e.message) || String(e)); throw e; }
