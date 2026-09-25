@@ -503,3 +503,7 @@ Alle tidspunkt er UTC.
 - To nye merknader (Blodrus og Massakre), og dødskortet viser lengste kjede og flest på en gang. Blødning og gift teller ikke i kjeden (src.dot).
 - Tester: to nye deler i test_ekstra (28 effekter og shadere, 29 kombo). To eldre sjekker ventet en fast tid på noe som skjer i spilltid, og feilet fordi testnettleseren går på omtrent en firedel av farten: bakholdet i det forbannede rommet og øyet i sprekken. Begge venter nå på det de sjekker. En setning om treffkjeden i håndboka ble tatt ut igjen fordi kampsiden ikke fikk plass. Resultat: test_ekstra 150 av 151, og den siste (håndboka) er rettet og sjekket for seg (17 av 17 sider på PC, 24 av 24 på mobil). Generator 1800 av 1800, gjennomspilling uten feil.
 - Foreslått som egen oppgave: gå gjennom resten av testene og la dem vente på spilltid i stedet for sanntid.
+
+## 2026-09-25 23:47 PR #3 flettet og publisert
+- PR #3 (tegnelistene, effektene og shaderne, og kombosystemet) er flettet inn i main som 505421f. GitHub Actions bygget og publiserte til GitHub Pages uten feil (kjøring 37).
+- Grenen claude/practical-babbage-nc80bu er satt til main igjen, så neste runde blir en ny PR.
