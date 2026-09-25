@@ -412,7 +412,7 @@ Størst gevinst først. Kortene vises i HUD-en og i journalen. Motivet midt i bi
 | `kort_stempel.png` | a red rubber office stamp slamming down with a splash of red ink. Square card illustration, subject centered | kvadrat | ja |
 | `kort_ukjent.png` | a dark silhouette of a person with a question mark. Square card illustration, subject centered | kvadrat | ja |
 
-## Runde 3: rekvisitter og møbler (72 bilder, 72 levert)
+## Runde 3: rekvisitter og møbler (73 bilder, 72 levert)
 
 Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbelet helt nederst i motivet.
 
@@ -430,6 +430,7 @@ Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbele
 | `hyllef11.png` | hyllef11 | stående | ja |
 | `hylles11.png` | hylles11 | stående | ja |
 | `journalskap.png` | a large dark wooden filing cabinet with many drawers, one drawer glowing purple, front view | stående | ja |
+| `kiste12.png` | a dark wooden coffin with a slightly raised lid and a small brass name plate, lying lengthwise into the picture (one tile wide, two tiles deep) | stående |  |
 | `kiste_lukket.png` | a small wooden treasure chest with iron bands, closed | kvadrat | ja |
 | `kiste_open.png` | the same chest, open, gold teeth inside | kvadrat | ja |
 | `kommodef.png` | a wooden chest of drawers, front view | liggende | ja |
@@ -491,7 +492,7 @@ Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbele
 | `verktoytavle1.png` | a pegboard with hanging tools (hammers, saws, keys), 1 tiles wide, front view | stående | ja |
 | `verktoytavle2.png` | a pegboard with hanging tools (hammers, saws, keys), 2 tiles wide, front view | liggende | ja |
 
-## Runde 4: plukk, effekter, tillegg og pynt (33 bilder, 33 levert)
+## Runde 4: plukk, effekter, tillegg og pynt (34 bilder, 33 levert)
 
 Små ting. Enkle former, tydelig kontur.
 
@@ -508,6 +509,7 @@ Små ting. Enkle former, tydelig kontur.
 | `puff0.png` | a small cartoon dust cloud puff, beige with a brown outline | kvadrat | ja |
 | `puff1.png` | a small cartoon dust cloud puff, beige with a brown outline | kvadrat | ja |
 | `puff2.png` | a small cartoon dust cloud puff, beige with a brown outline | kvadrat | ja |
+| `pupill.png` | a small red iris with a black pupil and a white highlight | kvadrat |  |
 | `pynt_harnett.png` | a thin dark hair net shaped like a dome (drawn alone) | liggende | ja |
 | `pynt_hjelm.png` | a padded brown leather protective helmet with brass rivets (drawn alone) | liggende | ja |
 | `pynt_nattlue.png` | a striped red and white nightcap with a pompom, drooping to the side (worn on a head, drawn alone) | kvadrat | ja |
@@ -645,10 +647,3 @@ Vanskeligst. Be først om et figurark (samme figur forfra, bakfra, fra siden), o
 | `sko_sokk.png` | ONE grey wool sock with a red band, side view | liggende | ja |
 | `sko_stovel.png` | ONE black pointy boot, side view | liggende | ja |
 | `sko_tofler.png` | ONE pink bunny slipper with little ears, front view | liggende | ja |
-
-## Øvrige
-
-| Filnavn | Beskrivelse | Format | Levert |
-|---|---|---|---|
-| `kiste12.png` | kiste12 | stående |  |
-| `pupill.png` | a small red iris with a black pupil and a white highlight | kvadrat |  |

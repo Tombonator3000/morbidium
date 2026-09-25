@@ -46,15 +46,20 @@ JS = r"""() => {
   window.__kur = Object.assign(Object.fromEntries(Object.entries(ITEMS).map(([k, v]) => [k, { name: v.name, desc: v.desc }])), Object.fromEntries(Object.entries(AKTIVE).map(([k, v]) => ['akt:' + k, { name: v.name, desc: v.desc }])), Object.fromEntries(Object.entries(LOMMERUSK).map(([k, v]) => ['lomme:' + k, { name: v.name, desc: v.desc }])));
   return out;
 }"""
+async def apne_spill(p):
+    """Starter det bygde spillet i Chromium og går inn i første etasje. Brukes også av tools/lag_tegnelister.py."""
+    b = await p.chromium.launch(args=['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'])
+    pg = await b.new_page(viewport={'width': 1280, 'height': 720}); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
+    if THREE:
+        await pg.route('**/three.min.js', lambda r: r.fulfill(path=THREE, content_type='application/javascript'))
+        await pg.route('https://fonts.googleapis.com/**', lambda r: r.fulfill(body='', content_type='text/css'))
+    await pg.goto((ROT / 'dist' / 'morbidium.html').as_uri()); await pg.wait_for_timeout(4000)
+    await pg.click('#tNew'); await pg.wait_for_timeout(400); await pg.click('[data-awk]'); await pg.wait_for_timeout(2500)
+    return b, pg, errs
+
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(args=['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'])
-        pg = await b.new_page(viewport={'width': 1280, 'height': 720}); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
-        if THREE:
-            await pg.route('**/three.min.js', lambda r: r.fulfill(path=THREE, content_type='application/javascript'))
-            await pg.route('https://fonts.googleapis.com/**', lambda r: r.fulfill(body='', content_type='text/css'))
-        await pg.goto((ROT / 'dist' / 'morbidium.html').as_uri()); await pg.wait_for_timeout(4000)
-        await pg.click('#tNew'); await pg.wait_for_timeout(400); await pg.click('[data-awk]'); await pg.wait_for_timeout(2500)
+        b, pg, errs = await apne_spill(p)
         ny = await pg.evaluate(JS)
         sti = ROT / 'assets' / 'manifest.json'; gammel = json.loads(sti.read_text(encoding='utf-8')) if sti.exists() else {}
         lagt_til = sorted(k for k in ny if k not in gammel); ikke_laget = sorted(k for k in gammel if k not in ny)
@@ -65,4 +70,5 @@ async def main():
         print('i manifestet, men ikke laget av spillet nå (beholdt):', len(ikke_laget), ikke_laget[:20])
         print('totalt', len(m), errs[:3])
         await b.close()
-asyncio.run(main())
+if __name__ == '__main__':
+    asyncio.run(main())

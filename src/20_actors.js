@@ -404,7 +404,7 @@ function updateEnemy(e, dt) {
   if (!e.alive) { e.deadT -= dt; e.doll.update(dt, { down: true }); e.doll.dissolve(1 - Math.max(0, e.deadT) / .5); if (e.deadT <= 0 && !e.gone) { e.gone = true; e.doll.dispose(); } return; }
   updateEnemyQueue(e, dt);
   e.t -= dt; e.cd -= dt; e.stun -= dt; e.slip -= dt; e.sleep -= dt; e.speechT -= dt; e.confused -= dt || 0; e.exposed -= dt; e.shrink -= dt; e.bloat -= dt;
-  if (e.bleed > 0) { e.bleed -= dt; e.bleedT = (e.bleedT || 0) - dt; if (e.bleedT <= 0) { e.bleedT = .5; hurt(e, 2, { from: 'player' }); } }
+  if (e.bleed > 0) { e.bleed -= dt; e.bleedT = (e.bleedT || 0) - dt; if (e.bleedT <= 0) { e.bleedT = .5; hurt(e, 2, { from: 'player', dot: true }); } }
   const T = enemyTarget(e), dx = T.x - e.x, dz = T.z - e.z, dist = Math.hypot(dx, dz), toT = Math.atan2(dx, dz);
   // egne kroker for nyere fiender (29_monstre.js): kan gi et annet mål for bevegelsen, som sporet Speilpasienten følger
   const alt = Grotesk.tick && Grotesk.tick[e.type] && e.state !== 'spawn' ? Grotesk.tick[e.type](e, dt, T, dist, toT) : null;
