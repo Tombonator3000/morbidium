@@ -5,6 +5,10 @@
    2) Tegnede plater (11_doll.js): blink, oppløsning med glødende kant, elitekant.
    3) Etterbehandling: fargegradering per etasje, papirkorn, vignett,
       lav helse, treff og Morbidium-forvrengning (kan slås av).
+   4) Store øyeblikk (38_effekter.js, 39_kombo.js): sjokkbølger som skyver
+      bildet utover, zoomslag, fargesplitt, negativ i vrengt blekk, lynblink,
+      brennende skjermkant i blodrus, og drømmesløret mellom etasjene.
+      Forvrengning følger «Forvrengning», blink følger «Blink» i innstillingene.
    ============================================================ */
 const CAM_PITCH = 52 * Math.PI / 180;
 const BILL_Y = 1 / Math.cos(CAM_PITCH);
@@ -12,7 +16,8 @@ const R = {
   renderer: null, scene: null, camera: null, level: null, dyn: null, lscene: null, geoCache: new Map(), tex: {},
   camT: { x: 0, z: 0 }, trauma: 0, shakeOn: true, flashOn: true, distortOn: true, lightsOn: true, view: 11.5,
   rt: null, lrt: null, post: null, postScene: null, postCam: null,
-  fx: { hurt: 0, flash: 0, morb: 0, low: 0, blod: 0, blodFlip: 0, aarer: 0, puls: 3 },
+  fx: { hurt: 0, flash: 0, morb: 0, low: 0, blod: 0, blodFlip: 0, aarer: 0, puls: 3, ca: 0, neg: 0, zoom: 0, drom: 0, lyn: 0, hete: 0 },
+  sjokkL: [], zoomP: { x: 0, y: 1, z: 0 },
   init(canvas) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches); this.dpr = this.dprMax = Math.min(devicePixelRatio || 1, this.coarse ? 1.5 : 2); this.renderer.setPixelRatio(1);
@@ -41,25 +46,45 @@ const R = {
         uAmbient: { value: new THREE.Color(1, 1, 1) }, uLift: { value: new THREE.Color(0, 0, 0) }, uGain: { value: new THREE.Color(1, 1, 1) },
         uMorb: { value: 0 }, uHurt: { value: 0 }, uLow: { value: 0 }, uFlash: { value: 0 }, uDistort: { value: 1 }, uLights: { value: 1 }, uVig: { value: .55 }, tBloom: { value: null }, uBloom: { value: 0 },
         tBlod: { value: this.blodSkjerm() }, uBlod: { value: 0 }, uBlodFlip: { value: 0 }, uAarer: { value: 0 }, uPuls: { value: 3 },
-        tUskarp: { value: null }, uTilt: { value: 0 }, uSplit: { value: 0 }, uFilm: { value: 0 } },
+        tUskarp: { value: null }, uTilt: { value: 0 }, uSplit: { value: 0 }, uFilm: { value: 0 },
+        uSjokk: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uZoom: { value: new THREE.Vector3() }, uCa: { value: 0 }, uNeg: { value: 0 }, uDrom: { value: 0 }, uLyn: { value: 0 }, uHete: { value: 0 } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: `
         uniform sampler2D tScene, tLight, tBloom, tBlod, tUskarp; uniform vec2 uRes; uniform float uTime, uMorb, uHurt, uLow, uFlash, uDistort, uLights, uVig, uBloom, uBlod, uBlodFlip, uAarer, uPuls, uTilt, uSplit, uFilm;
         uniform vec3 uAmbient, uLift, uGain; varying vec2 vUv;
+        uniform vec4 uSjokk[4]; uniform vec3 uZoom; uniform float uCa, uNeg, uDrom, uLyn, uHete;
         float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
         // årer: rygger i støyen gir tynne, forgreinede linjer
         float rygg(vec2 p){ return 1.0 - abs(vn(p) * 2.0 - 1.0); }
         float aare(vec2 p){ float r = rygg(p) * 0.55 + rygg(p * 2.2 + 3.7) * 0.3 + rygg(p * 4.7 + 9.1) * 0.15; return smoothstep(0.8, 0.95, r); }
         void main(){
-          vec2 uv = vUv; vec2 c = uv - 0.5; float d = length(c * vec2(uRes.x / uRes.y, 1.0));
+          vec2 uv = vUv; vec2 c = uv - 0.5; float asp = uRes.x / uRes.y; float d = length(c * vec2(asp, 1.0));
           // blekkboiling: hele tegningen skjelver litt, åtte ganger i sekundet, som håndtegnet animasjon
           float bt = floor(uTime * 8.0);
           uv += (vec2(vn(vUv * 7.0 + bt * 1.7), vn(vUv * 7.0 + 31.0 + bt * 2.3)) - 0.5) * 2.4 / uRes * uDistort;
           float m = uMorb * uDistort;
           if (m > 0.01) { uv += vec2(sin(uv.y * 17.0 + uTime * 1.3), cos(uv.x * 13.0 + uTime * 1.07)) * 0.0022 * m * smoothstep(0.15, 0.7, d); }
-          float ca = (uHurt * 0.006 + m * 0.0015) * smoothstep(0.1, 0.8, d);
+          // drømmen: bildet bølger sakte, som gjennom gammelt vindusglass
+          if (uDrom > 0.0) uv += vec2(sin(vUv.y * 11.0 + uTime * 0.9), cos(vUv.x * 9.0 + uTime * 0.7)) * 0.0035 * uDrom * uDistort;
+          // sjokkbølger: en ring som skyver bildet utover der noe stort skjer, med fargesplitt i kanten
+          float sj = 0.0;
+          for (int i = 0; i < 4; i++) {
+            vec4 s = uSjokk[i];
+            if (s.w > 0.0) {
+              vec2 dv = (vUv - s.xy) * vec2(asp, 1.0); float dd = max(length(dv), 0.0001);
+              float ring = exp(-pow((dd - s.z) * 13.0, 2.0));
+              uv -= dv / dd / vec2(asp, 1.0) * ring * s.w * 0.04; sj += ring * s.w;
+            }
+          }
+          float ca = (uHurt * 0.006 + m * 0.0015 + uCa * 0.009) * smoothstep(0.1, 0.8, d) + sj * 0.008;
           vec3 col = vec3(texture2D(tScene, uv + vec2(ca, 0.0)).r, texture2D(tScene, uv).g, texture2D(tScene, uv - vec2(ca, 0.0)).b);
+          // zoomslag: bildet trekkes mot et punkt i et kort øyeblikk
+          if (uZoom.z > 0.001) {
+            vec3 z = vec3(0.0);
+            for (int i = 1; i <= 8; i++) z += texture2D(tScene, uv + (uZoom.xy - uv) * float(i) * uZoom.z * 0.018).rgb;
+            col = mix(col, z / 8.0, min(1.0, uZoom.z * 1.6));
+          }
           // tilt-shift (3D, høy kvalitet): topp og bunn av bildet blir litt uskarpe, som et diorama
           if (uTilt > 0.0) col = mix(col, texture2D(tUskarp, uv).rgb, smoothstep(0.2, 0.52, abs(vUv.y - 0.54)) * uTilt);
           vec3 L = texture2D(tLight, uv).rgb;
@@ -70,6 +95,8 @@ const R = {
           if (uSplit > 0.0) { float L0 = dot(col, vec3(0.299, 0.587, 0.114)); col *= mix(vec3(1.0), vec3(0.9, 0.95, 1.12), (1.0 - smoothstep(0.0, 0.45, L0)) * uSplit); col *= mix(vec3(1.0), vec3(1.07, 1.0, 0.9), smoothstep(0.45, 1.0, L0) * uSplit); }
           float lum = dot(col, vec3(0.299, 0.587, 0.114));
           col = mix(col, vec3(lum) * vec3(1.05, 0.95, 0.9), uLow * 0.55);
+          // drømmen: blekere og varmere, som et gammelt fotografi, og en vignett som puster
+          if (uDrom > 0.0) { col = mix(col, vec3(lum) * vec3(1.08, 1.0, 0.86) + vec3(0.03, 0.02, 0.0), 0.38 * uDrom); col *= 1.0 - smoothstep(0.3, 0.95, d) * (0.3 + 0.12 * sin(uTime * 0.8)) * uDrom; }
           float paper = vn(vUv * uRes / 3.0) * 0.6 + vn(vUv * uRes / 11.0) * 0.4;
           float grain = h(vUv * uRes + fract(uTime * 7.0) * 100.0);
           col *= 0.94 + paper * 0.08 + (grain - 0.5) * 0.035;
@@ -93,6 +120,12 @@ const R = {
             float m = smoothstep(0.78 - uBlod * 0.5, 1.08, d);  // små treff viser bare det ytterste, store treff kryper lenger inn
             col = mix(col, b.rgb, b.a * m * smoothstep(0.0, 0.3, uBlod) * 0.85);
           }
+          // blodrus: skjermkanten brenner når kjeden av treff blir lang
+          if (uHete > 0.0) { float fl = 0.6 + 0.4 * sin(uTime * 9.0 + d * 24.0 + vn(vUv * 9.0 + uTime) * 5.0); col += vec3(1.0, 0.32, 0.06) * smoothstep(0.62 - uHete * 0.12, 1.1, d) * uHete * fl * 0.55; }
+          // lyn: et kaldt hvitt blink over hele bildet, sterkest øverst
+          if (uLyn > 0.0) col = mix(col, vec3(0.86, 0.9, 1.0) * (0.55 + col * 0.8), uLyn * (0.55 + 0.45 * vUv.y));
+          // negativ: et bilde eller to i vrengt blekk på de største øyeblikkene
+          if (uNeg > 0.0) col = mix(col, (vec3(1.0) - col) * vec3(1.0, 0.86, 0.8), uNeg);
           col = mix(col, vec3(1.0, 0.98, 0.9), uFlash);
           gl_FragColor = vec4(col, 1.0);
         }`,
@@ -146,11 +179,30 @@ const R = {
     const Q = D3.on ? D3.Q() : null; u.uDistort.value = this.distortOn ? 1 : 0; u.uLights.value = this.lightsOn && !D3.on ? 1 : 0; u.uBloom.value = Q && Q.glod ? .7 : 0;
     u.uTilt.value = Q && Q.tilt ? .62 : 0; u.uSplit.value = Q ? .7 : 0; u.uFilm.value = this.distortOn ? .35 + (G.depth || 1) * .16 : 0;
     this.fx.hurt = Math.max(0, this.fx.hurt - dt * 2.5); this.fx.flash = Math.max(0, this.fx.flash - dt * 5);
+    this.storeFx(dt, u);
     if (!D3.on) { r.setRenderTarget(this.lrt); r.setClearColor(0x000000, 1); r.clear(); r.render(this.lscene, this.camera); }
     r.setRenderTarget(this.rt); r.setClearColor(this.clear || 0x16130c, 1); r.clear(); r.render(this.scene, this.camera);
     if (Q && Q.glod) this.renderBloom();
     if (Q && Q.tilt) this.renderUskarp();
     r.setRenderTarget(null); r.render(this.postScene, this.postCam);
+  },
+  /* ---------- store øyeblikk ----------
+     Sjokkbølger og zoom er forvrengning og følger distortOn; negativ og lyn er blink og følger flashOn. */
+  uvAv(x, y, z) { const v = (this._uv || (this._uv = new THREE.Vector3())).set(x, y, z).project(this.camera); return { x: (v.x + 1) / 2, y: (v.y + 1) / 2 }; },
+  sjokk(x, z, s = 1, o = {}) {
+    if (this.safe) return; const L = this.sjokkL; if (L.length >= 4) L.shift();
+    L.push({ x, y: o.y ?? .8, z, t: 0, life: o.life || .75, fart: o.fart || 1.25, s: Math.min(2, s) });
+  },
+  zoomStot(x, z, s = .6) { this.zoomP.x = x; this.zoomP.z = z; this.zoomP.y = 1; this.fx.zoom = Math.max(this.fx.zoom, Math.min(1, s)); },
+  negativ(t = .09) { if (this.flashOn) this.fx.neg = Math.max(this.fx.neg, 1 + t * 10); },
+  storeFx(dt, u) {
+    const f = this.fx, L = this.sjokkL, sj = u.uSjokk.value;
+    for (let i = L.length - 1; i >= 0; i--) { L[i].t += dt; if (L[i].t >= L[i].life) L.splice(i, 1); }
+    for (let i = 0; i < 4; i++) { const s = L[i]; if (!s || !this.distortOn) { sj[i].set(0, 0, 0, 0); continue; } const p = this.uvAv(s.x, s.y, s.z); sj[i].set(p.x, p.y, s.t * s.fart, s.s * Math.pow(1 - s.t / s.life, 1.5)); }
+    const zp = this.uvAv(this.zoomP.x, this.zoomP.y, this.zoomP.z); u.uZoom.value.set(zp.x, zp.y, this.distortOn ? f.zoom : 0);
+    u.uCa.value = this.distortOn ? Math.min(1.5, f.ca) : 0; u.uNeg.value = this.flashOn ? Math.min(1, f.neg) : 0; u.uLyn.value = this.flashOn ? Math.min(1, f.lyn) : 0;
+    u.uDrom.value = f.drom; u.uHete.value = f.hete;
+    f.zoom = Math.max(0, f.zoom - dt * 3.2); f.ca = Math.max(0, f.ca - dt * 2.6); f.neg = Math.max(0, f.neg - dt * 12); f.lyn = Math.max(0, f.lyn - dt * 3.5);
   },
   /* glød til 3D-prøven: lyse deler av bildet i kvart oppløsning, uskarpt to veier, lagt oppå */
   renderBloom() {

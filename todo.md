@@ -7,6 +7,16 @@
 - [ ] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt).
 - [ ] Slette grenen claude/funny-newton-cgnzav på GitHub (Claude Code får ikke lov til det). Alt på den finnes i main.
 
+## Tegnelister, effekter og kombo, 2026-09-25 natt
+- [x] Tegnelister for alt som mangler bilde: tools/lag_tegnelister.py skriver tegnelister/ med ni lister (én ChatGPT-samtale hver), 59 ark og bilder for de 245 som mangler, og 11 delark til oppskriftssystemet. Referansebilder av dagens kodetegninger i samme rutenett som malen.
+- [ ] Tom og ChatGPT: tegne arkene i tegnelister/, liste 1 først. Kjør tools/lag_tegnelister.py etter levering, så krymper listene.
+- [x] Flere effekter og shadere (38_effekter.js og 04_render.js): sjokkbølger, zoomslag, negativ, lynblink, brennende skjermkant, drømmeslør, gnister, røyk, damp, sporer, Morbidium og møll på skjermkortet, lyn i regnværet, teslaspolens buer og regnringer.
+- [x] Kombo langt over toppen (39_kombo.js): treffkjede med åtte nivåer, flerdrap opp til pandemi, overkill, miljødrap, perfekt unnvikelse, tredje slag, kortkjede, sjefdrap, fanfarer for synergier og forvandlinger, kunngjørerstemme og trist trombone. Lydmotoren har fått kirkeklang, vibrato, forvrengning, filtersveip og en kompressor.
+- [ ] Tom: spille og si om kombolyden er passe mye over toppen. Kunngjøreren og fanfarene kan slås av under Lyd.
+- [ ] Tom: si om lynet i regnværet er for farlig, for sjeldent eller for ofte.
+- [x] Musikken går over i sjefslaget (messing, pauker og raskere tempo) når treffkjeden passerer 35.
+- [ ] Senere: egne ChatGPT-bilder til kombostempelet.
+
 ## Utvidelsen (UTVIDELSE.md), fra 2026-09-25 kveld
 - [x] Idédugnad og designdokument. Tom valgte seks etasjer der to er ute, korte drømmebaner og grov, kroppslig humor.
 - [x] Trinn 1: seks etasjer (Parken og Nattskogen ute), dybdeskala, gulv og vegger per romtype, L-rom og rotunder, 19 nye romtyper, bakke, trær og vær ute, utgangene per etasje, lyd og musikk for uteetasjene.
@@ -18,7 +28,7 @@
 - [x] Trinn 4: nye fiender og sjefer for Parken og Nattskogen (gartnere, kråker, Huldra, Vedkubbemannen, Nøkken, kålhoder, Overgartner Ansgar Hekk, Den hvite hjorten).
 - [ ] Tom: slåss mot Overgartneren og hjorten og si om de er for lette eller for tunge.
 - [x] Trinn 5: nye nøkler i manifestet (171 nye, 532 i alt) og fire nye runder i ART_BRIEF.md for ChatGPT (runde 10 til 13: møblene og uteområdene, hendelsene, drømmene, de nye fiendene og sjefene).
-- [ ] Tom: bestille bildene i runde 13 først (figurarkene til de nye fiendene), så runde 11 og 12. Se DESIGN_BRIEF.md.
+- [ ] Tom: bestille bildene til utvidelsen. De står som ferdige ark i tegnelister/ (liste 5 til 8), med prompt og referansebilde.
 - [ ] Tom: prøve de nye etasjene og si om parken og skogen er mørke nok, og om løpet blir for langt.
 
 ## Økta 2026-09-25 (3D, grafikk, blod, nye fiender, sjefer, håndbok og HUD)
@@ -31,9 +41,9 @@
 - [x] Fiendeindeks med bilder i Pasienthåndboka (kapittel 9 og 10).
 - [x] HUD etter ChatGPTs skisse, og UI-settet (runde 9) som tas i bruk av seg selv når bildene kommer.
 - [x] Forslag til ChatGPT som grafikkleverandør for HUD og menyer: del G, H og I i DESIGN_BRIEF.md.
-- [ ] Tom: flette grenen claude/practical-babbage-nc80bu inn i main, så Pages får det nye.
+- [x] Flette grenen claude/practical-babbage-nc80bu inn i main (PR #2, flettet 25.9. om kvelden).
 - [ ] Tom: spille med 3D på mobil og PC og si om den automatiske kvaliteten treffer, og om blodet er passe mye.
-- [ ] ChatGPT: runde 7, 8 og 9 i ART_BRIEF.md, i rekkefølgen under «Neste bestilling» i DESIGN_BRIEF.md.
+- [ ] ChatGPT: runde 7, 8 og 9 i ART_BRIEF.md. Står nå som ferdige ark i tegnelister/ (liste 1 til 4).
 - [ ] ChatGPT eller Tom: legge Kasteren-pakken inn som figur_kasteren.png og anim_kastesprut.png. De fire kastebildene trengs ikke, spillet kaster med delene.
 - [ ] Claude, når Tom vil: UI-settet fase 2 (ui_bok, ui_fane, ui_stempel, ui_merke, ui_stang, ui_flaske).
 - [ ] Balanse for de nye fiendene, minisjefene og Klumpen etter spilltesting.

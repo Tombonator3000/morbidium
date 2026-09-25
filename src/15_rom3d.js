@@ -67,6 +67,7 @@ const D3 = {
     const mane = new THREE.DirectionalLight('#9aaee8', .42); mane.castShadow = Q.skygge > 0;
     if (Q.skygge) mane.shadow.mapSize.set(Q.skygge, Q.skygge); const sc2 = mane.shadow.camera; sc2.left = -16; sc2.right = 16; sc2.top = 16; sc2.bottom = -16; sc2.near = 1; sc2.far = 60; mane.shadow.bias = -.0015; mane.shadow.normalBias = .02;
     if (F.ute) { mane.intensity = .78; mane.color.set('#a8bce8'); } // ute lyser månen sterkere
+    this.maneI = mane.intensity; // lynet (38_effekter.js) løfter månelyset et øyeblikk, så alt kaster skarp skygge
     sc.add(amb, hemi, mane, mane.target); this.mane = mane; this.ting.push(amb, hemi, mane, mane.target);
     this.pool = []; for (let i = 0; i < Q.lys; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); }
     // nivået: materialene byttes til tegneseriebelyste varianter
@@ -320,6 +321,7 @@ const D3 = {
     if (!this.on || !this.bygd || !G.F) return;
     this.t += dt; if (this.tidU) this.tidU.value += dt; const cx = R.camT.x, cz = R.camT.z, P = G.player;
     this.mane.position.set(cx - 7, 16, cz + 9); this.mane.target.position.set(cx, 0, cz); this.mane.target.updateMatrixWorld();
+    this.mane.intensity = (this.maneI || .42) + (R.flashOn ? R.fx.lyn || 0 : 0) * 2.8;
     // mye Morbidium: av og til slukner lyset
     if (P && P.alive && P.morb >= 70 && R.distortOn && G.state === 'play') { this.morkeR = (this.morkeR ?? rnd(8, 20)) - dt; if (this.morkeR <= 0) { this.morkeR = rnd(15, 35); this.morke(rnd(.7, 1.3), .12); } }
     const mf = this.morkeFaktor(dt);

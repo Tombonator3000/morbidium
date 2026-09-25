@@ -162,7 +162,10 @@ const Input = {
 /* ---------- lyd ----------
    Tilpasset fra Geometry 3044 sin SoundSystem (Tombonator3000/3044, MIT):
    prosedyriske synth-lyder med pitch-envelope, filtrert stoy og arpeggio.
-   Utvidet med flerlags-lyder, romklang-lignende hale og en ambient drone per etasje. */
+   Utvidet med flerlags-lyder, romklang-lignende hale og en ambient drone per etasje.
+   Lagene kan også ha: rv (hvor mye som sendes til kirkeklangen), vib ([fart, cent]), dist (forvrengning),
+   lp ([fra, til] lavpass som sveiper), atk (anslag i sekunder). Lange støylag går i sløyfe.
+   En mild kompressor på hovedutgangen tar toppene når mange lyder slår inn samtidig (39_kombo.js). */
 const Sound = {
   ctx: null, master: null, sfx: null, amb: null, noiseBuf: null, ready: false, volume: 0.8, ambNodes: [],
   lib: {
@@ -217,7 +220,9 @@ const Sound = {
     try {
       const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
       this.ctx = new C();
-      this.master = this.ctx.createGain(); this.master.gain.value = this.volume; this.master.connect(this.ctx.destination);
+      this.master = this.ctx.createGain(); this.master.gain.value = this.volume;
+      const komp = this.ctx.createDynamicsCompressor(); komp.threshold.value = -12; komp.knee.value = 10; komp.ratio.value = 4; komp.attack.value = .004; komp.release.value = .22;
+      this.master.connect(komp); komp.connect(this.ctx.destination);
       this.sfx = this.ctx.createGain(); this.sfx.gain.value = .8; this.sfx.connect(this.master);
       this.amb = this.ctx.createGain(); this.amb.gain.value = .35; this.amb.connect(this.master);
       this.mus = this.ctx.createGain(); this.mus.gain.value = .8; this.mus.connect(this.master); if (this.mix) this.setMix(...this.mix);
@@ -226,6 +231,10 @@ const Sound = {
       // brun stoy (tilfeldig gange), som i The Deep Ones sin Soundscape
       this.brownBuf = this.ctx.createBuffer(1, len * 4, this.ctx.sampleRate); const b = this.brownBuf.getChannelData(0); let v = 0;
       for (let i = 0; i < b.length; i++) { v = (v + Math.random() * .035 - .0175) * .98; b[i] = v * 3; }
+      // kirkeklang: en impulsrespons av støy som dør ut over tre sekunder, litt ulik i hvert øre
+      const ir = this.ctx.createBuffer(2, Math.floor(len * 3), this.ctx.sampleRate);
+      for (let ch = 0; ch < 2; ch++) { const c = ir.getChannelData(ch); for (let i = 0; i < c.length; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / c.length, 3.2) * (i < 90 ? i / 90 : 1); }
+      this.hall = this.ctx.createGain(); this.hall.gain.value = .5; const kl = this.ctx.createConvolver(); kl.buffer = ir; this.hall.connect(kl); kl.connect(this.sfx);
       this.ready = true;
     } catch (e) { this.ready = false; }
   },
@@ -243,26 +252,34 @@ const Sound = {
     }
   },
   _synth(s, vol, pitch, now) {
-    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    const c = this.ctx, o = c.createOscillator(), g = c.createGain();
     o.type = s.w; const f = s.f * pitch * (0.97 + Math.random() * 0.06);
     o.frequency.setValueAtTime(f, now);
     if (s.pd) o.frequency.exponentialRampToValueAtTime(Math.max(20, f * (1 - s.pd)), now + s.d);
+    if (s.vib) { const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = s.vib[0]; lg.gain.value = s.vib[1]; l.connect(lg); lg.connect(o.detune); l.start(now); l.stop(now + s.d + .02); }
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(s.v * vol, now + 0.008);
+    g.gain.linearRampToValueAtTime(s.v * vol, now + (s.atk || 0.008));
     g.gain.exponentialRampToValueAtTime(0.0001, now + s.d);
-    o.connect(g); g.connect(this.sfx); o.start(now); o.stop(now + s.d + 0.02);
+    let ut = o;
+    if (s.dist) { const w = c.createWaveShaper(); w.curve = this.kurve(s.dist); ut.connect(w); ut = w; }
+    if (s.lp) { const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 2; lp.frequency.setValueAtTime(s.lp[0], now); lp.frequency.exponentialRampToValueAtTime(Math.max(30, s.lp[1]), now + s.d); ut.connect(lp); ut = lp; }
+    ut.connect(g); this._ut(g, s); o.start(now); o.stop(now + s.d + 0.02);
   },
+  /* lyden ut: rett i effektbussen, og en del i kirkeklangen når laget ber om det */
+  _ut(g, s) { g.connect(this.sfx); if (s.rv && this.hall) { const r = this.ctx.createGain(); r.gain.value = s.rv; g.connect(r); r.connect(this.hall); } },
+  kurve(k) { const n = 512, a = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; a[i] = (1 + k) * x / (1 + k * Math.abs(x)); } return a; },
   _noise(s, vol, pitch, now) {
     const src = this.ctx.createBufferSource(); src.buffer = this.noiseBuf; src.playbackRate.value = pitch;
     const f = this.ctx.createBiquadFilter(); f.type = s.ft || 'lowpass'; f.Q.value = s.ft === 'bandpass' ? 1.4 : 0.7;
     f.frequency.setValueAtTime(s.f0, now); f.frequency.exponentialRampToValueAtTime(Math.max(30, s.f1), now + s.d);
     const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(s.v * vol, now + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, now + s.d);
-    src.connect(f); f.connect(g); g.connect(this.sfx);
+    g.gain.linearRampToValueAtTime(s.v * vol, now + (s.atk || 0.01)); g.gain.exponentialRampToValueAtTime(0.0001, now + s.d);
+    src.connect(f); f.connect(g); this._ut(g, s);
+    if (s.d > .45) src.loop = true; // støybufferen er ett sekund; lange drønn og applaus går i sløyfe
     const off = Math.random() * 0.5; src.start(now, off, s.d + 0.05);
   },
   _arp(s, vol, pitch, now) {
-    s.arp.forEach((fr, i) => this._synth({ w: s.w, f: fr, d: s.nl * 1.8, v: s.v }, vol, pitch, now + i * s.nl));
+    s.arp.forEach((fr, i) => this._synth({ w: s.w, f: fr, d: s.nd || s.nl * 1.8, v: s.v, rv: s.rv, vib: s.vib, atk: s.atk }, vol, pitch, now + i * s.nl));
   },
   /* mumlende monolog: tilfeldige lave toner, som en pompos stemme gjennom en vegg */
   mumble(n = 6, base = 150) {

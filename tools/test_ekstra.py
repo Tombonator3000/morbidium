@@ -142,8 +142,8 @@ async def main():
         etter = await pg.evaluate("() => MORBIDIUM.player.hp")
         sjekk('tornene tar et hjerte ved inngangen', cur['h0'] - etter >= 9.9, (cur['h0'], etter))
         await pg.evaluate("() => { const pd = Items.pedestals.find(p => p.cursed); Items.take(pd); }")
-        await pg.wait_for_timeout(2600)
-        kamp = await pg.evaluate("() => ({ combat: !!MORBIDIUM.combat, n: MORBIDIUM.enemies.filter(e => e.alive).length, items: MORBIDIUM.run.items.length })")
+        # bakholdet kommer 0,9 sekunder etter at glasset er tatt, og første bølge 0,7 sekunder spilltid etter det; testnettleseren går sakte, så vi venter på spilltiden
+        kamp = await pg.evaluate("async () => { for (let i = 0; i < 120 && !MORBIDIUM.enemies.some(e => e.alive); i++) await new Promise(r => setTimeout(r, 100)); return { combat: !!MORBIDIUM.combat, n: MORBIDIUM.enemies.filter(e => e.alive).length, items: MORBIDIUM.run.items.length }; }")
         sjekk('kuriositeten utløser bakhold', kamp['combat'] and kamp['n'] > 0 and kamp['items'] == 1, kamp)
         await pg.screenshot(path='/tmp/e_12bakhold.png')
         for _ in range(3):
@@ -596,7 +596,7 @@ async def main():
         sjekk('hver etasje får to til fire hendelser som passer dybden, aldri den samme som i etasjen over', fo['totalt'] >= 18 and all(all(2 <= n <= 4 for n in r['antall']) and r['gyldig'] and r['naboer'] and r['unike'] >= 11 for r in fo['runder']), fo)
         oy = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t));
           startFloor(2, false); rolig(); Hendelse.fjern(); const h = Hendelse.tving('oyet'); if (!h) return null;
-          const s = freeSpot(h.x, h.z + 1.2, 2); P.x = s.x; P.z = s.z; R.snapCamera(P.x, P.z); await vent(1300);
+          const s = freeSpot(h.x, h.z + 1.2, 2); P.x = s.x; P.z = s.z; R.snapCamera(P.x, P.z); for (let i = 0; i < 100 && !(h.oye.i >= 3 && h.pm.visible); i++) await vent(100); // øyet åpner seg på 0,375 s spilltid, og testnettleseren går sakte
           const aapent = h.oye.i >= 3 && h.pm.visible, it = findInteract(), prompt = it && it.t;
           P.teeth = 0; P.hp = P.maxHp - 25; it.fn(); await vent(80);
           const panel = !!document.querySelector('.samtale'), fire = document.querySelectorAll('[data-sv]').length === 4, bilde = !!document.querySelector('.samtale .sbilde canvas');
@@ -699,6 +699,106 @@ async def main():
         sjekk('de nye fiendene og sjefene står i fiendeindeksen og sjefpuljen', uf['indeks'], uf)
         await pg.screenshot(path='/tmp/e_14ute.png')
         sjekk('ingen konsollfeil (Parken og Nattskogen)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 28) Effekter og shadere: sjokkbølger, zoom, negativ og lyn i etterbehandlingen, glød fra ting, lynet, teslaspolen, regnringer og drømmesløret
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ef = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, u = R.post.uniforms, ut = {};
+          rolig(); P.hp = P.maxHp = 9999;
+          // etterbehandlingen: alt slår inn neste bilde og dør ut av seg selv
+          R.sjokk(P.x, P.z, 1.2); R.zoomStot(P.x, P.z, .8); R.negativ(.1); R.fx.lyn = 1; await vent(120);
+          ut.paa = u.uSjokk.value[0].w > .1 && u.uZoom.value.z > .1 && u.uNeg.value > .5 && u.uLyn.value > .1;
+          await vent(1800); ut.av = u.uSjokk.value[0].w === 0 && u.uZoom.value.z === 0 && u.uNeg.value === 0 && u.uLyn.value === 0 && R.sjokkL.length === 0;
+          // uten forvrengning og uten glimt blir de borte
+          R.distortOn = false; R.flashOn = false; R.sjokk(P.x, P.z, 1); R.zoomStot(P.x, P.z, 1); R.negativ(); R.fx.lyn = 1; await vent(120);
+          ut.skaansom = u.uSjokk.value[0].w === 0 && u.uZoom.value.z === 0 && u.uNeg.value === 0 && u.uLyn.value === 0; R.distortOn = true; R.flashOn = true; await vent(900);
+          // glød: alle typene lages, og tingene med ild, damp eller lys får sine når etasjen bygges
+          ut.typer = Object.keys(GLOD_TYPER).filter(t => { const E = Glod.lag(P.x, .3, P.z, t, { liv: 1 }); return E && E.pts.parent; });
+          const sett = new Set(); let kilder = 0, dekket = 0;
+          for (let d = 1; d <= 6; d++) { startFloor(d, false); await vent(80); for (const E of Glod.liste) sett.add(E.type); for (const o of G.props) if (['baal', 'vedovn', 'kjele', 'komfyr', 'gryte', 'candles', 'kjempeplante', 'lyktestolpe'].includes(o.kind)) { kilder++; if (Glod.liste.some(E => E.eier === o)) dekket++; } ut['glod' + d] = Glod.liste.every(E => !E.eier || G.props.includes(E.eier) || G.puddles.includes(E.eier)); }
+          ut.sett = [...sett]; ut.kilder = kilder; ut.dekket = dekket;
+          const p = addPuddle(P.x, P.z, 'morb', 1, 3); ut.morbPytt = !!(p && p.glod && p.glod.pts); await spill(3.6); await vent(300); ut.morbBorte = !Glod.liste.includes(p.glod);
+          R.safe = true; ut.enkel = Glod.lag(P.x, 0, P.z, 'gnister') === null && Lyn.slag(0, 0, 0, 1, 0, 1) === null; R.safe = false;
+          // lynet: varsel på bakken, så nedslag som treffer fienden der, og deg om du står der
+          startFloor(1, false); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2;
+          const s1 = freeSpot(P.x + 3, P.z, 3), e = spawnEnemy('pleier', s1.x, s1.z, false, 1); e.hp = e.max = 500; e.stun = 99;
+          let lyn = 0; const _sl = Lyn.slag; Lyn.slag = function () { lyn++; return _sl.apply(this, arguments); };
+          const hp0 = P.hp; Uvaer.varsel(e.x, e.z); Uvaer.varsel(P.x, P.z); await spill(1.3);
+          ut.lyn = lyn >= 2 && e.hp <= 455 && P.hp < hp0 - 5 && G.fxl.some(f => f.max === 20); ut.lynInfo = [lyn, Math.round(e.hp), Math.round(hp0 - P.hp), G.fxl.length];
+          // teslaspolen slår mot fienden som står nær
+          const spole = { kind: 'spole', x: e.x + 1.5, z: e.z, g: { position: { z: e.z + .2 } }, alive: true, buT: 0 }; G.props.push(spole); const h1 = e.hp; Effekter.spoler(.1); G.props.splice(G.props.indexOf(spole), 1);
+          ut.spole = e.hp < h1 && lyn >= 3; Lyn.slag = _sl;
+          // regnringer der det regner, og bort igjen
+          const v0 = G.F.vaer; G.F.vaer = 'regn'; Vaer.start(G.F); ut.regn = !!(Regnringer.obj && Regnringer.obj.parent); Vaer.stopp(); ut.regnBorte = !Regnringer.obj; G.F.vaer = v0; Vaer.start(G.F);
+          // drømmesløret: glir inn i drømmen og ut igjen etterpå
+          G.drom = G.drom || null; descend(); for (let i = 0; i < 80 && !G.drom; i++) await vent(100); for (let i = 0; i < 80 && R.fx.drom <= .6; i++) await vent(100); await vent(200); ut.drom = R.fx.drom > .6 && u.uDrom.value > .5; ut.dromInfo = [!!G.drom, G.state, +R.fx.drom.toFixed(2)];
+          Drom.hopp(); for (let i = 0; i < 80 && G.drom; i++) await vent(100); for (let i = 0; i < 80 && R.fx.drom >= .2; i++) await vent(100); ut.dromUt = R.fx.drom < .2;
+          return ut; }""")
+        sjekk('sjokkbølge, zoomslag, negativ og lynblink slår inn i etterbehandlingen og dør ut av seg selv', ef['paa'] and ef['av'], ef)
+        sjekk('uten forvrengning og hvite glimt blir sjokkbølger, zoom, negativ og lynblink borte', ef['skaansom'], ef)
+        sjekk('alle typene glød (gnister, glør, damp, røyk, sporer, Morbidium, møll og kombo) lages på skjermkortet', len(ef['typer']) == 8, ef['typer'])
+        sjekk('bål, ovner, kjeler, gryter, stearinlys, kjempeplanter og lyktestolper gløder og ryker, og gløden følger etasjen', ef['kilder'] > 0 and ef['dekket'] == ef['kilder'] and all(ef['glod%d' % d] for d in range(1, 7)), ef)
+        sjekk('Morbidium stiger fra lilla pytter og forsvinner med pytten, og enkel grafikk lager ingen glød eller lyn', ef['morbPytt'] and ef['morbBorte'] and ef['enkel'], ef)
+        sjekk('lynet varsler på bakken, slår ned og treffer fienden og pasienten som står der, og svir gulvet', ef['lyn'], ef)
+        sjekk('teslaspolen slår en bue mot fienden som står nær', ef['spole'], ef)
+        sjekk('regnringer på bakken når det regner, og de forsvinner med regnet', ef['regn'] and ef['regnBorte'], ef)
+        sjekk('drømmesløret glir inn i drømmen og ut igjen etterpå', ef['drom'] and ef['dromUt'], ef)
+        await pg.screenshot(path='/tmp/e_15fx.png')
+        sjekk('ingen konsollfeil (effekter og shadere)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 29) Kombo: treffkjeden med nivåer, flerdrap, overkill, miljødrap, perfekt unnvikelse, tredje slag, kortkjede, sjefdrap og fanfarer
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL + '?2d')
+        ko = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, T = Kombo.tall, ut = {};
+          Sound.init(); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.face = 0;
+          const lag = (dx, dz, hp = 1e6) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy('pleier', s.x, s.z, false, 1); e.hp = e.max = hp; e.stun = 99; e.state = 'chase'; return e; };
+          // treffkjeden: 22 treff gir tredje nivå, telleren og den brennende kanten
+          const a = lag(2, 0), xp0 = P.xp + P.level * 1000;
+          for (let i = 0; i < 22; i++) hurt(a, 1, { from: 'player', x: P.x, z: P.z }); hurt(a, 1, { from: 'player', dot: true });
+          const el = document.getElementById('kombo'); await vent(400);
+          ut.kjede = Kombo.n === 22 && Kombo.niva === 3 && T.milepael === 3 && el.classList.contains('on') && el.querySelector('b').textContent === '22' && el.querySelector('span').textContent === 'Kirurgisk' && el.classList.contains('het');
+          ut.hete = R.fx.hete > 0 && R.post.uniforms.uHete.value > 0; ut.stempel = document.getElementById('kstempel').textContent.startsWith('KIRURGISK');
+          // kjeden slutter av seg selv og gir erfaring
+          await spill(Kombo.VINDU + .3); ut.slutt = Kombo.n === 0 && T.slutt === 1 && P.xp + P.level * 1000 > xp0 && !el.classList.contains('on');
+          // og brister når du blir truffet
+          for (let i = 0; i < 12; i++) hurt(a, 1, { from: 'player', x: P.x, z: P.z }); P.invuln = P.iframe = 0; P.roll = 0; hurt(P, 3, { type: 'test' }); ut.brist = Kombo.n === 0 && T.brist === 1;
+          // perfekt unnvikelse: truffet midt i rullingen
+          P.invuln = 0; P.roll = .3; P.iframe = .3; hurt(P, 3, { type: 'test' }); ut.perfekt = T.perfekt === 1 && G.slow.t > 0; P.roll = 0; P.iframe = 0;
+          // flerdrap: fem på et øyeblikk er en massakre, med merknad
+          killEntity(a, {}); await spill(.3); const fem = [0, 1, 2, 3, 4].map(i => lag(-2 + i, 2, 20));
+          for (const e of fem) hurt(e, 9999, { from: 'player', x: P.x, z: P.z }); await spill(.6);
+          ut.massakre = G.run.flerdrapMaks === 5 && T.flerdrap >= 1 && T.overkill >= 1 && !!(G.meta.merk || {}).massakre;
+          // miljødrap: strøm, lyn og spolen
+          await spill(1.6); const m = lag(2, -1, 5); hurt(m, 50, { from: 'env', type: 'lyn' }); ut.miljo = T.miljo === 1;
+          // tredje slag som treffer to
+          const b1 = lag(-.35, 1), b2 = lag(.35, 1); P.face = 0; meleeHit({ combo: 2, heavy: false, charge: 0 }); ut.finale = T.finale === 1;
+          killEntity(b1, {}); killEntity(b2, {});
+          // tre ulike kort på rad
+          Kombo.kort(0); Kombo.kort(1); Kombo.kort(2); ut.kort = T.kort === 1 && document.getElementById('kstempel').textContent.startsWith('LEGEKUNST');
+          // fanfare for synergi og forvandling, og sjefdrap
+          stampBig('SYNERGI', 'Test'); stampBig('FORVANDLING', 'Test'); ut.fanfare = T.fanfare === 2;
+          const B = spawnBoss(1, P.x + 3, P.z); G.boss = G.boss || B; hurt(G.boss, 1e9, { from: 'player', x: P.x, z: P.z }); ut.sjef = T.sjef === 1;
+          // lydene og stemmen lages uten feil
+          let lydfeil = ''; try { for (const k of ['kombo1', 'kombo2', 'kombo3', 'kombo4', 'kombo5', 'dobbel', 'trippel', 'firling', 'massakre', 'overkill', 'miljo', 'perfekt', 'finale', 'kortkombo', 'synergi', 'forvandling', 'sjefdrap', 'trombone', 'kasse', 'applaus', 'lynslag', 'torden', 'gnistre']) { if (!Sound.lib[k]) lydfeil += k + ' mangler '; else Sound.play(k, .01); } for (const o of ['massakre', 'Klinisk sinnssyk', 'behandlet', 'xyz']) Sound.stemme(o, { v: .01 }); } catch (e) { lydfeil += e.message; }
+          ut.lyd = lydfeil || 'ok';
+          // bryteren i innstillingene, og kjeden på dødskortet
+          G.meta.settings.kombo = false; ut.av = !Kombo.lyd(); G.meta.settings.kombo = true;
+          ut.stats = runStats().includes('Lengste kjede') && runStats().includes('Flest på en gang');
+          return ut; }""")
+        sjekk('treffkjeden teller, får navn ved 5, 10 og 20 treff og vises til høyre, men blødning og gift teller ikke', ko['kjede'] and ko['stempel'], ko)
+        sjekk('lange kjeder får skjermkanten til å brenne', ko['hete'], ko)
+        sjekk('kjeden slutter av seg selv og gir erfaring, og brister når du blir truffet', ko['slutt'] and ko['brist'], ko)
+        sjekk('perfekt unnvikelse gir tidsfall', ko['perfekt'], ko)
+        sjekk('fem drept på et øyeblikk er en massakre, med overkill og merknaden Massakre', ko['massakre'], ko)
+        sjekk('miljødrap, tredje slag som treffer to, og tre ulike kort på rad', ko['miljo'] and ko['finale'] and ko['kort'], ko)
+        sjekk('fanfare for synergi og forvandling, og sjefdrap med lyn og applaus', ko['fanfare'] and ko['sjef'], ko)
+        sjekk('alle kombolydene og kunngjørerstemmen lages uten feil', ko['lyd'] == 'ok', ko['lyd'])
+        sjekk('kunngjøreren kan slås av, og lengste kjede og flest på en gang står på dødskortet', ko['av'] and ko['stats'], ko)
+        await pg.wait_for_timeout(300)
+        await pg.screenshot(path='/tmp/e_16kombo.png')
+        sjekk('ingen konsollfeil (kombo)', not pg.errs, pg.errs[:6])
         await pg.close()
 
         await b.close()
