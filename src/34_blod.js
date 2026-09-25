@@ -205,10 +205,10 @@ const Blod = {
   },
   /* taket drypper: vann i underetasjen, blod under grunnmuren */
   takTick(dt) {
-    const d = G.depth, P = G.player; if (!(d === 2 || d === 4) || G.state !== 'play') return;
+    const d = G.depth, P = G.player; if (!(d === 3 || d === 6) || G.state !== 'play') return; // vann i underetasjen, blod i Dypet
     this.takT -= dt; if (this.takT > 0) return; this.takT = rnd(.5, 1.6);
     const x = P.x + rnd(-7, 7), z = P.z + rnd(-4, 5); if (solid(Math.floor(x), Math.floor(z))) return;
-    const blod = d === 4, mat = blod ? (this.mB || (this.mB = new THREE.MeshBasicMaterial({ color: '#5a0610' }))) : (this.mV || (this.mV = new THREE.MeshBasicMaterial({ color: '#9ad8f0', transparent: true, opacity: .8 })));
+    const blod = d === 6, mat = blod ? (this.mB || (this.mB = new THREE.MeshBasicMaterial({ color: '#5a0610' }))) : (this.mV || (this.mV = new THREE.MeshBasicMaterial({ color: '#9ad8f0', transparent: true, opacity: .8 })));
     const m = new THREE.Mesh(R.geo('takdrape', () => new THREE.SphereGeometry(.045, 6, 4)), mat); m.scale.set(1, 2.2, 1); m.position.set(x, 3.4, z); R.dyn.add(m);
     this.fall.push({ m, x, z, y: 3.4, vy: 0, blod });
   },

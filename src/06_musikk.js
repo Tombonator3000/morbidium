@@ -17,8 +17,14 @@ const STYKKER = {
   e2: { bpm: 70, takt: 4, rot: 48, skala: 'harm', akk: [0, 0, 5, 5, 3, 3, 4, 4], mel: 'orgel', stil: 'sakte', drypp: true, tetthet: .35 },
   e3: { bpm: 100, takt: 4, rot: 52, skala: 'frygisk', akk: [0, 1, 0, 6, 0, 1, 3, 4], mel: 'cembalo', stil: 'marsj', maskin: true, tetthet: .45 },
   e4: { bpm: 58, takt: 4, rot: 45, skala: 'frygisk', akk: [0, 1, 0, 1, 5, 4, 1, 0], mel: 'klokke', stil: 'kor', tetthet: .3 },
-  tjeneste: { bpm: 104, takt: 3, rot: 55, skala: 'dur', akk: [0, 3, 4, 0, 0, 5, 1, 4], mel: 'spilledaase', stil: 'vals', knitr: 1, tetthet: .8, grammofon: true }
+  tjeneste: { bpm: 104, takt: 3, rot: 55, skala: 'dur', akk: [0, 3, 4, 0, 0, 5, 1, 4], mel: 'spilledaase', stil: 'vals', knitr: 1, tetthet: .8, grammofon: true },
+  // Parken: en vals fra musikkpaviljongen, langt borte og litt falsk
+  park: { bpm: 78, takt: 3, rot: 53, skala: 'moll', akk: [0, 3, 4, 0, 5, 3, 1, 4], mel: 'celesta', stil: 'vals', knitr: .25, tetthet: .42, grammofon: true },
+  // Nattskogen: langsomt og drømmende, klokker som en vibrafon i tåka
+  skog: { bpm: 54, takt: 4, rot: 45, skala: 'harm', akk: [0, 5, 3, 4, 0, 5, 6, 4], mel: 'klokke', stil: 'sakte', tetthet: .26 }
 };
+/* stykket for hver etasje: to uteetasjer med egne stykker, de fire gamle beholder sine */
+const stykkeFor = d => ({ 1: 'park', 2: 'e1', 3: 'e2', 4: 'e3', 5: 'skog', 6: 'e4' }[d] || 'e4');
 function frø(a) { let t = a + 0x6D2B79F5 | 0; t = Math.imul(t ^ t >>> 15, 1 | t); t ^= t + Math.imul(t ^ t >>> 7, 61 | t); return ((t ^ t >>> 14) >>> 0) / 4294967296; }
 
 const Musikk = {

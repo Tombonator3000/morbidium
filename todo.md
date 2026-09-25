@@ -7,6 +7,15 @@
 - [ ] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt).
 - [ ] Slette grenen claude/funny-newton-cgnzav på GitHub (Claude Code får ikke lov til det). Alt på den finnes i main.
 
+## Utvidelsen (UTVIDELSE.md), fra 2026-09-25 kveld
+- [x] Idédugnad og designdokument. Tom valgte seks etasjer der to er ute, korte drømmebaner og grov, kroppslig humor.
+- [x] Trinn 1: seks etasjer (Parken og Nattskogen ute), dybdeskala, gulv og vegger per romtype, L-rom og rotunder, 19 nye romtyper, bakke, trær og vær ute, utgangene per etasje, lyd og musikk for uteetasjene.
+- [ ] Trinn 2: hendelsene (samtalepanel med valg, fjorten hendelser, minne på tvers av løp).
+- [ ] Trinn 3: pasienthistoriene og drømmebanene mellom etasjene, slutten og arkivet.
+- [ ] Trinn 4: nye fiender og sjefer for Parken og Nattskogen (gartnere, kråker, Huldra, Vedkubbemannen, Nøkken, Overgartner Ansgar Hekk, Den hvite hjorten).
+- [ ] Trinn 5: nye nøkler i manifestet og en ny runde i ART_BRIEF.md for ChatGPT (møblene, uteting, utgangene).
+- [ ] Tom: prøve de nye etasjene og si om parken og skogen er mørke nok, og om løpet blir for langt.
+
 ## Økta 2026-09-25 (3D, grafikk, blod, nye fiender, sjefer, håndbok og HUD)
 - [x] 3D som standard med automatisk kvalitet (høy, middels, lav, av) og valg under Bilde.
 - [x] Bedre lys og shadere: kantlys fra lampene, lysstråler fra vinduene, lyskjegler, flimring, tåke, mørke som kommer og går, tilt-shift, kalde skygger og varme høylys, filmriper.

@@ -4,7 +4,7 @@
    BOSS_MOVES hit. Forsinkelser går gjennom sjefens egen kø (B.q), så de følger
    pause og tidsfall.
    ============================================================ */
-function bossDmg(B) { return 13 + B.depth * 3.5; }
+function bossDmg(B) { return 13 + (typeof dybdeStyrke === 'function' ? dybdeStyrke(B.depth) : B.depth) * 3.5; }
 function bossLater(B, t, fn) { B.q.push({ t, fn: () => { if (B.alive && G.state !== 'dead') fn(); } }); }
 
 /* ---------- tegning: Overarkivaren ---------- */

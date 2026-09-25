@@ -66,15 +66,19 @@ const D3 = {
     const hemi = new THREE.HemisphereLight('#8a90c8', '#2a1a14', Q.flat ? .45 : .16);
     const mane = new THREE.DirectionalLight('#9aaee8', .42); mane.castShadow = Q.skygge > 0;
     if (Q.skygge) mane.shadow.mapSize.set(Q.skygge, Q.skygge); const sc2 = mane.shadow.camera; sc2.left = -16; sc2.right = 16; sc2.top = 16; sc2.bottom = -16; sc2.near = 1; sc2.far = 60; mane.shadow.bias = -.0015; mane.shadow.normalBias = .02;
+    if (F.ute) { mane.intensity = .78; mane.color.set('#a8bce8'); } // ute lyser månen sterkere
     sc.add(amb, hemi, mane, mane.target); this.mane = mane; this.ting.push(amb, hemi, mane, mane.target);
     this.pool = []; for (let i = 0; i < Q.lys; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); }
     // nivået: materialene byttes til tegneseriebelyste varianter
     const bytt = (mesh, ny) => { this.byttet.push([mesh, mesh.material]); mesh.material = ny; };
     const PM = Paint.mesh || {};
-    for (const m of [PM.gulv, PM.topp, PM.vegg]) if (m && !m.geometry.attributes.normal) m.geometry.computeVertexNormals(); // den malte stilen trenger ikke normaler, lys gjør det
+    const vegger = PM.vegger && PM.vegger.length ? PM.vegger : PM.vegg ? [PM.vegg] : [];
+    for (const m of [PM.gulv, PM.topp, PM.bakke, ...vegger]) if (m && !m.geometry.attributes.normal) m.geometry.computeVertexNormals(); // den malte stilen trenger ikke normaler, lys gjør det
     if (PM.gulv) { bytt(PM.gulv, this.toon({ map: PM.gulv.material.map, bumpMap: PM.gulv.material.map, bumpScale: this.BUMP, vertexColors: true })); PM.gulv.receiveShadow = true; }
     if (PM.topp) { bytt(PM.topp, this.toon({ vertexColors: true, side: THREE.DoubleSide })); PM.topp.castShadow = true; }
-    if (PM.vegg) { bytt(PM.vegg, this.toon({ map: PM.vegg.material.map, side: THREE.DoubleSide })); PM.vegg.castShadow = true; PM.vegg.receiveShadow = true; }
+    // én mesh per veggstil (17_romtyper.js); gjerder og ruiner er utklipp og kaster ikke skygge som en mur
+    for (const v of vegger) { const b = v.material; bytt(v, this.toon({ map: b.map, side: THREE.DoubleSide, transparent: b.transparent, alphaTest: b.alphaTest, depthWrite: b.depthWrite })); v.castShadow = !b.transparent; v.receiveShadow = true; }
+    if (PM.bakke) { bytt(PM.bakke, this.toon({ map: PM.bakke.material.map, color: PM.bakke.material.color })); PM.bakke.receiveShadow = true; }
     this.lysLag();
     this.lamper = []; this.tidU = this.tidU || { value: 0 };
     this.vegglamper(F, th); this.arkitektur(F, th); if (Q.stov) this.stov(Q.stov); if (Q.taake) this.taake(F, th);
@@ -94,6 +98,9 @@ const D3 = {
     if (R.post) R.post.uniforms.uLights.value = R.lightsOn ? 1 : 0;
     this.bygd = false;
   },
+  /* veggstiler: lamper henger bare på innevegger, og lister og pilastre bare på pussede vegger */
+  inneVegg(i) { const st = Paint.wallS && Paint.wallS[i]; return !st || !{ hekk: 1, gjerde: 1, steinmur: 1, skog: 1, ruin: 1, glass: 1 }[st]; },
+  listeVegg(i) { const st = Paint.wallS && Paint.wallS[i]; return !st || !!{ panel: 1, tapet: 1, paviljong: 1 }[st]; },
   /* vanlige materialer i nivået (dekaler, plakater, dører) blir lyssatt, ellers lyser de i mørket */
   lysLag() {
     if (!R.level) return;
@@ -117,7 +124,7 @@ const D3 = {
       if (r.role === 'secret') continue;
       const z = r.z; let n = 0;
       for (let x = r.x + 1; x < r.x + r.w - 1; x += 3) {
-        if (!isF(x, z) || isF(x, z - 1) || !(wh[(z - 1) * F.W + x] > 2) || (Paint.opptatt && Paint.opptatt.has(x + ',' + z))) continue;
+        if (!isF(x, z) || isF(x, z - 1) || !(wh[(z - 1) * F.W + x] > 2) || !this.inneVegg((z - 1) * F.W + x) || (Paint.opptatt && Paint.opptatt.has(x + ',' + z))) continue;
         const g = new THREE.Group(); g.position.set(x + .5, 0, z + .03); R.level.add(g); this.ting.push(g);
         if (n % 2 === 0) {
           // vegglampe: brakett, skjerm og pære som gløder
@@ -130,7 +137,7 @@ const D3 = {
           let kj = null;
           if (this.q.straaler) { kj = new THREE.Mesh(this.kjegleGeo(), this.straaleMat(th.pool || '#ffd89a', .22)); kj.position.set(0, 0, .3); kj.renderOrder = 5; g.add(kj); this.egne.push(kj.material); }
           // noen lamper flimrer, flere jo lenger ned i bygget
-          this.lamper.push({ lp, pm, kj, base: .45, farge: new THREE.Color('#ffd89a'), flimrer: Math.random() < .12 + G.depth * .07, t: Math.random() * 10, burst: 0 });
+          this.lamper.push({ lp, pm, kj, base: .45, farge: new THREE.Color('#ffd89a'), flimrer: Math.random() < .12 + dybdeStyrke(G.depth) * .07, t: Math.random() * 10, burst: 0 });
         } else {
           // vindu: ramme, glass i månelys og en lysstripe ned på gulvet
           const fr = new THREE.Mesh(R.geo('d3vr', () => new THREE.BoxGeometry(.9, 1.0, .06)), ramme); fr.position.set(0, 1.45, 0); g.add(fr);
@@ -190,7 +197,8 @@ const D3 = {
   },
   /* ---------- bakketåke: to lag støy over gulvet, bare der det er gulv ---------- */
   taake(F, th) {
-    const cfg = { 1: [.1, '#e8dcc0'], 2: [.26, '#d4ece6'], 3: [.14, '#dccfb4'], 4: [.34, '#9a7ab8'] }[G.depth] || [.12, '#dddddd'];
+    const cfg = ({ 1: [.3, '#a8b8d0'], 2: [.1, '#e8dcc0'], 3: [.26, '#d4ece6'], 4: [.14, '#dccfb4'], 5: [.42, '#7a8ab8'], 6: [.34, '#9a7ab8'] }[G.depth] || [.12, '#dddddd']).slice();
+    if (F.vaer === 'taake') cfg[0] += .22;
     const data = new Uint8Array(F.W * F.H); for (let i = 0; i < data.length; i++) data[i] = F.tiles[i] > 0 ? 255 : 0;
     const mask = new THREE.DataTexture(data, F.W, F.H, THREE.LuminanceFormat); mask.magFilter = mask.minFilter = THREE.LinearFilter; mask.generateMipmaps = false; mask.needsUpdate = true; this.egne.push(mask);
     for (const [y, k, fart] of [[.16, 1, 1], [.48, .6, -.7]]) {
@@ -226,11 +234,11 @@ const D3 = {
   arkitektur(F, th) {
     const W = F.W, wh = Paint.wallH || [], isF = (x, z) => x >= 0 && z >= 0 && x < W && z < F.H && F.tiles[z * W + x] > 0;
     const opp = (x, z) => (Paint.opptatt && Paint.opptatt.get(x + ',' + z)) || '';
-    const front = []; for (let z = 0; z < F.H; z++) for (let x = 0; x < W; x++) if (wh[z * W + x] > 2 && isF(x, z + 1)) front.push([x, z + 1, opp(x, z + 1)]);
+    const front = []; for (let z = 0; z < F.H; z++) for (let x = 0; x < W; x++) if (wh[z * W + x] > 2 && this.listeVegg(z * W + x) && isF(x, z + 1)) front.push([x, z + 1, opp(x, z + 1)]);
     const piler = [];
     for (const r of F.rooms) {
       if (r.role === 'secret') continue;
-      for (let x = r.x + 3; x < r.x + r.w - 1; x += 3) if (wh[(r.z - 1) * W + x - 1] > 2 && wh[(r.z - 1) * W + x] > 2 && isF(x - 1, r.z) && isF(x, r.z) && !opp(x - 1, r.z) && !opp(x, r.z)) piler.push([x, r.z]);
+      for (let x = r.x + 3; x < r.x + r.w - 1; x += 3) if (wh[(r.z - 1) * W + x - 1] > 2 && wh[(r.z - 1) * W + x] > 2 && this.listeVegg((r.z - 1) * W + x) && isF(x - 1, r.z) && isF(x, r.z) && !opp(x - 1, r.z) && !opp(x, r.z)) piler.push([x, r.z]);
     }
     // hver del er en kasse, og en litt større blekkasse rett bak den gir strek på sidene og under
     const mx = new THREE.Matrix4(), kasse = (w, h, d) => R.geo('d3k' + [w, h, d].join(','), () => new THREE.BoxGeometry(w, h, d));

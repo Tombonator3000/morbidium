@@ -99,6 +99,21 @@ function buildFloor(seed, depth, opts) {
     r.cx = r.x + Math.floor(w / 2); r.cz = r.z + Math.floor(h / 2);
     for (let z = r.z; z < r.z + h; z++) for (let x = r.x; x < r.x + w; x++) { F.tiles[z * W + x] = T_ROOM; F.roomId[z * W + x] = r.id; }
   }
+  // 5b) former: noen vanlige rom får L-form eller avskårne hjørner (rotunde). Midten og rommet med den hemmelige døra røres ikke.
+  for (const r of F.rooms) {
+    if (!['combat', 'risk'].includes(r.role) || r.w < 10 || r.h < 10 || (secret && secret.parent === r.id)) continue;
+    const k = rng.next(), tom = (x, z) => { const i = z * W + x; F.tiles[i] = T_VOID; F.roomId[i] = -1; };
+    if (k < .24) {
+      const cw = rng.int(3, Math.floor(r.w / 2) - 1), ch = rng.int(3, Math.floor(r.h / 2) - 1), vx = rng.chance(.5), vz = rng.chance(.5);
+      const x0 = vx ? r.x : r.x + r.w - cw, z0 = vz ? r.z : r.z + r.h - ch;
+      for (let z = z0; z < z0 + ch; z++) for (let x = x0; x < x0 + cw; x++) tom(x, z);
+      r.form = 'L';
+    } else if (k < .4) {
+      const c = rng.int(2, 3);
+      for (let d = 0; d < c; d++) for (let e = 0; e < c - d; e++) { tom(r.x + e, r.z + d); tom(r.x + r.w - 1 - e, r.z + d); tom(r.x + e, r.z + r.h - 1 - d); tom(r.x + r.w - 1 - e, r.z + r.h - 1 - d); }
+      r.form = 'rund';
+    }
+  }
   // 6) korridorer, tre ruter brede, L-formet via cellegrensen
   const carve = (x0, z0, x1, z1) => {
     const [ax, bx] = x0 < x1 ? [x0, x1] : [x1, x0], [az, bz] = z0 < z1 ? [z0, z1] : [z1, z0];
@@ -128,25 +143,60 @@ function buildFloor(seed, depth, opts) {
   // 7) dører: korridorruter som grenser til rommet
   for (const r of F.rooms) {
     for (let z = r.z - 1; z <= r.z + r.h; z++) for (let x = r.x - 1; x <= r.x + r.w; x++) {
+      if (x < 0 || z < 0 || x >= W || z >= H) continue;
       const i = z * W + x; if (F.tiles[i] !== T_COR) continue;
-      const inX = x >= r.x && x < r.x + r.w, inZ = z >= r.z && z < r.z + r.h;
-      if ((inX && (z === r.z - 1 || z === r.z + r.h)) || (inZ && (x === r.x - 1 || x === r.x + r.w))) r.doors.push(i);
+      if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) => { const nx = x + dx, nz = z + dz; return nx >= 0 && nz >= 0 && nx < W && nz < H && F.roomId[nz * W + nx] === r.id; })) r.doors.push(i);
     }
   }
   // 8) innhold
-  const tmplByDepth = { 1: ['venterom', 'sovesal', 'kapell', 'arkiv', 'venterom'], 2: ['bad', 'behandling', 'bad', 'kapell', 'behandling'], 3: ['isolat', 'kartotek', 'isolat', 'arkiv', 'kartotek', 'kapell'], 4: ['kjeller', 'kapell', 'arkiv', 'kjeller', 'bad'] };
   // etasjen skal leve opp til navnet: Isolat og arkiv får alltid minst ett isolat eller kartotek
-  const kamp = F.rooms.filter(r => r.role === 'combat' || r.role === 'risk'), sist = kamp[kamp.length - 1], tema = { 3: ['isolat', 'kartotek'] }[depth];
+  const kamp = F.rooms.filter(r => r.role === 'combat' || r.role === 'risk'), sist = kamp[kamp.length - 1], tema = { 4: ['isolat', 'kartotek'] }[depth];
+  const sekk = [], trekk = () => { if (!sekk.length) sekk.push(...rng.shuffle((ROMTYPER[depth] || ROMTYPER[6]).slice())); return sekk.pop(); };
   let harTema = false;
+  F.ute = !!(typeof THEMES === 'object' && THEMES[depth] && THEMES[depth].ute);
+  F.korridor = F.ute ? (depth === 5 ? { gulv: 'sti', vegg: 'skog' } : { gulv: 'grus', vegg: 'hekk' }) : { gulv: 'planker', vegg: 'panel' };
   for (const r of F.rooms) {
-    if (r.role === 'combat' || r.role === 'risk') { r.template = rng.pick(tmplByDepth[depth] || tmplByDepth[4]); if (tema) { if (tema.includes(r.template)) harTema = true; else if (r === sist && !harTema) r.template = tema[0]; } }
+    if (r.role === 'combat' || r.role === 'risk') { r.template = trekk(); if (tema) { if (tema.includes(r.template)) harTema = true; else if (r === sist && !harTema) r.template = tema[0]; } }
     else if (r.role === 'start') r.template = opts.startTemplate || 'eget';
     else if (r.role === 'service') r.template = r.service;
     else r.template = r.role;
+    romStil(F, r);
     decorateRoom(F, r, rng);
     planWaves(F, r, rng, depth, opts);
   }
+  // været: ute i parken og skogen, og i gårdsrommene i inneetasjene
+  F.vaer = F.ute ? rng.pick(depth === 5 ? ['sno', 'ildfluer', 'taake', 'ildfluer'] : ['regn', 'regn', 'sno', 'taake', 'klart']) : F.rooms.some(r => r.ute) ? rng.pick(['regn', 'regn', 'klart']) : null;
   return F;
+}
+
+/* Romtyper for kamprom i hver etasje. Parken og Nattskogen er ute; de andre har et par uterom hver. */
+const ROMTYPER = {
+  1: ['hage', 'lysthus', 'kirkegard', 'fontene', 'isdam', 'liggehall', 'gardsplass', 'hage', 'drivhus'],
+  2: ['venterom', 'sovesal', 'kapell', 'arkiv', 'spisesal', 'dagligstue', 'gardsrom', 'frisor', 'direktor', 'venterom'],
+  3: ['bad', 'behandling', 'kapell', 'elektro', 'tannlege', 'lysgard', 'rontgen', 'kjokken', 'bad'],
+  4: ['isolat', 'kartotek', 'isolat', 'arkiv', 'kartotek', 'kapell', 'fyrrom', 'likkapell'],
+  5: ['bjorkeskog', 'lysning', 'myr', 'tjern', 'bjorkeskog', 'ruin', 'koie', 'lysning'],
+  6: ['kjeller', 'kapell', 'arkiv', 'kjeller', 'bad', 'likkapell', 'fyrrom']
+};
+/* gulv, vegg og om rommet er ute (1). Maling og vegger står i 17_romtyper.js. */
+const ROMSTIL = {
+  venterom: ['sjakk', 'panel'], sovesal: ['tre', 'tapet'], kapell: ['teppe', 'stein'], arkiv: ['parkett', 'panel'], bad: ['sekskant', 'fliser'],
+  behandling: ['linoleum', 'fliser'], kjeller: ['stein', 'mur'], isolat: ['linoleum', 'polstret'], kartotek: ['parkett', 'panel'],
+  spisesal: ['tre', 'panel'], dagligstue: ['teppe', 'tapet'], elektro: ['linoleum', 'fliser'], tannlege: ['sjakk', 'fliser'], fyrrom: ['stein', 'mur'],
+  kjokken: ['fliser', 'fliser'], likkapell: ['betong', 'stein'], direktor: ['parkett', 'tapet'], rontgen: ['linoleum', 'fliser'], frisor: ['sjakk', 'fliser'],
+  kafeteria: ['sjakk', 'panel'], medisin: ['linoleum', 'fliser'], vaktmester: ['betong', 'tre'], journal: ['parkett', 'panel'], bibliotek: ['tre', 'tapet'], vaskeri: ['fliser', 'fliser'],
+  eget: ['tre', 'tapet'], likhus: ['betong', 'fliser'], toalett: ['sekskant', 'fliser'], soppel: ['betong', 'mur'], vask: ['betong', 'fliser'], operasjon: ['fliser', 'fliser'], vaktbod: ['tre', 'tre'], begravelse: ['teppe', 'stein'],
+  boss: ['sjakk', 'panel'], treasure: ['parkett', 'tapet'], secret: ['stein', 'mur'], cursed: ['stein', 'stein'], offer: ['stein', 'stein'],
+  gardsrom: ['brostein', 'mur', 1], lysgard: ['stein', 'mur', 1], drivhus: ['jord', 'glass', 1],
+  hage: ['gress', 'hekk', 1], lysthus: ['gress', 'hekk', 1], kirkegard: ['gress', 'steinmur', 1], fontene: ['grus', 'hekk', 1], isdam: ['is', 'hekk', 1], liggehall: ['tre', 'gjerde', 1], gardsplass: ['grus', 'steinmur', 1],
+  bjorkeskog: ['mose', 'skog', 1], lysning: ['gress', 'skog', 1], myr: ['myr', 'skog', 1], tjern: ['mose', 'skog', 1], ruin: ['stein', 'ruin', 1], koie: ['tre', 'tommer']
+};
+function romStil(F, r) {
+  let st = ROMSTIL[r.template] || ['sjakk', 'panel'];
+  // ute-etasjene: sjefen venter ute, og alt som ikke er kamprom, ligger i små paviljonger (i skogen: koier)
+  if (F.ute && r.role === 'boss') st = F.depth === 5 ? ['gress', 'skog', 1] : ['grus', 'hekk', 1];
+  else if (F.ute && !st[2] && r.template !== 'koie') st = F.depth === 5 ? ['tre', 'tommer'] : [st[0], 'paviljong'];
+  r.gulv = st[0]; r.vegg = st[1]; r.ute = !!st[2];
 }
 
 function bfs(F, from) {
@@ -158,7 +208,7 @@ function bfs(F, from) {
 /* Dekor: planlegger rekvisitter som data. Blokkerende rekvisitter settes i F.block. */
 function decorateRoom(F, r, rng) {
   const W = F.W, reserved = new Set(), doorZone = new Set();
-  const inRoom = (x, z) => x >= r.x && x < r.x + r.w && z >= r.z && z < r.z + r.h;
+  const inRoom = (x, z) => x >= r.x && x < r.x + r.w && z >= r.z && z < r.z + r.h && F.roomId[z * W + x] === r.id;
   for (const di of r.doors) { const dx = di % W, dz = (di / W) | 0; for (let z = dz - 2; z <= dz + 2; z++) for (let x = dx - 2; x <= dx + 2; x++) if (Math.abs(x - dx) + Math.abs(z - dz) <= 3) { reserved.add(z * W + x); doorZone.add(z * W + x); } }
   const keepCenter = !['service', 'treasure', 'start', 'offer', 'cursed', 'secret'].includes(r.role) || r.template === 'begravelse';
   if (keepCenter) for (let z = r.cz - 2; z <= r.cz + 2; z++) for (let x = r.cx - 2; x <= r.cx + 2; x++) reserved.add(z * W + x);
@@ -203,7 +253,14 @@ function decorateRoom(F, r, rng) {
     }
     return null;
   };
-  const drains = n => ent('drain', n);
+  const drains = n => { if (!r.ute) ent('drain', n); };
+  // store ting: helst inntil den øvre veggen fra midten og utover, ellers raden under, så nede, og til slutt et ledig sted inne i rommet
+  const topp = (k, len, opt = {}) => {
+    const tiles = opt.tiles || Array.from({ length: len }, (_, i) => [i, 0]), tw = Math.max(...tiles.map(t => t[0])) + 1, th = Math.max(...tiles.map(t => t[1])) + 1, o = Object.assign({}, opt, { tiles });
+    for (const z of [r.z, r.z + 1, r.z + r.h - th, r.z + r.h - th - 1]) for (let d = 0; d < r.w; d++) for (const sgn of d ? [-1, 1] : [1]) { const x = Math.floor(r.cx - tw / 2 + .5) + sgn * d; if (put(k, x, z, 0, o)) return true; }
+    for (let g = 0; g < 60; g++) if (put(k, rng.int(r.x + 1, Math.max(r.x + 1, r.x + r.w - 1 - tw)), rng.int(r.z + 1, Math.max(r.z + 1, r.z + r.h - 1 - th)), 0, o)) return true;
+    return false;
+  };
   const T = r.template;
   const topMid = () => [r.cx, r.z];
   switch (T) {
@@ -214,7 +271,7 @@ function decorateRoom(F, r, rng) {
       put('altar', r.cx - 1, r.z, 0, { tiles: [[0, 0], [1, 0], [2, 0]] }); ent('candles', 3); ent('lamp', 1); drains(1); break;
     }
     case 'arkiv': along('cabinet', rng.int(6, 10), { data: { brk: 2 } }); ent('crate', rng.int(1, 3)); ent('trolley', 1); ent('lamp', 1); drains(1); break;
-    case 'bad': along('tub', rng.int(3, 5), { long: true, data: { dark: F.depth >= 4 } }); ent('lamp', 2, { data: { faulty: rng.chance(.6) } }); ent('puddle', rng.int(2, 3)); drains(2); ent('trolley', 1); break;
+    case 'bad': along('tub', rng.int(3, 5), { long: true, data: { dark: F.depth >= 6 } }); ent('lamp', 2, { data: { faulty: rng.chance(.6) } }); ent('puddle', rng.int(2, 3)); drains(2); ent('trolley', 1); break;
     case 'behandling': along('gurney', rng.int(3, 5), { long: true }); ent('lamp', 2); ent('trolley', 2); along('cabinet', 2, { data: { brk: 2 } }); drains(1); break;
     case 'kjeller': ent('chain', rng.int(3, 6)); ent('crate', rng.int(2, 4)); free('pillar', 2); drains(3); ent('lamp', 1, { data: { faulty: true } }); ent('puddle', 1, { data: { kind: 'morb' } }); break;
     case 'isolat': {
@@ -260,12 +317,50 @@ function decorateRoom(F, r, rng) {
     case 'operasjon': put('optable', r.cx, r.cz, 0, { tiles: [[0, 0], [0, 1]] }); ent('lamp', 2); ent('trolley', 1); break;
     case 'vaktbod': along('verktoytavle', 2, { long: true }); put('locker', r.x + r.w - 2, r.z, 0); ent('botte', 2); ent('crate', 3, { data: { brk: 2 } }); drains(1); break;
     case 'begravelse': put('coffin', r.cx, r.z + 2, 0, { tiles: [[0, 0], [0, 1]] }); for (const s of [-3, 3]) put('pew', r.cx + s - 1, r.cz + 1, 0, { tiles: [[0, 0], [1, 0]] }); ent('candles', 3); break;
+    // ---------- nye rom inne ----------
+    case 'spisesal': {
+      for (let z = r.z + 2; z < r.z + r.h - 2; z += 4) for (const x0 of [r.x + 1, r.x + r.w - 5]) if (put('langbord', x0, z, 0, { tiles: [[0, 0], [1, 0], [2, 0], [3, 0]] })) for (let i = 0; i < 4; i++) { put('chair', x0 + i, z - 1, 0, { block: false, data: { brk: 1 } }); put('chair', x0 + i, z + 1, Math.PI, { block: false, data: { brk: 1 } }); }
+      ent('menytavle', 1); ent('trolley', 1, { data: { soup: true } }); drains(1); break;
+    }
+    case 'dagligstue': topp('piano', 2); along('grammofon', 1); free('lenestol', rng.int(2, 4)); free('kortbord', 1); free('plant', 2); ent('lamp', 1); break;
+    case 'elektro': along('elektrostol', rng.int(2, 3)); free('spole', 2); along('cabinet', 2, { data: { brk: 2 } }); ent('lamp', 1, { data: { faulty: true } }); ent('puddle', 1); drains(1); break;
+    case 'tannlege': free('tannlegestol', 1); ent('instrumentbord', 2); ent('spyttkum', 1); ent('tannglass', 2); along('cabinet', 2, { data: { brk: 2 } }); ent('lamp', 1); drains(1); break;
+    case 'rontgen': topp('rontgen', 2); along('lysskjerm', 2); along('gurney', 1, { long: true }); ent('lamp', 1, { data: { faulty: rng.chance(.5) } }); drains(1); break;
+    case 'frisor': for (let i = 0; i < 3; i++) along('frisorstol', 1, { side: 'top' }); ent('harhaug', rng.int(3, 5)); ent('botte', 1); ent('lamp', 1); drains(1); break;
+    case 'direktor': free('desk', 1, { tiles: [[0, 0], [1, 0]] }); along('shelf', 4); free('bjorn', 1); ent('globus', 1); free('lenestol', 2); ent('lamp', 1); break;
+    case 'kjokken': topp('komfyr', 2); along('komfyr', 1); free('gryte', 1); along('kjottkrok', rng.int(2, 4)); free('table', 1); ent('botte', 2); ent('puddle', 2, { data: { kind: 'blod' } }); drains(2); break;
+    case 'fyrrom': topp('kjele', 2, { data: { glo: true } }); free('kullhaug', rng.int(2, 3), { data: { brk: 2 } }); along('ror', rng.int(3, 5), { block: false }); ent('crate', 2); ent('lamp', 1, { data: { faulty: true } }); drains(2); break;
+    case 'likkapell': for (const s of [-2, 2]) put('coffin', r.cx + s, r.z + 2, 0, { tiles: [[0, 0], [0, 1]] }); topp('kors', 1); for (const s of [-3, 3]) put('pew', r.cx + s - 1, r.cz + 2, 0, { tiles: [[0, 0], [1, 0]] }); ent('candles', 4); drains(1); break;
+    // ---------- uterom i inneetasjene ----------
+    case 'gardsrom': free('bronn', 1, { tiles: [[0, 0], [1, 0]] }); free('tre', rng.int(1, 2)); free('pew', 1, { tiles: [[0, 0], [1, 0]] }); ent('lyktestolpe', 2); ent('puddle', 2); break;
+    case 'lysgard': along('ror', 3, { block: false }); ent('botte', 2); free('plant', 3); ent('lyktestolpe', 1); ent('puddle', 3); break;
+    case 'drivhus': for (let i = 0; i < 4; i++) free('plantebord', 1, { tiles: [[0, 0], [1, 0]] }); free('kjempeplante', 1); ent('vannkanne', 2); free('plant', 3); ent('lamp', 1); break;
+    // ---------- parken ----------
+    case 'hage': free('busk', rng.int(3, 5)); free('blomsterbed', 2, { tiles: [[0, 0], [1, 0]] }); ent('hagenisse', rng.int(1, 3)); free('fuglebad', 1); ent('lyktestolpe', 2); free('pew', 1, { tiles: [[0, 0], [1, 0]] }); break;
+    case 'lysthus': topp('lysthus', 3, { tiles: [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]] }); free('busk', 3); free('pew', 2, { tiles: [[0, 0], [1, 0]] }); ent('lyktestolpe', 2); break;
+    case 'kirkegard': {
+      for (let z = r.z + 1; z < r.z + r.h - 1; z += 3) for (let x = r.x + 1; x < r.x + r.w - 1; x += 2) if (rng.chance(.55)) put('gravstein', x, z, 0, { data: { navn: rng.int(0, 99) } });
+      free('engel', 1); ent('kors', 2); free('tre', 1); ent('grav', 1, { data: { apen: true } }); ent('candles', 2); break;
+    }
+    case 'fontene': put('fontene', r.cx - 1, r.cz - 3, 0, { tiles: [[0, 0], [1, 0], [0, 1], [1, 1]] }) || free('fontene', 1, { tiles: [[0, 0], [1, 0], [0, 1], [1, 1]] }); free('pew', 2, { tiles: [[0, 0], [1, 0]] }); free('statue', 2); ent('lyktestolpe', 2); ent('puddle', 2); break;
+    case 'isdam': ent('siv', rng.int(4, 6)); free('snomann', 1); ent('vak', rng.int(1, 2)); free('pew', 1, { tiles: [[0, 0], [1, 0]] }); ent('lyktestolpe', 1); break;
+    case 'liggehall': for (let i = 0; i < 6; i++) along('liggestol', 1, { side: 'top', long: false }); ent('teppe', 2); ent('lamp', 1); break;
+    case 'gardsplass': free('bronn', 1, { tiles: [[0, 0], [1, 0]] }); free('kjerre', 1, { tiles: [[0, 0], [1, 0]] }); along('vedstabel', 2, { long: true }); free('tre', 1); ent('lyktestolpe', 2); break;
+    // ---------- Nattskogen ----------
+    case 'bjorkeskog': free('bjork', rng.int(6, 10)); ent('stubbe', 2); ent('sopp', rng.int(2, 4)); free('stein', 2); break;
+    case 'lysning': put('baal', r.cx, r.cz - 3, 0) || free('baal', 1); free('stubbe', 3); along('vedstabel', 1, { long: true }); free('bjork', 3); ent('sopp', 2); break;
+    case 'myr': ent('siv', rng.int(5, 8)); free('bjork', 2, { data: { dod: true } }); ent('puddle', rng.int(3, 4), { data: { kind: 'myr' } }); free('stein', 1); break;
+    case 'tjern': { const vann = { k: 'puddle', kind: 'tjern', x: r.cx + .5, z: r.cz + .5, r: Math.min(r.w, r.h) * .26 }; r.props.push(vann); ent('siv', rng.int(5, 7)); free('robat', 1, { tiles: [[0, 0], [1, 0]] }); free('bjork', 2); break; }
+    case 'ruin': along('ruinmur', rng.int(3, 5), { long: true }); free('pillar', 2); topp('kors', 1); ent('candles', 2); ent('sopp', 2); break;
+    case 'koie': topp('vedovn', 1, { data: { glo: true } }); along('koiesong', 1, { long: true }); free('table', 1); ent('chair', 2, { data: { brk: 1 } }); topp('gevir', 1); ent('lamp', 1); break;
   }
+  // sjefen ute: busker eller bjørker i hjørnene i stedet for søyler
+  if (T === 'boss' && r.ute) { for (const p of r.props) if (p.k === 'pillar') p.k = F.depth === 5 ? 'bjork' : 'busk'; r.props = r.props.filter(p => p.k !== 'chain'); }
   // gyteplasser
   const sp = [];
   for (let g = 0; g < 80 && sp.length < 10; g++) {
     const x = rng.int(r.x + 1, r.x + r.w - 2), z = rng.int(r.z + 1, r.z + r.h - 2);
-    if (F.block[z * W + x] || doorZone.has(z * W + x)) continue;
+    if (F.block[z * W + x] || doorZone.has(z * W + x) || F.roomId[z * W + x] !== r.id) continue;
     sp.push([x + .5, z + .5]);
   }
   for (const p of r.props) if (p.k === 'drain') sp.unshift([p.x, p.z]);
@@ -277,15 +372,18 @@ function planWaves(F, r, rng, depth, opts) {
   if (!['combat', 'risk', 'start', 'cursed'].includes(r.role)) return;
   if (r.role === 'start' && !opts.startCombat) return;
   const pool = DEPTH_ENEMIES[depth] || DEPTH_ENEMIES[4];
-  const bias = { kapell: 'kultist', bad: 'yngel', behandling: 'oppasser', sovesal: 'pleier', kjeller: 'yngel', isolat: 'tvang', kartotek: 'byrakrat' }[r.template];
-  const d = F.dist ? F.dist[r.id] : 2;
-  const nWaves = r.role === 'risk' ? 2 : r.role === 'start' || r.role === 'cursed' ? 1 : (d >= 3 && rng.chance(.55) ? 2 : 1) + (depth >= 3 && rng.chance(.3) ? 1 : 0);
+  const bias = { kapell: 'kultist', bad: 'yngel', behandling: 'oppasser', sovesal: 'pleier', kjeller: 'yngel', isolat: 'tvang', kartotek: 'byrakrat',
+    spisesal: 'pleier', dagligstue: 'kasteren', elektro: 'oppasser', tannlege: 'oppasser', kjokken: 'svulst', fyrrom: 'yngel', likkapell: 'kultist', frisor: 'tvang',
+    liggehall: 'trille', kirkegard: 'kultist', hage: 'pleier', isdam: 'trille', myr: 'yngel', tjern: 'yngel', ruin: 'kultist' }[r.template];
+  const d = F.dist ? F.dist[r.id] : 2, eff = Math.round(typeof dybdeStyrke === 'function' ? dybdeStyrke(depth) : depth);
+  const nWaves = r.role === 'risk' ? 2 : r.role === 'start' || r.role === 'cursed' ? 1 : (d >= 3 && rng.chance(.55) ? 2 : 1) + (eff >= 3 && rng.chance(.3) ? 1 : 0);
   for (let w = 0; w < nWaves; w++) {
-    const n = r.role === 'start' ? 2 : 2 + [0, 0, 1, 2, 2][Math.min(4, depth)] + rng.int(0, 2) + (d >= 4 ? 1 : 0) + (depth >= 4 && rng.chance(.4) ? 1 : 0);
+    const n = r.role === 'start' ? 2 : 2 + [0, 0, 1, 2, 2][Math.min(4, eff)] + rng.int(0, 2) + (d >= 4 ? 1 : 0) + (eff >= 4 && rng.chance(.4) ? 1 : 0);
     const wave = [];
     for (let i = 0; i < n; i++) {
       let t = bias && rng.chance(.35) ? bias : rng.pick(pool);
-      if (depth === 1 && t === 'yngel') t = 'pleier';
+      if (depth <= 2 && t === 'yngel') t = 'pleier';
+      if (typeof ENEMIES === 'object' && !ENEMIES[t]) t = rng.pick(pool);
       wave.push({ t, elite: (r.role === 'risk' && i < 1 + w) || (r.role === 'cursed' && i < 2) });
     }
     if (opts.extraPleier && depth === opts.startDepth && r.role === 'combat') wave.push({ t: 'pleier' });

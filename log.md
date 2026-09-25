@@ -432,3 +432,15 @@ Alle tidspunkt er UTC.
 - Tom ba om idédugnad: spillet skal bli større, med flere absurde hendelser (øyet i sprekken med samtale), en dyp historie for hver pasient som spilles ut i drømmer når pasienten prøver å komme seg ut, David Lynch og Twin Peaks, skitten humor, og rom med mer variasjon, inne og ute.
 - Idéliste og tre spørsmål. Tom valgte seks etasjer der to er ute, korte drømmebaner og grov, kroppslig humor.
 - Planen står i UTVIDELSE.md: etasjene og rømningsforsøkene, gulv, vegger og former per romtype, uterom, fjorten hendelser, historiegeneratoren og de fem drømmekapitlene, nye fiender og sjefer, og rekkefølgen for arbeidet.
+
+## 2026-09-25 19:52 Trinn 1 av utvidelsen: seks etasjer, uterom og rom som ser forskjellige ut
+- Seks etasjer: 1 Parken (ute), 2 Mottaket, 3 Underetasjen, 4 Kjelleren, 5 Nattskogen (ute, under grunnmuren) og 6 Dypet. MAX_DEPTH er 6, og temaer, fiendelister, PA-meldinger, velkomsttekst, håndbok og fiendeindeks følger etter.
+- Fiendenes styrke går etter en egen skala (dybdeStyrke: 1, 1,4, 2, 2,8, 3,4, 4), så slutten ikke blir tyngre enn før. Helse, skade, sjefens slag og sjansen for mesterfiender bruker den.
+- Sjefene i etasje 1 til 5 trekkes fra puljen, Journalen står fast i Dypet. Puljen har fortsatt fire sjefer, så etasje 5 gjentar sjefen fra etasje 1 til de nye kommer i trinn 4.
+- Ny fil src/17_romtyper.js: 16 gulv (tregulv, teppe, sekskantfliser, linoleum, steinheller, parkett, betong, gress, grus, jord, snø, mose, myr og flere) og 15 vegger (tapet, fliser, mur, trepanel, polstring, hekk, smijernsgjerde, steinmur, skog, ruin, glass og flere), hver med egen høyde og tegning. Rundt 60 nye møbler og uteting: langbord, grammofon, piano, elektrostol, tannlegestol, røntgen, frisørstol, komfyr og kjøttkroker, kjele og kullhaug, lysthus, gravsteiner med navnene til dine døde pasienter, engel, fontene, brønn, lyktestolper, bjørk, gran, bål, robåt, tømmerkoie og mye mer.
+- Generatoren lager L-rom og rotunder, og hver etasje trekker romtyper fra sin egen liste (19 nye). Uteetasjene får grusganger mellom hekkene i parken og stier mellom trærne i skogen. Rom uten kamp på uteetasjene blir paviljonger.
+- Ute ser ute ut: bakken fortsetter utenfor rommene med gress og trær, månen lyser sterkere, og det regner, snør, er tåke eller ildfluer. Gasslykter i stedet for vegglamper. Myr gjør deg treg, og på is sklir du.
+- Hver etasje har sin utgang etter sjefen: porten, et åpent vindu, kloakkristen, kullsjakta, stien ut av skogen og utskrivningen. Når du kommer ned, står det hva som skjedde («Du gikk ut porten. Du våknet i mottaket.»).
+- Lyd og musikk: ugle, kråke, kvist som knekker og en hund langt borte når du er ute, regn og vind som egne lyder. Parken har en vals fra musikkpaviljongen, Nattskogen et sakte stykke med klokker.
+- 3D: hver veggstil får sin egen mesh med toon-materiale, hekker og gjerder er lave, lampene sitter bare på innevegger, og tåka er tettest i skogen.
+- Tester: generator 1800 av 1800 (seks etasjer, stil på alle rom, former og romtyper), gjennomspilling uten feil (Krok i parken, porten åpnet seg og førte til mottaket), test_ekstra 103 av 103 med ny del for de seks etasjene.

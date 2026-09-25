@@ -123,7 +123,10 @@ function updatePlayer(dt, A) {
   let spd = (5 + P.stats.smidighet * .15) * (P.gasT > 0 ? .6 : 1) * (P.mokkT > 0 ? .72 : 1) * (P.roykT > 0 ? .82 : 1) * (P.adrenT > 0 ? 1.4 : 1) * (hasDiag('ruging') ? .9 : 1) * (hasDiag('samlemani') ? .95 : 1) * (P.fastT > 0 ? 1.4 : 1) * (P.coffee ? 1.1 : 1) * Items.stat('speed'), mx = stunned ? 0 : A.mx, mz = stunned ? 0 : A.mz;
   if (P.roll > 0) { P.roll -= dt; mx = Math.sin(P.rollA); mz = Math.cos(P.rollA); spd = 11 + P.stats.smidighet * .3; if (Math.random() < dt * 20) puff(P.x, P.z, 1, .45); }
   else if (P.atk) spd *= .3; else if (P.charging) spd *= .4;
-  P.vx = lerp(P.vx, mx * spd, 1 - Math.exp(-dt * 16)); P.vz = lerp(P.vz, mz * spd, 1 - Math.exp(-dt * 16));
+  // gulvet under føttene: myr gjør deg treg, og på isen glir du (17_romtyper.js)
+  const gulv = typeof gulvUnder === 'function' ? gulvUnder(P.x, P.z) : null, grep = gulv === 'is' && P.roll <= 0 ? 2.4 : 16;
+  if (gulv === 'myr') spd *= .74;
+  P.vx = lerp(P.vx, mx * spd, 1 - Math.exp(-dt * grep)); P.vz = lerp(P.vz, mz * spd, 1 - Math.exp(-dt * grep));
   moveEnt(P, (P.vx + P.kvx) * dt, (P.vz + P.kvz) * dt); P.kvx *= Math.pow(.02, dt); P.kvz *= Math.pow(.02, dt);
   const speed = Math.hypot(P.vx, P.vz);
   if (!Items.has('heliumlunge')) groundEffects(P, dt, speed);
@@ -375,12 +378,12 @@ function enemyTarget(e) {
    FIENDER
    ============================================================ */
 function spawnEnemy(type, x, z, elite, depth) {
-  const D = ENEMIES[type], gj = G.run && G.run.gjen, hpK = (1 + (depth - 1) * .3) * (gj ? 1.3 : 1);
+  const D = ENEMIES[type], gj = G.run && G.run.gjen, sk = typeof dybdeStyrke === 'function' ? dybdeStyrke(depth) : depth, hpK = (1 + (sk - 1) * .3) * (gj ? 1.3 : 1);
   // lagdelte skapninger (29_monstre.js) har egne deler i stedet for hode og kropp
   const dopt = { elite, weapon: type === 'oppasser' ? 'sproyte' : D.weapon || null, shadow: D.skygge || (type === 'pleier' ? .55 : D.r > .45 ? .5 : .42), scale: elite ? 1.2 : 1 };
   const doll = typeof LAGDUKKE === 'object' && LAGDUKKE[type] ? new Lagdukke(type, LAGDUKKE[type], dopt) : new Doll(type, dopt);
   R.scene.add(doll.root); doll.root.position.set(x, 0, z); doll.root.scale.setScalar(.01);
-  const e = { kind: 'enemy', type, x, z, r: D.r * (elite ? 1.15 : 1), face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, elite, hp: D.hp * hpK * (elite ? 2.2 : 1), dmg: D.dmg * (1 + (depth - 1) * .17) * (elite ? 1.3 : 1) * (gj ? 1.2 : 1), sp: D.speed, state: 'spawn', t: .5, cd: rnd(.8, 2), stun: 0, slip: 0, sleep: 0, speechT: rnd(3, 8), teles: [], bubbleH: D.bubbleH || (type === 'yngel' ? 1.7 : type === 'pleier' ? 3.3 : 3.1), blood: D.blood || (type === 'yngel' ? 0x6b2d8c : 0xb3261e), depth, mini: !!D.mini, noRecipe: !!D.mini, steady: !!D.mini, kbMult: D.mini ? .35 : undefined };
+  const e = { kind: 'enemy', type, x, z, r: D.r * (elite ? 1.15 : 1), face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, elite, hp: D.hp * hpK * (elite ? 2.2 : 1), dmg: D.dmg * (1 + (sk - 1) * .17) * (elite ? 1.3 : 1) * (gj ? 1.2 : 1), sp: D.speed, state: 'spawn', t: .5, cd: rnd(.8, 2), stun: 0, slip: 0, sleep: 0, speechT: rnd(3, 8), teles: [], bubbleH: D.bubbleH || (type === 'yngel' ? 1.7 : type === 'pleier' ? 3.3 : 3.1), blood: D.blood || (type === 'yngel' ? 0x6b2d8c : 0xb3261e), depth, mini: !!D.mini, noRecipe: !!D.mini, steady: !!D.mini, kbMult: D.mini ? .35 : undefined };
   e.max = e.hp; G.enemies.push(e); puff(x, z, 2, .8, type === 'yngel' ? '#6b3a82' : null);
   if (type === 'yngel') Particles.spawn(x, .2, z, 8, 0x6b2d8c, { speed: 2, up: 5 });
   return e;
@@ -570,8 +573,9 @@ function bossAttack(B, kind, dist, toP) {
 }
 function openTrapdoor() {
   Tips.vis('luke', 800);
-  const room = G.F.rooms[G.F.bossId], x = room.cx + .5, z = room.cz + .5;
-  const p = { k: 'trapdoor', x, z, rot: 0, opened: true }, g = propSprite('trapdoor', x, z, { P: propArt(p), flat: true }); R.level.add(g);
-  G.trapdoor = { x, z }; R.light(x, z, 2.5, '#ffe2a0', .5, R.levelL);
-  toast(G.depth >= MAX_DEPTH ? 'Utgangen er åpen' : 'En luke åpner seg', G.depth >= MAX_DEPTH ? 'Gå til luken for å bli skrevet ut' : 'Den fører ned');
+  // utgangen er et rømningsforsøk: porten i parken, et vindu, kloakken, kullsjakta, stien ut av skogen (17_romtyper.js)
+  const room = G.F.rooms[G.F.bossId], x = room.cx + .5, z = room.cz + .5, U0 = UTGANGER[G.depth] || UTGANGER[MAX_DEPTH], flat = !!FLATE_TING[U0.k];
+  const p = { k: U0.k, x, z, rot: 0, opened: true }, g = propSprite(U0.k, x, flat ? z : z + .3, { P: propArt(p), flat }); R.level.add(g);
+  G.trapdoor = { x, z, g }; R.light(x, z, 2.8, '#ffe2a0', .6, R.levelL);
+  toast(U0.toast[0], U0.toast[1]);
 }

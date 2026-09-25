@@ -205,7 +205,12 @@ const Sound = {
     skrik: [{ w: 'sawtooth', f: 540, d: 1.1, pd: .4, v: .035 }, { w: 'sine', f: 800, d: 1, pd: .35, v: .025 }],
     ror: [{ w: 'sawtooth', f: 68, d: 1.7, pd: .18, v: .05 }, { w: 'sawtooth', f: 102, d: 1.2, pd: .25, v: .025, at: .3 }],
     skrivemaskin: [{ n: 1, d: .02, f0: 3200, f1: 3000, ft: 'highpass', v: .22 }, { n: 1, d: .02, f0: 3200, f1: 3000, ft: 'highpass', v: .2, at: .09 }, { n: 1, d: .02, f0: 3200, f1: 3000, ft: 'highpass', v: .22, at: .16 }, { n: 1, d: .02, f0: 3200, f1: 3000, ft: 'highpass', v: .18, at: .27 }, { w: 'sine', f: 2600, d: .6, v: .05, at: .42 }],
-    rotte: [{ arp: [2400, 2900, 2500], nl: .04, w: 'sine', v: .06 }]
+    rotte: [{ arp: [2400, 2900, 2500], nl: .04, w: 'sine', v: .06 }],
+    // ute om natta: ugle, kråke, kvist som knekker, og en hund et sted langt borte
+    ugle: [{ w: 'sine', f: 392, d: .35, pd: -.08, v: .07 }, { w: 'sine', f: 370, d: .55, pd: -.1, v: .06, at: .5 }],
+    kraake: [{ w: 'sawtooth', f: 620, d: .22, pd: .35, v: .05 }, { n: 1, d: .2, f0: 1400, f1: 900, ft: 'bandpass', v: .06 }, { w: 'sawtooth', f: 600, d: .2, pd: .35, v: .04, at: .3 }],
+    kvist: [{ n: 1, d: .05, f0: 3500, f1: 1200, ft: 'bandpass', v: .25 }],
+    hund: [{ w: 'sawtooth', f: 330, d: .16, pd: .4, v: .03 }, { w: 'sawtooth', f: 310, d: .16, pd: .4, v: .025, at: .4 }]
   },
   init() {
     if (this.ready) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
@@ -264,13 +269,16 @@ const Sound = {
     if (!this.ready) return; const now = this.ctx.currentTime;
     for (let i = 0; i < n; i++) this._synth({ w: 'sawtooth', f: base * (0.8 + Math.random() * 0.5), d: .12, pd: .1, v: .07 }, 1, 1, now + i * .11);
   },
-  startAmbience(depth) {
+  /* etasjene i dronen og stemningslydene: seks etasjer, men lyden følger de gamle fire (Parken og Nattskogen er ute) */
+  lydDybde(depth) { return { 1: 1, 2: 1, 3: 2, 4: 3, 5: 3, 6: 4 }[depth] || depth; },
+  startAmbience(depth0) {
+    const ute = depth0 === 1 || depth0 === 5, depth = this.lydDybde(depth0);
     this.stopAmbience(); if (!this.ready) return;
     const now = this.ctx.currentTime, base = [55, 55, 46, 41.2, 36.7][depth] || 36.7;
     const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = depth >= 3 ? 220 : 320; lp.Q.value = 3;
     const lfo = this.ctx.createOscillator(), lfoG = this.ctx.createGain(); lfo.frequency.value = 0.07; lfoG.gain.value = 90;
     lfo.connect(lfoG); lfoG.connect(lp.frequency); lfo.start(now);
-    const g = this.ctx.createGain(); g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(.5, now + 3);
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(ute ? .22 : .5, now + 3);
     lp.connect(g); g.connect(this.amb);
     const oscs = [base, base * 1.006, base * 1.5 * (depth >= 3 ? 1.06 : 1)].map(fr => {
       const o = this.ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = fr;
@@ -284,12 +292,22 @@ const Sound = {
   /* Stemningslyder: en tilfeldig lyd fra etasjen hvert tiende til tjuende sekund.
      Tonerekka fra the-deep-ones er erstattet av musikken i 06_musikk.js. */
   evT: 8,
-  tick(dt, unsettled, depth) {
+  tick(dt, unsettled, depth0) {
     if (!this.ready || this.volume <= 0) return;
     this.evT -= dt; if (this.evT > 0) return; this.evT = 10 + Math.random() * 12 - (unsettled ? 4 : 0);
-    const valg = { 1: ['klokke', 'knirk', 'knirk', 'skrik'], 2: ['drypp', 'drypp', 'ror', 'knirk'], 3: ['skrivemaskin', 'skrivemaskin', 'knirk', 'rotte'], 4: ['skrik', 'hjerte', 'klokke', 'ror'] }[depth] || ['knirk'];
+    const depth = this.lydDybde(depth0), valg = depth0 === 1 ? ['ugle', 'kraake', 'klokke', 'hund', 'kvist'] : depth0 === 5 ? ['ugle', 'ugle', 'kvist', 'skrik', 'klokke'] : { 1: ['klokke', 'knirk', 'knirk', 'skrik'], 2: ['drypp', 'drypp', 'ror', 'knirk'], 3: ['skrivemaskin', 'skrivemaskin', 'knirk', 'rotte'], 4: ['skrik', 'hjerte', 'klokke', 'ror'] }[depth] || ['knirk'];
     const k = valg[Math.floor(Math.random() * valg.length)], n = k === 'drypp' ? 3 : 1;
     for (let i = 0; i < n; i++) setTimeout(() => this.play(k, .7, (k === 'klokke' && depth >= 4 ? .5 : .85) + Math.random() * .3), i * (300 + Math.random() * 500));
+  },
+  /* regn eller vind som en støysløyfe under stemningen (17_romtyper.js, Vaer) */
+  vaer(type) {
+    if (this.vaerN) { try { this.vaerN.stop(); } catch (e) { } this.vaerN = null; }
+    if (!type || !this.ready) return;
+    const c = this.ctx, n = c.createBufferSource(); n.buffer = this.noiseBuf; n.loop = true;
+    const f = c.createBiquadFilter(); f.type = type === 'regn' ? 'bandpass' : 'lowpass'; f.frequency.value = type === 'regn' ? 1600 : 420; f.Q.value = .6;
+    const g = c.createGain(); g.gain.setValueAtTime(0, c.currentTime); g.gain.linearRampToValueAtTime(type === 'regn' ? .06 : .045, c.currentTime + 2);
+    if (type === 'vind') { const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = .09; lg.gain.value = 180; lfo.connect(lg); lg.connect(f.frequency); lfo.start(); }
+    n.connect(f); f.connect(g); g.connect(this.amb); n.start(); this.vaerN = n;
   },
   stopAmbience() {
     for (const n of this.ambNodes) { try { if (n.stop) n.stop(); else n.disconnect(); } catch (e) { } }

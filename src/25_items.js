@@ -81,7 +81,7 @@ Object.assign(ENEMIES, {
 });
 Object.assign(LINES, { flue: ['bzz', 'bzzz', 'BZZ'], svulst: ['Godartet!', 'Jeg er en del av deg nå.', '*pulserer*', 'Vi vokser sammen.'], lunge: ['*host*', '*harker*', 'Ikke røyk, barn.', 'Jeg var en gang en tenor.'] });
 Object.assign(DEATH_CAUSES, { flue: ['Spist av fluer. Fluene var fornøyde.', 'Gikk bort i en sky av surring.'], svulst: ['Omfavnet av en svulst som bare ville være venner.'], lunge: ['Hostet på av en lunge uten eier. Smittsomt.', 'Druknet i fremmed slim.'] });
-DEPTH_ENEMIES[1].push('flue', 'flue', 'lunge'); DEPTH_ENEMIES[2].push('svulst', 'lunge', 'flue', 'flue'); DEPTH_ENEMIES[3].push('lunge', 'svulst', 'flue'); DEPTH_ENEMIES[4].push('svulst', 'svulst', 'flue', 'lunge');
+DEPTH_ENEMIES[1].push('flue', 'flue'); DEPTH_ENEMIES[2].push('flue', 'flue', 'lunge'); DEPTH_ENEMIES[3].push('svulst', 'lunge', 'flue', 'flue'); DEPTH_ENEMIES[4].push('lunge', 'svulst', 'flue'); DEPTH_ENEMIES[5].push('flue', 'flue', 'svulst'); DEPTH_ENEMIES[6].push('svulst', 'svulst', 'flue', 'lunge');
 Object.assign(RIG, {
   flue: { blob: true, scale: .5, tentacles: 2, tentW: .04, tentCol: '#2a2a2a', float: true, pulse: 40, tentSpread: .24 },
   svulst: { blob: true, scale: .95, tentacles: 6, tentW: .07, tentCol: '#a8404a', pulse: 3, tentSpread: .8 },
