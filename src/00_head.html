@@ -185,6 +185,23 @@ body.touch #akt{ display:none; } #cons .n{ position:absolute; right:-6px; top:-8
 #bigstamp{ position:fixed; left:50%; top:40%; transform:translate(-50%,-50%) rotate(-8deg) scale(1.6); opacity:0; pointer-events:none; text-align:center; font-family:var(--display); color:var(--red); border:7px double var(--red); padding:6px 22px; font-size:48px; background:rgba(236,217,168,.5); transition:transform .18s cubic-bezier(.2,1.6,.4,1), opacity .18s; }
 #bigstamp small{ display:block; font-family:var(--hand); font-size:26px; color:var(--ink); margin-top:-4px; }
 #bigstamp.on{ opacity:1; transform:translate(-50%,-50%) rotate(-8deg) scale(1); }
+/* kombotelleren (39_kombo.js): et stempel til høyre som rister mer jo lengre kjeden blir, og en lunte som brenner ned */
+#kombo{ position:absolute; right:calc(18px + env(safe-area-inset-right,0px)); top:calc(92px + env(safe-area-inset-top,0px)); text-align:right; pointer-events:none; font-family:var(--display); transform:rotate(-6deg); transform-origin:right center; scale:var(--ui,1); opacity:0; transition:opacity .25s; }
+#kombo.on{ opacity:1; }
+#kombo b{ display:block; font-size:54px; line-height:.9; color:#f2c230; -webkit-text-stroke:3px var(--ink); paint-order:stroke fill; text-shadow:4px 4px 0 var(--ink); }
+#kombo b::before{ content:'×'; font-size:.6em; margin-right:2px; }
+#kombo span{ display:block; font-size:21px; color:var(--red); -webkit-text-stroke:1.5px #f6ead0; paint-order:stroke fill; letter-spacing:1px; }
+#kombo i{ display:block; height:6px; width:130px; margin:5px 0 0 auto; background:linear-gradient(90deg,#7a0a0a,#ff5a1a); border:2px solid var(--ink); transform-origin:right center; }
+#kombo.het b{ color:#ff7a1a; } #kombo.gal b{ color:#fff6d8; text-shadow:4px 4px 0 var(--red), -2px -2px 0 var(--ink); }
+#kombo.pang b{ animation:kpang .22s ease-out; }
+@keyframes kpang{ 0%{ transform:scale(1.55) rotate(5deg); } 100%{ transform:none; } }
+body.touch #kombo{ top:calc(150px + env(safe-area-inset-top,0px)); }
+#kstempel{ position:fixed; left:50%; top:33%; transform:translate(-50%,-50%); pointer-events:none; font-family:var(--display); font-size:74px; color:#f2c230; -webkit-text-stroke:4px var(--ink); paint-order:stroke fill; text-shadow:6px 6px 0 var(--red); white-space:nowrap; opacity:0; text-align:center; }
+#kstempel small{ display:block; font-family:var(--hand); font-size:28px; color:#f6ead0; -webkit-text-stroke:0; text-shadow:2px 2px 0 var(--ink); }
+#kstempel.on{ animation:kslam 1.4s cubic-bezier(.2,1.4,.4,1) forwards; }
+@keyframes kslam{ 0%{ opacity:0; transform:translate(-50%,-50%) scale(3.2) rotate(-14deg); } 12%{ opacity:1; transform:translate(-50%,-50%) scale(.92) rotate(-6deg); } 20%{ transform:translate(-50%,-50%) scale(1.05) rotate(-7deg); } 80%{ opacity:1; transform:translate(-50%,-50%) scale(1) rotate(-7deg); } 100%{ opacity:0; transform:translate(-50%,-50%) scale(1.1) rotate(-7deg); } }
+@media (max-width:700px){ #kstempel{ font-size:46px; } #kombo b{ font-size:40px; } #kombo span{ font-size:16px; } }
+@media (prefers-reduced-motion: reduce){ #kstempel.on{ animation:none; opacity:1; } #kombo.pang b{ animation:none; } }
 #toast{ top:22%; font-size:40px; text-align:center; }
 #toast small{ display:block; font-family:var(--body); font-weight:800; font-size:18px; color:var(--parch-l); -webkit-text-stroke:0; text-shadow:2px 2px 0 var(--ink); }
 /* ---------- skjermbilder ---------- */
@@ -525,10 +542,11 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
   <div id="akt" class="paper hidden"><canvas id="aktc" width="80" height="80"></canvas><div class="pips" id="aktp"></div><span class="n">V</span></div>
   <div id="mapring"><canvas id="map" width="200" height="200"></canvas><b class="nord">N</b></div>
   <div id="prompt" class="hidden"></div>
+  <div id="kombo"><b></b><span></span><i></i></div>
   <div id="tools"><button class="btn" id="bJournal"><svg viewBox="0 0 28 22"><path d="M14 5c-3-2-7-3-12-2v15c5-1 9 0 12 2 3-2 7-3 12-2V3c-5-1-9 0-12 2z" fill="#f6ead0" stroke="#2a1a14" stroke-width="2" stroke-linejoin="round"/><path d="M14 5v15" stroke="#2a1a14" stroke-width="2"/><path d="M5 7.5c2.5-.5 4.5 0 6 .8M5 11c2.5-.5 4.5 0 6 .8M17 8.3c1.5-.8 3.5-1.3 6-.8M17 11.8c1.5-.8 3.5-1.3 6-.8" stroke="#8a6a4a" stroke-width="1.3" fill="none"/></svg>Journal</button><button class="btn" id="bPause"><svg viewBox="0 0 28 22"><rect x="7" y="3" width="5" height="16" rx="1.5" fill="#2a1a14"/><rect x="16" y="3" width="5" height="16" rx="1.5" fill="#2a1a14"/></svg>Pause</button></div>
 </div>
 <div id="touch" class="hidden"><div id="stick"><i></i></div><div id="tbtns"><button data-t="active" id="tAkt" class="hidden">Aktiv</button><button data-t="use">Bruk</button><button data-t="interact">Snakk</button><button data-t="heavy">Tungt</button><button data-t="dodge">Rull</button><button data-t="attack">Slag</button></div></div>
-<div id="toast"></div><div id="bigstamp"></div>
+<div id="toast"></div><div id="bigstamp"></div><div id="kstempel"></div>
 <div id="title" class="screen"></div>
 <div id="panel" class="screen dim hidden"></div>
 <div id="journal" class="screen hidden"></div>
