@@ -393,3 +393,19 @@ Alle tidspunkt er UTC.
 - 3D: kantlys på alle tegninger fra den sterkeste lampen (en smal lysstripe innenfor blekkstreken på siden som vender mot lyset), lysstråler fra vinduene med sprossen som mørk stripe og støv i lyset, vinduet tegnet i lys på gulvet, lyskjegler under vegglampene, lamper som flimrer (flere lenger ned), mørke der alle lys slukner og flimrer tilbake (brukes ved mye Morbidium, og av sjefene), og bakketåke i to lag over gulvet.
 - Ny innstilling «Blod og skrekkeffekter» (standard på) slår av alt utover de vanlige flekkene.
 - Tester: generator 1200 av 1200, gjennomspilling uten feil.
+
+## 2026-09-25 17:31 Nye fiender, Den Store Klumpen, tilfeldige sjefer og minisjefer
+- Ny fil src/29_monstre.js med skapningene ChatGPT foreslo, tegnet i koden i samme stil (tykk blekkstrek, skjeve, grove ansikter):
+  - Kasteren: gammel mann med vill, grå sveis, digre briller, tunga ute og flekkete kåpe. Holder avstand, merker treffstedet, løfter armen (positur «kast») og kaster en snurrende klump i bue (animasjonen kasteklump). Klumpen lander med en brun sprut og legger et søl som gjør pasienten treg. Mestere og eliter kaster tre.
+  - Trillepasienten: i knirkende rullestol med rutete teppe, infusjonsstativ og bandasje over det ene øyet. Svinger tregt, kjører på deg i full fart (BONK i veggen) og kaster bekken. Hjulet ruller etter hvor langt stolen faktisk flytter seg.
+  - Speilpasienten: et håndspeil som hode, og speilet viser ansiktet til pasienten du spiller, speilvendt og sprukket. Går i sporet ditt 1,25 sekunder bak, slår der du var for et øyeblikk siden, og blender deg med lyset fra lampene. Knuses den, flyr sju glasskår ut, og du får sju års ulykke (mindre flaks resten av etasjen).
+  - Klumpunge: små kjøttklumper med ett ansikt.
+  - Minisjefer: Hviskekoret (kormesserskjorte full av munner og ører, stearinlys på toppen, ord som prosjektiler, røyk som gir Morbidium, korskrik du må rulle gjennom), Tannlegen (pannespeil, voksbart, gulltenner; trekker tennene dine og slipper dem bak seg, tannregn, bor og «NESTE!») og Den hodeløse portieren (kaster sitt eget hode som biter og kommer tilbake, går i blinde mens det er borte, svinger nøkkelknippet og ønsker velkommen).
+- Lagdukke: skapninger av mange tegnede deler som beveger seg hver for seg (munner som hvisker, ører som rykker, ansikter som skriker). Samme grensesnitt som papirdukken. Doll kan nå sitte (sete og hjul) og ta imot positurer.
+- Ny fil src/31_sjefpulje.js:
+  - Tilfeldige sjefer: etasje 1 til 3 trekkes fra Krok, Rust, Overarkivaren og Den Store Klumpen for hvert løp, uten gjentakelse. Journalen står fast nederst. Helsa følger etasjen. Trekningen lagres med løpet; eldre lagringer får de faste sjefene. Journalens «omskriving» låner angrep fra sjefene du faktisk har møtt.
+  - Den Store Klumpen: alle pasientene som ble til én, med fire ansikter, løse øyne, seks armer og nattlue. Klemmer seg sammen og spruter puss rundt seg, slår ned med armene tre eller fire ganger, spytter ut klumpunger og ruller etter deg med et blodspor (BONK i veggen). Egne replikker, tale og dødsårsaker.
+  - Minisjefer kommer til slutt i rommet med frivillig risiko, og fra underetasjen av og til i et kamprom lenger inne. Lampene slukner når de kommer, de får egen lilla helsestang og legger alltid igjen et preparatglass og et hjerte. De tåler slag uten å bli svimeslått og skyves mindre.
+- Mørke når sjefer kommer: alle lys slukner og flimrer tilbake.
+- fiendeBilde(type) tegner hvilken som helst fiendetype forfra til et lerret (til fiendeindeksen).
+- Tester: generator 1200 av 1200, gjennomspilling uten feil (sjefen i etasje 1 var Rust denne gangen). Alle sju skapninger lever og angriper uten konsollfeil, alle fem angrepene til Klumpen virker, og minisjefen i risikorommet får helsestang og gir belønning.

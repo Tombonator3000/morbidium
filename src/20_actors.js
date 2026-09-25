@@ -78,7 +78,7 @@ function weaponStats() { return WEAPONS[G.player.weapon] || WEAPONS.stativ; }
 function updatePlayer(dt, A) {
   const P = G.player;
   if (!P.alive) { P.doll.update(dt, { down: true }); return; }
-  P.iframe -= dt; P.invuln -= dt; P.fastT -= dt; P.kamferT -= dt; P.stunT -= dt; P.dodgeText = false;
+  P.iframe -= dt; P.invuln -= dt; P.fastT -= dt; P.kamferT -= dt; P.stunT -= dt; P.mokkT = (P.mokkT || 0) - dt; P.roykT = (P.roykT || 0) - dt; P.dodgeText = false;
   for (let i = 0; i < 4; i++) P.cds[i] = Math.max(0, P.cds[i] - dt);
   // utsatt skade fra benektelse
   for (let i = P.denied.length - 1; i >= 0; i--) { const d = P.denied[i]; d.t -= dt; if (d.t <= 0) { P.denied.splice(i, 1); P.hp -= d.d; numText(P.x, P.z, Math.round(d.d), 'hurt', 2); FX.bubble(P, 'Å ja, der kom den.', 1.4); Sound.play('hurt', .7); if (P.hp <= 0) { P.lastCause = d.cause || 'self'; playerDie(); return; } } }
@@ -120,7 +120,7 @@ function updatePlayer(dt, A) {
     if (k.p >= 1) { P.atk = null; if (P.queued) { P.queued = false; startSwing(false); } else P.chain = .3; }
   } else if (P.chain > 0) { P.chain -= dt; if (P.chain <= 0) P.combo = 0; }
   // bevegelse
-  let spd = (5 + P.stats.smidighet * .15) * (P.gasT > 0 ? .6 : 1) * (P.adrenT > 0 ? 1.4 : 1) * (hasDiag('ruging') ? .9 : 1) * (hasDiag('samlemani') ? .95 : 1) * (P.fastT > 0 ? 1.4 : 1) * (P.coffee ? 1.1 : 1) * Items.stat('speed'), mx = stunned ? 0 : A.mx, mz = stunned ? 0 : A.mz;
+  let spd = (5 + P.stats.smidighet * .15) * (P.gasT > 0 ? .6 : 1) * (P.mokkT > 0 ? .72 : 1) * (P.roykT > 0 ? .82 : 1) * (P.adrenT > 0 ? 1.4 : 1) * (hasDiag('ruging') ? .9 : 1) * (hasDiag('samlemani') ? .95 : 1) * (P.fastT > 0 ? 1.4 : 1) * (P.coffee ? 1.1 : 1) * Items.stat('speed'), mx = stunned ? 0 : A.mx, mz = stunned ? 0 : A.mz;
   if (P.roll > 0) { P.roll -= dt; mx = Math.sin(P.rollA); mz = Math.cos(P.rollA); spd = 11 + P.stats.smidighet * .3; if (Math.random() < dt * 20) puff(P.x, P.z, 1, .45); }
   else if (P.atk) spd *= .3; else if (P.charging) spd *= .4;
   P.vx = lerp(P.vx, mx * spd, 1 - Math.exp(-dt * 16)); P.vz = lerp(P.vz, mz * spd, 1 - Math.exp(-dt * 16));
@@ -375,9 +375,11 @@ function enemyTarget(e) {
    ============================================================ */
 function spawnEnemy(type, x, z, elite, depth) {
   const D = ENEMIES[type], gj = G.run && G.run.gjen, hpK = (1 + (depth - 1) * .3) * (gj ? 1.3 : 1);
-  const doll = new Doll(type, { elite, weapon: type === 'oppasser' ? 'sproyte' : D.weapon || null, shadow: type === 'pleier' ? .55 : D.r > .45 ? .5 : .42, scale: elite ? 1.2 : 1 });
+  // lagdelte skapninger (29_monstre.js) har egne deler i stedet for hode og kropp
+  const dopt = { elite, weapon: type === 'oppasser' ? 'sproyte' : D.weapon || null, shadow: D.skygge || (type === 'pleier' ? .55 : D.r > .45 ? .5 : .42), scale: elite ? 1.2 : 1 };
+  const doll = typeof LAGDUKKE === 'object' && LAGDUKKE[type] ? new Lagdukke(type, LAGDUKKE[type], dopt) : new Doll(type, dopt);
   R.scene.add(doll.root); doll.root.position.set(x, 0, z); doll.root.scale.setScalar(.01);
-  const e = { kind: 'enemy', type, x, z, r: D.r * (elite ? 1.15 : 1), face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, elite, hp: D.hp * hpK * (elite ? 2.2 : 1), dmg: D.dmg * (1 + (depth - 1) * .17) * (elite ? 1.3 : 1) * (gj ? 1.2 : 1), sp: D.speed, state: 'spawn', t: .5, cd: rnd(.8, 2), stun: 0, slip: 0, sleep: 0, speechT: rnd(3, 8), teles: [], bubbleH: D.bubbleH || (type === 'yngel' ? 1.7 : type === 'pleier' ? 3.3 : 3.1), blood: D.blood || (type === 'yngel' ? 0x6b2d8c : 0xb3261e), depth };
+  const e = { kind: 'enemy', type, x, z, r: D.r * (elite ? 1.15 : 1), face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, elite, hp: D.hp * hpK * (elite ? 2.2 : 1), dmg: D.dmg * (1 + (depth - 1) * .17) * (elite ? 1.3 : 1) * (gj ? 1.2 : 1), sp: D.speed, state: 'spawn', t: .5, cd: rnd(.8, 2), stun: 0, slip: 0, sleep: 0, speechT: rnd(3, 8), teles: [], bubbleH: D.bubbleH || (type === 'yngel' ? 1.7 : type === 'pleier' ? 3.3 : 3.1), blood: D.blood || (type === 'yngel' ? 0x6b2d8c : 0xb3261e), depth, mini: !!D.mini, noRecipe: !!D.mini, steady: !!D.mini, kbMult: D.mini ? .35 : undefined };
   e.max = e.hp; G.enemies.push(e); puff(x, z, 2, .8, type === 'yngel' ? '#6b3a82' : null);
   if (type === 'yngel') Particles.spawn(x, .2, z, 8, 0x6b2d8c, { speed: 2, up: 5 });
   return e;
@@ -400,6 +402,10 @@ function updateEnemy(e, dt) {
   e.t -= dt; e.cd -= dt; e.stun -= dt; e.slip -= dt; e.sleep -= dt; e.speechT -= dt; e.confused -= dt || 0; e.exposed -= dt; e.shrink -= dt; e.bloat -= dt;
   if (e.bleed > 0) { e.bleed -= dt; e.bleedT = (e.bleedT || 0) - dt; if (e.bleedT <= 0) { e.bleedT = .5; hurt(e, 2, { from: 'player' }); } }
   const T = enemyTarget(e), dx = T.x - e.x, dz = T.z - e.z, dist = Math.hypot(dx, dz), toT = Math.atan2(dx, dz);
+  // egne kroker for nyere fiender (29_monstre.js): kan gi et annet mål for bevegelsen, som sporet Speilpasienten følger
+  const alt = Grotesk.tick && Grotesk.tick[e.type] && e.state !== 'spawn' ? Grotesk.tick[e.type](e, dt, T, dist, toT) : null;
+  const mdist = alt ? Math.hypot(alt.x - e.x, alt.z - e.z) : dist, mto = alt ? Math.atan2(alt.x - e.x, alt.z - e.z) : toT;
+  if (e.positur) { e.positur.t += dt; e.positur.p = e.positur.t / e.positur.dur; if (e.positur.p >= 1) e.positur = null; }
   let mv = 0, want = e.face, speedMul = 1;
   if (e.state === 'spawn') { e.doll.root.scale.setScalar(Math.min(1, 1 - e.t / .5)); if (e.t <= 0) { e.state = 'chase'; e.doll.root.scale.setScalar(1); } }
   else if (e.stun > 0 || e.slip > 0 || e.sleep > 0) { if (e.state === 'wind') { cancelTeles(e); e.state = 'recover'; e.t = .3; } }
@@ -415,7 +421,8 @@ function updateEnemy(e, dt) {
   else if (e.state === 'chase') {
     want = toT;
     const keep = { pleier: 1.3, kultist: 3.6, oppasser: 5, yngel: 1.0 }[e.type] ?? Grotesk.keep[e.type] ?? 1.2;
-    if (dist > keep) mv = 1; else if (dist < keep - 1.3 && (e.type === 'kultist' || e.type === 'oppasser' || Grotesk.retreat[e.type])) mv = -.7;
+    if (mdist > keep) mv = 1; else if (mdist < keep - 1.3 && (e.type === 'kultist' || e.type === 'oppasser' || Grotesk.retreat[e.type])) mv = -.7;
+    if (e.stille > 0) mv = 0;
     const canHit = T === P ? P.alive : true;
     if (e.cd <= 0 && canHit) {
       if (e.type === 'pleier') {
@@ -439,10 +446,10 @@ function updateEnemy(e, dt) {
   // bevegelse: strømningsfelt rundt møbler, rett mot målet på kort hold
   let vx = 0, vz = 0;
   if (mv) {
-    let fx = Math.sin(toT), fz = Math.cos(toT);
+    let fx = Math.sin(mto), fz = Math.cos(mto);
     // rundt møbler: strømningsfeltet når sikten er blokkert for kroppen (ikke bare midtpunktet), eller når fienden står fast
-    if (mv > 0 && dist > 1.6 && (e.stuckT > 0 || !losWide(e.x, e.z, T.x, T.z, e.r))) {
-      const f = T === P ? flowDir(e) : null;
+    if (mv > 0 && mdist > 1.6 && (e.stuckT > 0 || !losWide(e.x, e.z, alt ? alt.x : T.x, alt ? alt.z : T.z, e.r))) {
+      const f = T === P && !alt ? flowDir(e) : null;
       if (f) { fx = f.x; fz = f.z; } else if (e.stuckT > 0) { const a = toT + e.sideSign * 1.35; fx = Math.sin(a); fz = Math.cos(a); }
     }
     const sp = e.sp * (e.shrink > 0 ? 1.2 : 1) * (e.bloat > 0 ? .7 : 1);
@@ -450,7 +457,8 @@ function updateEnemy(e, dt) {
   }
   for (const o of G.enemies) if (o !== e && o.alive) { const d = Math.hypot(e.x - o.x, e.z - o.z), m = e.r + o.r; if (d < m && d > 0) { vx += (e.x - o.x) / d * (m - d) * 8; vz += (e.z - o.z) / d * (m - d) * 8; } }
   if (P.alive) { const d = Math.hypot(e.x - P.x, e.z - P.z), m = e.r + P.r; if (d < m && d > 0) { vx += (e.x - P.x) / d * (m - d) * 6; vz += (e.z - P.z) / d * (m - d) * 6; } }
-  e.vx = lerp(e.vx, vx, 1 - Math.exp(-dt * 10)); e.vz = lerp(e.vz, vz, 1 - Math.exp(-dt * 10));
+  const styr = Grotesk.styring && Grotesk.styring[e.type] || 10; // lav verdi: svinger tregt, som en rullestol i fart
+  e.vx = lerp(e.vx, vx, 1 - Math.exp(-dt * styr)); e.vz = lerp(e.vz, vz, 1 - Math.exp(-dt * styr));
   moveEnt(e, (e.vx + e.kvx) * dt, (e.vz + e.kvz) * dt); const kb = Math.hypot(e.kvx, e.kvz); e.kvx *= Math.pow(.015, dt); e.kvz *= Math.pow(.015, dt);
   // står fienden fast mens den vil fram, prøver den en annen vei en stund
   e.stuckT = (e.stuckT || 0) - dt; e.progT = (e.progT || 0) + dt;
@@ -461,8 +469,8 @@ function updateEnemy(e, dt) {
   for (const zn of G.zones) if (zn.kind === 'trip' && e.slip <= 0) { const t = clamp(((e.x - zn.x0) * (zn.x1 - zn.x0) + (e.z - zn.z0) * (zn.z1 - zn.z0)) / (d2(zn.x0, zn.z0, zn.x1, zn.z1) || 1), 0, 1); if (d2(e.x, e.z, lerp(zn.x0, zn.x1, t), lerp(zn.z0, zn.z1, t)) < .25) enemySlip(e); }
   e.doll.setFacing(e.face);
   const sp = Math.hypot(e.vx, e.vz);
-  e.doll.update(dt, { speed: sp, down: e.slip > 0 || e.sleep > 0, raise: e.raise || e.state === 'pose', headTilt: e.state === 'pose' ? .25 : 0, hop: Grotesk.hop[e.type] && sp > 1 ? Math.abs(Math.sin(G.time * (e.type === 'rotte' ? 20 : 14))) * (e.type === 'tvang' ? .25 : .15) : 0, spin: e.rolling && e.state === 'charge' ? (G.time * 16) % TAU : 0,
-    attack: e.type === 'oppasser' && e.state === 'wind' ? { p: .1, combo: 0 } : e.type === 'pleier' && e.state === 'wind' ? { p: .2 + (1 - e.t / .55) * .2, combo: 0 } : null, hold: e.type === 'oppasser' || Grotesk.hold[e.type] });
+  e.doll.update(dt, { speed: sp, down: e.slip > 0 || e.sleep > 0, raise: e.raise || e.state === 'pose', headTilt: e.state === 'pose' ? .25 : 0, hop: Grotesk.hop[e.type] && sp > 1 ? Math.abs(Math.sin(G.time * (e.type === 'rotte' ? 20 : 14))) * (e.type === 'tvang' ? .25 : .15) : 0, spin: e.rolling && e.state === 'charge' ? (G.time * 16) % TAU : e.spinn ? (G.time * 14) % TAU : 0,
+    attack: e.type === 'oppasser' && e.state === 'wind' ? { p: .1, combo: 0 } : e.type === 'pleier' && e.state === 'wind' ? { p: .2 + (1 - e.t / .55) * .2, combo: 0 } : null, hold: e.type === 'oppasser' || Grotesk.hold[e.type], pose: e.positur || null, aapen: e.aapen || 0 });
   e.doll.root.position.set(e.x, 0, e.z);
   if ((e.stun > 0 || e.sleep > 0) && Math.random() < dt * 3) Particles.spawn(e.x, 2.3, e.z, 1, e.sleep > 0 ? 0xcfe8ef : 0xfff6c8, { speed: 1, up: 1, g: 0, life: .5, size: .8 });
 }
@@ -473,12 +481,14 @@ function updateEnemy(e, dt) {
    og 12 prosent skade eller Våpenisert monolog (b) avbryter talen.
    ============================================================ */
 function spawnBoss(depth, x, z) {
-  const B0 = BOSSES[depth] || BOSSES[MAX_DEPTH], type = B0.type, tome = type === 'journalen';
-  const doll = new Doll(type, { fixedView: 'f', weapon: B0.weapon, shadow: 1, scale: 1 });
+  const B0 = typeof sjefFor === 'function' ? sjefFor(depth) : BOSSES[depth] || BOSSES[MAX_DEPTH], type = B0.type, tome = type === 'journalen';
+  const bopt = { fixedView: 'f', weapon: B0.weapon, shadow: B0.skygge || 1, scale: 1 };
+  const doll = typeof LAGDUKKE === 'object' && LAGDUKKE[type] ? new Lagdukke(type, LAGDUKKE[type], bopt) : new Doll(type, bopt);
   R.scene.add(doll.root); doll.root.position.set(x, 0, z);
   const B = { kind: 'boss', type, depth, name: B0.name, x, z, r: tome ? 1.1 : .9, face: 0, vx: 0, vz: 0, kvx: 0, kvz: 0, doll, alive: true, hp: B0.hp * (G.run && G.run.gjen ? 1.3 : 1), max: B0.hp * (G.run && G.run.gjen ? 1.3 : 1), B0, state: 'intro', t: 2.6, cd: 1.5, phase: 'fight', phasesDone: 0, stagger: 0, slowT: 0, teles: [], bubbleH: tome ? 4.2 : 4.6, enraged: false, anchored: true, blood: tome ? 0x6b2d8c : 0xb3261e, q: [] };
   B.glow = R.light(x, z, 5, tome ? '#b36be0' : type === 'arkivar' ? '#ffe0b0' : '#ffcc88', .3);
-  G.boss = B; FX.bubble(B, pick(LINES.bossIntro[depth]), 2.6, 'boss');
+  B.mono = LINES.monolog[type] || LINES.monolog[depth]; if (B0.r) B.r = B0.r;
+  G.boss = B; FX.bubble(B, pick(LINES.bossIntro[type] || LINES.bossIntro[depth]), 2.6, 'boss');
   $('bossName').textContent = B0.name; $('bossTitle').textContent = B0.title; $('bossBar').classList.remove('hidden');
   Sound.play('boss'); return B;
 }
@@ -487,7 +497,7 @@ function bossOnHurt(B, d) {
   const th = [.66, .33][B.phasesDone];
   if (th && B.hp / B.max < th && B.phase !== 'monolog') {
     B.phasesDone++; B.phase = 'monolog'; B.monoT = 6; B.monoDmg = 0; B.monoLine = 0; cancelTeles(B); B.state = 'talk';
-    FX.bubble(B, LINES.monolog[B.depth][0], 2, 'boss'); toast('Bossen holder tale', 'Slå hardt for å avbryte, eller svar med monolog');
+    FX.bubble(B, B.mono[0], 2, 'boss'); toast('Sjefen holder tale', 'Slå hardt for å avbryte, eller svar med monolog');
   }
 }
 function bossInterrupt(B) { B.phase = 'fight'; B.state = 'stagger'; B.t = 2.5; B.stagger = 2.5; FX.bubble(B, pick(LINES.interrupted), 1.8, 'boss'); Sound.play('stamp'); R.shake(.4); numText(B.x, B.z, 'AVBRUTT', 'crit', 4); }
@@ -506,12 +516,13 @@ function updateBoss(B, dt) {
   const sl = B.slowT > 0 ? .6 : 1; dt *= sl; B.slowT -= dt;
   for (let i = B.q.length - 1; i >= 0; i--) { const j = B.q[i]; j.t -= dt; if (j.t <= 0) { B.q.splice(i, 1); j.fn(); } }
   B.t -= dt; B.cd -= dt; B.stagger -= dt;
+  if (B.B0.tick) B.B0.tick(B, dt); // egne bevegelser, som Klumpen som ruller
   const dx = P.x - B.x, dz = P.z - B.z, dist = Math.hypot(dx, dz), toP = Math.atan2(dx, dz);
   let mv = 0;
   if (B.state === 'intro') { if (B.t <= 0) B.state = 'chase'; }
   else if (B.state === 'talk') {
     B.monoT -= dt;
-    const lines = LINES.monolog[B.depth], li = Math.floor((6 - B.monoT) / 2);
+    const lines = B.mono, li = Math.floor((6 - B.monoT) / 2);
     if (li !== B.monoLine && li < lines.length) { B.monoLine = li; FX.bubble(B, lines[li], 2, 'boss'); Sound.mumble(6, 110); }
     if (B.monoT <= 0) { B.phase = 'fight'; B.state = 'chase'; B.enraged = true; toast('Talen er over', 'Bossen er rasende'); B.cd = .5; }
   }
@@ -521,11 +532,12 @@ function updateBoss(B, dt) {
     if (dist > 2.2) mv = 1;
     if (B.cd <= 0 && P.alive) bossAttack(B, pick(B.B0.attacks), dist, toP);
   }
-  if (mv) { const sp = (B.type === 'journalen' ? 2.3 : B.type === 'arkivar' ? 2.1 : 1.9) * (B.enraged ? 1.3 : 1); B.vx = lerp(B.vx, Math.sin(toP) * sp, dt * 4); B.vz = lerp(B.vz, Math.cos(toP) * sp, dt * 4); } else { B.vx *= Math.pow(.02, dt); B.vz *= Math.pow(.02, dt); }
+  if (mv) { const sp = (B.B0.fart || (B.type === 'journalen' ? 2.3 : B.type === 'arkivar' ? 2.1 : 1.9)) * (B.enraged ? 1.3 : 1); B.vx = lerp(B.vx, Math.sin(toP) * sp, dt * 4); B.vz = lerp(B.vz, Math.cos(toP) * sp, dt * 4); } else { B.vx *= Math.pow(.02, dt); B.vz *= Math.pow(.02, dt); }
   moveEnt(B, B.vx * dt, B.vz * dt);
   if (P.alive && d2(P.x, P.z, B.x, B.z) < (B.r + P.r) ** 2) { const a = Math.atan2(P.x - B.x, P.z - B.z); P.kvx = Math.sin(a) * 5; P.kvz = Math.cos(a) * 5; }
   B.face = toP; B.doll.setFacing(toP);
-  B.doll.update(dt, { speed: Math.hypot(B.vx, B.vz), raise: B.state === 'talk', attack: B.state === 'act' && B.atkAnim ? { p: 1 - Math.max(0, B.t) / B.atkDur, combo: 0, heavy: true } : null, headTilt: B.state === 'stagger' ? .3 : 0 });
+  if (B.positur) { B.positur.t += dt; B.positur.p = B.positur.t / B.positur.dur; if (B.positur.p >= 1) B.positur = null; }
+  B.doll.update(dt, { speed: Math.hypot(B.vx, B.vz), raise: B.state === 'talk', attack: B.state === 'act' && B.atkAnim && !B.positur ? { p: 1 - Math.max(0, B.t) / B.atkDur, combo: 0, heavy: true } : null, headTilt: B.state === 'stagger' ? .3 : 0, pose: B.positur || null, aapen: B.aapen || (B.state === 'talk' ? .8 : 0) });
   B.doll.root.position.set(B.x, B.hop || 0, B.z);
   if (B.glow) { B.glow.position.set(B.x, 0, B.z + .5); R.setLight(B.glow, B.state === 'talk' ? .7 + Math.sin(G.time * 8) * .2 : .3); }
   if (B.stagger > 0 && Math.random() < dt * 4) Particles.spawn(B.x, 3.6, B.z, 1, 0xfff6c8, { speed: 1, up: 1, g: 0, life: .5 });

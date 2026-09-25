@@ -212,7 +212,7 @@ function slowMo(t, s) {
 }
 
 /* ---------- pytter og strøm ---------- */
-const CONDUCTIVE = { wet: 1, soup: 1, vomit: 1, blod: 1 };
+const CONDUCTIVE = { wet: 1, soup: 1, vomit: 1, blod: 1, mokk: 1 };
 function addPuddle(x, z, kind, r = 1, life = 16) {
   if (tIdx(x, z) < 0 || !G.F.tiles[tIdx(x, z)]) return null;
   for (const p of G.puddles) if (p.kind === kind && d2(p.x, p.z, x, z) < (p.r * .7) * (p.r * .7)) { p.r = Math.min(2.6, Math.max(p.r, r) + .15); p.life = Math.max(p.life, life); p.mesh.scale.set(p.r * 2, p.r * 2, 1); return p; }
@@ -257,6 +257,7 @@ function groundEffects(e, dt, speed) {
       if (e.kind === 'enemy' && e.alive) numText(e.x, e.z, 'ZAPP', 'crit', 2.2);
     }
   }
+  if (p.kind === 'mokk' && e.kind === 'player') e.mokkT = .2;
   if (p.kind === 'morb') {
     if (e.kind === 'player') addMorb(dt * 3.2);
     else if (e.type === 'yngel' && e.hp < e.max) e.hp = Math.min(e.max, e.hp + dt * 4);

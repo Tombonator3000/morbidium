@@ -119,7 +119,7 @@ function giveCard(id, quiet) {
 function newRun(awk) {
   Merknad.nye = [];
   const run = G.run = { awk, patient: G.patient, look: G.patient.look, gjen: !!G.patient.gjen, seed: rndi(1, 2e9), stats: { helse: 2, styrke: 2, smidighet: 2, forstand: 2, fatteevne: 2 }, weapon: 'mopp', slots: [null, null, null, null], reserve: [], diag: [], teeth: 0, morb: 0, hpFrac: 1, kills: 0, rooms: 0, t0: performance.now(), price: 1 };
-  Items.newRun();
+  Items.newRun(); run.sjefer = trekkSjefer(run.seed); // sjefene for dette løpet (31_sjefpulje.js)
   let n = 2;
   if (awk === 'eget') n = 3;
   if (awk === 'likhus') { run.weapon = 'sag'; run.teeth = 25; run.hpFrac = .6; run.price = 1.25; run.revealBoss = true; }
@@ -142,13 +142,13 @@ function killObj(o) { if (!o) return; if (o.doll) o.doll.dispose(); for (const k
 function clearFloor() {
   for (const e of G.enemies) killObj(e); G.enemies = [];
   if (G.boss) { killObj(G.boss); if (G.boss.glow) R.remove(G.boss.glow); G.boss = null; }
-  show('bossBar', false);
+  show('bossBar', false); show('miniBar', false);
   for (const k of ['allies', 'projectiles', 'puddles', 'pickups', 'npcs', 'walls', 'halluc', 'zones']) { for (const o of G[k] || []) killObj(o); G[k] = []; }
   for (const t of G.tele) R.remove(t.mesh); G.tele = [];
   for (const f of G.fxl) R.remove(f.obj); G.fxl = [];
   for (const b of G.barriers) R.remove(b.g); G.barriers = [];
   if (G.titleDolls) { G.titleDolls.forEach(d => d.dispose()); G.titleDolls = null; }
-  G.props = []; clearCage(); Items.clear(); clearVFX(); Anim.clear(); Particles.clear(); FX.clear(); G.lock = null; G.trapdoor = null; G.flow = null; G.combat = null; G.corpses = [];
+  G.props = []; clearCage(); Items.clear(); clearVFX(); Anim.clear(); Monstre.clear(); Particles.clear(); FX.clear(); G.lock = null; G.trapdoor = null; G.flow = null; G.combat = null; G.corpses = [];
 }
 function decorateLevel() {
   const F = G.F, rng = mulberry32(F.seed || 7);
@@ -180,7 +180,7 @@ function startFloor(depth, first) {
   }
   const P = G.player, sp = freeSpot(sr.x + sr.w / 2, sr.z + sr.h / 2 + 1, 4); P.x = sp.x; P.z = sp.z; P.vx = P.vz = P.kvx = P.kvz = 0;
   P.doll.root.position.set(P.x, 0, P.z); P.coffee = false;
-  Oppskrift.onFloor(); Items.onFloor(); Items.updateLook(); Spesial.onFloor(); G.lastRid = -2; G.slowEnemies = 0; Aktiv.key = '';
+  Oppskrift.onFloor(); Items.onFloor(); Items.updateLook(); Spesial.onFloor(); Mini.onFloor(); G.lastRid = -2; G.slowEnemies = 0; Aktiv.key = '';
   G.rooms = F.rooms.map(r => ({ cleared: r.role === 'cursed' || (r.role !== 'boss' && !(r.waves && r.waves.length)), visited: false }));
   G.seen = new Uint8Array(F.W * F.H); G.seenT = 0; G.shops = {}; G.lore = {}; Lomme.onFloor();
   const reveal = r => { for (let z = r.z - 1; z <= r.z + r.h; z++) for (let x = r.x - 1; x <= r.x + r.w; x++) if (x >= 0 && z >= 0 && x < F.W && z < F.H) G.seen[z * F.W + x] = 1; };
@@ -608,7 +608,7 @@ function hudUpdate() {
       const tb = $('tAkt'); tb.innerHTML = ''; tb.appendChild(partCanvas(aktIcon(ak.id), 52, 52, 1)); const pp = document.createElement('span'); pp.className = 'pp'; pp.innerHTML = pips; tb.appendChild(pp);
     }
   }
-  $('roomsign').style.visibility = G.boss && G.boss.alive ? 'hidden' : '';
+  $('roomsign').style.visibility = (G.boss && G.boss.alive) || Mini.sist ? 'hidden' : '';
   if (G.boss && G.boss.alive) $('bossFill').style.width = clamp(G.boss.hp / G.boss.max, 0, 1) * 100 + '%';
 }
 function drawMap() {
@@ -677,7 +677,7 @@ function loop(now) {
     const edt = G.slowEnemies > 0 ? sdt * .3 : sdt;
     for (const e of G.enemies) updateEnemy(e, edt); G.enemies = G.enemies.filter(e => !e.gone);
     if (G.boss) { updateBoss(G.boss, edt); if (G.boss.gone) G.boss = null; }
-    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); Anim.tick(sdt); Blod.tick(sdt); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt); updateZones(sdt); Spesial.update(sdt); Aktiv.update(sdt); Oppskrift.update(sdt);
+    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); Anim.tick(sdt); Blod.tick(sdt); Monstre.tick(sdt); Mini.tick(); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt); updateZones(sdt); Spesial.update(sdt); Aktiv.update(sdt); Oppskrift.update(sdt);
     if (hallucinate) hallucinate(sdt);
     G.flowT = (G.flowT || 0) - sdt; if (G.flowT <= 0 && P.alive) { G.flowT = .25; buildFlow(Math.floor(P.x), Math.floor(P.z)); }
     roomLogic(sdt); interactLogic(A);
@@ -734,7 +734,7 @@ function boot() {
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };
-  Object.assign(window, { rolig, D3, Anim, ANIM, POSER, posStat, Blod, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { rolig, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
   step('Pakker ut bilder');
   Art.preload().then(() => { step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }

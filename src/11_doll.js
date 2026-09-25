@@ -112,6 +112,8 @@ class Doll {
       this.plane.add(this.body, this.head, this.shoeL, this.shoeR);
       this.wp = new THREE.Group(); this.plane.add(this.wp);
       if (this.wpId) this.setWeapon(this.wpId);
+      // sittende figurer (Trillepasienten): et stort hjul som ruller, synlig fra siden
+      if (this.rig.hjul) { this.hjul = partMesh(charPart(type, 'hjul', 'f'), this.U); this.plane.add(this.hjul); this.hjulA = 0; }
     }
     this.meshes = []; this.plane.traverse(o => { if (o.isMesh && o.material.map) this.meshes.push(o); });
   }
@@ -133,6 +135,7 @@ class Doll {
     for (const a of this.addons || []) {
       const base = a.L.at === 'body' || !this.head ? this.body : this.head, off = a.L.off[v] || a.L.off.f;
       if (a.L.views) { const P = a.L.views[v] || a.L.views.f; if (P) setPart(a.m, P); a.m.visible = !!(a.L.views[v] || (v !== 'b' && a.L.views.f)); } else a.m.visible = !(a.L.face && v === 'b');
+      if (a.m.userData.skjult || (a.L.bare && !a.L.bare.includes(v))) a.m.visible = false; // skjult av spillet, eller bare synlig i noen visninger
       a.m.position.set(base.position.x + off[0], base.position.y + off[1], base.position.z + (a.L.behind ? -.004 : .004)); a.m.rotation.z = base.rotation.z;
     }
   }
@@ -190,15 +193,28 @@ class Doll {
     else { fL = [-hw - .03, Math.max(0, sp) * .12]; fR = [hw + .03, Math.max(0, -sp) * .12]; }
     if (!moving) { fL[1] = fR[1] = 0; }
     const hipL = v === 's' ? [-.03, hipY + .04] : [-hw, hipY + .04], hipR = v === 's' ? [.03, hipY + .04] : [hw, hipY + .04];
-    this.back.add(limb(hipL[0], hipL[1], fL[0], fL[1] + .07, v === 's' ? .05 : -.03), legW, legC, z.legs);
-    this.back.add(limb(hipR[0], hipR[1], fR[0], fR[1] + .07, v === 's' ? .05 : .03), legW, legC, z.legs);
+    if (!R0.sete) {
+      this.back.add(limb(hipL[0], hipL[1], fL[0], fL[1] + .07, v === 's' ? .05 : -.03), legW, legC, z.legs);
+      this.back.add(limb(hipR[0], hipR[1], fR[0], fR[1] + .07, v === 's' ? .05 : .03), legW, legC, z.legs);
+    }
+    this.shoeL.visible = this.shoeR.visible = !R0.sete;
     this.shoeL.position.set(fL[0], fL[1], z.shoes + (v === 's' ? .004 : 0)); this.shoeR.position.set(fR[0], fR[1], z.shoes);
     this.shoeL.scale.x = this.shoeR.scale.x = 1; if (v === 's') { this.shoeL.scale.x = this.shoeR.scale.x = 1.1; }
+    if (this.hjul) {
+      // hjulet ruller etter hvor langt figuren faktisk har flyttet seg siden forrige bilde
+      const rp = this.root.position; if (this.sistPos) this.hjulA -= Math.hypot(rp.x - this.sistPos.x, rp.z - this.sistPos.z) / (R0.hjul.r * this.sc); this.sistPos = { x: rp.x, z: rp.z };
+      this.hjul.visible = v === 's'; this.hjul.position.set(R0.hjul.x, R0.hjul.y, .042); this.hjul.rotation.z = this.hjulA;
+    }
     // armer
     const shL = [v === 's' ? -.02 : -R0.shW, shY], shR = [v === 's' ? .06 : R0.shW, shY];
     const armLen = .38 + R0.armW * .5;
     let hL = [shL[0] - .06 - sp * (v === 's' ? -.18 : .02), shL[1] - armLen + Math.max(0, -sp) * .05];
     let hR = [shR[0] + .06 + (v === 's' ? sp * .2 : 0), shR[1] - armLen + Math.max(0, sp) * .05];
+    if (R0.sete) {
+      // sittende: hendene på armlenene forfra, på hjulet fra siden (dytter i takt med farten)
+      if (v === 's') { const k = Math.sin(this.t * 6) * Math.min(1, this.speed * .3); hR = [R0.hjul.x + .12 + k * .12, R0.hjul.y + R0.hjul.r * .8]; hL = [R0.hjul.x + .02 + k * .1, R0.hjul.y + R0.hjul.r * .72]; }
+      else { hL = [shL[0] - .08, hipY + .06]; hR = [shR[0] + .08, hipY + .06]; }
+    }
     let wpAngle = v === 's' ? -.55 : v === 'b' ? .3 : -.3, wpBehind = v === 'b';
     const atk = st.attack;
     if (atk) {
