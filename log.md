@@ -427,3 +427,8 @@ Alle tidspunkt er UTC.
 - Slåtte sjefer (meta.sjefDrap) lagres med en gang, ikke først ved neste lagring.
 - Nye tester for alle tre. test_ekstra: 97 av 97.
 - Tom valgte retning for utvidelsen: seks etasjer der to er ute (Parken først, Nattskogen under grunnmuren før Dypet), korte drømmebaner med pasientens historie, og grov, kroppslig humor.
+
+## 2026-09-25 19:20 Idédugnad og designdokument for utvidelsen
+- Tom ba om idédugnad: spillet skal bli større, med flere absurde hendelser (øyet i sprekken med samtale), en dyp historie for hver pasient som spilles ut i drømmer når pasienten prøver å komme seg ut, David Lynch og Twin Peaks, skitten humor, og rom med mer variasjon, inne og ute.
+- Idéliste og tre spørsmål. Tom valgte seks etasjer der to er ute, korte drømmebaner og grov, kroppslig humor.
+- Planen står i UTVIDELSE.md: etasjene og rømningsforsøkene, gulv, vegger og former per romtype, uterom, fjorten hendelser, historiegeneratoren og de fem drømmekapitlene, nye fiender og sjefer, og rekkefølgen for arbeidet.
