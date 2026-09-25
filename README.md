@@ -10,6 +10,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og He
 ## Innhold
 - Seks etasjer: Parken utenfor, mottaket, underetasjen, kjelleren, Nattskogen som ikke burde finnes under grunnmuren, og Dypet. Hver har en overlege trukket fra en pulje for hvert løp, og nederst venter alltid Journalen. Minisjefer venter i rommet med frivillig risiko.
 - Rommene ser forskjellige ut: eget gulv og egne vegger for hver romtype, L-rom og rotunder, spisesal, dagligstue, elektroterapi, tannlegekontor, fyrrom, kjøkken og likkapell. Ute er det hekker, gasslykter, kirkegård, fontene, isdam, bjørkeskog, myr og tjern, med regn, snø eller ildfluer.
+- Rare ting skjer i gangene: et øye i en sprekk i veggen som prater og husker deg, ei ku i kapellet som sier navnet ditt, en telefon som ringer i et tomt rom, en mann som går baklengs, et hjemmebrentapparat, rotter som holder parlament og en mann som tror han er en lampe. Atten hendelser, to til fire per etasje, hver med en samtale og valg.
 - Rommene er 3D som standard, med lamper, måneskinn, skygger og tåke. Kvaliteten justeres av seg selv, og 3D kan slås av under Bilde.
 - Hver pasient settes sammen på nytt: kjønn, hår, hud, klær og pynt. Liket blir liggende der pasienten døde.
 - Kuriositeter som stables og kombineres, piller med ukjent virkning, apparater og lommerusk, evnekort i et frenologisk hode, diagnoser som følger av måten du spiller på.

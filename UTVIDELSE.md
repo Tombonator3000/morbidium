@@ -44,7 +44,7 @@ Hver gang pasienten prøver å komme seg ut, faller hen inn i en drøm og våkne
 
 ## Hendelser
 
-To til fire per etasje, trukket fra en pulje, aldri den samme to ganger i ett løp. Hver hendelse har en liten scene, en samtale med valg og en følge: tenner, helse, Morbidium, en kuriositet, en forbannelse, et kart, eller fiender. Noen husker deg fra tidligere løp (`meta.hendelser`).
+To til fire per etasje, trukket fra en pulje. Samme hendelse kommer ikke to ganger i ett løp så lenge puljen rekker, og aldri i to etasjer etter hverandre. Hver hendelse har en liten scene, en samtale med valg og en følge: tenner, helse, Morbidium, en kuriositet, en forbannelse, et kart, eller fiender. Noen husker deg fra tidligere løp (`meta.hendelser`).
 
 1. **Øyet i sprekken.** Stirrer, prater og kjenner igjen pasienter fra før. Viser det det ser mot betaling. Stikker du fingeren inn, får du den ikke alltid tilbake.
 2. **Mannen som går baklengs.** Snakker baklengs. Følger du ham, går han gjennom en vegg som ikke var der.
@@ -60,6 +60,12 @@ To til fire per etasje, trukket fra en pulje, aldri den samme to ganger i ett l�
 12. **Den dansende pleieren.** Danser alene til en grammofon. Står du stille og danser med, får du noe. Avbryter du, blir hun sint.
 13. **Radioen.** Et hørespill om en pasient som ligner mistenkelig på deg. Hint om historien din.
 14. **Kaffeselskapet i lysningen.** Tre gamle damer i bunad drikker kaffe midt i skogen om natta. Den ene har kuhale.
+15. **Kona med kubben.** Holder en vedkubbe som et spedbarn. Kubben har sett noe, og det handler om overlegen lenger ned.
+16. **Kjempen.** En mann i smoking, så høy at hodet forsvinner under taket. Sier tre ting, og to av dem er sanne.
+17. **Tannfeen.** Ligger under en seng i nattkjole og møllvinger og teller tenner. Betaler med hjerter.
+18. **Mannen som er en lampe.** Står inntil veggen med lampeskjerm på hodet. Skru ham opp, slå ham av, eller si sannheten.
+
+De fire siste kom til under arbeidet, fordi fjorten ikke rakk til seks etasjer uten gjentakelser.
 
 ## Pasientens historie og drømmene
 

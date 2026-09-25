@@ -197,7 +197,7 @@ const D3 = {
   },
   /* ---------- bakketåke: to lag støy over gulvet, bare der det er gulv ---------- */
   taake(F, th) {
-    const cfg = ({ 1: [.3, '#a8b8d0'], 2: [.1, '#e8dcc0'], 3: [.26, '#d4ece6'], 4: [.14, '#dccfb4'], 5: [.42, '#7a8ab8'], 6: [.34, '#9a7ab8'] }[G.depth] || [.12, '#dddddd']).slice();
+    const cfg = (F.taake || { 1: [.3, '#a8b8d0'], 2: [.1, '#e8dcc0'], 3: [.26, '#d4ece6'], 4: [.14, '#dccfb4'], 5: [.42, '#7a8ab8'], 6: [.34, '#9a7ab8'] }[G.depth] || [.12, '#dddddd']).slice(); // F.taake: drømmene har sin egen
     if (F.vaer === 'taake') cfg[0] += .22;
     const data = new Uint8Array(F.W * F.H); for (let i = 0; i < data.length; i++) data[i] = F.tiles[i] > 0 ? 255 : 0;
     const mask = new THREE.DataTexture(data, F.W, F.H, THREE.LuminanceFormat); mask.magFilter = mask.minFilter = THREE.LinearFilter; mask.generateMipmaps = false; mask.needsUpdate = true; this.egne.push(mask);
@@ -341,7 +341,7 @@ const D3 = {
     }
     // tegnede figurer og plater lyses av de samme lampene, med kantlys fra den sterkeste
     const alle = []; if (P && P.doll) alle.push(P.doll); for (const e of G.enemies || []) if (e.doll) alle.push(e.doll);
-    if (G.boss && G.boss.doll) alle.push(G.boss.doll); for (const n of G.npcs || []) if (n.doll) alle.push(n.doll); for (const d of G.titleDolls || []) alle.push(d);
+    if (G.boss && G.boss.doll) alle.push(G.boss.doll); for (const n of G.npcs || []) if (n.doll) alle.push(n.doll); for (const d of G.titleDolls || []) alle.push(d); for (const d of G.ekstraDukker || []) if (d.root.parent) alle.push(d); // figurer i hendelser og drømmer
     const KL = this._kl || (this._kl = {});
     for (const d of alle) { this.dukke(d); const p = d.root.position, c = this.lysVed(p.x, p.z, .9, KL); d.U.uTint.value.copy(d.U.tint0).multiply(c); this.settKant(d.U, KL, p.x, .9 + p.y, p.z, d.flip || 1); }
     if ((this.nyT = (this.nyT || 0) - dt) <= 0) { this.nyT = .5; this.lysLag(); for (const o of G.props) if (o.g && !o.d3) { o.d3 = true; this.moble(o); } }

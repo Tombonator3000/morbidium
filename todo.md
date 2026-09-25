@@ -10,7 +10,8 @@
 ## Utvidelsen (UTVIDELSE.md), fra 2026-09-25 kveld
 - [x] Idédugnad og designdokument. Tom valgte seks etasjer der to er ute, korte drømmebaner og grov, kroppslig humor.
 - [x] Trinn 1: seks etasjer (Parken og Nattskogen ute), dybdeskala, gulv og vegger per romtype, L-rom og rotunder, 19 nye romtyper, bakke, trær og vær ute, utgangene per etasje, lyd og musikk for uteetasjene.
-- [ ] Trinn 2: hendelsene (samtalepanel med valg, fjorten hendelser, minne på tvers av løp).
+- [x] Trinn 2: hendelsene. Samtalepanel med valg, atten hendelser (fire flere enn planlagt, så seks etasjer har nok), minne på tvers av løp.
+- [ ] Tom: prøve hendelsene og si hvilke som er morsomme og hvilke som bør skrives om. Tekstene står i src/35_hendelser.js.
 - [ ] Trinn 3: pasienthistoriene og drømmebanene mellom etasjene, slutten og arkivet.
 - [ ] Trinn 4: nye fiender og sjefer for Parken og Nattskogen (gartnere, kråker, Huldra, Vedkubbemannen, Nøkken, Overgartner Ansgar Hekk, Den hvite hjorten).
 - [ ] Trinn 5: nye nøkler i manifestet og en ny runde i ART_BRIEF.md for ChatGPT (møblene, uteting, utgangene).

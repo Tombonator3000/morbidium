@@ -444,3 +444,13 @@ Alle tidspunkt er UTC.
 - Lyd og musikk: ugle, kråke, kvist som knekker og en hund langt borte når du er ute, regn og vind som egne lyder. Parken har en vals fra musikkpaviljongen, Nattskogen et sakte stykke med klokker.
 - 3D: hver veggstil får sin egen mesh med toon-materiale, hekker og gjerder er lave, lampene sitter bare på innevegger, og tåka er tettest i skogen.
 - Tester: generator 1800 av 1800 (seks etasjer, stil på alle rom, former og romtyper), gjennomspilling uten feil (Krok i parken, porten åpnet seg og førte til mottaket), test_ekstra 103 av 103 med ny del for de seks etasjene.
+
+## 2026-09-25 20:43 Trinn 2 av utvidelsen: hendelsene
+- Ny fil src/35_hendelser.js med atten absurde hendelser, to til fire per etasje: øyet i sprekken, mannen som går baklengs, telefonen som ringer i et tomt rom, kaffe og kake, kua i kapellet, hjemmebrentapparatet, doet som snakker (utedo i parken), mannen i badekaret, heisen som bare går ned, rotteparlamentet, graven med navnet ditt, den dansende pleieren, radioen, kaffeselskapet i lysningen, kona med kubben, kjempen, tannfeen og mannen som er en lampe. De fire siste kom til fordi fjorten ikke rakk til seks etasjer uten gjentakelser.
+- Samtalepanelet: bilde til venstre, tekst og valg til høyre, tallene 1 til 4 velger, og valg du ikke har råd til er sperret. Bildene beskjæres til det som faktisk er tegnet. Hver hendelse gir noe eller tar noe: tenner, helse, Morbidium, kart, kuriositeter, flasker, et hjerte, fiender, eller en svakere sjef (graven).
+- Trekningen: nye hendelser først. Når puljen blir for liten i de nederste etasjene, kan en fra tidligere i løpet komme igjen, men aldri en fra etasjen rett over. Hendelser i kamprom kan først brukes når rommet er ryddet. Et valg som gir noe, kan ikke gjentas.
+- Minne på tvers av løp: øyet husker forrige pasient, kua husker at du sparket henne, og telefonen, badekaret og kona med kubben sier noe annet andre gang (meta.hendelser).
+- Lyder: kua rauter, telefonen ringer med en ekte klokke, radioen mumler.
+- 3D lyser nå også opp dukkene i hendelsene (G.ekstraDukker).
+- Rettet to feil fra trinn 1 som testene fant: været beholdt fargelisten fra ildfluene når du kom fra skogen, så regn og snø kastet en feil hvert bilde etterpå. Og Vaer.ute() svarte for forrige etasje når det var klarvær eller tåke.
+- Tester: test_ekstra har en ny del for hendelsene (fordeling over seks etasjer, øyet, sperrede valg, minnet, tastaturet, rom som må ryddes, graven, hjemmebrent, tannfeen, dansen og opprydding). 112 av 113 i første kjøring; den ene var værfeilen over, som er rettet. Generator 1800 av 1800, gjennomspilling uten feil.
