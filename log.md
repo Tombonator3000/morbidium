@@ -507,3 +507,9 @@ Alle tidspunkt er UTC.
 ## 2026-09-25 23:47 PR #3 flettet og publisert
 - PR #3 (tegnelistene, effektene og shaderne, og kombosystemet) er flettet inn i main som 505421f. GitHub Actions bygget og publiserte til GitHub Pages uten feil (kjøring 37).
 - Grenen claude/practical-babbage-nc80bu er satt til main igjen, så neste runde blir en ny PR.
+
+## 2026-09-25 23:57 Alt flettet, publisert og sjekket
+- Tom ba om å flette alt og gjøre klart. Ingen PR-er står åpne. Arbeidsgrenen claude/practical-babbage-nc80bu står likt med main, og den gamle grenen claude/funny-newton-cgnzav har ingen commits som mangler i main, så den kan slettes på GitHub.
+- GitHub Pages bygget og publiserte både PR #3 og PR #4 uten feil (kjøring 37 og 38).
+- Den publiserte fila (lastet ned fra tombonator3000.github.io/morbidium, 4,1 MB med 314 innebygde bilder) starter i testnettleseren på PC og mobil uten konsollfeil. Et nytt løp kommer i gang med 3D, glød fra tingene og kombotelleren (12 treff, nivå «Blodig»). Testnettleseren her stoler ikke på sertifikatet til nettverksproxyen, så fila ble testet lokalt i stedet for fra adressen.
+- Denne oppføringen flettes inn i main som en egen liten PR.
