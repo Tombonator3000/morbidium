@@ -237,6 +237,7 @@ Animasjonsark for figurer som går, slår og dør. Spillet animerer figurene ved
 3. Den Store Klumpen og klumpungene (se H).
 4. Spritearkene i runde 8 (se I), aller først `anim_kastesprut.png` og `anim_blodsprut.png`, som synes mest.
 5. UI-settet i runde 9 (se G). Hjertene og ringene gir mest for minst.
+6. Utvidelsen (UTVIDELSE.md), runde 10 til 13 i `ART_BRIEF.md`. Aller først figurarkene til de nye fiendene: `figur_gartner.png`, `figur_huldra.png` (bakfra er hun en råtten stamme, så baksiden på arket er viktig), `figur_vedkubbe.png` og `figur_nokken.png`, og de to sjefene. Deretter figurene uten ansikt i drømmene (`figur_blank_m.png`, `figur_blank_k.png`) og hendelsene i runde 11, som vises stort i samtalepanelet. Møblene i runde 10 kan komme sist; koden tegner dem godt nok til da.
 
 ## Første bestilling (stort sett levert, se status i `ART_BRIEF.md`)
 

@@ -30,6 +30,8 @@ De nye fiendene fra ChatGPTs forslag lages som figurark på `mal_figur.png`: `fi
 
 Spilleren settes sammen på nytt ved hver innleggelse. `figur_pasient.png` er mannen og `figur_pasient_kvinne.png` kvinnen; hårfarge, hudtone og kåpefarge legges på av spillet. Andre plagg er foreløpig tegnet i koden og kan erstattes med figurark som bare har kroppsraden fylt ut: `figur_tvang.png` (tvangstrøye), `figur_skjorte.png` (sykehusskjorte) og `figur_pyjamas.png` (stripete pyjamas). Småting til hodet kan leveres som enkeltbilder: `pynt_nattlue.png`, `pynt_papiljotter.png`, `pynt_harnett.png`, `pynt_hjelm.png`, `pynt_rosett.png`, `pynt_plaster.png` og `pynt_sting.png`, og fottøy som `sko_barfot.png` og `sko_sokk.png`.
 
+Utvidelsen høsten 2026 har fire nye runder i `ART_BRIEF.md`: runde 10 (møblene i de nye rommene, parken og skogen, og utgangene), runde 11 (hendelsene: øyet, kua, telefonen, heisen og de andre), runde 12 (drømmene: minnene, tegnene, døra og figurene uten ansikt) og runde 13 (gartnerne, kråkene, Huldra, Vedkubbemannen, Nøkken, Overgartneren og Den hvite hjorten). Figurene lages som figurark på `mal_figur.png` med navnet `figur_<type>.png`, for eksempel `figur_huldra.png`.
+
 ## Krav til bildene
 - PNG, helst med gjennomsiktig bakgrunn. Hvit eller ensfarget bakgrunn går også, den fjernes fra kantene og innover.
 - Ingen skygge på bakken, ingen tekst, ingen ramme, ingen bakgrunn.

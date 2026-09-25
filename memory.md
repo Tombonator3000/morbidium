@@ -191,3 +191,4 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Kålhodet er en liten kål med tenner som Overgartneren planter.
 - Sjefene: Overgartner Ansgar Hekk (saks, hekkring som blokkerer ruter i seks sekunder med to åpninger, gjødsel som mokk og røyk, kålhoder) og Den hvite hjorten (storm i en rett linje som ender i BONK mot veggen, geviret rundt seg, rødt månelys, og tåke med kopier der den selv blir halvt borte). Begge ligger i SJEF_PULJE, så etasje 1 til 5 trekker nå fem av seks.
 - Fiendeindeksen har 22 fiender og 10 sjefer. Håndboka har 17 sider.
+- Bildene fra ChatGPT til utvidelsen står i runde 10 til 13 i ART_BRIEF.md. tools/lag_manifest.py går gjennom seks etasjer og lager også utgangene, hendelsene (HEND_ART) og drømmene (DROM_ART). Gravsteiner med navn tas ikke med, fordi navnene tegnes av koden.

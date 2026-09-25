@@ -10,7 +10,7 @@ Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke red
 4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).
 5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.
 
-Status: 287 av 361 bilder er levert. Kolonnen «Levert» viser hvilke.
+Status: 287 av 532 bilder er levert. Kolonnen «Levert» viser hvilke.
 
 ## Stilblokk (lim inn i ChatGPT)
 
@@ -24,6 +24,204 @@ Technical: PNG with a TRANSPARENT background. Exactly one object, centered, full
 - Samme stil i alle bilder er viktigere enn at hvert enkelt bilde er perfekt. Bruk samme ChatGPT-samtale for en hel runde.
 - Gjennomsiktig bakgrunn er best. Hvit eller ensfarget bakgrunn går også, verktøyet fjerner den fra kantene og innover.
 - Ikke tegn skygge på bakken. Spillet legger på skygge og lys selv.
+
+## Runde 10: uterom og de nye rommene (59 bilder, 0 levert)
+
+Møblene til de nye romtypene, parken og Nattskogen, og utgangene fra hver etasje. Forfra, som de andre møblene. Det som ligger flatt på gulvet (grav, vak, kloakk, kullsjakt, blomsterbed), tegnes rett ovenfra.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
+| `prop_baal.png` | a campfire in a ring of stones, burning | stående |  |
+| `prop_bjork.png` | a tall white birch tree | stående |  |
+| `prop_bjork_dod.png` | a dead white birch tree without leaves | stående |  |
+| `prop_bjorn.png` | a stuffed brown bear standing upright with one glass eye missing | stående |  |
+| `prop_blomsterbed.png` | a flower bed with red and white flowers, seen from above (flat) | liggende |  |
+| `prop_bronn.png` | a stone well with a small wooden roof and a bucket | kvadrat |  |
+| `prop_busk.png` | a round clipped hedge bush | kvadrat |  |
+| `prop_elektrostol.png` | an electroshock therapy chair with leather straps and a metal head cap with wires | stående |  |
+| `prop_engel.png` | a weeping stone angel on a plinth | stående |  |
+| `prop_fontene.png` | a round stone fountain with water in the basin | kvadrat |  |
+| `prop_frisorstol.png` | a barber chair of cracked leather and chrome | stående |  |
+| `prop_fuglebad.png` | a stone birdbath | kvadrat |  |
+| `prop_gevir.png` | deer antlers mounted on a wooden plaque | stående |  |
+| `prop_globus.png` | an old globe on a wooden stand | stående |  |
+| `prop_grammofon.png` | a 1920s gramophone with a big brass horn on a small wooden cabinet | stående |  |
+| `prop_grav.png` | an open grave with a spade in the dirt pile, seen from above (flat) | stående |  |
+| `prop_gryte.png` | a big steel soup pot | kvadrat |  |
+| `prop_hagenisse.png` | a garden gnome with a red cap, slightly sinister | stående |  |
+| `prop_harhaug.png` | a pile of cut hair on the floor, seen from above (flat) | liggende |  |
+| `prop_instrumentbord.png` | a small steel instrument table with pliers and probes | stående |  |
+| `prop_kjele.png` | a big iron boiler with pipes, a pressure gauge and a glowing firebox | kvadrat |  |
+| `prop_kjerre.png` | a wooden hand cart | liggende |  |
+| `prop_kjottkrok.png` | meat hooks on a rail with sausages and a ham | stående |  |
+| `prop_kloakk.png` | a round sewer grate seen from above (flat), dark water below | kvadrat |  |
+| `prop_komfyr.png` | a black cast-iron kitchen stove with pots on top | kvadrat |  |
+| `prop_kors.png` | a tall wooden crucifix | stående |  |
+| `prop_kortbord.png` | a small card table with playing cards and a glass of cognac | kvadrat |  |
+| `prop_langbord.png` | a long wooden dining-hall table with white plates and cups, front view | liggende |  |
+| `prop_lenestol.png` | a worn floral armchair, front view | kvadrat |  |
+| `prop_liggestol.png` | a wooden sanatorium deck chair with a plaid blanket | stående |  |
+| `prop_lyktestolpe.png` | a cast-iron gas street lamp, lit | stående |  |
+| `prop_lysskjerm.png` | an X-ray light box on a stand showing the bones of a hand | stående |  |
+| `prop_lysthus.png` | a small white wooden gazebo with a pointed roof | kvadrat |  |
+| `prop_piano.png` | an old upright piano with brass candle holders, front view | kvadrat |  |
+| `prop_plantebord.png` | a greenhouse potting table with seedlings in clay pots | liggende |  |
+| `prop_porten.png` | a tall wrought-iron park gate, slightly open | kvadrat |  |
+| `prop_robat.png` | a wooden rowing boat pulled up on land | liggende |  |
+| `prop_rontgen.png` | a 1920s X-ray machine: a glass tube on a big jointed arm over a stand | kvadrat |  |
+| `prop_ror.png` | rusty pipes with a valve wheel | stående |  |
+| `prop_ruinmur.png` | a crumbling stone ruin wall | liggende |  |
+| `prop_siv.png` | a clump of reeds | stående |  |
+| `prop_skilt.png` | a wooden signpost pointing out of a forest | stående |  |
+| `prop_snomann.png` | a crooked snowman with coal eyes | stående |  |
+| `prop_sopp.png` | two toadstools, red with white dots | kvadrat |  |
+| `prop_spole.png` | a tall induction coil on a wooden base with a copper ring on top | stående |  |
+| `prop_spyttkum.png` | a white enamel spittoon on a stand | stående |  |
+| `prop_statue.png` | a classical marble statue of a woman on a plinth | stående |  |
+| `prop_stein.png` | a mossy boulder | liggende |  |
+| `prop_stubbe.png` | a tree stump | kvadrat |  |
+| `prop_tannglass.png` | a glass jar full of pulled teeth | stående |  |
+| `prop_tannlegestol.png` | an old dentist chair with a drill arm | stående |  |
+| `prop_teppe.png` | a folded plaid blanket on the ground, flat | liggende |  |
+| `prop_tre.png` | a large leafy park tree, front view | stående |  |
+| `prop_utgang.png` | a lit exit door with bright white light behind it | stående |  |
+| `prop_vak.png` | a black hole in the ice, seen from above (flat) | kvadrat |  |
+| `prop_vannkanne.png` | a zinc watering can | kvadrat |  |
+| `prop_vedovn.png` | a black wood-burning stove with a glowing door | stående |  |
+| `prop_vedstabel.png` | a stack of firewood | liggende |  |
+| `prop_vindu.png` | an open window with a night sky outside | stående |  |
+
+## Runde 11: hendelsene (24 bilder, 0 levert)
+
+De absurde hendelsene. Tonen er David Lynch på et norsk sanatorium i 1923: hverdagslig, litt feil, aldri skummelt på den åpenbare måten. Bildene vises også stort i samtalepanelet.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
+| `hode_baklengs_b.png` | HEAD ONLY (no neck, no body) of a pale man in a neat black suit and tie with his eyes closed and a small calm smile (he walks backwards and talks backwards). back view, facing away | kvadrat |  |
+| `hode_baklengs_f.png` | HEAD ONLY (no neck, no body) of a pale man in a neat black suit and tie with his eyes closed and a small calm smile (he walks backwards and talks backwards). front view, facing the viewer | kvadrat |  |
+| `hode_baklengs_s.png` | HEAD ONLY (no neck, no body) of a pale man in a neat black suit and tie with his eyes closed and a small calm smile (he walks backwards and talks backwards). side view, facing right | kvadrat |  |
+| `kropp_baklengs_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a pale man in a neat black suit and tie with his eyes closed and a small calm smile (he walks backwards and talks backwards). back view, facing away | liggende |  |
+| `kropp_baklengs_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a pale man in a neat black suit and tie with his eyes closed and a small calm smile (he walks backwards and talks backwards). front view, facing the viewer | liggende |  |
+| `kropp_baklengs_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a pale man in a neat black suit and tie with his eyes closed and a small calm smile (he walks backwards and talks backwards). side view, facing right | liggende |  |
+| `prop_badekarmann.png` | a man in a dark suit and hat sitting fully dressed in a clawfoot bathtub of grey water, reading a newspaper | kvadrat |  |
+| `prop_brennevin.png` | a patient in long underwear next to a copper moonshine still on a crate | kvadrat |  |
+| `prop_damer.png` | three old ladies in Norwegian bunad sitting on tree stumps drinking coffee; the third one has a cow tail | liggende |  |
+| `prop_heis.png` | an old cage elevator; inside stands a lift operator in a red uniform and cap with no face | stående |  |
+| `prop_kaffebord.png` | a small cafe table with a cup of black coffee and a slice of cream cake with one cherry | kvadrat |  |
+| `prop_kjempe.png` | a very tall thin man in a black tuxedo and bow tie, his small bald head far up | stående |  |
+| `prop_kjempeplante.png` | a giant carnivorous plant with glowing pods | stående |  |
+| `prop_ku.png` | a brown and white cow standing sideways, calm wet eyes and a brass bell | liggende |  |
+| `prop_kubbekona.png` | an old woman in a shawl and round glasses cradling a firewood log like a baby | stående |  |
+| `prop_kullhaug.png` | a heap of coal with a shovel stuck in it | liggende |  |
+| `prop_kullsjakt.png` | a square coal chute hatch in the floor with a ladder, seen from above (flat) | kvadrat |  |
+| `prop_lampemann.png` | a patient in striped pyjamas standing stiffly with a lampshade on his head and an electric cord coming out of his sleeve | stående |  |
+| `prop_lampemann_paa.png` | the same lamp patient, but the lampshade glows warm yellow | stående |  |
+| `prop_radiobord.png` | a 1920s wooden radio set on a small table | kvadrat |  |
+| `prop_rotter.png` | six rats sitting in a ring around a candle stump, the biggest wearing a white judge wig | liggende |  |
+| `prop_tannfe.png` | a woman in a nightgown with moth wings lying under an iron hospital bed, counting a pile of teeth | liggende |  |
+| `prop_telefon.png` | a wooden wall telephone with a rotary dial and the receiver hanging on its cord | stående |  |
+| `prop_utedo.png` | a wooden outhouse with a heart cut into the door | stående |  |
+
+## Runde 12: drømmene (52 bilder, 0 levert)
+
+Minnene, tegnene som går igjen, døra og figurene uten ansikt. Litt mykere og blekere enn resten, som et gammelt fotografi. Figurene uten ansikt skal ha et helt blankt papirark der ansiktet skulle vært, ingen trekk i det hele tatt.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
+| `drom_bok.png` | a prayer book open on a stand | stående |  |
+| `drom_bord.png` | a kitchen table set for four | kvadrat |  |
+| `drom_brev.png` | a small table with a handwritten letter and an envelope | kvadrat |  |
+| `drom_dor.png` | a closed door in a dark frame | stående |  |
+| `drom_dor_aapen.png` | the same door wide open with warm white light pouring out | stående |  |
+| `drom_dorlaast.png` | a closed wooden door with a key in the lock | stående |  |
+| `drom_foto.png` | an old framed photograph of two people on an easel; their faces are blank | stående |  |
+| `drom_hest.png` | a white horse standing sideways, calm and slightly unreal | kvadrat |  |
+| `drom_hvitveis.png` | a glass of white wood anemones on a stool | stående |  |
+| `drom_kaape_4a4a52.png` | a man's grey coat hanging on a coat stand | stående |  |
+| `drom_kaape_7a2a2e.png` | a woman's dark red coat hanging on a coat stand | stående |  |
+| `drom_koffert.png` | a packed brown suitcase with a train ticket on top | kvadrat |  |
+| `drom_kommode.png` | a wooden chest of drawers with one drawer open | kvadrat |  |
+| `drom_kopp.png` | a half-full cup of black coffee with steam, on a small table | kvadrat |  |
+| `drom_lue.png` | a red knitted hat lying on a wooden stool | stående |  |
+| `drom_mappe.png` | a patient file folder on a small table | kvadrat |  |
+| `drom_notat.png` | a lectern with an open policeman's notebook | stående |  |
+| `drom_sko.png` | a pair of dry leather shoes on a doormat | liggende |  |
+| `drom_soldat.png` | a tin soldier in a red coat, missing one foot, standing on a stool | stående |  |
+| `drom_speil.png` | a standing oval mirror | stående |  |
+| `drom_symaskin.png` | a black and gold antique sewing machine on a small table | kvadrat |  |
+| `drom_ur.png` | a gold pocket watch on a small wooden table | kvadrat |  |
+| `drom_vindu_brann.png` | a freestanding window frame with fire outside | stående |  |
+| `drom_vindu_klart.png` | a freestanding window frame with a starry night outside | stående |  |
+| `drom_vindu_regn.png` | a freestanding window frame with rain outside | stående |  |
+| `drom_vindu_rim.png` | a freestanding window frame covered in frost patterns | stående |  |
+| `drom_vindu_sno.png` | a freestanding window frame, snow falling at night outside | stående |  |
+| `drom_vindu_taake.png` | a freestanding window frame with thick fog outside | stående |  |
+| `hode_ansikt_k_b.png` | HEAD ONLY (no neck, no body) of the same woman in a long dark red dress, but now with an ordinary, gentle, slightly sad face. back view, facing away | kvadrat |  |
+| `hode_ansikt_k_f.png` | HEAD ONLY (no neck, no body) of the same woman in a long dark red dress, but now with an ordinary, gentle, slightly sad face. front view, facing the viewer | kvadrat |  |
+| `hode_ansikt_k_s.png` | HEAD ONLY (no neck, no body) of the same woman in a long dark red dress, but now with an ordinary, gentle, slightly sad face. side view, facing right | kvadrat |  |
+| `hode_ansikt_m_b.png` | HEAD ONLY (no neck, no body) of the same man in a dark 1910s suit, but now with an ordinary, gentle, slightly sad face. back view, facing away | kvadrat |  |
+| `hode_ansikt_m_f.png` | HEAD ONLY (no neck, no body) of the same man in a dark 1910s suit, but now with an ordinary, gentle, slightly sad face. front view, facing the viewer | kvadrat |  |
+| `hode_ansikt_m_s.png` | HEAD ONLY (no neck, no body) of the same man in a dark 1910s suit, but now with an ordinary, gentle, slightly sad face. side view, facing right | kvadrat |  |
+| `hode_blank_k_b.png` | HEAD ONLY (no neck, no body) of a woman in a long dark red dress with a white collar and her hair in a bun, whose face is a blank sheet of paper with no features at all (a figure in a dream). back view, facing away | kvadrat |  |
+| `hode_blank_k_f.png` | HEAD ONLY (no neck, no body) of a woman in a long dark red dress with a white collar and her hair in a bun, whose face is a blank sheet of paper with no features at all (a figure in a dream). front view, facing the viewer | kvadrat |  |
+| `hode_blank_k_s.png` | HEAD ONLY (no neck, no body) of a woman in a long dark red dress with a white collar and her hair in a bun, whose face is a blank sheet of paper with no features at all (a figure in a dream). side view, facing right | kvadrat |  |
+| `hode_blank_m_b.png` | HEAD ONLY (no neck, no body) of a man in a dark 1910s suit and tie whose face is a blank sheet of paper with no features at all, dark combed hair (a figure in a dream). back view, facing away | kvadrat |  |
+| `hode_blank_m_f.png` | HEAD ONLY (no neck, no body) of a man in a dark 1910s suit and tie whose face is a blank sheet of paper with no features at all, dark combed hair (a figure in a dream). front view, facing the viewer | kvadrat |  |
+| `hode_blank_m_s.png` | HEAD ONLY (no neck, no body) of a man in a dark 1910s suit and tie whose face is a blank sheet of paper with no features at all, dark combed hair (a figure in a dream). side view, facing right | kvadrat |  |
+| `kropp_ansikt_k_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the same woman in a long dark red dress, but now with an ordinary, gentle, slightly sad face. back view, facing away | kvadrat |  |
+| `kropp_ansikt_k_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the same woman in a long dark red dress, but now with an ordinary, gentle, slightly sad face. front view, facing the viewer | kvadrat |  |
+| `kropp_ansikt_k_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the same woman in a long dark red dress, but now with an ordinary, gentle, slightly sad face. side view, facing right | kvadrat |  |
+| `kropp_ansikt_m_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the same man in a dark 1910s suit, but now with an ordinary, gentle, slightly sad face. back view, facing away | liggende |  |
+| `kropp_ansikt_m_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the same man in a dark 1910s suit, but now with an ordinary, gentle, slightly sad face. front view, facing the viewer | liggende |  |
+| `kropp_ansikt_m_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the same man in a dark 1910s suit, but now with an ordinary, gentle, slightly sad face. side view, facing right | liggende |  |
+| `kropp_blank_k_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a woman in a long dark red dress with a white collar and her hair in a bun, whose face is a blank sheet of paper with no features at all (a figure in a dream). back view, facing away | kvadrat |  |
+| `kropp_blank_k_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a woman in a long dark red dress with a white collar and her hair in a bun, whose face is a blank sheet of paper with no features at all (a figure in a dream). front view, facing the viewer | kvadrat |  |
+| `kropp_blank_k_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a woman in a long dark red dress with a white collar and her hair in a bun, whose face is a blank sheet of paper with no features at all (a figure in a dream). side view, facing right | kvadrat |  |
+| `kropp_blank_m_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a man in a dark 1910s suit and tie whose face is a blank sheet of paper with no features at all, dark combed hair (a figure in a dream). back view, facing away | liggende |  |
+| `kropp_blank_m_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a man in a dark 1910s suit and tie whose face is a blank sheet of paper with no features at all, dark combed hair (a figure in a dream). front view, facing the viewer | liggende |  |
+| `kropp_blank_m_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a man in a dark 1910s suit and tie whose face is a blank sheet of paper with no features at all, dark combed hair (a figure in a dream). side view, facing right | liggende |  |
+
+## Runde 13: Parken og Nattskogen, fiender og sjefer (35 bilder, 0 levert)
+
+Gartnerne og kråkene i parken, Huldra, Vedkubbemannen og Nøkken i skogen, og de to nye sjefene. Hjorten og kråka er satt sammen av deler; tegn hver del for seg.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
+| `blob_kaalhode_b.png` | a small cabbage head with a mouth full of sharp teeth and two little eyes. back view, facing away | kvadrat |  |
+| `blob_kaalhode_f.png` | a small cabbage head with a mouth full of sharp teeth and two little eyes. front view, facing the viewer | kvadrat |  |
+| `blob_kaalhode_s.png` | a small cabbage head with a mouth full of sharp teeth and two little eyes. side view, facing right | kvadrat |  |
+| `hjort_hode.png` | BOSS: the neck and head of the white stag with huge antlers, but the face is a sad human face with tears | stående |  |
+| `hjort_kropp.png` | BOSS: the body of an enormous white stag seen from the side facing right, no head and no legs (the game draws the legs) | liggende |  |
+| `hode_gartner_b.png` | HEAD ONLY (no neck, no body) of a park gardener with a wide straw hat, a big white mustache, a red nose and a pipe, white shirt and a dark green apron with suspenders. back view, facing away | kvadrat |  |
+| `hode_gartner_f.png` | HEAD ONLY (no neck, no body) of a park gardener with a wide straw hat, a big white mustache, a red nose and a pipe, white shirt and a dark green apron with suspenders. front view, facing the viewer | kvadrat |  |
+| `hode_gartner_s.png` | HEAD ONLY (no neck, no body) of a park gardener with a wide straw hat, a big white mustache, a red nose and a pipe, white shirt and a dark green apron with suspenders. side view, facing right | kvadrat |  |
+| `hode_hekk_f.png` | HEAD ONLY (no neck, no body) of BOSS: Head Gardener Ansgar Hekk, huge and red-faced, a wide straw hat with a rose in the band, an enormous white walrus mustache, white shirt, a dark green apron with garden tools in the pocket and manure stains. front view, facing the viewer | kvadrat |  |
+| `hode_huldra_b.png` | HEAD ONLY (no neck, no body) of the Huldra from Norwegian folklore: a beautiful young woman with long golden hair and a crown of white wood anemones, red bunad with black and gold embroidery. SEEN FROM BEHIND (back view) she is a hollow rotten tree trunk with moss, fungus and beetles, and she has a cow tail. back view, facing away | kvadrat |  |
+| `hode_huldra_f.png` | HEAD ONLY (no neck, no body) of the Huldra from Norwegian folklore: a beautiful young woman with long golden hair and a crown of white wood anemones, red bunad with black and gold embroidery. SEEN FROM BEHIND (back view) she is a hollow rotten tree trunk with moss, fungus and beetles, and she has a cow tail. front view, facing the viewer | kvadrat |  |
+| `hode_huldra_s.png` | HEAD ONLY (no neck, no body) of the Huldra from Norwegian folklore: a beautiful young woman with long golden hair and a crown of white wood anemones, red bunad with black and gold embroidery. SEEN FROM BEHIND (back view) she is a hollow rotten tree trunk with moss, fungus and beetles, and she has a cow tail. side view, facing right | kvadrat |  |
+| `hode_nokken_b.png` | HEAD ONLY (no neck, no body) of the Nokken (Norwegian water spirit): a pale green man with long wet black hair, big sad eyes, bare ribs, holding a Hardanger fiddle across his chest, dripping water. back view, facing away | kvadrat |  |
+| `hode_nokken_f.png` | HEAD ONLY (no neck, no body) of the Nokken (Norwegian water spirit): a pale green man with long wet black hair, big sad eyes, bare ribs, holding a Hardanger fiddle across his chest, dripping water. front view, facing the viewer | kvadrat |  |
+| `hode_nokken_s.png` | HEAD ONLY (no neck, no body) of the Nokken (Norwegian water spirit): a pale green man with long wet black hair, big sad eyes, bare ribs, holding a Hardanger fiddle across his chest, dripping water. side view, facing right | kvadrat |  |
+| `hode_vedkubbe_b.png` | HEAD ONLY (no neck, no body) of the Log Man: a man whose head is a birch log standing on end, with two glowing knot-hole eyes and a crack for a mouth, wearing a black and white Norwegian lusekofte sweater with pewter clasps. back view, facing away | kvadrat |  |
+| `hode_vedkubbe_f.png` | HEAD ONLY (no neck, no body) of the Log Man: a man whose head is a birch log standing on end, with two glowing knot-hole eyes and a crack for a mouth, wearing a black and white Norwegian lusekofte sweater with pewter clasps. front view, facing the viewer | kvadrat |  |
+| `hode_vedkubbe_s.png` | HEAD ONLY (no neck, no body) of the Log Man: a man whose head is a birch log standing on end, with two glowing knot-hole eyes and a crack for a mouth, wearing a black and white Norwegian lusekofte sweater with pewter clasps. side view, facing right | kvadrat |  |
+| `kraake_kropp.png` | a black crow seen from the side facing right, one pale eye, the body only (the wing is a separate image) | liggende |  |
+| `kraake_vinge.png` | one black crow wing, spread | kvadrat |  |
+| `kropp_gartner_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a park gardener with a wide straw hat, a big white mustache, a red nose and a pipe, white shirt and a dark green apron with suspenders. back view, facing away | liggende |  |
+| `kropp_gartner_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a park gardener with a wide straw hat, a big white mustache, a red nose and a pipe, white shirt and a dark green apron with suspenders. front view, facing the viewer | liggende |  |
+| `kropp_gartner_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of a park gardener with a wide straw hat, a big white mustache, a red nose and a pipe, white shirt and a dark green apron with suspenders. side view, facing right | liggende |  |
+| `kropp_hekk_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of BOSS: Head Gardener Ansgar Hekk, huge and red-faced, a wide straw hat with a rose in the band, an enormous white walrus mustache, white shirt, a dark green apron with garden tools in the pocket and manure stains. front view, facing the viewer | liggende |  |
+| `kropp_huldra_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Huldra from Norwegian folklore: a beautiful young woman with long golden hair and a crown of white wood anemones, red bunad with black and gold embroidery. SEEN FROM BEHIND (back view) she is a hollow rotten tree trunk with moss, fungus and beetles, and she has a cow tail. back view, facing away | kvadrat |  |
+| `kropp_huldra_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Huldra from Norwegian folklore: a beautiful young woman with long golden hair and a crown of white wood anemones, red bunad with black and gold embroidery. SEEN FROM BEHIND (back view) she is a hollow rotten tree trunk with moss, fungus and beetles, and she has a cow tail. front view, facing the viewer | kvadrat |  |
+| `kropp_huldra_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Huldra from Norwegian folklore: a beautiful young woman with long golden hair and a crown of white wood anemones, red bunad with black and gold embroidery. SEEN FROM BEHIND (back view) she is a hollow rotten tree trunk with moss, fungus and beetles, and she has a cow tail. side view, facing right | kvadrat |  |
+| `kropp_nokken_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Nokken (Norwegian water spirit): a pale green man with long wet black hair, big sad eyes, bare ribs, holding a Hardanger fiddle across his chest, dripping water. back view, facing away | liggende |  |
+| `kropp_nokken_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Nokken (Norwegian water spirit): a pale green man with long wet black hair, big sad eyes, bare ribs, holding a Hardanger fiddle across his chest, dripping water. front view, facing the viewer | liggende |  |
+| `kropp_nokken_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Nokken (Norwegian water spirit): a pale green man with long wet black hair, big sad eyes, bare ribs, holding a Hardanger fiddle across his chest, dripping water. side view, facing right | liggende |  |
+| `kropp_vedkubbe_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Log Man: a man whose head is a birch log standing on end, with two glowing knot-hole eyes and a crack for a mouth, wearing a black and white Norwegian lusekofte sweater with pewter clasps. back view, facing away | liggende |  |
+| `kropp_vedkubbe_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Log Man: a man whose head is a birch log standing on end, with two glowing knot-hole eyes and a crack for a mouth, wearing a black and white Norwegian lusekofte sweater with pewter clasps. front view, facing the viewer | liggende |  |
+| `kropp_vedkubbe_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Log Man: a man whose head is a birch log standing on end, with two glowing knot-hole eyes and a crack for a mouth, wearing a black and white Norwegian lusekofte sweater with pewter clasps. side view, facing right | liggende |  |
+| `vaapen_hagesaks.png` | garden hedge shears with wooden handles | stående |  |
+| `vaapen_storsaks.png` | enormous garden hedge shears with long wooden handles | stående |  |
 
 ## Runde 7: nye fiender, minisjefer og Den Store Klumpen (52 bilder, 0 levert)
 
@@ -452,4 +650,5 @@ Vanskeligst. Be først om et figurark (samme figur forfra, bakfra, fra siden), o
 
 | Filnavn | Beskrivelse | Format | Levert |
 |---|---|---|---|
+| `kiste12.png` | kiste12 | stående |  |
 | `pupill.png` | a small red iris with a black pupil and a white highlight | kvadrat |  |
