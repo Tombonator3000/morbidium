@@ -53,10 +53,12 @@ Object.assign(DEATH_CAUSES, {
   tannlege: ['Trukket. Alle tennene, og så resten.', 'Døde i tannlegestolen. Det var ingen stol.'],
   portier: ['Slått av en hodeløs mann. Hodet så på.', 'Ble vist ut. For godt.', 'Bitt av et hode uten kropp.']
 });
-DEPTH_ENEMIES[1].push('kasteren', 'kasteren', 'trille');
-DEPTH_ENEMIES[2].push('kasteren', 'trille', 'speil');
-DEPTH_ENEMIES[3].push('kasteren', 'speil', 'trille');
-DEPTH_ENEMIES[4].push('speil', 'speil', 'trille', 'kasteren');
+DEPTH_ENEMIES[1].push('kasteren', 'kasteren', 'trille', 'trille');
+DEPTH_ENEMIES[2].push('kasteren', 'kasteren', 'trille');
+DEPTH_ENEMIES[3].push('kasteren', 'trille', 'speil');
+DEPTH_ENEMIES[4].push('kasteren', 'speil', 'trille');
+DEPTH_ENEMIES[5].push('speil', 'speil', 'kasteren');
+DEPTH_ENEMIES[6].push('speil', 'speil', 'trille', 'kasteren');
 Object.assign(MESTER_TITTEL, { kasteren: 'Kasteren', trille: 'Pasient', speil: 'Speilet', klumpunge: 'Ungen' });
 
 /* ============================================================

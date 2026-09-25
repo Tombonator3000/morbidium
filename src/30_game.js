@@ -55,7 +55,7 @@ function artFor(kind, id) {
 function showTitle() {
   G.state = 'title'; show('hud', false); show('panel', false); show('journal', false); show('title', true);
   clearFloor(); if (G.player) { G.player.doll.dispose(); R.remove(G.player.lantern); G.player = null; }
-  G.depth = 1; G.th = THEMES[1]; G.F = generateFloor(rndi(1, 1e9), 1, {}); if (!R.lowTex) decorateLevel(); else { Paint.level({ W: 1, H: 1, tiles: new Uint8Array(1), roomId: new Int16Array(1), rooms: [] }, G.th); } G.titleT = 0;
+  G.depth = 2; G.th = THEMES[2]; G.F = generateFloor(rndi(1, 1e9), 2, {}); if (!R.lowTex) decorateLevel(); else { Paint.level({ W: 1, H: 1, tiles: new Uint8Array(1), roomId: new Int16Array(1), rooms: [] }, G.th); } G.titleT = 0;
   const r = G.F.rooms[G.F.startId], cx = r.x + r.w / 2, cz = r.z + r.h / 2;
   if (!R.lowTex) G.titleDolls = [['kultist', -1.5, 0, 's'], ['pleier', 1.6, .6, 'f'], ['yngel', .2, 1.8, 'f']].map(([t, dx, dz, v]) => { const d = new Doll(t, {}); d.root.position.set(cx + dx, 0, cz + dz); d.view = v; d.flip = -1; R.scene.add(d.root); return d; });
   R.snapCamera(cx, cz); D3.onFloor();
@@ -157,10 +157,12 @@ function decorateLevel() {
   const isF = (x, z) => x >= 0 && z >= 0 && x < F.W && z < F.H && F.tiles[z * F.W + x] > 0;
   for (const r of F.rooms) {
     const cx = r.x + r.w / 2, cz = r.z + r.h / 2;
-    R.light(cx, cz + .3, Math.max(r.w, r.h) * .62, r.role === 'boss' ? '#ff9a6a' : G.th.pool || '#ffe6a0', r.role === 'boss' ? .55 : .5, R.levelL);
+    // uterom har ingen taklampe: månen og gasslyktene får jobben
+    if (r.ute) R.light(cx, cz + .3, Math.max(r.w, r.h) * .7, '#8aa0d8', .22, R.levelL);
+    else R.light(cx, cz + .3, Math.max(r.w, r.h) * .62, r.role === 'boss' ? '#ff9a6a' : G.th.pool || '#ffe6a0', r.role === 'boss' ? .55 : .5, R.levelL);
     const wallOK = x => !isF(x, r.z - 1) && !isF(x + 1, r.z - 1) && !isF(x - 1, r.z - 1);
     if (r.role === 'service') { for (let x = r.x + 1; x < r.x + r.w - 2; x++) if (wallOK(x) && wallOK(x + 1)) { Paint.door(x + 1, r.z, SERVICES[r.service].name.replace(/^(Den|Det) /, '').toUpperCase().slice(0, 12)); break; } }
-    else if (rng() < .7) { const x = r.x + 2 + Math.floor(rng() * Math.max(1, r.w - 4)); if (wallOK(x)) Paint.poster(POSTERS[Math.floor(rng() * POSTERS.length)], x + .5, r.z); }
+    else if (!r.ute && rng() < .7) { const x = r.x + 2 + Math.floor(rng() * Math.max(1, r.w - 4)); if (wallOK(x)) Paint.poster(POSTERS[Math.floor(rng() * POSTERS.length)], x + .5, r.z); }
   }
 }
 function startFloor(depth, first) {
@@ -197,11 +199,11 @@ function startFloor(depth, first) {
     if (!ld.looted) Items.splat(c.x, c.z + .2, '#6a0a0a', 1.1, .7);
   }
   Spor.onFloor(); Bygg.onFloor(); D3.onFloor(); Tips.vis('gaa', 1500); Tips.vis('kort', 10500);
-  Sound.startAmbience(depth); Musikk.spill('e' + Math.min(4, depth)); G.paT = rnd(18, 30);
+  Sound.startAmbience(depth); Musikk.spill(stykkeFor(depth)); G.paT = rnd(18, 30);
   $('floorName').textContent = G.th.name; hudCardsKey = ''; drawWeaponCard();
   show('hud', true); show('title', false); G.state = 'play';
   R.snapCamera(P.x, P.z);
-  toast(G.th.name, first ? 'Du våkner: ' + A0.name : 'Luken smeller igjen over deg');
+  toast(G.th.name, first ? 'Du våkner: ' + A0.name : ((UTGANGER[depth - 1] || {}).ankomst || 'Luken smeller igjen over deg'));
   if (first) setTimeout(() => FX.bubble(P, pick(['Hvor er tøflene mine? Å. Der.', 'Dette er ikke rommet mitt.', 'Noen har skrevet navnet mitt feil.']), 2.4), 900);
   $('game').focus(); saveRun(first);
 }
@@ -293,7 +295,7 @@ function findInteract() {
   for (const pd of Items.pedestals) if (!pd.taken && pd.akt) consider(Math.hypot(pd.x - P.x, pd.z - P.z) - .9, { t: 'Ta ' + AKTIVE[pd.akt].name + Items.priceText(pd), fn: () => Items.take(pd) });
   for (const pd of Items.pedestals) if (!pd.taken && ITEMS[pd.id]) consider(Math.hypot(pd.x - P.x, pd.z - P.z) - .9, { t: 'Ta ' + ITEMS[pd.id].name + Items.priceText(pd), fn: () => Items.take(pd) });
   for (const C of G.corpses || []) if (!C.ld.looted) consider(Math.hypot(C.x - P.x, C.z - P.z) - .6, { t: 'Undersøk liket etter ' + C.ld.name, fn: () => lootCorpse(C) });
-  if (G.trapdoor) consider(Math.hypot(G.trapdoor.x - P.x, G.trapdoor.z - P.z) - .6, { t: G.depth >= MAX_DEPTH ? 'Gå ut av bygget' : 'Klatre ned', fn: descend });
+  if (G.trapdoor) consider(Math.hypot(G.trapdoor.x - P.x, G.trapdoor.z - P.z) - .6, { t: (UTGANGER[G.depth] || UTGANGER[MAX_DEPTH]).tekst, fn: descend });
   for (const k of G.pickups) if (k.kind === 'weapon' || k.kind === 'card' || k.kind === 'cons' || k.kind === 'trinket') consider(Math.hypot(k.x - P.x, k.z - P.z) + .2, { t: k.kind === 'weapon' ? 'Ta ' + WEAPONS[k.val].name : k.kind === 'card' ? 'Plukk opp kortet' : k.kind === 'trinket' ? 'Ta ' + LOMMERUSK[k.val].name + ' (lommerusk)' : 'Ta ' + CONSUMABLES[k.val].name, fn: () => takePickup(k) });
   return best;
 }
@@ -680,16 +682,16 @@ function loop(now) {
     const edt = G.slowEnemies > 0 ? sdt * .3 : sdt;
     for (const e of G.enemies) updateEnemy(e, edt); G.enemies = G.enemies.filter(e => !e.gone);
     if (G.boss) { updateBoss(G.boss, edt); if (G.boss.gone) G.boss = null; }
-    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); Anim.tick(sdt); Blod.tick(sdt); Monstre.tick(sdt); Mini.tick(); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt); updateZones(sdt); Spesial.update(sdt); Aktiv.update(sdt); Oppskrift.update(sdt);
+    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); Anim.tick(sdt); Blod.tick(sdt); Romtyper.tick(sdt); Monstre.tick(sdt); Mini.tick(); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt); updateZones(sdt); Spesial.update(sdt); Aktiv.update(sdt); Oppskrift.update(sdt);
     if (hallucinate) hallucinate(sdt);
     G.flowT = (G.flowT || 0) - sdt; if (G.flowT <= 0 && P.alive) { G.flowT = .25; buildFlow(Math.floor(P.x), Math.floor(P.z)); }
     roomLogic(sdt); interactLogic(A);
     G.paT -= dt; if (G.paT <= 0) { G.paT = rnd(45, 75); paLine(pick(PA[G.depth] || PA[1])); }
-    Sound.tick(dt, G.depth >= 2 || P.morb >= 50 || !!(G.boss && G.boss.alive), G.depth);
+    Sound.tick(dt, G.depth >= 3 || P.morb >= 50 || !!(G.boss && G.boss.alive), G.depth);
     // musikken følger situasjonen: sjef, kamp eller ro, og grammofonen i tjenesterommene
     const rr = roomAt(P.x, P.z), rom = rr >= 0 ? G.F.rooms[rr] : null; Musikk.morb = P.morb / 100;
     Musikk.settNiva(G.boss && G.boss.alive && G.combat && G.combat.boss ? 2 : G.combat ? 1 : 0);
-    if (P.alive) Musikk.spill(!G.combat && rom && rom.role === 'service' ? 'tjeneste' : 'e' + Math.min(4, G.depth));
+    if (P.alive) Musikk.spill(!G.combat && rom && rom.role === 'service' ? 'tjeneste' : stykkeFor(G.depth));
     Merknad.tick(dt); Tips.tick(dt); Bygg.tick(sdt);
     if (P.alive && P.hp < P.maxHp * .25) { G.hjerteT = (G.hjerteT || 0) - dt; if (G.hjerteT <= 0) { G.hjerteT = .5 + P.hp / P.maxHp * 2.4; Sound.play('hjerte', .9); } }
     R.fx.morb = clamp((P.morb - 25) / 75, 0, 1); R.fx.low = P.alive && P.hp < P.maxHp * .3 ? 1 : 0;
@@ -739,7 +741,7 @@ function boot() {
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };
-  Object.assign(window, { rolig, SPRITES, hbSider, saveMeta, brukUIsett, UI_SETT, hjerteHtml, portierHode, skarPart, speilbilde, ordPart, WEAPON_ART, kastKlump, sendOrd, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { rolig, SPRITES, hbSider, saveMeta, MAX_DEPTH, THEMES, UTGANGER, gulvUnder, Vaer, Landskap, GULV, VEGG, ROMSTIL, ROMTYPER, openTrapdoor, findInteract, stykkeFor, brukUIsett, UI_SETT, hjerteHtml, portierHode, skarPart, speilbilde, ordPart, WEAPON_ART, kastKlump, sendOrd, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
   step('Pakker ut bilder');
   Art.preload().then(() => { try { brukUIsett(); } catch (e) { } step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }

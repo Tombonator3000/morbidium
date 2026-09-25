@@ -130,9 +130,9 @@ function openSettings(fromTitle, back, tab = 'lyd') {
 
 /* ---------- pasienthåndboka ---------- */
 const HANDBOK = [
-  { id: 'velkommen', t: 'Velkommen', note: 'De sier det er fire etasjer. Jeg har talt fem.', art: () => portraitOf(G.run && G.player ? G.run.look : Pasient.lag(), 150, 190),
+  { id: 'velkommen', t: 'Velkommen', note: 'De sier det er seks etasjer. Jeg har talt sju. Den sjuende var en skog.', art: () => portraitOf(G.run && G.player ? G.run.look : Pasient.lag(), 150, 190),
     b: `<p>Du er innlagt ved Morbidium sanatorium. Det finnes ingen vei ut, bare ned.</p>
-      <p>Bygget har <b>fire etasjer</b>. I hver av dem holder en <b>overlege</b> til bak en låst dør. Behandle overlegen, så åpner luka ned til neste etasje seg. Overlegene bytter plass fra pasient til pasient, så du vet aldri hvem som venter. Under grunnmuren venter alltid noe som kaller seg Journalen.</p>
+      <p>Det er <b>seks etasjer</b>, fra parken utenfor og ned. I hver av dem holder en <b>overlege</b> til bak en låst dør. Behandle overlegen, så åpner det seg en vei ut: en port, et vindu, en kloakk. Den fører alltid lenger inn. Overlegene bytter plass fra pasient til pasient, så du vet aldri hvem som venter. Nederst, under skogen som ikke finnes, venter alltid noe som kaller seg Journalen.</p>
       <p>Dør du, er pasienten borte for godt. Neste pasient våkner et annet sted i bygget, men liket blir liggende. Løpet lagres ved starten av hver etasje, så du kan ta en pause og fortsette fra tittelen.</p>
       <p>Hver pasient er ny: annet navn, andre klær, andre evner. Du våkner aldri to ganger på samme sted.</p>` },
   { id: 'styring', t: 'Styring', note: 'Mellomrom redder liv. Ikke mitt, men likevel.',
@@ -206,10 +206,10 @@ const SJEF_REKKE = ['koret', 'tannlege', 'portier', 'krok', 'rust', 'arkivar', '
 function fiendeNavn(t) { return (ENEMIES[t] && ENEMIES[t].name) || (SJEF_DATA[t] && SJEF_DATA[t].name) || t; }
 function fiendeSted(t) {
   if (ENEMIES[t] && ENEMIES[t].mini) return 'Minisjef, oftest i rommet med frivillig risiko';
-  if (SJEF_DATA[t]) return t === 'journalen' ? 'Sjef under grunnmuren' : 'Sjef i en av de tre første etasjene';
+  if (SJEF_DATA[t]) return t === 'journalen' ? 'Sjef i Dypet, alltid' : 'Sjef i en av de fem første etasjene';
   if (t === 'klumpunge') return 'Der Den Store Klumpen er';
-  const d = [1, 2, 3, 4].filter(k => (DEPTH_ENEMIES[k] || []).includes(t)), kort = { 1: 'Mottaket', 2: 'Underetasjen', 3: 'Kjelleren', 4: 'Dypet' };
-  return d.length === 4 ? 'Alle etasjene' : d.length ? d.map(k => kort[k]).join(', ') : 'Kommer når noen kaller';
+  const d = [1, 2, 3, 4, 5, 6].filter(k => (DEPTH_ENEMIES[k] || []).includes(t)), kort = { 1: 'Parken', 2: 'Mottaket', 3: 'Underetasjen', 4: 'Kjelleren', 5: 'Nattskogen', 6: 'Dypet' };
+  return d.length === 6 ? 'Alle etasjene' : d.length ? d.map(k => kort[k]).join(', ') : 'Kommer når noen kaller';
 }
 function fiendeKort(t) {
   const I = FIENDE_INFO[t] || ['', ''], m = G.meta, n = ((m.drapPer || {})[t] || 0) + ((m.sjefDrap || {})[t] || 0);

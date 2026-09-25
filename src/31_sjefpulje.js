@@ -1,7 +1,7 @@
 /* ============================================================
    SJEFPULJE OG MINISJEFER
-   - Tilfeldige sjefer: overlegene i etasje 1 til 3 trekkes fra en pulje for hvert løp
-     (Krok, Rust, Overarkivaren og Den Store Klumpen). Journalen venter alltid nederst.
+   - Tilfeldige sjefer: overlegene i etasje 1 til 5 trekkes fra en pulje for hvert løp
+     (Krok, Rust, Overarkivaren og Den Store Klumpen). Journalen venter alltid nederst, i etasje 6.
      Helsa følger etasjen, ikke sjefen, så alle passer overalt. Trekningen lagres med løpet.
    - Den Store Klumpen: alle pasientene som ble til én. Klemmer seg sammen og spruter,
      slår med armene sine, spytter ut klumpunger og ruller etter deg.
@@ -9,16 +9,17 @@
      rommet med frivillig risiko, og av og til i et kamprom lenger inne (fra underetasjen).
      De har egen helsestang og legger alltid igjen et preparatglass.
    ============================================================ */
-const SJEF_HP = { 1: 650, 2: 950, 3: 1150, 4: 1500 };
+const SJEF_HP = { 1: 550, 2: 700, 3: 950, 4: 1150, 5: 1350, 6: 1500 };
 const SJEF_PULJE = ['krok', 'rust', 'arkivar', 'klumpen'];
-const SJEF_DATA = { krok: BOSSES[1], rust: BOSSES[2], arkivar: BOSSES[3], journalen: BOSSES[4] };
+const SJEF_DATA = { krok: BOSSES[2], rust: BOSSES[3], arkivar: BOSSES[4], journalen: BOSSES[6] };
 SJEF_DATA.klumpen = { type: 'klumpen', weapon: null, name: 'Den Store Klumpen', title: 'Alle pasientene som ble til én', hp: 1000, minion: 'klumpunge', minions: 3, attacks: ['klem', 'armslag', 'spytt', 'rull', 'armslag', 'klem', 'summon'], puddle: 'blod', r: 1.45, fart: 1.45, skygge: 1.7 };
 /* sjefen i en etasje for dette løpet. Eldre lagrede løp uten trekning får de faste sjefene. */
 function sjefFor(depth) {
   const fast = BOSSES[depth] || BOSSES[MAX_DEPTH], type = (G.run && G.run.sjefer && G.run.sjefer[depth]) || fast.type, D = SJEF_DATA[type] || fast;
   return Object.assign({}, D, { hp: SJEF_HP[depth] || D.hp });
 }
-function trekkSjefer(seed) { const p = new RNG((seed >>> 0) * 7 + 13).shuffle(SJEF_PULJE.slice()); return { 1: p[0], 2: p[1], 3: p[2], 4: 'journalen' }; }
+/* etasje 1 til 5 fra puljen uten gjentakelse så langt puljen rekker, Journalen alltid sist */
+function trekkSjefer(seed) { const p = new RNG((seed >>> 0) * 7 + 13).shuffle(SJEF_PULJE.slice()), ut = {}; for (let d = 1; d < MAX_DEPTH; d++) ut[d] = p[(d - 1) % p.length]; ut[MAX_DEPTH] = 'journalen'; return ut; }
 Object.assign(LINES.bossIntro, { krok: LINES.bossIntro[1], rust: LINES.bossIntro[2], arkivar: LINES.bossIntro[3], journalen: LINES.bossIntro[4], klumpen: ['Vi har ventet på deg. Alle sammen.', 'Det er plass til én til.', 'Kom inn i varmen.'] });
 Object.assign(LINES.monolog, { krok: LINES.monolog[1], rust: LINES.monolog[2], arkivar: LINES.monolog[3], journalen: LINES.monolog[4], klumpen: ['Vi var mange en gang.', 'Så ble det trangt i kjelleren...', '...og nå er vi én. Det er mye lettere å holde varmen.'] });
 Object.assign(LINES.boss, { klumpen: ['Bli med oss!', 'Varmt og trangt!', 'Ikke dytt!', 'VI!'] });

@@ -8,7 +8,8 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og He
 - Håndkontroll og berøring virker også. Hele oversikten står i Pasienthåndboka på tittelskjermen og i pausemenyen.
 
 ## Innhold
-- Fire etasjer med hver sin overlege, trukket fra en pulje for hvert løp: Krok, Rust, Overarkivaren eller Den Store Klumpen, og under grunnmuren Journalen selv. Minisjefer venter i rommet med frivillig risiko.
+- Seks etasjer: Parken utenfor, mottaket, underetasjen, kjelleren, Nattskogen som ikke burde finnes under grunnmuren, og Dypet. Hver har en overlege trukket fra en pulje for hvert løp, og nederst venter alltid Journalen. Minisjefer venter i rommet med frivillig risiko.
+- Rommene ser forskjellige ut: eget gulv og egne vegger for hver romtype, L-rom og rotunder, spisesal, dagligstue, elektroterapi, tannlegekontor, fyrrom, kjøkken og likkapell. Ute er det hekker, gasslykter, kirkegård, fontene, isdam, bjørkeskog, myr og tjern, med regn, snø eller ildfluer.
 - Rommene er 3D som standard, med lamper, måneskinn, skygger og tåke. Kvaliteten justeres av seg selv, og 3D kan slås av under Bilde.
 - Hver pasient settes sammen på nytt: kjønn, hår, hud, klær og pynt. Liket blir liggende der pasienten døde.
 - Kuriositeter som stables og kombineres, piller med ukjent virkning, apparater og lommerusk, evnekort i et frenologisk hode, diagnoser som følger av måten du spiller på.

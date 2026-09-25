@@ -25,10 +25,12 @@ Object.assign(DEATH_CAUSES, {
   oyeblomst: ['Stirret ned av en blomst.', 'Så inn i øyet for lenge.']
 });
 DEPTH_ENEMIES[1].push('tvang');
-DEPTH_ENEMIES[2].push('narkose', 'tvang');
-DEPTH_ENEMIES[3].push('tvang', 'tvang', 'byrakrat', 'byrakrat', 'rotte', 'narkose');
-DEPTH_ENEMIES[4].push('oyeblomst', 'oyeblomst', 'rotte', 'narkose', 'byrakrat');
-BOSSES[3].minion = 'byrakrat';
+DEPTH_ENEMIES[2].push('tvang');
+DEPTH_ENEMIES[3].push('narkose', 'tvang');
+DEPTH_ENEMIES[4].push('tvang', 'tvang', 'byrakrat', 'byrakrat', 'rotte', 'narkose');
+DEPTH_ENEMIES[5].push('oyeblomst', 'oyeblomst', 'rotte', 'rotte');
+DEPTH_ENEMIES[6].push('oyeblomst', 'oyeblomst', 'rotte', 'narkose', 'byrakrat');
+BOSSES[4].minion = 'byrakrat';
 
 /* ---------- tegninger ---------- */
 const JAKKE = '#efe8d4', JAKKEL = '#4a4234';
