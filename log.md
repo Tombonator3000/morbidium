@@ -420,3 +420,10 @@ Alle tidspunkt er UTC.
 - test_ekstra.py: nye tester for 3D som standard og overgangen fra gamle innstillinger, kvalitetstrinnene ned til 3D av, måling av bildefrekvens, animasjonssystemet, blod, de nye fiendene, minisjefene, trekningen av sjefer, alle fem sjefene (også Klumpen) med alle angrep, UI-settet, nedtellingen og fiendeindeksen på bred og smal skjerm. De fleste testene går i 2D (?2d), fordi programvaregrafikken i testnettleseren er for treg i 3D for de tidsfølsomme testene (sprukken vegg, bakhold, byggeanimasjon). En skjult feil i testene: å sette en ny fiende rett til state 'chase' hopper over oppstigningen, så dukken blir stående i skala 0,01. Testene setter nå e.t = 0 i stedet. Spillet selv gjør aldri dette.
 - Dokumentasjon: memory.md, todo.md, AGENTS.md og README.md er oppdatert med de nye filene og systemene.
 - Tester på det ferdige bygget: generator 1200 av 1200, gjennomspilling uten feil, test_ekstra 94 av 94 (var 73 før økta).
+
+## 2026-09-25 19:05 Rettet tre feil Codex fant i PR #2
+- «Lys og skygge» virket ikke i 3D. Nå gir innstillingen et jevnt opplyst rom uten punktlys, skygger, lysstråler og kantlys (D3.Q() får flat: true), og 3D bygges på nytt når den endres.
+- Slås «Blod og skrekkeffekter» av, forsvinner sprut på veggene, drypp, fallende dråper og kjøttbiter med en gang. Vanlige flekker på gulvet blir liggende.
+- Slåtte sjefer (meta.sjefDrap) lagres med en gang, ikke først ved neste lagring.
+- Nye tester for alle tre. test_ekstra: 97 av 97.
+- Tom valgte retning for utvidelsen: seks etasjer der to er ute (Parken først, Nattskogen under grunnmuren før Dypet), korte drømmebaner med pasientens historie, og grov, kroppslig humor.
