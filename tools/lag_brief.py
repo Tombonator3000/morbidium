@@ -23,6 +23,11 @@ FIG = {
   'tvang': 'the player patient wearing an off-white canvas straitjacket with brown leather straps and brass buckles, one loose strap dangling (the clothes only)',
   'skjorte': 'the player patient wearing a pale blue hospital gown with a tiny diamond pattern and short sleeves; seen from behind it is open with ties and white polka-dot underpants (the clothes only)',
   'pyjamas': 'the player patient wearing white pyjamas with vertical blue stripes, a lapel collar, buttons and a breast pocket (the clothes only)',
+  'kasteren': 'the Thrower: a skinny old man with wild grey hair sticking out in all directions, huge round glasses that magnify his mismatched eyes, open mouth with the tongue hanging out, a mustard-yellow bathrobe with brown stains and a lumpy pocket',
+  'trille': 'the Wheelchair Patient: a bald old man with a bandage wound around his head and over one eye and a toothless grin, slumped in a creaky wooden wheelchair with big spoked wheels, a red and green plaid blanket over his knees and an IV stand with a yellow bag behind him (the body part is the chair, blanket and torso together; the chair reaches the floor)',
+  'speil': 'the Mirror Patient: a thin patient whose head is an ornate gilded hand mirror on its handle (the glass is blank and cracked, the game shows a reflection in it), grey-green hospital gown with shards of mirror glued into it and a little blood around them',
+  'tannlege': 'MINI-BOSS the Dentist: bald with a round head mirror on a headband, pince-nez, a big waxed mustache, a manic grin with several gold teeth, white coat with blood spots and a leather bandolier of pulled teeth',
+  'portier': 'MINI-BOSS the Headless Doorman: a tall doorman in a dark green uniform with two rows of gold buttons and gold epaulettes, but with NO HEAD, only a bloody neck stump above a high collar (the head part is just the stump and collar)',
 }
 VIEW = {'f': 'front view, facing the viewer', 'b': 'back view, facing away', 's': 'side view, facing right', 'x': 'front view, dead with X marks over the eyes (comedic)'}
 CARD = {
@@ -77,6 +82,34 @@ MISC = {
   'arkivhylle3': 'a tall dark archive shelf stuffed with folders and boxes, three tiles wide', 'medisinskap': 'a white enamel medicine cabinet with glass doors and bottles inside',
   'offeralter': 'a sacrificial altar of dark stone with a bowl of blood and red candles', 'sprekkvegg': 'a cracked section of wall with light shining through the crack',
   'kortplukk': 'an ability card lying on the floor, slightly tilted, face down with a purple back (pickup)',
+  'portierhode': "the doorman's severed head carried as an object: pale and surprised, big mustache, green doorman's cap with a gold band, a little blood at the neck",
+  'hjul_trille_f': 'ONE big wooden wheelchair wheel with spokes and a rubber tire, seen straight from the side (the game spins it)',
+  'koret_kropp': 'MINI-BOSS the Whispering Choir, BODY ONLY: a floating torn burgundy choir robe with a white ruffled collar, a tall column of pale pink flesh bursting out of the collar with stitches, and three lit candles on top. No mouths and no ears (the game adds them)',
+  'koret_munn0': 'ONE human mouth with red lips and teeth, half open, drawn alone', 'koret_munn1': 'ONE human mouth with red lips, teeth and the tongue sticking out, drawn alone', 'koret_munn2': 'ONE wide human mouth with red lips and teeth, whispering, drawn alone',
+  'koret_ore0': 'ONE human ear, fleshy pink, drawn alone', 'koret_ore1': 'ONE human ear with a small gold earring, drawn alone',
+  'klumpen_kropp': 'BOSS the Big Lump, BODY ONLY: a huge mound of fused human flesh in different skin tones, with stitches, bandages, a stuck IV needle with a tube, a piece of a yellow bathrobe and a striped pyjama patch grown into it. No faces and no arms (the game adds them)',
+  'klumpen_ansikt0': 'ONE human face sunk into pink flesh, screaming with the eyes squeezed shut, drawn alone', 'klumpen_ansikt1': 'ONE human face sunk into pink flesh, sleeping and drooling, drawn alone',
+  'klumpen_ansikt2': 'ONE human face sunk into pink flesh, smiling far too wide with many teeth, drawn alone', 'klumpen_ansikt3': 'ONE human face sunk into pink flesh, wearing round glasses and looking worried, drawn alone',
+  'klumpen_oye': 'ONE loose bloodshot eyeball with a green iris', 'klumpen_lue': 'a red and white striped nightcap with a white pompom, drawn alone',
+  'vaapen_klump': 'a brown lump the Thrower holds in his hand (you know what it is), drawn alone', 'vaapen_tang': 'a giant pair of dental pliers with a gold tooth in the jaws, handles down',
+  'vaapen_knippe': 'a huge iron key ring with five big old brass keys, handle down', 'vaapen_stempelboss': 'a giant wooden office stamp with a red rubber foot, handle down',
+  'vaapen_skjemabunke': 'a messy stack of official paper forms held as a weapon', 'vaapen_gasskolbe': 'a glass ether bottle with a cork, held as a weapon',
+  'glasskar': 'a small shard of broken mirror glass', 'pupill': 'a small red iris with a black pupil and a white highlight',
+  'anim_kasteklump': 'SPRITE SHEET, 4 equal squares in ONE row: a brown lump spinning in the air, a quarter turn more in each frame. Same size and same center in every square',
+  'anim_kastesprut': 'SPRITE SHEET, 4 equal cells in ONE row: a brown splash hitting the floor, from a small impact to a big splat with droplets flying up, then settling. Same ground line in every cell',
+  'anim_blodsprut': 'SPRITE SHEET, 6 equal cells in ONE row: a burst of droplets exploding outward and falling. Draw it in WHITE and light grey with dark outlines (the game colors it red, purple or yellow). Same ground line in every cell',
+  'anim_oye': 'SPRITE SHEET, 5 equal cells in ONE row: an eye opening in a crack in a wall, from a closed slit to wide open, bloodshot white, NO pupil (the game adds the pupil). Same center in every cell',
+  'anim_kjottbiter': 'SHEET, 6 equal squares in ONE row, six different small gore bits, one per square: a chunk of meat, a bone, an eyeball with a nerve, a gold tooth, a finger, a piece of liver',
+  'ui_panel': 'UI 9-SLICE PANEL: an empty parchment panel with a slightly torn edge, dark ink outline and small brass pins in the four corners. Nothing inside. Keep all detail within the outer 10 % so the middle can be stretched',
+  'ui_knapp': 'UI 9-SLICE BUTTON: a small empty parchment tile with a thick ink outline and a tiny brass pin in the top right corner. Nothing inside',
+  'ui_kort': 'UI 9-SLICE ABILITY CARD FRAME: an empty cream paper card with faint blue ruled lines, rounded corners and a brass pin at the top center. No picture, no text',
+  'ui_skilt': 'UI 9-SLICE SIGN: an empty wide parchment plaque with brass screws at both ends, for the room name. No text',
+  'ui_utklipp': 'UI 9-SLICE CLIPBOARD: an empty brown wooden clipboard with a brass clamp at the top center and a sheet of lined paper, seen straight on. No text',
+  'ui_ring_portrett': 'UI RING: a thick round gold frame with rivets and an ink outline, the center COMPLETELY TRANSPARENT (a portrait goes inside)',
+  'ui_ring_kart': 'UI RING: a brass compass ring with a small N at the top and four knobs, the center COMPLETELY TRANSPARENT (the map goes inside)',
+  'ui_hjerte_full': 'UI ICON: a full red cartoon heart with an ink outline and a small highlight', 'ui_hjerte_halv': 'UI ICON: the same heart, left half red and right half empty grey', 'ui_hjerte_tom': 'UI ICON: the same heart, empty and dark grey',
+  'ui_ikon_journal': 'UI ICON: an open leather-bound book, simple and bold', 'ui_ikon_pause': 'UI ICON: two thick vertical pause bars drawn in ink',
+  'ui_hode': 'UI: a phrenology head in profile facing LEFT, bald, with neck and shoulders cut off, a pale parchment-colored bust with ink outlines. NO brain regions and NO text (the game draws the four regions and labels on top). Square image, the skull fills the upper two thirds',
   'torner': 'a tangle of black thorny vines (a hazard lying on the floor)', 'isolatvegg': 'a padded white cell wall panel with buttons, standing', 'stempelfall': 'a giant red rubber office stamp falling down',
 }
 SENG = {'bed': 'an iron hospital bed with white sheets and a blue blanket', 'optable': 'a steel operating table with blood stains and an overhead lamp arm', 'gurney': 'a steel hospital stretcher on wheels', 'tub': 'an old clawfoot bathtub filled with murky water'}
@@ -101,7 +134,7 @@ def beskriv(k):
     if k == 'skudd_slim': return 'a small glob of green-yellow phlegm (projectile)'
     if k.startswith('blob_'):
         typ, v = k.split('_')[1], k.split('_')[2]
-        return {'tvang': 'an enemy patient in a straitjacket, arms bound, hopping, wild eyes', 'rotte': 'a fat grey archive rat with a paper slip in its mouth', 'oyeblomst': 'an eye flower: a fleshy stalk rooted in the floor with a big bloodshot eye as its bloom', 'journalen': 'FINAL BOSS: the Journal, a huge floating leather-bound patient journal with tentacles and teeth, pages flapping', 'flue': 'a fat bluebottle meat fly with big red eyes', 'svulst': 'a walking pink tumor with veins, one eye and a grin', 'lunge': 'a pink human lung walking on its own, tar spots, tiny sad face', 'yngel': 'drain spawn: a small purple slime creature with mismatched eyes and a toothy grin'}.get(typ, typ) + '. ' + VIEW.get(v, v)
+        return {'tvang': 'an enemy patient in a straitjacket, arms bound, hopping, wild eyes', 'rotte': 'a fat grey archive rat with a paper slip in its mouth', 'oyeblomst': 'an eye flower: a fleshy stalk rooted in the floor with a big bloodshot eye as its bloom', 'journalen': 'FINAL BOSS: the Journal, a huge floating leather-bound patient journal with tentacles and teeth, pages flapping', 'flue': 'a fat bluebottle meat fly with big red eyes', 'svulst': 'a walking pink tumor with veins, one eye and a grin', 'lunge': 'a pink human lung walking on its own, tar spots, tiny sad face', 'yngel': 'drain spawn: a small purple slime creature with mismatched eyes and a toothy grin', 'kaalhode': 'a small cabbage head with a mouth full of sharp teeth and two little eyes'}.get(typ, typ) + '. ' + VIEW.get(v, v)
     if k.startswith('kort_'): return CARD.get(k[5:], k[5:]) + '. Square card illustration, subject centered'
     if k.startswith('seng_'):
         kind = next(x for x in SENG if k[5:].startswith(x)); return SENG[kind] + ', ' + RETN[k[-1]]
@@ -121,10 +154,86 @@ for mappe in (ROT / 'gpt-grafikk', ROT / 'gpt-grafikk' / 'behandlet'):
         else: LEV.add(n)
 
 def format_(m):
+    if 'ruter' in m: return f"ark, {m['ruter'][0]} ruter på rad"
     r = m['w'] / m['h']
     return 'kvadrat' if .8 <= r <= 1.25 else ('stående' if r < .8 else 'liggende')
 
+NY = {'kasteren', 'trille', 'speil', 'tannlege', 'portier', 'klumpunge'}
+# utvidelsen høsten 2026 (UTVIDELSE.md): figurene og tingene som kom med de seks etasjene, hendelsene og drømmene
+FIG.update({
+  'gartner': 'a park gardener with a wide straw hat, a big white mustache, a red nose and a pipe, white shirt and a dark green apron with suspenders',
+  'huldra': 'the Huldra from Norwegian folklore: a beautiful young woman with long golden hair and a crown of white wood anemones, red bunad with black and gold embroidery. SEEN FROM BEHIND (back view) she is a hollow rotten tree trunk with moss, fungus and beetles, and she has a cow tail',
+  'vedkubbe': 'the Log Man: a man whose head is a birch log standing on end, with two glowing knot-hole eyes and a crack for a mouth, wearing a black and white Norwegian lusekofte sweater with pewter clasps',
+  'nokken': 'the Nokken (Norwegian water spirit): a pale green man with long wet black hair, big sad eyes, bare ribs, holding a Hardanger fiddle across his chest, dripping water',
+  'baklengs': 'a pale man in a neat black suit and tie with his eyes closed and a small calm smile (he walks backwards and talks backwards)',
+  'blank_m': 'a man in a dark 1910s suit and tie whose face is a blank sheet of paper with no features at all, dark combed hair (a figure in a dream)',
+  'blank_k': 'a woman in a long dark red dress with a white collar and her hair in a bun, whose face is a blank sheet of paper with no features at all (a figure in a dream)',
+  'ansikt_m': 'the same man in a dark 1910s suit, but now with an ordinary, gentle, slightly sad face',
+  'ansikt_k': 'the same woman in a long dark red dress, but now with an ordinary, gentle, slightly sad face',
+  'hekk': 'BOSS: Head Gardener Ansgar Hekk, huge and red-faced, a wide straw hat with a rose in the band, an enormous white walrus mustache, white shirt, a dark green apron with garden tools in the pocket and manure stains'
+})
+UTV = {
+  'prop_kjele': 'a big iron boiler with pipes, a pressure gauge and a glowing firebox', 'prop_komfyr': 'a black cast-iron kitchen stove with pots on top',
+  'prop_piano': 'an old upright piano with brass candle holders, front view', 'prop_rontgen': 'a 1920s X-ray machine: a glass tube on a big jointed arm over a stand',
+  'prop_langbord': 'a long wooden dining-hall table with white plates and cups, front view', 'prop_grammofon': 'a 1920s gramophone with a big brass horn on a small wooden cabinet',
+  'prop_lenestol': 'a worn floral armchair, front view', 'prop_kortbord': 'a small card table with playing cards and a glass of cognac',
+  'prop_elektrostol': 'an electroshock therapy chair with leather straps and a metal head cap with wires', 'prop_spole': 'a tall induction coil on a wooden base with a copper ring on top',
+  'prop_tannlegestol': 'an old dentist chair with a drill arm', 'prop_instrumentbord': 'a small steel instrument table with pliers and probes',
+  'prop_spyttkum': 'a white enamel spittoon on a stand', 'prop_tannglass': 'a glass jar full of pulled teeth', 'prop_lysskjerm': 'an X-ray light box on a stand showing the bones of a hand',
+  'prop_frisorstol': 'a barber chair of cracked leather and chrome', 'prop_harhaug': 'a pile of cut hair on the floor, seen from above (flat)',
+  'prop_bjorn': 'a stuffed brown bear standing upright with one glass eye missing', 'prop_globus': 'an old globe on a wooden stand',
+  'prop_gryte': 'a big steel soup pot', 'prop_kjottkrok': 'meat hooks on a rail with sausages and a ham', 'prop_kullhaug': 'a heap of coal with a shovel stuck in it',
+  'prop_ror': 'rusty pipes with a valve wheel', 'prop_kors': 'a tall wooden crucifix', 'prop_plantebord': 'a greenhouse potting table with seedlings in clay pots',
+  'prop_kjempeplante': 'a giant carnivorous plant with glowing pods', 'prop_vannkanne': 'a zinc watering can', 'prop_bronn': 'a stone well with a small wooden roof and a bucket',
+  'prop_tre': 'a large leafy park tree, front view', 'prop_lyktestolpe': 'a cast-iron gas street lamp, lit', 'prop_busk': 'a round clipped hedge bush',
+  'prop_blomsterbed': 'a flower bed with red and white flowers, seen from above (flat)', 'prop_hagenisse': 'a garden gnome with a red cap, slightly sinister',
+  'prop_fuglebad': 'a stone birdbath', 'prop_lysthus': 'a small white wooden gazebo with a pointed roof', 'prop_engel': 'a weeping stone angel on a plinth',
+  'prop_grav': 'an open grave with a spade in the dirt pile, seen from above (flat)', 'prop_fontene': 'a round stone fountain with water in the basin',
+  'prop_statue': 'a classical marble statue of a woman on a plinth', 'prop_siv': 'a clump of reeds', 'prop_snomann': 'a crooked snowman with coal eyes',
+  'prop_vak': 'a black hole in the ice, seen from above (flat)', 'prop_liggestol': 'a wooden sanatorium deck chair with a plaid blanket', 'prop_teppe': 'a folded plaid blanket on the ground, flat',
+  'prop_kjerre': 'a wooden hand cart', 'prop_vedstabel': 'a stack of firewood', 'prop_bjork': 'a tall white birch tree', 'prop_bjork_dod': 'a dead white birch tree without leaves',
+  'prop_gran': 'a dark spruce tree', 'prop_stubbe': 'a tree stump', 'prop_sopp': 'two toadstools, red with white dots', 'prop_stein': 'a mossy boulder',
+  'prop_baal': 'a campfire in a ring of stones, burning', 'prop_robat': 'a wooden rowing boat pulled up on land', 'prop_ruinmur': 'a crumbling stone ruin wall',
+  'prop_vedovn': 'a black wood-burning stove with a glowing door', 'prop_gevir': 'deer antlers mounted on a wooden plaque',
+  'prop_porten': 'a tall wrought-iron park gate, slightly open', 'prop_vindu': 'an open window with a night sky outside', 'prop_kloakk': 'a round sewer grate seen from above (flat), dark water below',
+  'prop_kullsjakt': 'a square coal chute hatch in the floor with a ladder, seen from above (flat)', 'prop_skilt': 'a wooden signpost pointing out of a forest',
+  'prop_utgang': 'a lit exit door with bright white light behind it',
+  'prop_telefon': 'a wooden wall telephone with a rotary dial and the receiver hanging on its cord', 'prop_kaffebord': 'a small cafe table with a cup of black coffee and a slice of cream cake with one cherry',
+  'prop_ku': 'a brown and white cow standing sideways, calm wet eyes and a brass bell', 'prop_brennevin': 'a patient in long underwear next to a copper moonshine still on a crate',
+  'prop_badekarmann': 'a man in a dark suit and hat sitting fully dressed in a clawfoot bathtub of grey water, reading a newspaper', 'prop_heis': 'an old cage elevator; inside stands a lift operator in a red uniform and cap with no face',
+  'prop_rotter': 'six rats sitting in a ring around a candle stump, the biggest wearing a white judge wig', 'prop_radiobord': 'a 1920s wooden radio set on a small table',
+  'prop_damer': 'three old ladies in Norwegian bunad sitting on tree stumps drinking coffee; the third one has a cow tail', 'prop_utedo': 'a wooden outhouse with a heart cut into the door',
+  'prop_kubbekona': 'an old woman in a shawl and round glasses cradling a firewood log like a baby', 'prop_kjempe': 'a very tall thin man in a black tuxedo and bow tie, his small bald head far up',
+  'prop_tannfe': 'a woman in a nightgown with moth wings lying under an iron hospital bed, counting a pile of teeth', 'prop_lampemann': 'a patient in striped pyjamas standing stiffly with a lampshade on his head and an electric cord coming out of his sleeve',
+  'prop_lampemann_paa': 'the same lamp patient, but the lampshade glows warm yellow',
+  'drom_lue': 'a red knitted hat lying on a wooden stool', 'drom_ur': 'a gold pocket watch on a small wooden table', 'drom_symaskin': 'a black and gold antique sewing machine on a small table',
+  'drom_kopp': 'a half-full cup of black coffee with steam, on a small table', 'drom_hest': 'a white horse standing sideways, calm and slightly unreal', 'drom_soldat': 'a tin soldier in a red coat, missing one foot, standing on a stool',
+  'drom_hvitveis': 'a glass of white wood anemones on a stool', 'drom_kaape_7a2a2e': "a woman's dark red coat hanging on a coat stand", 'drom_kaape_4a4a52': "a man's grey coat hanging on a coat stand",
+  'drom_bord': 'a kitchen table set for four', 'drom_brev': 'a small table with a handwritten letter and an envelope', 'drom_foto': 'an old framed photograph of two people on an easel; their faces are blank',
+  'drom_vindu_sno': 'a freestanding window frame, snow falling at night outside', 'drom_vindu_rim': 'a freestanding window frame covered in frost patterns', 'drom_vindu_regn': 'a freestanding window frame with rain outside',
+  'drom_vindu_brann': 'a freestanding window frame with fire outside', 'drom_vindu_taake': 'a freestanding window frame with thick fog outside', 'drom_vindu_klart': 'a freestanding window frame with a starry night outside',
+  'drom_notat': "a lectern with an open policeman's notebook", 'drom_speil': 'a standing oval mirror', 'drom_sko': 'a pair of dry leather shoes on a doormat',
+  'drom_koffert': 'a packed brown suitcase with a train ticket on top', 'drom_bok': 'a prayer book open on a stand', 'drom_kommode': 'a wooden chest of drawers with one drawer open',
+  'drom_mappe': 'a patient file folder on a small table', 'drom_dorlaast': 'a closed wooden door with a key in the lock', 'drom_dor': 'a closed door in a dark frame', 'drom_dor_aapen': 'the same door wide open with warm white light pouring out',
+  'kraake_kropp': 'a black crow seen from the side facing right, one pale eye, the body only (the wing is a separate image)', 'kraake_vinge': 'one black crow wing, spread',
+  'hjort_kropp': 'BOSS: the body of an enormous white stag seen from the side facing right, no head and no legs (the game draws the legs)', 'hjort_hode': 'BOSS: the neck and head of the white stag with huge antlers, but the face is a sad human face with tears',
+  'flis': 'a sharp splinter of wood', 'vaapen_hagesaks': 'garden hedge shears with wooden handles', 'vaapen_storsaks': 'enormous garden hedge shears with long wooden handles'
+}
+MISC.update(UTV)
+UTV_FIG = {'gartner', 'huldra', 'vedkubbe', 'nokken', 'baklengs', 'blank_m', 'blank_k', 'ansikt_m', 'ansikt_k', 'hekk', 'kaalhode'}
+er_fig = lambda k, typer: any(k.startswith(p + '_' + t + '_') for t in typer for p in ('hode', 'kropp', 'blob'))
 RUNDER = [
+  ('Runde 10: uterom og de nye rommene', lambda k: k in UTV and k.startswith('prop_') and not k.startswith(('prop_telefon', 'prop_kaffebord', 'prop_ku', 'prop_brennevin', 'prop_badekarmann', 'prop_heis', 'prop_rotter', 'prop_radiobord', 'prop_damer', 'prop_utedo', 'prop_kubbekona', 'prop_kjempe', 'prop_tannfe', 'prop_lampemann')),
+   'Møblene til de nye romtypene, parken og Nattskogen, og utgangene fra hver etasje. Forfra, som de andre møblene. Det som ligger flatt på gulvet (grav, vak, kloakk, kullsjakt, blomsterbed), tegnes rett ovenfra.'),
+  ('Runde 11: hendelsene', lambda k: k in UTV and k.startswith(('prop_telefon', 'prop_kaffebord', 'prop_ku', 'prop_brennevin', 'prop_badekarmann', 'prop_heis', 'prop_rotter', 'prop_radiobord', 'prop_damer', 'prop_utedo', 'prop_kubbekona', 'prop_kjempe', 'prop_tannfe', 'prop_lampemann')) or er_fig(k, {'baklengs'}),
+   'De absurde hendelsene. Tonen er David Lynch på et norsk sanatorium i 1923: hverdagslig, litt feil, aldri skummelt på den åpenbare måten. Bildene vises også stort i samtalepanelet.'),
+  ('Runde 12: drømmene', lambda k: k.startswith('drom_') or er_fig(k, {'blank_m', 'blank_k', 'ansikt_m', 'ansikt_k'}),
+   'Minnene, tegnene som går igjen, døra og figurene uten ansikt. Litt mykere og blekere enn resten, som et gammelt fotografi. Figurene uten ansikt skal ha et helt blankt papirark der ansiktet skulle vært, ingen trekk i det hele tatt.'),
+  ('Runde 13: Parken og Nattskogen, fiender og sjefer', lambda k: er_fig(k, UTV_FIG - {'baklengs', 'blank_m', 'blank_k', 'ansikt_m', 'ansikt_k'}) or k.startswith(('kraake_', 'hjort_')) or k in ('flis', 'vaapen_hagesaks', 'vaapen_storsaks'),
+   'Gartnerne og kråkene i parken, Huldra, Vedkubbemannen og Nøkken i skogen, og de to nye sjefene. Hjorten og kråka er satt sammen av deler; tegn hver del for seg.'),
+  ('Runde 7: nye fiender, minisjefer og Den Store Klumpen', lambda k: any(k.startswith(p + '_' + t) for t in NY for p in ('hode', 'kropp', 'blob')) or k.startswith(('koret_', 'klumpen_')) or k in ('portierhode', 'hjul_trille_f', 'vaapen_klump', 'vaapen_tang', 'vaapen_knippe', 'glasskar'), 'Fiendene ChatGPT foreslo. Kasteren, Trillepasienten, Speilpasienten, Tannlegen og Portieren lages som figurark på mal_figur.png: figur_kasteren.png, figur_trille.png, figur_speil.png, figur_tannlege.png og figur_portier.png. Hviskekoret og Klumpen er lagdelte: kroppen alene, og munner, ører, ansikter og øyne hver for seg, så spillet kan bevege dem.'),
+  ('Runde 8: animasjoner (spriteark)', lambda k: k.startswith('anim_'), 'Ett bilde med like store ruter på én rad, lest fra venstre. Samme festepunkt i hver rute (samme midtpunkt eller samme bakkelinje), ellers hopper figuren. Filnavnet er anim_<navn>.png.'),
+  ('Runde 9: HUD og menyer (UI-settet)', lambda k: k.startswith('ui_'), 'Rammer og ikoner til HUD-en og menyene, etter ChatGPTs egne skisser. Paneler, kort, knapper, skilt og utklippstavle strekkes av spillet (9-delt): hjørnene beholder størrelsen og sidene strekkes, så all pynt må ligge i kanten og midten må være jevn. Ringene må være helt gjennomsiktige i midten.'),
   ('Runde 1: kuriositetene (Isaac-gjenstander), apparater og lommerusk', lambda k: k.startswith(('kur_', 'pille_', 'akt_', 'lomme_')) or k == 'glass_tomt', 'Gjenstandene man plukker opp og kombinerer. Små, tydelige og groteske, som gjenstandene i The Binding of Isaac. Bruk gjerne «ni ting»-arket fra DESIGN_BRIEF.md.'),
   ('Runde 2: evnekortene', lambda k: k.startswith('kort_'), 'Størst gevinst først. Kortene vises i HUD-en og i journalen. Motivet midt i bildet, spillet tegner selve kortrammen.'),
   ('Runde 3: rekvisitter og møbler', lambda k: k.startswith(('prop_', 'seng_', 'skap', 'hylle', 'disk_', 'kiste_')) or k in ('journalskap', 'olsenskap', 'pult', 'sjakt', 'alter3', 'kommodef', 'garderobes', 'sperre', 'lik', 'celle', 'medisinskap', 'offeralter', 'sprekkvegg') or k.startswith(('arkivhylle', 'vaskemaskin', 'verktoytavle')), 'Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbelet helt nederst i motivet.'),

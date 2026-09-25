@@ -37,10 +37,21 @@ const Paint = {
     const c = document.createElement('canvas'); c.width = W * T; c.height = H * T; const g = c.getContext('2d');
     const isF = (x, z) => x >= 0 && z >= 0 && x < W && z < H && F.tiles[z * W + x] > 0, isC = (x, z) => isF(x, z) && F.tiles[z * W + x] === T_COR;
     g.lineCap = 'round'; g.lineJoin = 'round';
-    // 1) grunnfarge per flis, rolig sjakk med små variasjoner
+    // gulvet i hver rute: rommets eget (romStil i generatoren), korridoren sitt, og ellers sjakk som før
+    const STIL = new Array(W * H), UTE = new Uint8Array(W * H), sno = F.vaer === 'sno';
+    for (let i = 0; i < W * H; i++) { if (!F.tiles[i]) continue; const rid = F.roomId[i], rom = rid >= 0 && F.rooms ? F.rooms[rid] : null; STIL[i] = rom ? (rom.gulv || 'sjakk') : F.tiles[i] === T_COR ? ((F.korridor && F.korridor.gulv) || 'planker') : 'sjakk'; UTE[i] = rom ? (rom.ute ? 1 : 0) : (F.ute ? 1 : 0); }
+    const erSjakk = (x, z) => isF(x, z) && STIL[z * W + x] === 'sjakk', erPlanker = (x, z) => isF(x, z) && STIL[z * W + x] === 'planker';
+    const samme = (i, x, z) => x >= 0 && z >= 0 && x < W && z < H && F.tiles[z * W + x] > 0 && F.roomId[z * W + x] === F.roomId[i];
+    // 1) grunnfarge per flis, rolig sjakk med små variasjoner; andre gulv males av GULV (17_romtyper.js)
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
       if (!isF(x, z)) continue;
-      let base = isC(x, z) ? (th.corr || '#b9a878') : ((x + z) % 2 ? (th.tileB2 || th.tileB) : th.tileA);
+      const i = z * W + x, st = STIL[i];
+      if (st !== 'sjakk' && st !== 'planker' && typeof GULV === 'object' && GULV[st]) {
+        const rid = F.roomId[i]; GULV[st](g, x * T, z * T, T, { x, z, th, rom: rid >= 0 ? F.rooms[rid] : null, ute: !!UTE[i], kant: { n: !samme(i, x, z - 1), s: !samme(i, x, z + 1), w: !samme(i, x - 1, z), e: !samme(i, x + 1, z) } });
+        if (sno && UTE[i]) snoPaa(g, x * T, z * T, T, { x, z });
+        continue;
+      }
+      let base = st === 'planker' ? (th.corr || '#b9a878') : ((x + z) % 2 ? (th.tileB2 || th.tileB) : th.tileA);
       const v = 1 + (rng() - .5) * .07; base = v > 1 ? Col.light(base, (v - 1) * 2) : Col.dark(base, v);
       g.fillStyle = base; g.fillRect(x * T, z * T, T + 1, T + 1);
     }
@@ -56,17 +67,17 @@ const Paint = {
     }
     // 3) fuger: skjeve blekkstreker, med hull her og der
     g.strokeStyle = th.grout; g.lineWidth = T * .07;
-    for (let z = 0; z <= H; z++) for (let x = 0; x < W; x++) if ((isF(x, z) && isF(x, z - 1)) && !isC(x, z) && rng() > .07) { g.beginPath(); g.moveTo(x * T + rng() * 3, z * T + (rng() - .5) * 3); g.quadraticCurveTo(x * T + T / 2, z * T + (rng() - .5) * 5, x * T + T - rng() * 3, z * T + (rng() - .5) * 3); g.stroke(); }
-    for (let x = 0; x <= W; x++) for (let z = 0; z < H; z++) if ((isF(x, z) && isF(x - 1, z)) && !isC(x, z) && rng() > .07) { g.beginPath(); g.moveTo(x * T + (rng() - .5) * 3, z * T + rng() * 3); g.quadraticCurveTo(x * T + (rng() - .5) * 5, z * T + T / 2, x * T + (rng() - .5) * 3, z * T + T - rng() * 3); g.stroke(); }
+    for (let z = 0; z <= H; z++) for (let x = 0; x < W; x++) if ((erSjakk(x, z) && erSjakk(x, z - 1)) && rng() > .07) { g.beginPath(); g.moveTo(x * T + rng() * 3, z * T + (rng() - .5) * 3); g.quadraticCurveTo(x * T + T / 2, z * T + (rng() - .5) * 5, x * T + T - rng() * 3, z * T + (rng() - .5) * 3); g.stroke(); }
+    for (let x = 0; x <= W; x++) for (let z = 0; z < H; z++) if ((erSjakk(x, z) && erSjakk(x - 1, z)) && rng() > .07) { g.beginPath(); g.moveTo(x * T + (rng() - .5) * 3, z * T + rng() * 3); g.quadraticCurveTo(x * T + (rng() - .5) * 5, z * T + T / 2, x * T + (rng() - .5) * 3, z * T + T - rng() * 3); g.stroke(); }
     // korridor: plankegulv
     g.strokeStyle = 'rgba(60,40,20,.45)'; g.lineWidth = T * .04;
-    for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) if (isC(x, z)) for (let k = 1; k < 3; k++) { g.beginPath(); g.moveTo(x * T, z * T + k * T / 3 + (rng() - .5) * 2); g.lineTo(x * T + T, z * T + k * T / 3 + (rng() - .5) * 2); g.stroke(); }
+    for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) if (erPlanker(x, z)) for (let k = 1; k < 3; k++) { g.beginPath(); g.moveTo(x * T, z * T + k * T / 3 + (rng() - .5) * 2); g.lineTo(x * T + T, z * T + k * T / 3 + (rng() - .5) * 2); g.stroke(); }
     // 4) lys kant på flisene
     g.strokeStyle = 'rgba(255,250,225,.22)'; g.lineWidth = T * .05;
-    for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) if (isF(x, z) && !isC(x, z)) { g.beginPath(); g.moveTo(x * T + T * .12, z * T + T * .88); g.lineTo(x * T + T * .12, z * T + T * .14); g.lineTo(x * T + T * .86, z * T + T * .14); g.stroke(); }
+    for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) if (erSjakk(x, z)) { g.beginPath(); g.moveTo(x * T + T * .12, z * T + T * .88); g.lineTo(x * T + T * .12, z * T + T * .14); g.lineTo(x * T + T * .86, z * T + T * .14); g.stroke(); }
     // 5) avslåtte fliser
     for (let i = 0; i < W * H / 14; i++) {
-      const x = Math.floor(rng() * W), z = Math.floor(rng() * H); if (!isF(x, z) || isC(x, z)) continue;
+      const x = Math.floor(rng() * W), z = Math.floor(rng() * H); if (!erSjakk(x, z)) continue;
       const cx = x * T + (rng() < .5 ? 0 : T), cy = z * T + (rng() < .5 ? 0 : T), sx = cx === x * T ? 1 : -1, sy = cy === z * T ? 1 : -1, s = T * (.25 + rng() * .25);
       g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + sx * s, cy + sy * s * .15); g.lineTo(cx + sx * s * .2, cy + sy * s); g.closePath(); g.fillStyle = 'rgba(60,50,30,.35)'; g.fill(); g.strokeStyle = 'rgba(42,26,20,.6)'; g.lineWidth = T * .035; g.stroke();
     }
@@ -81,6 +92,13 @@ const Paint = {
     for (let i = 0; i < W * H / 6; i++) {
       const x = rng() * W, z = rng() * H; if (!isF(Math.floor(x), Math.floor(z))) continue;
       const px = x * T, py = z * T, k = rng();
+      // ute: løv, kvister og småstein i stedet for papir og piller
+      if (UTE[Math.floor(z) * W + Math.floor(x)]) {
+        if (k < .3) { g.save(); g.translate(px, py); g.rotate(rng() * TAU); g.fillStyle = F.depth === 5 ? '#6a5a2a' : rng() < .5 ? '#a8622a' : '#c89a3a'; g.beginPath(); g.ellipse(0, 0, T * .08, T * .045, 0, 0, TAU); g.fill(); g.strokeStyle = 'rgba(42,26,20,.5)'; g.lineWidth = T * .015; g.stroke(); g.restore(); }
+        else if (k < .45) { g.strokeStyle = 'rgba(60,40,20,.7)'; g.lineWidth = T * .025; g.beginPath(); g.moveTo(px, py); g.lineTo(px + (rng() - .5) * T * .5, py + (rng() - .5) * T * .3); g.stroke(); }
+        else if (k < .6) { g.fillStyle = 'rgba(120,114,100,.8)'; g.beginPath(); g.arc(px, py, T * .04, 0, TAU); g.fill(); }
+        continue;
+      }
       if (k < .25) { g.save(); g.translate(px, py); g.rotate(rng() * TAU); g.fillStyle = '#efe6cc'; g.strokeStyle = 'rgba(42,26,20,.7)'; g.lineWidth = T * .03; g.fillRect(-T * .12, -T * .09, T * .24, T * .18); g.strokeRect(-T * .12, -T * .09, T * .24, T * .18); g.restore(); }
       else if (k < .35) { g.save(); g.translate(px, py); g.rotate(rng() * TAU); g.fillStyle = rng() < .5 ? '#f4f0e6' : '#c86a4a'; g.beginPath(); g.ellipse(0, 0, T * .07, T * .035, 0, 0, TAU); g.fill(); g.strokeStyle = INK; g.lineWidth = T * .02; g.stroke(); g.restore(); }
       else if (k < .6) { g.fillStyle = 'rgba(42,26,20,.18)'; for (let d = 0; d < 4; d++) { g.beginPath(); g.arc(px + (rng() - .5) * T * .6, py + (rng() - .5) * T * .4, T * .025, 0, TAU); g.fill(); } }
@@ -97,8 +115,10 @@ const Paint = {
     }
     const tex = new THREE.CanvasTexture(c); tex.anisotropy = 4; return tex;
   },
-  wallTex(th) {
-    // 2 enheter bred, 2,3 høy. v = høyde / 2.3
+  wallTex(th, stil = 'panel') {
+    // 2 enheter bred og like høy som veggen (128 px per enhet). v = høyde / veggens høyde
+    const V = typeof VEGG === 'object' && VEGG[stil];
+    if (V && V.tegn) { const hp = Math.round((V.h || 2.3) * 128); return R.canvasTex(256, hp, (g, w, h) => V.tegn(g, w, h, th, mulberry32(stil.length * 97 + 5)), true); }
     return R.canvasTex(256, 296, (g, w, h) => {
       const yOf = u => h - u / 2.3 * h, rng = mulberry32(99);
       g.fillStyle = th.wall; g.fillRect(0, 0, w, h);
@@ -147,22 +167,29 @@ const Paint = {
     this.mesh = {};
     { const ft = this.floorCanvas(F, th), fm = new THREE.MeshBasicMaterial({ map: ft, vertexColors: true }); this.owned.push(ft, fm, fg); L.add(this.mesh.gulv = new THREE.Mesh(fg, fm)); }
     // vegger: høye bak, lave foran. Bare fronten (mot kameraet) og toppen er synlige.
-    const wallH = new Float32Array(W * H);
+    // hver veggrute får stilen til rommet (eller korridoren) den vender mot: helst sør, så nord, så sidene
+    const wallH = new Float32Array(W * H), wallS = new Array(W * H);
+    const stilFor = (x, z) => { for (const [dx, dz] of [[0, 1], [0, -1], [-1, 0], [1, 0], [-1, 1], [1, 1], [-1, -1], [1, -1]]) { const nx = x + dx, nz = z + dz; if (!isF(nx, nz)) continue; const rid = F.roomId ? F.roomId[nz * W + nx] : -1; return rid >= 0 && F.rooms ? (F.rooms[rid].vegg || 'panel') : ((F.korridor && F.korridor.vegg) || 'panel'); } return 'panel'; };
+    const VG = typeof VEGG === 'object' ? VEGG : { panel: { h: 2.3 } };
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
       if (tiles[z * W + x]) continue;
       let near = false; for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (isF(x + dx, z + dz)) near = true;
       if (!near) continue;
-      wallH[z * W + x] = (isF(x - 1, z - 1) || isF(x, z - 1) || isF(x + 1, z - 1)) ? .42 : 2.3;
+      const st = stilFor(x, z), V = VG[st] || VG.panel; wallS[z * W + x] = VG[st] ? st : 'panel';
+      wallH[z * W + x] = (isF(x - 1, z - 1) || isF(x, z - 1) || isF(x + 1, z - 1)) ? (V.lav || .42) : (V.h || 2.3);
     }
-    const cp = [], cc = [], fp = [], fu = [];
-    const cTop = new THREE.Color(th.cap || Col.dark(th.wall, .5)), cInk = new THREE.Color(INK), cEdge = cInk;
+    const cp = [], cc = [], grupper = {};
+    const cTopTema = new THREE.Color(th.cap || Col.dark(th.wall, .5)), cInk = new THREE.Color(INK), toppFarge = {};
     const quadC = (a, b, c, d, color) => { for (const v of [a, b, c, a, c, d]) { cp.push(v[0], v[1], v[2]); cc.push(color.r, color.g, color.b); } };
-    const quadF = (x0, x1, z0, h) => { const vs = [[x0, 0, z0, x0 * .5, 0], [x1, 0, z0, x1 * .5, 0], [x1, h, z0, x1 * .5, h / 2.3], [x0, 0, z0, x0 * .5, 0], [x1, h, z0, x1 * .5, h / 2.3], [x0, h, z0, x0 * .5, h / 2.3]]; for (const v of vs) { fp.push(v[0], v[1], v[2]); fu.push(v[3], v[4]); } };
+    const quadF = (st, x0, x1, z0, h) => { const G2 = grupper[st] || (grupper[st] = { fp: [], fu: [] }), hh = (VG[st] && VG[st].h) || 2.3, vs = [[x0, 0, z0, x0 * .5, 0], [x1, 0, z0, x1 * .5, 0], [x1, h, z0, x1 * .5, h / hh], [x0, 0, z0, x0 * .5, 0], [x1, h, z0, x1 * .5, h / hh], [x0, h, z0, x0 * .5, h / hh]]; for (const v of vs) { G2.fp.push(v[0], v[1], v[2]); G2.fu.push(v[3], v[4]); } };
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
       const h = wallH[z * W + x]; if (!h) continue;
+      const st = wallS[z * W + x], V = VG[st] || VG.panel;
       const nh = (nx, nz) => (nx < 0 || nz < 0 || nx >= W || nz >= H) ? 0 : wallH[nz * W + nx];
+      if (nh(x, z + 1) < h) quadF(st, x, x + 1, z + 1, h);
+      if (V.topp === null) continue; // smijernsgjerdet har ingen topp
+      const cTop = V.topp ? (toppFarge[st] || (toppFarge[st] = new THREE.Color(V.topp))) : cTopTema;
       quadC([x, h, z], [x, h, z + 1], [x + 1, h, z + 1], [x + 1, h, z], cTop);
-      if (nh(x, z + 1) < h) quadF(x, x + 1, z + 1, h);
       // blekkant rundt toppen der naboen er lavere
       const e = .07, y = h + .002;
       if (nh(x, z - 1) !== h) quadC([x, y, z], [x, y, z + e], [x + 1, y, z + e], [x + 1, y, z], cInk);
@@ -172,9 +199,17 @@ const Paint = {
     }
     const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(cp, 3)); cg.setAttribute('color', new THREE.Float32BufferAttribute(cc, 3));
     { const cm = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); this.owned.push(cg, cm); L.add(this.mesh.topp = new THREE.Mesh(cg, cm)); }
-    const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); wg.setAttribute('uv', new THREE.Float32BufferAttribute(fu, 2));
-    { const wt = this.wallTex(th), wm = new THREE.MeshBasicMaterial({ map: wt, side: THREE.DoubleSide }); this.owned.push(wg, wt, wm); L.add(this.mesh.vegg = new THREE.Mesh(wg, wm)); }
-    this.wallH = wallH;
+    // én veggmesh per stil; gjerder og ruiner er utklipp, glasset er gjennomsiktig
+    this.mesh.vegger = [];
+    for (const [st, G2] of Object.entries(grupper)) {
+      const V = VG[st] || VG.panel, wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(G2.fp, 3)); wg.setAttribute('uv', new THREE.Float32BufferAttribute(G2.fu, 2));
+      const wt = this.wallTex(th, st), wm = new THREE.MeshBasicMaterial({ map: wt, side: THREE.DoubleSide, transparent: !!V.alfa, alphaTest: V.alfa && st !== 'glass' ? .4 : 0, depthWrite: st !== 'glass' });
+      const m = new THREE.Mesh(wg, wm); m.userData.veggStil = st; this.owned.push(wg, wt, wm); L.add(m); this.mesh.vegger.push(m);
+      if (st === 'panel' || !this.mesh.vegg) this.mesh.vegg = m;
+    }
+    this.wallH = wallH; this.wallS = wallS;
+    // ute: bakken fortsetter utenfor rommene, med trær i mørket (17_romtyper.js)
+    if (F.ute && typeof Landskap === 'object') { try { Landskap.bakke(F, th, L); } catch (e) { console.warn('bakken feilet', e); } }
     return L;
   },
   decals(F, n = 26) {

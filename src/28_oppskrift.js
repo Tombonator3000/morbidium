@@ -90,7 +90,7 @@ const Oppskrift = {
     // størrelse: litt forskjell på alle
     const k = .92 + this.r() * .16; d.sc *= k;
     // mester?
-    const sjanse = (.03 + G.depth * .025 + (e.elite ? .1 : 0)) * (G.run && G.run.gjen ? 1.6 : 1);
+    const sjanse = (.03 + dybdeStyrke(G.depth) * .025 + (e.elite ? .1 : 0)) * (G.run && G.run.gjen ? 1.6 : 1);
     if (!e.split && this.r() < sjanse) this.mester(e, this.p(Object.keys(MESTER)));
   },
   mester(e, key) {

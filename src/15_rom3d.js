@@ -1,15 +1,49 @@
 /* ============================================================
-   ROM I 3D (PRØVE)  -  bare rommene, gulvet og effektene er 3D. Figurene og
+   ROM I 3D  -  bare rommene, gulvet og effektene er 3D. Figurene og
    tingene er de samme 2D-tegningene som ellers, men de lyses av lampene og
    kaster ekte skygge etter tegningen. Mørk natt, varme punktlys fra lamper
    og stearinlys, måneskinn gjennom vinduene, lister og pilastre som stikker
    ut av veggene, relieff i gulvflisene, støv i lyset og glød.
-   Slås på i innstillingene (Bilde) eller med #3d. Alt legges oppå den
-   vanlige etasjen og kan tas bort igjen uten å bygge etasjen på nytt.
+   Standard fra 25.9. Slås av i innstillingene (Bilde) eller med #2d, og
+   enkel grafikk slår det alltid av. Alt legges oppå den vanlige etasjen og
+   kan tas bort igjen uten å bygge etasjen på nytt.
+   Kvalitet: høy, middels eller lav, valgt i innstillingene eller automatisk.
+   Automatisk starter på høy (middels på berøringsskjerm) og går ned et trinn
+   når bildefrekvensen holder seg lav, til slutt slås 3D av.
    ============================================================ */
 const D3 = {
   on: false, bygd: false, ting: [], byttet: [], egne: [], gjemt: [], pool: [], dukker: new Set(), t: 0,
-  POOL: 8, BUMP: .7,
+  BUMP: .7,
+  NIVA: {
+    hoy: { navn: 'høy', skygge: 2048, lys: 8, glod: true, stov: 192, straaler: true, taake: true, tilt: true, kant: true, dpr: 2 },
+    middels: { navn: 'middels', skygge: 1024, lys: 6, glod: true, stov: 96, straaler: true, taake: true, tilt: false, kant: true, dpr: 1.5 },
+    lav: { navn: 'lav', skygge: 512, lys: 4, glod: false, stov: 0, straaler: false, taake: false, tilt: false, kant: false, dpr: 1 }
+  },
+  /* valgt nivå: fast i innstillingene (1 lav, 2 middels, 3 høy) eller automatisk (0) */
+  kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse ? 'middels' : 'hoy'); },
+  /* «Lys og skygge» av (R.lightsOn) gir et jevnt opplyst rom: ingen punktlys, skygger, lysstråler eller kantlys */
+  Q() { const q = this.NIVA[this.kval()] || this.NIVA.hoy; return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },
+  /* oppløsningen følger nivået når 3D er på; uten 3D brukes det skjermen tåler */
+  dpr() { const k = this.on ? Math.min(R.dprMax || 1, this.Q().dpr) : (R.dprMax || 1); if (Math.abs(k - R.dpr) > .01) { R.dpr = k; R.resize(); } },
+  /* kalles fra applySettings: nytt nivå bygger 3D-laget på nytt */
+  nokkel() { return this.kval() + (R.lightsOn ? '' : '-flat'); },
+  kvalitet() { const k = this.nokkel(); if (k === this.kSist) return; this.kSist = k; if (this.on) { this.dpr(); this.onFloor(); } },
+  /* automatisk kvalitet: måler bildefrekvensen i spill, to sekunder om gangen. To lave målinger på rad gir et trinn ned.
+     Hopper over fanebytter og automatiske testnettlesere, som bare har programvaregrafikk. */
+  maal(dt) {
+    const s = G.meta && G.meta.settings; if (!this.on || !this.bygd || !s || (s.kvalitet | 0) || (navigator.webdriver && !this.tvingMaal)) return;
+    if (dt > .25) { this.mT = this.mN = 0; return; }
+    this.mT = (this.mT || 0) + dt; this.mN = (this.mN || 0) + 1; if (this.mT < 2) return;
+    const fps = this.mN / this.mT, niva = this.kval(); this.mT = this.mN = 0;
+    this.lave = fps < { hoy: 40, middels: 30, lav: 22 }[niva] ? (this.lave || 0) + 1 : 0;
+    if (this.lave >= 2) { this.lave = 0; this.nedgrader(niva, fps); }
+  },
+  nedgrader(niva, fps) {
+    const s = G.meta.settings, neste = { hoy: 'middels', middels: 'lav' }[niva || this.kval()], f = fps ? ' (' + Math.round(fps) + ' bilder i sekundet)' : '';
+    if (neste) { s.kvAuto = neste; toast('Grafikken er justert', 'Kvaliteten er satt til ' + this.NIVA[neste].navn + f); }
+    else { s.d3 = false; toast('3D er slått av', 'Bildet hakket også på lav kvalitet' + f + '. Det kan slås på igjen under Bilde.'); }
+    saveMeta(); applySettings(); return neste || 'av';
+  },
   gradient() {
     if (this.grad) return this.grad;
     const d = new Uint8Array([60, 60, 60, 255, 118, 118, 118, 255, 178, 178, 178, 255, 222, 222, 222, 255]);
@@ -18,30 +52,36 @@ const D3 = {
   },
   toon(o) { const m = new THREE.MeshToonMaterial(Object.assign({ gradientMap: this.gradient() }, o)); return m; },
   sett(on) {
-    on = !!on && !R.safe; if (on === this.on) return; this.on = on;
+    on = !!on && !R.safe; if (on === this.on) return; this.on = on; this.kSist = this.nokkel();
     R.renderer.shadowMap.enabled = true; R.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    if (on) this.onFloor(); else this.riv();
+    this.dpr(); if (on) this.onFloor(); else this.riv();
   },
   /* kalles når en etasje (eller tittelen) er ferdig bygd */
   onFloor() { this.riv(); if (!this.on || !R.level || !G.F) return; try { this.bygg(); } catch (e) { console.warn('3D-prøven feilet', e); this.riv(); } },
   bygg() {
     const sc = R.scene, F = G.F, th = G.th || THEMES[1];
     // himmel og måne
-    const amb = new THREE.AmbientLight(new THREE.Color(th.fog || '#1a1622').lerp(new THREE.Color('#3a3450'), .6), .32);
-    const hemi = new THREE.HemisphereLight('#8a90c8', '#2a1a14', .16);
-    const mane = new THREE.DirectionalLight('#9aaee8', .42); mane.castShadow = true;
-    mane.shadow.mapSize.set(2048, 2048); const sc2 = mane.shadow.camera; sc2.left = -16; sc2.right = 16; sc2.top = 16; sc2.bottom = -16; sc2.near = 1; sc2.far = 60; mane.shadow.bias = -.0015; mane.shadow.normalBias = .02;
+    const Q = this.Q(); this.q = Q;
+    const amb = new THREE.AmbientLight(new THREE.Color(th.fog || '#1a1622').lerp(new THREE.Color('#3a3450'), .6), Q.flat ? .95 : .32);
+    const hemi = new THREE.HemisphereLight('#8a90c8', '#2a1a14', Q.flat ? .45 : .16);
+    const mane = new THREE.DirectionalLight('#9aaee8', .42); mane.castShadow = Q.skygge > 0;
+    if (Q.skygge) mane.shadow.mapSize.set(Q.skygge, Q.skygge); const sc2 = mane.shadow.camera; sc2.left = -16; sc2.right = 16; sc2.top = 16; sc2.bottom = -16; sc2.near = 1; sc2.far = 60; mane.shadow.bias = -.0015; mane.shadow.normalBias = .02;
+    if (F.ute) { mane.intensity = .78; mane.color.set('#a8bce8'); } // ute lyser månen sterkere
     sc.add(amb, hemi, mane, mane.target); this.mane = mane; this.ting.push(amb, hemi, mane, mane.target);
-    this.pool = []; for (let i = 0; i < this.POOL; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); }
+    this.pool = []; for (let i = 0; i < Q.lys; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); }
     // nivået: materialene byttes til tegneseriebelyste varianter
     const bytt = (mesh, ny) => { this.byttet.push([mesh, mesh.material]); mesh.material = ny; };
     const PM = Paint.mesh || {};
-    for (const m of [PM.gulv, PM.topp, PM.vegg]) if (m && !m.geometry.attributes.normal) m.geometry.computeVertexNormals(); // den malte stilen trenger ikke normaler, lys gjør det
+    const vegger = PM.vegger && PM.vegger.length ? PM.vegger : PM.vegg ? [PM.vegg] : [];
+    for (const m of [PM.gulv, PM.topp, PM.bakke, ...vegger]) if (m && !m.geometry.attributes.normal) m.geometry.computeVertexNormals(); // den malte stilen trenger ikke normaler, lys gjør det
     if (PM.gulv) { bytt(PM.gulv, this.toon({ map: PM.gulv.material.map, bumpMap: PM.gulv.material.map, bumpScale: this.BUMP, vertexColors: true })); PM.gulv.receiveShadow = true; }
     if (PM.topp) { bytt(PM.topp, this.toon({ vertexColors: true, side: THREE.DoubleSide })); PM.topp.castShadow = true; }
-    if (PM.vegg) { bytt(PM.vegg, this.toon({ map: PM.vegg.material.map, side: THREE.DoubleSide })); PM.vegg.castShadow = true; PM.vegg.receiveShadow = true; }
+    // én mesh per veggstil (17_romtyper.js); gjerder og ruiner er utklipp og kaster ikke skygge som en mur
+    for (const v of vegger) { const b = v.material; bytt(v, this.toon({ map: b.map, side: THREE.DoubleSide, transparent: b.transparent, alphaTest: b.alphaTest, depthWrite: b.depthWrite })); v.castShadow = !b.transparent; v.receiveShadow = true; }
+    if (PM.bakke) { bytt(PM.bakke, this.toon({ map: PM.bakke.material.map, color: PM.bakke.material.color })); PM.bakke.receiveShadow = true; }
     this.lysLag();
-    this.vegglamper(F, th); this.arkitektur(F, th); this.stov();
+    this.lamper = []; this.tidU = this.tidU || { value: 0 };
+    this.vegglamper(F, th); this.arkitektur(F, th); if (Q.stov) this.stov(Q.stov); if (Q.taake) this.taake(F, th);
     for (const o of G.props) { o.d3 = true; this.moble(o); }
     R.post.uniforms.uLights.value = 0;
     this.bygd = true; this.t = 0;
@@ -51,18 +91,27 @@ const D3 = {
     for (const [m, mat] of this.byttet) { if (m.material !== mat) m.material.dispose(); m.material = mat; m.castShadow = m.receiveShadow = false; } this.byttet = [];
     for (const s of this.gjemt) s.visible = true; this.gjemt = []; this.stovP = null;
     for (const o of this.egne) o.dispose(); this.egne = [];
-    for (const d of this.dukker) if (d.U && d.U.tint0) d.U.uTint.value.copy(d.U.tint0); this.dukker.clear();
-    if (G.props) for (const o of G.props) { o.d3 = false; if (o.U && o.U.tint0) o.U.uTint.value.copy(o.U.tint0); }
+    const utenKant = U => { if (U && U.uRimCol) U.uRimCol.value.setRGB(0, 0, 0); };
+    for (const d of this.dukker) { if (d.U && d.U.tint0) d.U.uTint.value.copy(d.U.tint0); utenKant(d.U); } this.dukker.clear();
+    if (G.props) for (const o of G.props) { o.d3 = false; if (o.U && o.U.tint0) o.U.uTint.value.copy(o.U.tint0); utenKant(o.U); }
+    this.lamper = []; this.morkeT = 0;
     if (R.post) R.post.uniforms.uLights.value = R.lightsOn ? 1 : 0;
     this.bygd = false;
   },
+  /* veggstiler: lamper henger bare på innevegger, og lister og pilastre bare på pussede vegger */
+  inneVegg(i) { const st = Paint.wallS && Paint.wallS[i]; return !st || !{ hekk: 1, gjerde: 1, steinmur: 1, skog: 1, ruin: 1, glass: 1 }[st]; },
+  listeVegg(i) { const st = Paint.wallS && Paint.wallS[i]; return !st || !!{ panel: 1, tapet: 1, paviljong: 1 }[st]; },
   /* vanlige materialer i nivået (dekaler, plakater, dører) blir lyssatt, ellers lyser de i mørket */
   lysLag() {
     if (!R.level) return;
     for (const c of R.level.children) {
       if (c.userData.d3 || !c.isMesh || !c.material || !c.material.isMeshBasicMaterial || c.material.blending === THREE.AdditiveBlending) continue;
       const b = c.material; c.userData.d3 = true;
-      const ny = new THREE.MeshLambertMaterial({ map: b.map, color: b.color, transparent: b.transparent, opacity: b.opacity, depthWrite: b.depthWrite, side: b.side, vertexColors: b.vertexColors });
+      // blod og andre våte flekker blir blanke og fanger lampene
+      const ny = c.userData.vaat ? new THREE.MeshPhongMaterial({ map: b.map, color: b.color.clone().multiplyScalar(1.45), emissive: new THREE.Color('#1a0808'), transparent: b.transparent, opacity: b.opacity, depthWrite: b.depthWrite, side: b.side, shininess: 70, specular: new THREE.Color('#8a6060') })
+        : new THREE.MeshLambertMaterial({ map: b.map, color: b.color, transparent: b.transparent, opacity: b.opacity, depthWrite: b.depthWrite, side: b.side, vertexColors: b.vertexColors });
+      // blodet lyser litt av seg selv, som gulvets laveste tegneserietrinn, ellers blir det svart i mørke hjørner
+      if (c.userData.vaat) ny.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n\ttotalEmissiveRadiance += diffuseColor.rgb * 0.34;'); };
       this.byttet.push([c, b]); c.material = ny; c.receiveShadow = true;
     }
   },
@@ -75,25 +124,108 @@ const D3 = {
       if (r.role === 'secret') continue;
       const z = r.z; let n = 0;
       for (let x = r.x + 1; x < r.x + r.w - 1; x += 3) {
-        if (!isF(x, z) || isF(x, z - 1) || !(wh[(z - 1) * F.W + x] > 2) || (Paint.opptatt && Paint.opptatt.has(x + ',' + z))) continue;
+        if (!isF(x, z) || isF(x, z - 1) || !(wh[(z - 1) * F.W + x] > 2) || !this.inneVegg((z - 1) * F.W + x) || (Paint.opptatt && Paint.opptatt.has(x + ',' + z))) continue;
         const g = new THREE.Group(); g.position.set(x + .5, 0, z + .03); R.level.add(g); this.ting.push(g);
         if (n % 2 === 0) {
           // vegglampe: brakett, skjerm og pære som gløder
           const b = new THREE.Mesh(R.geo('d3brak', () => new THREE.BoxGeometry(.08, .08, .3)), messing); b.position.set(0, 1.55, .15); g.add(b);
           const sk = new THREE.Mesh(R.geo('d3skj', () => new THREE.ConeGeometry(.2, .22, 8, 1, true)), this.toon({ color: '#c8a060', side: THREE.DoubleSide })); sk.position.set(0, 1.62, .3); g.add(sk);
-          const p = new THREE.Mesh(R.geo('d3pare', () => new THREE.SphereGeometry(.08, 8, 6)), glod); p.position.set(0, 1.5, .3); g.add(p);
+          const pm = glod.clone(); this.egne.push(pm);
+          const p = new THREE.Mesh(R.geo('d3pare', () => new THREE.SphereGeometry(.08, 8, 6)), pm); p.position.set(0, 1.5, .3); g.add(p);
           const lp = R.light(x + .5, z + 1.2, 3.2, th.pool || '#ffd89a', .45, R.levelL); lp.userData.y = 1.5; this.ting.push(lp);
-        } else {
+          // en svak lyskjegle fra skjermen ned mot gulvet
+          let kj = null;
+          if (this.q.straaler) { kj = new THREE.Mesh(this.kjegleGeo(), this.straaleMat(th.pool || '#ffd89a', .22)); kj.position.set(0, 0, .3); kj.renderOrder = 5; g.add(kj); this.egne.push(kj.material); }
+          // noen lamper flimrer, flere jo lenger ned i bygget
+          this.lamper.push({ lp, pm, kj, base: .45, farge: new THREE.Color('#ffd89a'), flimrer: Math.random() < .12 + dybdeStyrke(G.depth) * .07, t: Math.random() * 10, burst: 0 });
+        } else if ((Paint.wallS && Paint.wallS[(z - 1) * F.W + x]) !== 'forheng') { // ingen vinduer i de røde forhengene
           // vindu: ramme, glass i månelys og en lysstripe ned på gulvet
           const fr = new THREE.Mesh(R.geo('d3vr', () => new THREE.BoxGeometry(.9, 1.0, .06)), ramme); fr.position.set(0, 1.45, 0); g.add(fr);
           for (const [dx, dy] of [[-.2, .22], [.2, .22], [-.2, -.2], [.2, -.2]]) { const q = new THREE.Mesh(R.geo('d3vg', () => new THREE.PlaneGeometry(.34, .36)), glass); q.position.set(dx, 1.45 + dy, .035); g.add(q); }
-          const sj = new THREE.Mesh(R.geo('d3sj', () => { const s = new THREE.PlaneGeometry(1, 1); s.translate(0, .5, 0); return s; }), new THREE.MeshBasicMaterial({ map: this.stripeTex(), color: '#7a8ad0', transparent: true, opacity: .22, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
-          sj.position.set(0, 0, 0); sj.rotation.x = -1.05; sj.scale.set(1.1, 2.6, 1); g.add(sj);
+          if (this.q.straaler) {
+            // lysstråle fra vinduet ned på gulvet, med sprossen som en mørk stripe og støv som driver i lyset
+            const sj = new THREE.Mesh(this.straaleGeo(), this.straaleMat('#8a9ae0', .34, true)); sj.renderOrder = 5; g.add(sj); this.egne.push(sj.material);
+            // og vinduet tegnet i lys på gulvet der strålen treffer
+            const fl = new THREE.Mesh(R.plane1(), new THREE.MeshBasicMaterial({ map: this.vindusLys(), color: '#6a7ac0', transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false }));
+            fl.rotation.x = -Math.PI / 2; fl.position.set(.05, .018, 2.05); fl.scale.set(1.25, 1.2, 1); fl.renderOrder = 2; g.add(fl); this.egne.push(fl.material);
+          } else {
+            const sj = new THREE.Mesh(R.geo('d3sj', () => { const s = new THREE.PlaneGeometry(1, 1); s.translate(0, .5, 0); return s; }), new THREE.MeshBasicMaterial({ map: this.stripeTex(), color: '#7a8ad0', transparent: true, opacity: .22, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+            sj.position.set(0, 0, 0); sj.rotation.x = -1.05; sj.scale.set(1.1, 2.6, 1); g.add(sj);
+          }
           const lv = R.light(x + .5, z + 1.6, 2.6, '#8a9ae0', .4, R.levelL); lv.userData.y = 1.9; this.ting.push(lv);
         }
         n++;
       }
     }
+  },
+  /* ---------- lys i lufta: stråler fra vinduene og kjegler under lampene ---------- */
+  straaleGeo() {
+    return R.geo('d3straale', () => {
+      // fra vinduet (øverst, v = 1) på skrå ned til gulvet inne i rommet (v = 0)
+      const g = new THREE.BufferGeometry(), P = [-.42, 1.92, .04, .42, 1.92, .04, .62, .01, 2.35, -.62, .01, 2.35], U = [0, 1, 1, 1, 1, 0, 0, 0];
+      g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setIndex([0, 3, 1, 1, 3, 2]); return g;
+    });
+  },
+  kjegleGeo() {
+    return R.geo('d3kjegle', () => {
+      const g = new THREE.BufferGeometry(), P = [-.16, 1.5, 0, .16, 1.5, 0, .75, .01, .95, -.75, .01, .95], U = [0, 1, 1, 1, 1, 0, 0, 0];
+      g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setIndex([0, 3, 1, 1, 3, 2]); return g;
+    });
+  },
+  straaleMat(farge, styrke, sprosse) {
+    return new THREE.ShaderMaterial({
+      uniforms: { uTid: this.tidU, uFarge: { value: new THREE.Color(farge) }, uStyrke: { value: styrke }, uSprosse: { value: sprosse ? 1 : 0 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `uniform float uTid, uStyrke, uSprosse; uniform vec3 uFarge; varying vec2 vUv; ${SHADER_NOISE}
+        void main(){
+          float side = smoothstep(0.0, 0.22, vUv.x) * smoothstep(1.0, 0.78, vUv.x);
+          float lengde = smoothstep(0.0, 0.25, vUv.y) * (0.45 + 0.55 * vUv.y) * smoothstep(1.0, 0.94, vUv.y);
+          float sprosse = 1.0 - uSprosse * 0.6 * (1.0 - smoothstep(0.02, 0.06, abs(vUv.x - 0.5)));
+          float stov = 0.7 + 0.3 * vn(vec2(vUv.x * 7.0 + uTid * 0.07, vUv.y * 4.0 - uTid * 0.18));
+          gl_FragColor = vec4(uFarge * side * lengde * sprosse * stov * uStyrke, 1.0);
+        }`,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+    });
+  },
+  /* fire ruter lys med et mørkt kors, myke kanter: vinduet slik det faller på gulvet */
+  vindusLys() {
+    return this._vl || (this._vl = R.canvasTex(128, 128, g => {
+      g.filter = 'blur(5px)'; g.fillStyle = '#ffffff';
+      for (const [x, y] of [[18, 16], [68, 16], [18, 66], [68, 66]]) { g.beginPath(); g.moveTo(x + 6, y); g.lineTo(x + 44, y); g.lineTo(x + 40, y + 44); g.lineTo(x + 2, y + 44); g.closePath(); g.fill(); }
+      g.filter = 'none';
+    }));
+  },
+  /* ---------- bakketåke: to lag støy over gulvet, bare der det er gulv ---------- */
+  taake(F, th) {
+    const cfg = (F.taake || { 1: [.3, '#a8b8d0'], 2: [.1, '#e8dcc0'], 3: [.26, '#d4ece6'], 4: [.14, '#dccfb4'], 5: [.42, '#7a8ab8'], 6: [.34, '#9a7ab8'] }[G.depth] || [.12, '#dddddd']).slice(); // F.taake: drømmene har sin egen
+    if (F.vaer === 'taake') cfg[0] += .22;
+    const data = new Uint8Array(F.W * F.H); for (let i = 0; i < data.length; i++) data[i] = F.tiles[i] > 0 ? 255 : 0;
+    const mask = new THREE.DataTexture(data, F.W, F.H, THREE.LuminanceFormat); mask.magFilter = mask.minFilter = THREE.LinearFilter; mask.generateMipmaps = false; mask.needsUpdate = true; this.egne.push(mask);
+    for (const [y, k, fart] of [[.16, 1, 1], [.48, .6, -.7]]) {
+      const mat = new THREE.ShaderMaterial({
+        uniforms: { uTid: this.tidU, uMask: { value: mask }, uFarge: { value: new THREE.Color(cfg[1]) }, uStyrke: { value: cfg[0] * k }, uSize: { value: new THREE.Vector2(F.W, F.H) }, uFart: { value: fart } },
+        vertexShader: 'varying vec2 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }',
+        fragmentShader: `uniform float uTid, uStyrke, uFart; uniform vec3 uFarge; uniform sampler2D uMask; uniform vec2 uSize; varying vec2 vW; ${SHADER_NOISE}
+          void main(){
+            float m = texture2D(uMask, vW / uSize).r;
+            vec2 p = vW * 0.33 + vec2(uTid * 0.05, uTid * 0.021) * uFart;
+            float n = vn(p) * 0.55 + vn(p * 2.1 + 5.3) * 0.3 + vn(p * 4.3 - uTid * 0.04) * 0.15;
+            gl_FragColor = vec4(uFarge, m * uStyrke * smoothstep(0.32, 0.78, n));
+          }`,
+        transparent: true, depthWrite: false
+      });
+      const t = new THREE.Mesh(R.plane1(), mat); t.rotation.x = -Math.PI / 2; t.position.set(F.W / 2, y, F.H / 2); t.scale.set(F.W, F.H, 1); t.renderOrder = 10; t.frustumCulled = false;
+      R.scene.add(t); this.ting.push(t); this.egne.push(mat);
+    }
+  },
+  /* ---------- mørke: lampene slukner og flimrer tilbake (sjefer, minisjefer, mye Morbidium) ---------- */
+  morke(t = 1.2, dyp = .08) { this.morkeT = Math.max(this.morkeT || 0, t); this.morke0 = Math.max(this.morkeT, this.morke0 || 0); this.morkeDyp = dyp; },
+  morkeFaktor(dt) {
+    if (!(this.morkeT > 0)) return 1;
+    this.morkeT -= dt; const p = 1 - this.morkeT / (this.morke0 || 1);
+    if (this.morkeT <= 0) { this.morke0 = 0; return 1; }
+    // helt mørkt først, så flimrer det tilbake
+    return p < .45 ? this.morkeDyp : Math.random() < (p - .45) * 1.8 ? 1 : this.morkeDyp + Math.random() * .25;
   },
   stripeTex() { return this._st || (this._st = R.canvasTex(32, 128, g => { const gr = g.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.3, 'rgba(255,255,255,.8)'); gr.addColorStop(1, 'rgba(255,255,255,1)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 128); })); },
   /* ---------- rommets egen dybde ---------- */
@@ -102,11 +234,11 @@ const D3 = {
   arkitektur(F, th) {
     const W = F.W, wh = Paint.wallH || [], isF = (x, z) => x >= 0 && z >= 0 && x < W && z < F.H && F.tiles[z * W + x] > 0;
     const opp = (x, z) => (Paint.opptatt && Paint.opptatt.get(x + ',' + z)) || '';
-    const front = []; for (let z = 0; z < F.H; z++) for (let x = 0; x < W; x++) if (wh[z * W + x] > 2 && isF(x, z + 1)) front.push([x, z + 1, opp(x, z + 1)]);
+    const front = []; for (let z = 0; z < F.H; z++) for (let x = 0; x < W; x++) if (wh[z * W + x] > 2 && this.listeVegg(z * W + x) && isF(x, z + 1)) front.push([x, z + 1, opp(x, z + 1)]);
     const piler = [];
     for (const r of F.rooms) {
       if (r.role === 'secret') continue;
-      for (let x = r.x + 3; x < r.x + r.w - 1; x += 3) if (wh[(r.z - 1) * W + x - 1] > 2 && wh[(r.z - 1) * W + x] > 2 && isF(x - 1, r.z) && isF(x, r.z) && !opp(x - 1, r.z) && !opp(x, r.z)) piler.push([x, r.z]);
+      for (let x = r.x + 3; x < r.x + r.w - 1; x += 3) if (wh[(r.z - 1) * W + x - 1] > 2 && wh[(r.z - 1) * W + x] > 2 && this.listeVegg((r.z - 1) * W + x) && isF(x - 1, r.z) && isF(x, r.z) && !opp(x - 1, r.z) && !opp(x, r.z)) piler.push([x, r.z]);
     }
     // hver del er en kasse, og en litt større blekkasse rett bak den gir strek på sidene og under
     const mx = new THREE.Matrix4(), kasse = (w, h, d) => R.geo('d3k' + [w, h, d].join(','), () => new THREE.BoxGeometry(w, h, d));
@@ -126,8 +258,8 @@ const D3 = {
   },
   blekk() { return this._blekk || (this._blekk = new THREE.MeshBasicMaterial({ color: INK })); },
   /* støv som svever i lyset: hvert korn hører til ett av punktlysene og driver rundt i lyskjeglen */
-  stov() {
-    const N = 192, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), off = new Float32Array(N * 3), fase = new Float32Array(N);
+  stov(N = 192) {
+    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), off = new Float32Array(N * 3), fase = new Float32Array(N);
     for (let i = 0; i < N; i++) { this.nyttKorn(off, i); fase[i] = Math.random() * TAU; }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
     const tex = this._prikk || (this._prikk = R.canvasTex(16, 16, g => { const gr = g.createRadialGradient(8, 8, 0, 8, 8, 8); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 16, 16); }));
@@ -169,31 +301,51 @@ const D3 = {
   },
   /* ---------- hvert bilde ---------- */
   kilder() { return (R.kilder || []).filter(m => m.parent && (m.parent === R.lscene || m.parent === R.levelL) && (m.parent !== R.levelL || R.levelL.parent)); },
-  lysVed(x, z, y = .9) {
-    const c = this._c || (this._c = new THREE.Color()); c.setRGB(.26, .25, .34);
-    for (const l of this.pool) { if (l.intensity <= 0) continue; const dx = l.position.x - x, dz = l.position.z - z, dy = l.position.y - y, d = Math.sqrt(dx * dx + dz * dz + dy * dy), k = Math.max(0, 1 - d / l.distance); if (k > 0) { const f = k * k * l.intensity * .55; c.r += l.color.r * f; c.g += l.color.g * f; c.b += l.color.b * f; } }
-    c.r = Math.min(1.5, c.r); c.g = Math.min(1.5, c.g); c.b = Math.min(1.5, c.b); return c;
+  /* lyset ved et punkt: en farge å gange tegningen med, og (valgfritt i K) den sterkeste lampen, som gir kantlys */
+  lysVed(x, z, y = .9, K) {
+    const c = this._c || (this._c = new THREE.Color());
+    if (this.q && this.q.flat) { c.setRGB(.95, .93, .9); if (K) { K.l = null; K.f = 0; } return c; }
+    c.setRGB(.26, .25, .34); let best = 0, bl = null;
+    for (const l of this.pool) { if (l.intensity <= 0) continue; const dx = l.position.x - x, dz = l.position.z - z, dy = l.position.y - y, d = Math.sqrt(dx * dx + dz * dz + dy * dy), k = Math.max(0, 1 - d / l.distance); if (k > 0) { const f = k * k * l.intensity * .55; c.r += l.color.r * f; c.g += l.color.g * f; c.b += l.color.b * f; if (f > best) { best = f; bl = l; } } }
+    c.r = Math.min(1.5, c.r); c.g = Math.min(1.5, c.g); c.b = Math.min(1.5, c.b); if (K) { K.l = bl; K.f = best; } return c;
+  },
+  /* kantlys: retningen til lampen slik den ser ut på skjermen, i tegningens egne koordinater (speilet når figuren snur) */
+  settKant(U, K, x, y, z, flip) {
+    if (!U || !U.uRimCol) return;
+    if (!this.q || !this.q.kant || !K.l || K.f < .035) { U.uRimCol.value.setRGB(0, 0, 0); return; }
+    const l = K.l, dx = l.position.x - x, dy = l.position.y - y, dz = l.position.z - z, sx = dx * flip, sy = dy * COSP - dz * SINP, n = Math.hypot(sx, sy) || 1;
+    U.uRimDir.value.set(sx / n, sy / n); U.uRimCol.value.copy(l.color).multiplyScalar(Math.min(.8, K.f * 1.5));
   },
   tick(dt) {
     if (!this.on || !this.bygd || !G.F) return;
-    this.t += dt; const cx = R.camT.x, cz = R.camT.z;
+    this.t += dt; if (this.tidU) this.tidU.value += dt; const cx = R.camT.x, cz = R.camT.z, P = G.player;
     this.mane.position.set(cx - 7, 16, cz + 9); this.mane.target.position.set(cx, 0, cz); this.mane.target.updateMatrixWorld();
+    // mye Morbidium: av og til slukner lyset
+    if (P && P.alive && P.morb >= 70 && R.distortOn && G.state === 'play') { this.morkeR = (this.morkeR ?? rnd(8, 20)) - dt; if (this.morkeR <= 0) { this.morkeR = rnd(15, 35); this.morke(rnd(.7, 1.3), .12); } }
+    const mf = this.morkeFaktor(dt);
+    // vegglampene: noen flimrer i korte støt, og alle slukner i mørket
+    for (const L of this.lamper || []) {
+      let f = 1;
+      if (L.flimrer) { L.t -= dt; if (L.burst > 0) { L.burst -= dt; f = Math.random() < .55 ? .12 + Math.random() * .3 : 1; if (L.burst <= 0) L.t = rnd(2, 9); } else if (L.t <= 0) L.burst = rnd(.25, 1.1); }
+      f *= mf; R.setLight(L.lp, L.base * f); L.pm.color.copy(L.farge).multiplyScalar(.2 + .8 * f); if (L.kj) L.kj.material.uniforms.uStyrke.value = .22 * f;
+    }
     // de nærmeste lyskildene får punktlysene; spillerens lykt først
-    const K = this.kilder(), P = G.player;
+    const K = this.kilder();
     K.sort((a, b) => (a === (P && P.lantern) ? -1 : b === (P && P.lantern) ? 1 : 0) || ((a.position.x - cx) ** 2 + (a.position.z - cz) ** 2) - ((b.position.x - cx) ** 2 + (b.position.z - cz) ** 2));
     for (let i = 0; i < this.pool.length; i++) {
       const l = this.pool[i], m = K[i];
       if (!m) { l.intensity = 0; continue; }
-      const base = m.userData.col, cur = m.material.color, k = Math.max(cur.r, cur.g, cur.b) / Math.max(.001, Math.max(base.r, base.g, base.b));
-      l.color.copy(base); l.intensity = k * (m === (P && P.lantern) ? 1.2 : 1.5); l.distance = m.scale.x * .55 + 1;
-      l.position.set(m.position.x, m.userData.y || (m === (P && P.lantern) ? 1.8 : 1.6), m.position.z - .3);
+      const base = m.userData.col, cur = m.material.color, k = Math.max(cur.r, cur.g, cur.b) / Math.max(.001, Math.max(base.r, base.g, base.b)), lykt = m === (P && P.lantern);
+      l.color.copy(base); l.intensity = k * (lykt ? 1.2 : 1.5) * (lykt ? Math.max(.6, mf) : mf); l.distance = m.scale.x * .55 + 1;
+      l.position.set(m.position.x, m.userData.y || (lykt ? 1.8 : 1.6), m.position.z - .3);
     }
-    // tegnede figurer og plater lyses av de samme lampene
+    // tegnede figurer og plater lyses av de samme lampene, med kantlys fra den sterkeste
     const alle = []; if (P && P.doll) alle.push(P.doll); for (const e of G.enemies || []) if (e.doll) alle.push(e.doll);
-    if (G.boss && G.boss.doll) alle.push(G.boss.doll); for (const n of G.npcs || []) if (n.doll) alle.push(n.doll); for (const d of G.titleDolls || []) alle.push(d);
-    for (const d of alle) { this.dukke(d); const p = d.root.position, c = this.lysVed(p.x, p.z); d.U.uTint.value.copy(d.U.tint0).multiply(c); }
+    if (G.boss && G.boss.doll) alle.push(G.boss.doll); for (const n of G.npcs || []) if (n.doll) alle.push(n.doll); for (const d of G.titleDolls || []) alle.push(d); for (const d of G.ekstraDukker || []) if (d.root.parent) alle.push(d); // figurer i hendelser og drømmer
+    const KL = this._kl || (this._kl = {});
+    for (const d of alle) { this.dukke(d); const p = d.root.position, c = this.lysVed(p.x, p.z, .9, KL); d.U.uTint.value.copy(d.U.tint0).multiply(c); this.settKant(d.U, KL, p.x, .9 + p.y, p.z, d.flip || 1); }
     if ((this.nyT = (this.nyT || 0) - dt) <= 0) { this.nyT = .5; this.lysLag(); for (const o of G.props) if (o.g && !o.d3) { o.d3 = true; this.moble(o); } }
     this.stovTick(dt);
-    for (const o of G.props) { if (!o.U || !o.g || !o.g.visible) continue; if (!o.U.tint0) o.U.tint0 = o.U.uTint.value.clone(); const c = this.lysVed(o.x, o.z, 1); o.U.uTint.value.copy(o.U.tint0).multiply(c); }
+    for (const o of G.props) { if (!o.U || !o.g || !o.g.visible) continue; if (!o.U.tint0) o.U.tint0 = o.U.uTint.value.clone(); const c = this.lysVed(o.x, o.z, 1, KL); o.U.uTint.value.copy(o.U.tint0).multiply(c); this.settKant(o.U, KL, o.x, .8, o.z, o.g.userData.m && o.g.userData.m.scale.x < 0 ? -1 : 1); }
   }
 };

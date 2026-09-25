@@ -7,6 +7,37 @@
 - [ ] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt).
 - [ ] Slette grenen claude/funny-newton-cgnzav på GitHub (Claude Code får ikke lov til det). Alt på den finnes i main.
 
+## Utvidelsen (UTVIDELSE.md), fra 2026-09-25 kveld
+- [x] Idédugnad og designdokument. Tom valgte seks etasjer der to er ute, korte drømmebaner og grov, kroppslig humor.
+- [x] Trinn 1: seks etasjer (Parken og Nattskogen ute), dybdeskala, gulv og vegger per romtype, L-rom og rotunder, 19 nye romtyper, bakke, trær og vær ute, utgangene per etasje, lyd og musikk for uteetasjene.
+- [x] Trinn 2: hendelsene. Samtalepanel med valg, atten hendelser (fire flere enn planlagt, så seks etasjer har nok), minne på tvers av løp.
+- [ ] Tom: prøve hendelsene og si hvilke som er morsomme og hvilke som bør skrives om. Tekstene står i src/35_hendelser.js.
+- [x] Trinn 3: pasienthistoriene og drømmebanene mellom etasjene, slutten og arkivet.
+- [ ] Tom: gå gjennom en hel runde med drømmer og si om tekstene treffer, og om skyggen er for treg eller for rask.
+- [ ] Senere: et kapittel om drømmene i Pasienthåndboka, og egne bilder fra ChatGPT for minnene, figurene uten ansikt og det røde rommet.
+- [x] Trinn 4: nye fiender og sjefer for Parken og Nattskogen (gartnere, kråker, Huldra, Vedkubbemannen, Nøkken, kålhoder, Overgartner Ansgar Hekk, Den hvite hjorten).
+- [ ] Tom: slåss mot Overgartneren og hjorten og si om de er for lette eller for tunge.
+- [x] Trinn 5: nye nøkler i manifestet (171 nye, 532 i alt) og fire nye runder i ART_BRIEF.md for ChatGPT (runde 10 til 13: møblene og uteområdene, hendelsene, drømmene, de nye fiendene og sjefene).
+- [ ] Tom: bestille bildene i runde 13 først (figurarkene til de nye fiendene), så runde 11 og 12. Se DESIGN_BRIEF.md.
+- [ ] Tom: prøve de nye etasjene og si om parken og skogen er mørke nok, og om løpet blir for langt.
+
+## Økta 2026-09-25 (3D, grafikk, blod, nye fiender, sjefer, håndbok og HUD)
+- [x] 3D som standard med automatisk kvalitet (høy, middels, lav, av) og valg under Bilde.
+- [x] Bedre lys og shadere: kantlys fra lampene, lysstråler fra vinduene, lyskjegler, flimring, tåke, mørke som kommer og går, tilt-shift, kalde skygger og varme høylys, filmriper.
+- [x] Blod og skrekk: sprut på vegger og gulv, drypp, kjøttbiter, fotspor, blod på skjermen, årer ved lite helse, øyne i veggene.
+- [x] System for animering av 2D-ting (spriteark eller tegnede ruter) og positurer for dukkene.
+- [x] ChatGPTs fiender: Kasteren, Trillepasienten, Speilpasienten, klumpunger, Hviskekoret (minisjef) og Den Store Klumpen (sjef). I tillegg minisjefene Tannlegen og Den hodeløse portieren.
+- [x] Tilfeldige sjefer per løp og minisjefer i risikorommet.
+- [x] Fiendeindeks med bilder i Pasienthåndboka (kapittel 9 og 10).
+- [x] HUD etter ChatGPTs skisse, og UI-settet (runde 9) som tas i bruk av seg selv når bildene kommer.
+- [x] Forslag til ChatGPT som grafikkleverandør for HUD og menyer: del G, H og I i DESIGN_BRIEF.md.
+- [ ] Tom: flette grenen claude/practical-babbage-nc80bu inn i main, så Pages får det nye.
+- [ ] Tom: spille med 3D på mobil og PC og si om den automatiske kvaliteten treffer, og om blodet er passe mye.
+- [ ] ChatGPT: runde 7, 8 og 9 i ART_BRIEF.md, i rekkefølgen under «Neste bestilling» i DESIGN_BRIEF.md.
+- [ ] ChatGPT eller Tom: legge Kasteren-pakken inn som figur_kasteren.png og anim_kastesprut.png. De fire kastebildene trengs ikke, spillet kaster med delene.
+- [ ] Claude, når Tom vil: UI-settet fase 2 (ui_bok, ui_fane, ui_stempel, ui_merke, ui_stang, ui_flaske).
+- [ ] Balanse for de nye fiendene, minisjefene og Klumpen etter spilltesting.
+
 ## Toms tilbakemelding 2026-09-24 (åtte punkter)
 - [x] 8: sjefer ble usynlige (feil i slag-angrepet).
 - [x] 6: fiender som ikke dør (personale uten disk, hallusinasjoner som ble stående, vern mot ugyldig helse).
@@ -34,7 +65,7 @@
 - [x] Varierte pasienter, Pasienthåndboka, innstillinger med faner, nytt arkiv, ny tittelmeny og pause (Toms punkt 3, 4 og 5).
 - [x] Prøve på 3D-rom med 2D-figurer (vegglamper, måneskygger, glød, lavpoly-møbler). Av som standard, slås på i innstillingene eller med #3d.
 - [x] Tom har bestemt retning for 3D: figurer og ting forblir 2D, bare rom, gulv og effekter i 3D. Lavpoly-møblene er fjernet; lister, pilastre, relieff i gulvet og støv i lyset er lagt til.
-- [ ] Tom: prøve den nye 3D-versjonen (#3d eller Innstillinger, Bilde) og si om den skal bli standard. Ytelsen må måles på mobil og en vanlig PC.
+- [x] Tom ba 25.9. om at 3D blir standard. Gjort, med automatisk kvalitet som går ned og til slutt slår 3D av når bildet hakker.
 - [x] Strekarmer og strekbein som i Conan Chop Chop (standard), med valg for de gamle tykke lemmene.
 - [ ] Tom: si om strekarmene skal være enda tynnere eller ha en annen farge (STREK i 11_doll.js).
 - [x] Bilder av 40 kuriositeter, åtte piller og et tomt preparatglass fra ChatGPT i gpt-grafikk/.

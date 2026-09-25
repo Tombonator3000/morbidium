@@ -8,10 +8,16 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og He
 - Håndkontroll og berøring virker også. Hele oversikten står i Pasienthåndboka på tittelskjermen og i pausemenyen.
 
 ## Innhold
-- Fire etasjer med hver sin overlege: Mottak og bosted, Underetasjen, Isolat og arkiv, og under grunnmuren Journalen selv.
+- Seks etasjer: Parken utenfor, mottaket, underetasjen, kjelleren, Nattskogen som ikke burde finnes under grunnmuren, og Dypet. Hver har en overlege trukket fra en pulje for hvert løp, og nederst venter alltid Journalen. Minisjefer venter i rommet med frivillig risiko.
+- I parken går gartnere med hagesaks og kråker i flokk. I Nattskogen venter Huldra, Vedkubbemannen og Nøkken. To nye overleger: Overgartner Ansgar Hekk med hekker og gjødsel, og Den hvite hjorten med et trist menneskeansikt.
+- Rommene ser forskjellige ut: eget gulv og egne vegger for hver romtype, L-rom og rotunder, spisesal, dagligstue, elektroterapi, tannlegekontor, fyrrom, kjøkken og likkapell. Ute er det hekker, gasslykter, kirkegård, fontene, isdam, bjørkeskog, myr og tjern, med regn, snø eller ildfluer.
+- Hver pasient har et liv før innleggelsen: et hjem, en person, noe som skjedde og noe pasienten gjorde. Hver gang du prøver å rømme, faller du inn i en kort drøm fra det livet, med figurer uten ansikt, tre minner og en skygge som følger etter. Fem kapitler, og valgene bestemmer slutten ved utskrivningen.
+- Rare ting skjer i gangene: et øye i en sprekk i veggen som prater og husker deg, ei ku i kapellet som sier navnet ditt, en telefon som ringer i et tomt rom, en mann som går baklengs, et hjemmebrentapparat, rotter som holder parlament og en mann som tror han er en lampe. Atten hendelser, to til fire per etasje, hver med en samtale og valg.
+- Rommene er 3D som standard, med lamper, måneskinn, skygger og tåke. Kvaliteten justeres av seg selv, og 3D kan slås av under Bilde.
 - Hver pasient settes sammen på nytt: kjønn, hår, hud, klær og pynt. Liket blir liggende der pasienten døde.
 - Kuriositeter som stables og kombineres, piller med ukjent virkning, apparater og lommerusk, evnekort i et frenologisk hode, diagnoser som følger av måten du spiller på.
-- Tjenesterom, hemmelige rom bak sprukne vegger, forbannede rom og blodoffer. Fiender settes sammen av deler, og noen er navngitte mestere.
+- Tjenesterom, hemmelige rom bak sprukne vegger, forbannede rom og blodoffer. Fiender settes sammen av deler, og noen er navngitte mestere. Pasienthåndboka har en fiendeindeks med bilde av alt som bor i bygget.
+- Blod som spruter på vegger og gulv, kjøttbiter ved tunge slag, og øyne som åpner seg i veggene når Morbidium stiger.
 - Musikk laget i nettleseren som følger kampen, pasienthåndbok, arkiv med pasientmapper, merknader som låser opp nytt innhold, og gjeninnleggelse etter første utskrivning.
 
 ## Bygg

@@ -7,7 +7,11 @@ Skjermbilder havner i /tmp/e_*.png. Skriptet avslutter med kode 1 hvis noe feile
 import pathlib, os, sys, asyncio
 from playwright.async_api import async_playwright
 THREE = os.environ.get('MORBIDIUM_THREE') or (sys.argv[sys.argv.index('--three') + 1] if '--three' in sys.argv else None)
-URL = (pathlib.Path(__file__).resolve().parent.parent / 'dist' / 'morbidium.html').as_uri()
+# Rommene er 3D som standard, men programvaregrafikken i testnettleseren er så treg i 3D at tidsfølsomme
+# tester bommer. Derfor går de fleste testene i 2D (?2d), som før. Testene for 3D bruker URL3D eller slår det på selv.
+# Spørsmålstegn og ikke #, fordi en ny goto til samme adresse med # bare hopper i siden i stedet for å laste den på nytt.
+URL3D = (pathlib.Path(__file__).resolve().parent.parent / 'dist' / 'morbidium.html').as_uri()
+URL = URL3D + '?2d'
 feil = []
 
 def sjekk(navn, ok, info=''):
@@ -24,12 +28,16 @@ async def ny_side(b, **kw):
     pg.on('console', lambda m: pg.errs.append(m.type + ': ' + m.text) if m.type == 'error' else None)
     return pg
 
-async def start_lop(pg, awk=None):
-    await pg.goto(URL); await pg.wait_for_timeout(2500)
+async def start_lop(pg, awk=None, url=None):
+    await pg.goto(url or URL); await pg.wait_for_timeout(2500)
     await pg.click('#tNew'); await pg.wait_for_timeout(500)
     sel = f'[data-awk="{awk}"]' if awk else '[data-awk]'
     if awk and not await pg.query_selector(sel): sel = '[data-awk]'
     await pg.click(sel); await pg.wait_for_timeout(1500)
+
+# en side i pasienthåndboka får plass: panelet er innenfor skjermen, teksten eller fiendekortene flyter ikke over, og hvert fiendekort har bilde
+HB_PLASS = """() => { const f = document.querySelector('#panel .fit'), r = f.getBoundingClientRect(), t = document.querySelector('.htext') || document.querySelector('.findeks'), kort = [...document.querySelectorAll('.fkort')];
+  return r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1 && t.scrollHeight <= t.clientHeight + 2 && kort.every(k => k.scrollHeight <= k.clientHeight + 2 && !!k.querySelector('canvas')) && document.querySelector('.hpage h2').textContent.length > 2; }"""
 
 async def main():
     async with async_playwright() as p:
@@ -42,12 +50,15 @@ async def main():
         await start_lop(pg)
         await pg.evaluate("""() => { const G = MORBIDIUM; Items.give('bart'); Items.give('magnet'); G.player.teeth = 77; G.player.weaponLvl = 2; descend(); }""")
         await pg.wait_for_timeout(1500)
-        for_ = await pg.evaluate("() => ({ d: MORBIDIUM.depth, items: MORBIDIUM.run.items.slice(), teeth: MORBIDIUM.player.teeth, name: MORBIDIUM.run.patient.name, look: JSON.stringify(MORBIDIUM.run.look) })")
+        for_ = await pg.evaluate("() => ({ d: MORBIDIUM.depth, items: MORBIDIUM.run.items.slice(), teeth: MORBIDIUM.player.teeth, name: MORBIDIUM.run.patient.name, look: JSON.stringify(MORBIDIUM.run.look), drom: !!MORBIDIUM.drom })")
         await pg.evaluate("() => showTitle()"); await pg.wait_for_timeout(800)
         har = await pg.query_selector('#tCont')
         sjekk('Fortsett-knapp på tittelen', har is not None)
         if har:
             await pg.click('#tCont'); await pg.wait_for_timeout(1500)
+            igjen = await pg.evaluate("() => !!MORBIDIUM.drom")
+            sjekk('drømmen mellom etasjene kommer før neste etasje, og spilles på nytt etter Fortsett', for_['drom'] and igjen, (for_['drom'], igjen))
+            await pg.evaluate("() => Drom.hopp()"); await pg.wait_for_timeout(800)
             etter = await pg.evaluate("() => ({ d: MORBIDIUM.depth, items: MORBIDIUM.run.items.slice(), teeth: MORBIDIUM.player.teeth, name: MORBIDIUM.run.patient.name, lvl: MORBIDIUM.player.weaponLvl, state: MORBIDIUM.state, look: JSON.stringify(MORBIDIUM.run.look) })")
             sjekk('fortsatt løp har samme etasje, tenner og kuriositeter', etter['d'] == for_['d'] and etter['items'] == for_['items'] and etter['teeth'] == for_['teeth'] and etter['name'] == for_['name'] and etter['lvl'] == 2 and etter['state'] == 'play', etter)
             sjekk('fortsatt løp har samme utseende', etter['look'] == for_['look'] and '"v":1' in for_['look'], for_['look'])
@@ -271,11 +282,13 @@ async def main():
         sjekk('kameraavstand og skadetall virker og lagres', abs(v['view'] - 13.8) < .01 and v['tall'] and v['lagret'] == 1.2, v)
         await pg.click('[data-close]'); await pg.wait_for_timeout(300)
         await pg.click('#tHelp'); await pg.wait_for_timeout(300)
-        kap = []
-        for k in range(await pg.evaluate("() => HANDBOK.length")):
+        kap, nkap = [], await pg.evaluate("() => HANDBOK.length")
+        for k in range(nkap):
             await pg.click(f'[data-kap="{k}"]'); await pg.wait_for_timeout(120)
-            kap.append(await pg.evaluate("() => { const f = document.querySelector('#panel .fit'), r = f.getBoundingClientRect(), t = document.querySelector('.htext'); return r.bottom <= innerHeight + 1 && t.scrollHeight <= t.clientHeight + 2 && document.querySelector('.hpage h2').textContent.length > 2; }"))
-        sjekk('pasienthåndboka har åtte kapitler som alle får plass', len(kap) == 8 and all(kap), kap)
+            for side in range(await pg.evaluate("(k) => hbSider(HANDBOK[k])", k)):
+                if side: await pg.click('#hNext'); await pg.wait_for_timeout(150)
+                kap.append(await pg.evaluate(HB_PLASS))
+        sjekk('pasienthåndboka har ti kapitler med fiendeindeks, og alle sidene får plass', nkap == 10 and len(kap) == 17 and all(kap), kap)
         await pg.click('[data-close]'); await pg.wait_for_timeout(300)
         await pg.click('#tArch'); await pg.wait_for_timeout(400)
         a = await pg.evaluate("() => ({ mapper: document.querySelectorAll('.mappe').length, portrett: document.querySelectorAll('.mappe canvas').length })")
@@ -306,7 +319,7 @@ async def main():
         k = await pg.evaluate("() => ({ navn: Musikk.navn, niva: Musikk.niva, steg: Musikk.steg })")
         await pg.evaluate("() => { const P = MORBIDIUM.player; P.invuln = 0; P.iframe = 0; hurt(P, 99999, { type: 'kultist' }); }"); await pg.wait_for_timeout(2600)
         d = await pg.evaluate("() => Musikk.navn")
-        sjekk('musikken spiller på tittelen, går over i kamp og stopper ved død', t == {'navn': 'tittel', 'klar': True} and k['navn'] == 'e1' and k['niva'] == 1 and k['steg'] > 3 and d is None, [t, k, d])
+        sjekk('musikken spiller på tittelen, går over i kamp og stopper ved død', t == {'navn': 'tittel', 'klar': True} and k['navn'] == 'park' and k['niva'] == 1 and k['steg'] > 3 and d is None, [t, k, d])
         sjekk('ingen konsollfeil (musikk)', not pg.errs, pg.errs[:6])
         await pg.close()
 
@@ -381,9 +394,10 @@ async def main():
         # 4) alle fire sjefer med alle angrep, og rommene i Isolat og arkiv
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await start_lop(pg)
-        for depth in [1, 2, 3, 4]:
-            info = await pg.evaluate("""(d) => { const G = MORBIDIUM; G.player.hp = G.player.maxHp = 9999; startFloor(d, false); const r = G.F.rooms[G.F.bossId]; G.player.x = r.x + r.w / 2; G.player.z = r.z + r.h - 2; return { theme: G.th.name, tpl: G.F.rooms.map(r => r.template) }; }""", depth)
-            if depth == 3:
+        # sjefene trekkes tilfeldig per løp, så her velges hver av dem med vilje, også Den Store Klumpen
+        for depth, sjef in [(1, 'krok'), (2, 'rust'), (4, 'arkivar'), (3, 'klumpen'), (1, 'hekk'), (5, 'hjort'), (6, 'journalen')]:
+            info = await pg.evaluate("""([d, s]) => { const G = MORBIDIUM; G.player.hp = G.player.maxHp = 9999; G.run.sjefer[d] = s; startFloor(d, false); const r = G.F.rooms[G.F.bossId]; G.player.x = r.x + r.w / 2; G.player.z = r.z + r.h - 2; return { theme: G.th.name, tpl: G.F.rooms.map(r => r.template) }; }""", [depth, sjef])
+            if depth == 4:
                 sjekk('Isolat og arkiv har egne rom', 'isolat' in info['tpl'] or 'kartotek' in info['tpl'], info['tpl'])
                 await pg.evaluate("""() => { const G = MORBIDIUM, r = G.F.rooms.find(r => r.template === 'kartotek') || G.F.rooms.find(r => r.template === 'isolat'); if (r) { G.player.x = r.x + r.w / 2; G.player.z = r.z + r.h / 2; G.rooms[r.id].cleared = true; } }""")
                 await pg.wait_for_timeout(1200); await pg.screenshot(path='/tmp/e_5arkiv.png')
@@ -392,17 +406,299 @@ async def main():
                 await pg.evaluate("""() => { const G = MORBIDIUM, r = G.F.rooms[G.F.bossId]; G.player.x = r.x + r.w / 2; G.player.z = r.z + r.h - 2; }""")
             await pg.wait_for_timeout(3500)
             bnavn = await pg.evaluate("() => MORBIDIUM.boss && MORBIDIUM.boss.type")
-            sjekk(f'sjef i etasje {depth}', bnavn is not None, bnavn)
+            sjekk(f'{sjef} er sjef i etasje {depth}', bnavn == sjef, bnavn)
             kinds = await pg.evaluate("() => MORBIDIUM.boss ? [...new Set(MORBIDIUM.boss.B0.attacks)] : []")
             for k in kinds:
                 await pg.evaluate("(k) => { const B = MORBIDIUM.boss, P = MORBIDIUM.player; if (!B) return; B.state = 'chase'; B.cd = 99; P.hp = P.maxHp; bossAttackTest(B, k); }", k)
                 await pg.wait_for_timeout(1700)
-                if (depth, k) in [(3, 'isolate'), (4, 'pages'), (2, 'flood'), (1, 'hookpull')]:
+                if (depth, k) in [(4, 'isolate'), (6, 'pages'), (2, 'flood'), (1, 'hookpull'), (3, 'rull'), (1, 'hekkring'), (5, 'maane')]:
                     await pg.screenshot(path=f'/tmp/e_7sjef_{depth}_{k}.png')
             await pg.evaluate("() => { const B = MORBIDIUM.boss; if (B) hurt(B, 99999, { from: 'player' }); }")
             await pg.wait_for_timeout(2500)
-            sjekk(f'luken åpner seg i etasje {depth}', await pg.evaluate("() => !!MORBIDIUM.trapdoor"))
+            sjekk(f'luken åpner seg etter {sjef} i etasje {depth}', await pg.evaluate("() => !!MORBIDIUM.trapdoor"))
         sjekk('ingen konsollfeil (sjefer)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 16) 3D er standard: gamle lagringer slås over én gang, et nytt valg huskes, og kvaliteten går ned ett trinn om gangen til 3D slås av
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL3D); await pg.wait_for_timeout(2000)
+        await pg.evaluate("() => { localStorage.clear(); localStorage.setItem('morbidium_meta_v2', JSON.stringify({ deaths: 1, settings: { d3: false, vol: .5 } })); }")
+        await pg.reload(); await pg.wait_for_timeout(2000)
+        m1 = await pg.evaluate("() => { const s = MORBIDIUM.meta.settings, a = { d3: s.d3, sv: s.sv, kvalitet: s.kvalitet }; s.d3 = false; saveMeta(); return a; }")
+        await pg.reload(); await pg.wait_for_timeout(2000)
+        m1['huskes'] = await pg.evaluate("() => MORBIDIUM.meta.settings.d3")
+        sjekk('3D slås på for gamle lagringer, og et nytt valg om å slå det av huskes', m1 == {'d3': True, 'sv': 2, 'kvalitet': 0, 'huskes': False}, m1)
+        await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg, url=URL3D)
+        q = await pg.evaluate("""async () => { rolig(); await new Promise(r => setTimeout(r, 600)); const s = MORBIDIUM.meta.settings, a = { d3: s.d3, on: D3.on, niva: D3.kval() };
+          a.trinn = [D3.nedgrader(), D3.nedgrader(), D3.nedgrader()]; await new Promise(r => setTimeout(r, 300));
+          a.etter = { d3: s.d3, on: D3.on, lagret: JSON.parse(localStorage.getItem('morbidium_meta_v2')).settings.d3 };
+          s.kvAuto = null; s.d3 = true; applySettings(); await new Promise(r => setTimeout(r, 600));
+          D3.tvingMaal = true; for (let i = 0; i < 45; i++) D3.maal(.1); D3.tvingMaal = false; a.maalt = D3.kval();
+          s.kvalitet = 1; applySettings(); a.fast = D3.kval(); a.lavGlod = D3.Q().glod; s.kvalitet = 0; s.kvAuto = null; applySettings();
+          s.lights = false; applySettings(); await new Promise(r => setTimeout(r, 400)); a.lysAv = { flat: !!D3.q.flat, lys: D3.pool.length, skygge: D3.mane.castShadow };
+          s.lights = true; applySettings(); await new Promise(r => setTimeout(r, 400)); a.lysPaa = { flat: !!D3.q.flat, lys: D3.pool.length > 0, skygge: D3.mane.castShadow };
+          return a; }""")
+        sjekk('3D er på fra start, og kvaliteten går fra høy til middels til lav før 3D slås av og lagres av',
+              q['d3'] and q['on'] and q['niva'] == 'hoy' and q['trinn'] == ['middels', 'lav', 'av'] and q['etter'] == {'d3': False, 'on': False, 'lagret': False}, q)
+        sjekk('lav bildefrekvens måles og gir et trinn ned, og fast kvalitet i innstillingene overstyrer', q['maalt'] == 'middels' and q['fast'] == 'lav' and q['lavGlod'] is False, q)
+        sjekk('«Lys og skygge» av gir jevnt lys i 3D uten punktlys og skygger, og på igjen gir dem tilbake', q['lysAv'] == {'flat': True, 'lys': 0, 'skygge': False} and q['lysPaa'] == {'flat': False, 'lys': True, 'skygge': True}, q)
+        sjekk('ingen konsollfeil (3D som standard)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 17) animasjonssystemet: tegnede ruter når arket mangler, spilles av og forsvinner, går i ring, baklengs og blir stående
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        an = await pg.evaluate("""() => { rolig(); const P = MORBIDIUM.player, a = {};
+          a.ruter = Object.keys(ANIM).map(k => [k, Anim.rammer(k).length]);
+          const h = Anim.lag('kastesprut', P.x, P.z, { fps: 20 }); a.lagd = Anim.aktive.includes(h);
+          for (let i = 0; i < 12; i++) Anim.tick(.05); a.ferdig = h.done && !Anim.aktive.includes(h);
+          const l = Anim.lag('oye', P.x + 1, P.z, { loop: true, fps: 10 }); for (let i = 0; i < 30; i++) Anim.tick(.05); a.ring = !l.done && Anim.aktive.includes(l); Anim.fjern(l); Anim.tick(.01); a.fjernet = !Anim.aktive.includes(l);
+          const r = Anim.lag('oye', P.x - 1, P.z, { fps: 10, fart: -1, start: 4 }); a.start = r.i; for (let i = 0; i < 20; i++) Anim.tick(.05); a.baklengs = r.i === 0 && r.done;
+          const s = Anim.lag('blodsprut', P.x, P.z, { hold: true, fps: 30 }); for (let i = 0; i < 20; i++) Anim.tick(.05); a.hold = s.done && Anim.aktive.includes(s) && s.i === s.rammer.length - 1; Anim.fjern(s);
+          const k = posStat({ navn: 'kast', p: .5 }); a.pose = !!k && Object.values(k).every(v => Array.isArray(v) && v.every(Number.isFinite)); a.ukjent = posStat({ navn: 'finnesikke', p: .5 }) === null;
+          return a; }""")
+        sjekk('animasjonene har ruter (tegnet når arket mangler), spilles av og forsvinner, går i ring, baklengs og blir stående',
+              all(n > 1 for k, n in an['ruter']) and an['lagd'] and an['ferdig'] and an['ring'] and an['fjernet'] and an['start'] == 4 and an['baklengs'] and an['hold'], an)
+        sjekk('posituren «kast» gir tall til dukken, og en ukjent positur gir ingenting', an['pose'] and an['ukjent'], an)
+
+        # 18) blod: flekker, sprut på veggen, kjøttbiter ved tunge slag, blod på skjermen når pasienten skades, og det kan slås av
+        bl = await pg.evaluate("""async () => { startFloor(2, false); rolig(); const G = MORBIDIUM, P = G.player, r = G.F.rooms.find(r => r.role === 'combat'), n = () => Object.values(Blod.pools).reduce((a, p) => a + p.n, 0);
+          P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; Bygg.alt(); const a = {}, n0 = n();
+          const e = spawnEnemy('pleier', P.x + 1.5, P.z, false, 1); e.state = 'chase'; e.cd = 99; hurt(e, 9999, { from: 'player', x: P.x, z: P.z, kb: 9 });
+          await new Promise(r => setTimeout(r, 300)); a.flekker = n() - n0; a.biter = Blod.bitene.length;
+          let vegg = false; for (let x = r.x + 1; x < r.x + r.w - 1 && !vegg; x++) for (let z = r.z + .4; z < r.z + 2.5 && !vegg; z += .3) vegg = Blod.vegg(x + .5, z, '#8a1010', 1);
+          a.vegg = vegg && Blod.vegger.length > 0 && Blod.drypper.length > 0;
+          R.fx.blod = 0; P.hp = P.maxHp; P.iframe = P.invuln = 0; P.deny = null; hurt(P, 2, { type: 'pleier', x: P.x - 1, z: P.z }); a.skjerm = R.fx.blod > 0;
+          const gulv = n(); Blod.sett(false); a.av = R.fx.blod === 0 && !Blod.on; a.ryddet = { vegger: Blod.vegger.length, drypp: Blod.drypper.length, biter: Blod.bitene.length, gulvIgjen: n() === gulv }; Blod.sett(true); P.hp = P.maxHp;
+          return a; }""")
+        sjekk('blod: flekker og kjøttbiter når en fiende knuses, sprut med drypp på veggen og blod på skjermen', bl['flekker'] > 3 and bl['biter'] >= 4 and bl['vegg'] and bl['skjerm'] and bl['av'], bl)
+        sjekk('slås blod og skrekk av, forsvinner sprut på veggene, drypp og kjøttbiter, mens flekkene på gulvet blir liggende', bl['ryddet'] == {'vegger': 0, 'drypp': 0, 'biter': 0, 'gulvIgjen': True}, bl)
+        sjekk('ingen konsollfeil (animasjon og blod)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 19) de nye fiendene: Kasteren kaster, Trillepasienten ruller, Speilpasienten gir sju års ulykke, klumpungen lever.
+        #     e.t = 0 avslutter oppstigningen med en gang. Settes state rett til 'chase', blir dukken stående i skala 0,01.
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        await pg.evaluate("""() => { rolig(); const G = MORBIDIUM, P = G.player, r = G.F.rooms.filter(r => r.role === 'combat')[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.hp = P.maxHp = 9999; Bygg.alt();
+          window._nye = ['kasteren', 'trille', 'speil', 'klumpunge'].map((t, i) => { const e = spawnEnemy(t, P.x - 3 + i * 2, P.z - 2.5, false, 1); e.t = 0; e.sleep = 0; e.cd = 0; return e; }); window._luck0 = Items.stat('luck'); }""")
+        # programvaregrafikken er treg, så vi venter til Kasteren har kastet og noen har truffet (høyst 30 sekunder)
+        for _ in range(30):
+            await pg.wait_for_timeout(1000)
+            if await pg.evaluate("() => { const G = MORBIDIUM; return (G.puddles.some(p => p.kind === 'mokk') || G.projectiles.some(p => p.type === 'klump')) && G.player.hp < 9999; }"): break
+        ny_ = await pg.evaluate("""() => { const G = MORBIDIUM, [k, t, s, u] = window._nye;
+          const a = { typer: window._nye.map(e => e.type), levende: window._nye.filter(e => e.alive).length, hjul: !!t.doll.hjul, kastet: G.puddles.some(p => p.kind === 'mokk') || G.projectiles.some(p => p.type === 'klump'), skadet: G.player.hp < 9999 };
+          hurt(s, 99999, { from: 'player', x: G.player.x, z: G.player.z }); a.ulykke = (G.run.buffs || {}).ulykke || 0; a.luck = window._luck0 - Items.stat('luck');
+          return a; }""")
+        await pg.screenshot(path='/tmp/e_8nye_fiender.png')
+        sjekk('Kasteren, Trillepasienten, Speilpasienten og klumpungen lever og gjør skade, rullestolen har hjul, og Kasteren kaster',
+              ny_['typer'] == ['kasteren', 'trille', 'speil', 'klumpunge'] and ny_['levende'] >= 3 and ny_['hjul'] and ny_['kastet'] and ny_['skadet'], ny_)
+        sjekk('Speilpasienten knust gir sju års ulykke (mindre flaks)', ny_['ulykke'] == 1 and ny_['luck'] == 6, ny_)
+        sjekk('ingen konsollfeil (nye fiender fra ChatGPT)', not pg.errs, pg.errs[:6])
+
+        # 20) minisjefer: kommer i risikorommet med egen helsestang, og legger igjen preparatglass og hjerte
+        mi = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player; for (const e of G.enemies) if (e.alive) killEntity(e, {});
+          const a = { rom: [] };
+          for (let d = 1; d <= 3; d++) { startFloor(d, false); const risk = G.F.rooms.find(r => r.role === 'risk'); a.rom.push(!risk || Mini.rom[risk.id] !== undefined); }
+          const risk = G.F.rooms.find(r => r.role === 'risk') || G.F.rooms.find(r => r.role === 'combat'); if (!Mini.rom[risk.id]) Mini.rom[risk.id] = 'tannlege';
+          G.rooms.forEach(s => s.cleared = true); P.x = risk.x + risk.w / 2; P.z = risk.z + 1.2;
+          const hjerter = () => G.pickups.filter(k => k.kind === 'heart').length, ped0 = Items.pedestals.length, m0 = G.meta.minisjefer || 0, h0 = hjerter();
+          const e = Mini.kom({ r: risk }); e.cd = 99; Mini.tick(); a.type = e.type; a.mini = !!e.mini; a.stang = !document.getElementById('miniBar').classList.contains('hidden');
+          a.navn = document.getElementById('miniName').textContent;
+          hurt(e, 99999, { from: 'player', x: P.x, z: P.z }); await new Promise(r => setTimeout(r, 400)); Mini.tick();
+          a.glass = Items.pedestals.length - ped0; a.hjerte = hjerter() > h0; a.teller = (G.meta.minisjefer || 0) - m0; a.borte = document.getElementById('miniBar').classList.contains('hidden');
+          return a; }""")
+        sjekk('minisjefene er fordelt på risikorommene, får helsestang og navn, og gir preparatglass og hjerte',
+              all(mi['rom']) and mi['mini'] and mi['stang'] and len(mi['navn']) > 3 and mi['glass'] == 1 and mi['hjerte'] and mi['teller'] == 1 and mi['borte'], mi)
+        for t in ['koret', 'tannlege', 'portier']:
+            await pg.evaluate("""(t) => { const G = MORBIDIUM, P = G.player; for (const e of G.enemies) if (e.alive) killEntity(e, {}); const e = spawnEnemy(t, P.x + 2.5, P.z, false, G.depth); e.t = 0; e.sleep = 0; }""", t)
+            await pg.wait_for_timeout(5000)
+            if t == 'koret': await pg.screenshot(path='/tmp/e_9koret.png')
+        sjekk('Hviskekoret, Tannlegen og portieren slåss uten feil', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 21) sjefene trekkes fra frøet: samme frø gir samme sjefer, ulike frø gir variasjon, og Journalen er alltid sist
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2000)
+        tr = await pg.evaluate("""() => { const a = JSON.stringify(trekkSjefer(4242)) === JSON.stringify(trekkSjefer(4242)), sett = new Set(), alle = new Set(); let sist = true;
+          for (let s = 1; s < 80; s++) { const t = trekkSjefer(s), fem = [1, 2, 3, 4, 5].map(d => t[d]); sett.add(fem.join()); fem.forEach(x => alle.add(x)); sist = sist && t[MAX_DEPTH] === 'journalen' && new Set(fem).size === Math.min(5, SJEF_PULJE.length) && fem.every(x => SJEF_PULJE.includes(x)); }
+          return { lik: a, varianter: sett.size, alle: [...alle].sort(), pulje: SJEF_PULJE.slice().sort(), sist, dybde: MAX_DEPTH }; }""")
+        sjekk('sjefene i etasje 1 til 5 trekkes fra frøet, hele puljen dukker opp, og Journalen er alltid nederst i etasje 6', tr['lik'] and tr['varianter'] >= 10 and tr['alle'] == tr['pulje'] and tr['sist'] and tr['dybde'] == 6, tr)
+        lagret = await pg.evaluate("() => { Merknad.onBoss({ type: 'klumpen' }); return (JSON.parse(localStorage.getItem('morbidium_meta_v2')).sjefDrap || {}).klumpen; }")
+        sjekk('en slått sjef lagres med en gang (til fiendeindeksen)', lagret == 1, lagret)
+
+        # 22) UI-settet fra ChatGPT: uten bilder tegner CSS-en som før, med bilder byttes rammer, ringer, hjerter og ikoner inn uten at boksene endrer størrelse
+        await start_lop(pg)
+        ui = await pg.evaluate("""async () => { rolig(); const a = {}, px = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+          const P = MORBIDIUM.player; P.cds[1] = 4.6; (P.cdMax || (P.cdMax = [1, 1, 1, 1]))[1] = 8; await new Promise(r => setTimeout(r, 500));
+          const cd = document.querySelector('#ac1 .cd'); a.nedtelling = cd && !cd.classList.contains('hidden') ? cd.textContent : null; a.sektor = cd ? +cd.style.getPropertyValue('--p') : -1;
+          a.uten = brukUIsett().length === 0 && !document.body.classList.contains('ui-sett'); a.kodehjerte = !hjerteHtml(1, c => '<i style="color:' + c + '"></i>').includes('uihjerte');
+          const boks = () => { const r = document.getElementById('plate').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }, f0 = boks();
+          for (const k of ['ui_panel', 'ui_kort', 'ui_ring_kart', 'ui_hjerte_full', 'ui_hjerte_halv', 'ui_ikon_pause']) SPRITES[k] = px;
+          a.halvtSett = hjerteHtml(1, c => '').includes('uihjerte'); SPRITES.ui_hjerte_tom = px;
+          a.brukt = brukUIsett(); a.css = (document.getElementById('uiSett') || { textContent: '' }).textContent.includes('border-image'); a.ikon = !!document.querySelector('#bPause img');
+          a.hjerte = hjerteHtml(.5, c => '').includes('uihjerte'); const f1 = boks(); a.boks = Math.abs(f1[0] - f0[0]) <= 2 && Math.abs(f1[1] - f0[1]) <= 2;
+          return a; }""")
+        sjekk('kortet viser nedtellingen i sekunder og en sektor som krymper', ui['nedtelling'] in ('4s', '5s') and 0.3 < ui['sektor'] < 0.65, ui)
+        sjekk('UI-settet: CSS-en tegner når bildene mangler, og ChatGPTs bilder tas i bruk uten å endre størrelsen på boksene',
+              ui['uten'] and ui['kodehjerte'] and not ui['halvtSett'] and ui['brukt'] == ['ui_panel', 'ui_kort', 'ui_ring_kart', 'ui_ikon_pause'] and ui['css'] and ui['ikon'] and ui['hjerte'] and ui['boks'], ui)
+        sjekk('ingen konsollfeil (sjefpulje og UI-sett)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 23) fiendeindeksen i håndboka får plass også på smal skjerm
+        pg = await ny_side(b, viewport={'width': 400, 'height': 800})
+        await pg.goto(URL); await pg.wait_for_timeout(2000)
+        await pg.evaluate("() => localStorage.clear()")
+        await pg.click('#tHelp'); await pg.wait_for_timeout(300)
+        smal = []
+        for k in [8, 9]:
+            await pg.click(f'[data-kap="{k}"]'); await pg.wait_for_timeout(150)
+            for side in range(await pg.evaluate("(k) => hbSider(HANDBOK[k])", k)):
+                if side: await pg.click('#hNext'); await pg.wait_for_timeout(150)
+                smal.append(await pg.evaluate(HB_PLASS))
+        await pg.screenshot(path='/tmp/e_10indeks_smal.png')
+        sjekk('fiendeindeksen får plass på smal skjerm, to kort per side', len(smal) == 16 and all(smal), smal)
+        sjekk('ingen konsollfeil (smal indeks)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 24) seks etasjer: Parken og Nattskogen er ute med hekker, trevegger, bakke og vær; alle rom har gulv og vegg; utgangene fører videre
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        et = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {};
+          for (let d = 1; d <= 6; d++) {
+            startFloor(d, false); rolig(); await new Promise(r => setTimeout(r, 250));
+            const F = G.F, stiler = new Set(Paint.mesh.vegger.map(m => m.userData.veggStil));
+            ut[d] = { ute: !!F.ute, bakke: !!Paint.mesh.bakke, hekk: stiler.has('hekk'), skog: stiler.has('skog'), stiler: stiler.size, gulv: new Set(F.rooms.map(r => r.gulv)).size, alleHarStil: F.rooms.every(r => r.gulv && r.vegg), vaer: F.vaer, vaerAktiv: Vaer.type, lykter: G.props.filter(o => o.kind === 'lyktestolpe' && o.light).length, navn: G.th.name };
+            openTrapdoor(); const P = G.player; P.x = G.trapdoor.x + .5; P.z = G.trapdoor.z + .5; const it = findInteract(); ut[d].utgang = it && it.t === UTGANGER[d].tekst;
+            if (d < 6) { descend(); await new Promise(r => setTimeout(r, 200)); if (G.drom) Drom.hopp(); await new Promise(r => setTimeout(r, 100)); ut[d].videre = G.depth === d + 1 && document.getElementById('toast').textContent.includes(UTGANGER[d].ankomst.slice(0, 12)); }
+          }
+          return ut; }""")
+        ok_ute = all(et[str(d)]['ute'] == (d in (1, 5)) and et[str(d)]['bakke'] == (d in (1, 5)) for d in range(1, 7))
+        sjekk('Parken og Nattskogen er ute med bakke rundt, de fire andre er inne', ok_ute, et)
+        sjekk('parken har hekker og skogen har trær som vegger, og alle rom har eget gulv og egen vegg', et['1']['hekk'] and et['5']['skog'] and all(et[str(d)]['alleHarStil'] and et[str(d)]['gulv'] >= 3 and et[str(d)]['stiler'] >= 2 for d in range(1, 7)), et)
+        sjekk('været i parken og skogen, og gasslyktene i parken lyser', et['1']['vaer'] in ('regn', 'sno', 'taake', 'klart') and et['5']['vaer'] in ('sno', 'ildfluer', 'taake') and et['1']['lykter'] > 0, et)
+        sjekk('hver etasje har sin utgang (porten, vinduet, kloakken, kullsjakta, stien, utskrivningen), og den fører videre', all(et[str(d)]['utgang'] for d in range(1, 7)) and all(et[str(d)]['videre'] for d in range(1, 6)), et)
+        is_ = await pg.evaluate("""() => { const G = MORBIDIUM; startFloor(1, false); rolig(); const F = G.F, r = F.rooms.find(r => r.gulv === 'is') || F.rooms.find(r => r.ute); return { gulv: gulvUnder(r.x + r.w / 2, r.z + r.h / 2), ute: Vaer.ute(r.x + r.w / 2, r.z + r.h / 2) }; }""")
+        sjekk('gulvet under føttene kan leses (is og myr endrer gangen), og været vet hva som er ute', is_['gulv'] is not None and is_['ute'] is True, is_)
+        await pg.screenshot(path='/tmp/e_11parken.png')
+        sjekk('ingen konsollfeil (seks etasjer)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 25) hendelsene: to til fire per etasje, ingen fra etasjen over, samtale med valg, minne på tvers av løp og følgene
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        fo = await pg.evaluate("""() => { const G = MORBIDIUM, runder = [];
+          for (let k = 0; k < 3; k++) { G.run.hendelser = []; G.run.hendForrige = []; const ut = [];
+            for (let d = 1; d <= 6; d++) { startFloor(d, false); rolig(); ut.push(Hendelse.aktive.map(h => h.id)); }
+            runder.push({ antall: ut.map(l => l.length), gyldig: ut.every((l, i) => l.every(id => HENDELSER[id].dybder.includes(i + 1))), naboer: ut.every((l, i) => i === 0 || !l.some(id => ut[i - 1].includes(id))), unike: new Set(ut.flat()).size }); }
+          return { runder, totalt: Object.keys(HENDELSER).length }; }""")
+        sjekk('hver etasje får to til fire hendelser som passer dybden, aldri den samme som i etasjen over', fo['totalt'] >= 18 and all(all(2 <= n <= 4 for n in r['antall']) and r['gyldig'] and r['naboer'] and r['unike'] >= 11 for r in fo['runder']), fo)
+        oy = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t));
+          startFloor(2, false); rolig(); Hendelse.fjern(); const h = Hendelse.tving('oyet'); if (!h) return null;
+          const s = freeSpot(h.x, h.z + 1.2, 2); P.x = s.x; P.z = s.z; R.snapCamera(P.x, P.z); await vent(1300);
+          const aapent = h.oye.i >= 3 && h.pm.visible, it = findInteract(), prompt = it && it.t;
+          P.teeth = 0; P.hp = P.maxHp - 25; it.fn(); await vent(80);
+          const panel = !!document.querySelector('.samtale'), fire = document.querySelectorAll('[data-sv]').length === 4, bilde = !!document.querySelector('.samtale .sbilde canvas');
+          Samtale.velg(0); await vent(50); const sperret = document.querySelector('[data-sv="0"]').disabled; Samtale.velg(0); await vent(50);
+          const fortsatt = !!document.querySelector('.samtale') && P.teeth === 0; Samtale.velg(1); await vent(50); closePanel();
+          const hp0 = P.hp, m0 = P.morb; Hendelse.start(h); await vent(80); const husker = document.querySelector('.samtale .stekst').innerText.includes('Du igjen');
+          Samtale.velg(2); await vent(50); const bedre = P.hp > hp0, brukt = h.brukt; closePanel(); await vent(1600);
+          const lagret = (JSON.parse(localStorage.getItem('morbidium_meta_v2')) || {}).hendelser || {};
+          return { aapent, prompt, panel, fire, bilde, sperret, fortsatt, bedre, brukt, lukket: h.oye.i < 3, husker, teller: lagret.oyet, igjen: !findInteract() || findInteract().t !== 'Se inn i sprekken' }; }""")
+        sjekk('øyet i sprekken åpner seg når du kommer nær, og samtalen har bilde og fire valg', bool(oy) and oy['aapent'] and oy['prompt'] == 'Se inn i sprekken' and oy['panel'] and oy['fire'] and oy['bilde'], oy)
+        sjekk('et valg du ikke har råd til er sperret og gjør ingenting', bool(oy) and oy['sperret'] and oy['fortsatt'], oy)
+        sjekk('øyet husker deg andre gang, og tellingen lagres', bool(oy) and oy['husker'] and (oy['teller'] or 0) >= 2, oy)
+        sjekk('etter en belønning lukker øyet seg og kan ikke brukes igjen', bool(oy) and oy['bedre'] and oy['brukt'] and oy['lukket'] and oy['igjen'], oy)
+        tast = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t));
+          startFloor(3, false); rolig(); Hendelse.fjern(); const h = Hendelse.tving('kaffe'); P.coffee = false; Hendelse.start(h); await vent(80);
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', code: 'Digit1', bubbles: true })); await vent(80);
+          const r = { kaffe: P.coffee === true, svar: !!document.querySelector('.samtale') && document.querySelector('.samtale .stekst').innerText.includes('kaffe') }; closePanel(); return r; }""")
+        sjekk('tallene på tastaturet velger i samtalen', tast['kaffe'] and tast['svar'], tast)
+        rom = await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player; for (let k = 0; k < 6; k++) { startFloor(1, false); Hendelse.fjern(); const h = Hendelse.tving('ku'); if (!h) continue;
+            for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; const st = G.rooms[h.sted.rom]; st.cleared = false;
+            P.x = h.x; P.z = h.z + 1; const for_ = findInteract(); st.cleared = true; const etter = findInteract();
+            return { for: for_ ? for_.t : null, etter: etter ? etter.t : null }; } return null; }""")
+        sjekk('en hendelse i et kamprom kan først brukes når rommet er ryddet', bool(rom) and rom['for'] != 'Hils på kua' and rom['etter'] == 'Hils på kua', rom)
+        fl = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          startFloor(1, false); rolig(); Hendelse.fjern(); let h = null; for (let k = 0; k < 6 && !h; k++) { startFloor(1, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('graven'); }
+          G.run.sjefSvekk = {}; Hendelse.start(h); await vent(50); Samtale.velg(2); closePanel(); const B = spawnBoss(1, P.x + 4, P.z); ut.sjef = B.hp / B.max;
+          h = null; for (const d of [3, 4, 6, 2, 4, 6]) { if (h) break; startFloor(d, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('hjemmebrent'); } if (h) { Hendelse.start(h); await vent(50); Samtale.velg(0); closePanel(); ut.sterk = P.kamferT > 20; await vent(3000); ut.spy = G.puddles.filter(p => p.kind === 'vomit').length; }
+          startFloor(2, false); rolig(); Hendelse.fjern(); h = null; for (let k = 0; k < 6 && !h; k++) { startFloor(2, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('tannfeen'); }
+          if (h) { P.teeth = 20; const m0 = P.maxHp; Hendelse.start(h); await vent(50); Samtale.velg(0); closePanel(); ut.hjerte = P.maxHp - m0; ut.tenner = P.teeth; }
+          startFloor(2, false); rolig(); Hendelse.fjern(); h = null; for (let k = 0; k < 6 && !h; k++) { startFloor(2, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('dans'); }
+          if (h) { P.x = h.x + 1.5; P.z = h.z + 1.5; P.vx = P.vz = 0; Hendelse.start(h); await vent(50); Samtale.velg(0); for (let t = 0; t < 40 && !h.ferdig; t++) { P.vx = P.vz = 0; await vent(500); } ut.dans = h.ferdig === true && h.brukt === true && !h.dukke; ut.dansIgjen = h.data.dans; }
+          const gamle = Hendelse.aktive.flatMap(x => x.obj); startFloor(3, false); rolig(); ut.ryddet = gamle.every(o => !o.parent);
+          return ut; }""")
+        sjekk('graven svekker sjefen, hjemmebrent gir styrke og et spor av spy, tannfeen gir et hjerte og dansen gir noe når du står stille', fl.get('sjef', 1) < .85 and fl.get('sterk') and fl.get('spy', 0) >= 1 and fl.get('hjerte') == 10 and fl.get('tenner') == 5 and fl.get('dans'), fl)
+        sjekk('hendelsene ryddes bort når du går til neste etasje', fl.get('ryddet'), fl)
+        await pg.screenshot(path='/tmp/e_12hendelser.png')
+        sjekk('ingen konsollfeil (hendelser)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 26) drømmene: historien fra frøet, fem kapitler, minnene, skyggen, døra, valgene, slutten og pasientmappa
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        tk = await pg.evaluate("""() => { const run = MORBIDIUM.run, gammel = run.historie, fro = run.seed, feil = [], hjem = new Set(), like = []; let n = 0;
+          for (let s = 1; s <= 240; s++) { run.historie = null; run.seed = s * 7919; const H = Drom.historie(), S = Drom.ord(H), tekster = []; hjem.add(H.hjem);
+            if (s <= 3) { run.historie = null; like.push(JSON.stringify(Drom.historie()) === JSON.stringify(H)); }
+            for (const k of [1, 2, 3, 4, 5]) { const K = DROM_KAP[k], v = K.valg(S); tekster.push(K.intro(S), ...K.minner(S).map(m => m.tittel + ' ' + m.tekst), ...K.figurer(S), v.tekst, v.baklengs || '', ...v.valg.map(o => o.tekst + ' ' + o.svar)); }
+            for (const k of Object.keys(DROM_SLUTT)) tekster.push(DROM_SLUTT[k].tekst(S)); tekster.push(...S.skyld.jeg(S));
+            for (const t of tekster) { n++; if (/undefined|NaN|\$\{|\[object|null/.test(t)) feil.push(s + ': ' + t.slice(0, 90)); } }
+          run.historie = gammel; run.seed = fro; return { n, feil: feil.slice(0, 4), antall: feil.length, hjem: hjem.size, like }; }""")
+        sjekk('historien trekkes likt fra frøet, og alle tekstene i fem kapitler blir hele setninger', tk['antall'] == 0 and tk['n'] > 5000 and tk['hjem'] == 7 and all(tk['like']), tk)
+        dr = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          startFloor(1, false); rolig(); descend(); await vent(500);
+          ut.drom = !!G.drom && G.drom.kap === 1 && G.depth === 2 && !!document.querySelector('.samtale'); ut.fiender = G.enemies.length; closePanel();
+          const m0 = Drom.minner[0]; P.x = m0.x; P.z = m0.z + 1.1; const it = findInteract(); ut.prompt = it && it.t; it.fn(); await vent(80); ut.panel = !!document.querySelector('.samtale'); closePanel();
+          ut.skygge = Drom.skygge.aktiv && Drom.skygge.doll.root.visible; ut.dorLukket = !Drom.dor.aapen;
+          for (const m of Drom.minner.slice(1)) { P.x = m.x; P.z = m.z + 1.1; findInteract().fn(); await vent(60); closePanel(); }
+          ut.dorAapen = Drom.dor.aapen; P.x = Drom.dor.x; P.z = Drom.dor.z + .6; const d = findInteract(); ut.dorPrompt = d && d.t; d.fn(); await vent(80);
+          ut.valg = document.querySelectorAll('[data-sv]').length; Samtale.velg(1); await vent(60); Samtale.velg(0); await vent(2600);
+          ut.vaaken = !G.drom && G.depth === 2 && G.state === 'play' && document.getElementById('toast').textContent.includes(UTGANGER[1].ankomst.slice(0, 10)); ut.husket = G.run.historie.valg[1];
+          // skyggen tar deg igjen: du våkner for tidlig med Morbidium i blodet
+          startFloor(2, false); rolig(); descend(); await vent(500); closePanel(); const m1 = Drom.minner[0]; P.x = m1.x; P.z = m1.z + 1.1; findInteract().fn(); await vent(60); closePanel();
+          const mb = P.morb, s = Drom.skygge; s.x = P.x + .5; s.z = P.z; await vent(2600); ut.tatt = !G.drom && G.depth === 3 && G.run.historie.valg[2] === 'flukt' && P.morb > mb;
+          // kapittel 5 etter skogen: det røde rommet, og skyggen snur seg når minnene er funnet
+          startFloor(5, false); rolig(); descend(); await vent(500); closePanel(); ut.kap5 = G.drom && G.drom.kap === 5 && G.F.rooms.every(r => r.gulv === 'sikksakk' && r.vegg === 'forheng');
+          for (const m of Drom.minner) { P.x = m.x; P.z = m.z + 1.1; findInteract().fn(); await vent(60); closePanel(); }
+          ut.snudd = !!Drom.skygge.snudd; Drom.hopp('tilgivelse'); await vent(300); ut.dypet = G.depth === 6 && !G.drom;
+          G.run.historie.valg = { 1: 'sannheten', 2: 'gjentakelse', 3: 'gjentakelse', 4: 'sannheten', 5: 'sannheten' }; ut.slutt = Drom.slutt();
+          G.run.historie.valg = { 1: 'tilgivelse', 2: 'tilgivelse', 3: 'flukt', 4: 'flukt', 5: 'flukt' }; ut.slutt2 = Drom.slutt();
+          G.run.historie.sett = 5; ut.mappe = Drom.mappe(true);
+          return ut; }""")
+        sjekk('utgangen fører inn i en drøm uten fiender, med tre minner, en skygge som våkner og en dør som åpner seg', dr['drom'] and dr['fiender'] == 0 and (dr['prompt'] or '').startswith('Husk') and dr['panel'] and dr['skygge'] and dr['dorLukket'] and dr['dorAapen'] and dr['dorPrompt'] == 'Gå mot døra', dr)
+        sjekk('valget ved døra huskes, og du våkner i neste etasje', dr['valg'] >= 3 and dr['vaaken'] and dr['husket'] == 'sannheten', dr)
+        sjekk('skyggen kan ta deg igjen, og da våkner du for tidlig med Morbidium i blodet', dr['tatt'], dr)
+        sjekk('kapittel 5 er det røde rommet, og skyggen snur seg', dr['kap5'] and dr['snudd'] and dr['dypet'], dr)
+        sjekk('slutten følger valgene (kapittel 5 teller dobbelt), og pasientmappa får historien', dr['slutt'] == 'sannheten' and dr['slutt2'] == 'fornektelse' and dr['mappe'] and 'Fra ' in dr['mappe']['tekst'] and dr['mappe']['tekst'].endswith('.'), dr)
+        ep = await pg.evaluate("""async () => { const vent = t => new Promise(r => setTimeout(r, t)); showWin(); await vent(1500); const tekst = (document.querySelector('.samtale .stekst') || {}).innerText || ''; const knapp = document.getElementById('epOk'); if (knapp) knapp.click(); await vent(500); return { tekst: tekst.slice(0, 60), brev: !!document.querySelector('.brev') }; }""")
+        sjekk('ved utskrivningen kommer slutten på historien før brevet', len(ep['tekst']) > 20 and ep['brev'], ep)
+        await pg.screenshot(path='/tmp/e_13drom.png')
+        sjekk('ingen konsollfeil (drømmer)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 27) Parken og Nattskogen: gartnere, kråker, Huldra, Vedkubbemannen, Nøkken og kålhoder slåss, med hver sine særtrekk
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        uf = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = { sett: {} };
+          for (const [d, typer] of [[1, ['gartner', 'kraake', 'kaalhode']], [5, ['huldra', 'vedkubbe', 'nokken']]]) {
+            startFloor(d, false); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2;
+            const fl = typer.map((t, i) => { const a = i / typer.length * Math.PI * 2, s = freeSpot(P.x + Math.sin(a) * 3.5, P.z + Math.cos(a) * 3.5, 3), e = spawnEnemy(t, s.x, s.z, false, d); e.t = 0; return e; });
+            for (let k = 0; k < 44; k++) { await vent(250); P.hp = 9999; for (const e of fl) { const S = ut.sett[e.type] || (ut.sett[e.type] = {}); S[e.state] = 1; if (e.lokker > 0) S.lokker = 1; if (e.dukket) S.nede = 1; if (e.dukket === false) S.oppe = 1; } }
+            ut['levende' + d] = fl.filter(e => e.alive).length;
+            if (d === 5) { for (const e of fl) if (e.type === 'vedkubbe') hurt(e, 99999, { from: 'player' }); for (const e of fl) if (e.type === 'nokken') { e.cd = 99; e.stille = 99; } await vent(300); const h = fl.find(e => e.type === 'huldra'), sp = freeSpot(P.x + 4, P.z, 3); h.x = sp.x; h.z = sp.z; h.stille = 99; h.cd = 99; h.state = 'chase'; const x0 = Math.hypot(P.x - h.x, P.z - h.z); h.lokker = 1.5; await vent(700); ut.dratt = x0 > 1.5 && Math.hypot(P.x - h.x, P.z - h.z) < x0 - .3; h.stille = 0; for (const e of fl) if (e.type === 'nokken') { e.cd = 0; e.stille = 0; } const n = fl.find(e => e.type === 'nokken'); n.dukket = true; const h0 = n.hp; hurt(n, 30, { from: 'player' }); ut.nokkenUrort = n.hp === h0; n.dukket = false; hurt(n, 30, { from: 'player' }); ut.nokkenTruffet = n.hp < h0; }
+            for (const e of fl) hurt(e, 99999, { from: 'player' });
+          }
+          ut.indeks = ['gartner', 'kraake', 'kaalhode', 'huldra', 'vedkubbe', 'nokken', 'hekk', 'hjort'].every(t => (FIENDE_INFO[t] || [])[0]) && SJEF_PULJE.includes('hekk') && SJEF_PULJE.includes('hjort');
+          return ut; }""")
+        S = uf['sett']
+        sjekk('gartnere, kråker og kålhoder i Parken, Huldra, Vedkubbemannen og Nøkken i Nattskogen går til angrep', all('wind' in S.get(t, {}) for t in ['gartner', 'kraake', 'kaalhode', 'huldra', 'vedkubbe', 'nokken']) and uf['levende1'] == 3 and uf['levende5'] == 3, uf)
+        sjekk('kråka stuper, Huldras sang drar deg mot henne, og Nøkken går under og kommer opp igjen', 'charge' in S.get('kraake', {}) and uf.get('dratt') and 'nede' in S.get('nokken', {}) and 'oppe' in S.get('nokken', {}), uf)
+        sjekk('Nøkken kan ikke treffes under vannet, men når han er oppe', uf['nokkenUrort'] and uf['nokkenTruffet'], uf)
+        sjekk('de nye fiendene og sjefene står i fiendeindeksen og sjefpuljen', uf['indeks'], uf)
+        await pg.screenshot(path='/tmp/e_14ute.png')
+        sjekk('ingen konsollfeil (Parken og Nattskogen)', not pg.errs, pg.errs[:6])
         await pg.close()
 
         await b.close()

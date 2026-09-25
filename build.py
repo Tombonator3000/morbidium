@@ -8,7 +8,7 @@ fila fortsatt er selvstendig og virker både som publisert artefakt og på GitHu
 import base64, json, pathlib
 ROT = pathlib.Path(__file__).resolve().parent
 S = ROT / 'src'
-parts = ['01_core.js', '02_data.js', '03_generator.js', '04_render.js', '05_world.js', '06_musikk.js', '10_art.js', '11_doll.js', '12_paint.js', '13_rom.js', '14_pasient.js', '15_rom3d.js', '20_actors.js', '22_sjefer.js', '25_items.js', '26_fiender.js', '27_utstyr.js', '28_oppskrift.js', '32_meny.js', '33_merknader.js', '30_game.js']
+parts = ['01_core.js', '02_data.js', '03_generator.js', '04_render.js', '05_world.js', '06_musikk.js', '10_art.js', '11_doll.js', '12_paint.js', '13_rom.js', '14_pasient.js', '15_rom3d.js', '16_anim.js', '17_romtyper.js', '20_actors.js', '22_sjefer.js', '25_items.js', '26_fiender.js', '27_utstyr.js', '28_oppskrift.js', '29_monstre.js', '31_sjefpulje.js', '34_blod.js', '35_hendelser.js', '36_drom.js', '32_meny.js', '33_merknader.js', '37_utefiender.js', '30_game.js']
 ferdig = ROT / 'assets' / 'ferdig'
 sprites = {p.stem: 'data:image/png;base64,' + base64.b64encode(p.read_bytes()).decode() for p in sorted(ferdig.glob('*.png'))} if ferdig.exists() else {}
 # deler til oppskriftssystemet (assets/deler/, laget av tools/skjaer_ark.py): beskjæres til det som
@@ -32,6 +32,10 @@ if meta_sti.exists():
         q = im.quantize(colors=256, method=Image.Quantize.FASTOCTREE); b = io.BytesIO(); q.save(b, 'PNG', optimize=True)
         deler_sprites[k] = 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode()
         deler_meta[k] = {'kategori': m['kategori'], 'serie': m['serie'], 'del': m['del'], 'visning': m['visning'], 'bw': im.width, 'bh': im.height}
+# spriteark (anim_<navn>): rutenett og festepunkt fra manifestet, så spillet klipper arket slik bildeflyten skalerte det
+man_sti = ROT / 'assets' / 'manifest.json'
+manifest = json.loads(man_sti.read_text(encoding='utf-8')) if man_sti.exists() else {}
+anim_ark = {k: {n: m[n] for n in ('w', 'h', 'ax', 'ay', 'ruter', 'n', 'fps') if n in m} for k, m in manifest.items() if k.startswith('anim_') and 'ruter' in m and k in sprites}
 game = ''
 for p in parts:
     game += (S / p).read_text(encoding='utf-8') + '\n'
@@ -39,6 +43,7 @@ for p in parts:
         if sprites: game += 'Object.assign(SPRITES, ' + json.dumps(sprites) + ');\n'
         if deler_sprites: game += 'Object.assign(SPRITES, ' + json.dumps(deler_sprites) + ');\n'
         game += 'const DELER_META = ' + json.dumps(deler_meta) + ';\n'
+        game += 'const ANIM_ARK = ' + json.dumps(anim_ark) + ';\n'
 loader = r'''
 </script>
 <script>
