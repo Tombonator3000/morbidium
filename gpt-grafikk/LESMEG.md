@@ -16,6 +16,9 @@ Verktøyene vet hva et bilde er bare ut fra filnavnet. Skriv det med små boksta
 | Figurark (forfra, bakfra, fra siden) laget på `mal_figur.png` | `figur_<navn>.png` | `figur_pasient.png` |
 | Ni ting på ett ark laget på `mal_ni_ting.png` | `ark__<nøkkel>__<nøkkel>...png`, ni nøkler med to understreker mellom, lest fra venstre mot høyre og ovenfra. `_` hopper over en rute | se under |
 | Delark til oppskriftssystemet | `hoder_<serie>.png`, `hatter_<serie>.png`, `har_<serie>.png`, `tilbehor_<serie>.png`, `kropper_<serie>.png` | `hoder_personale.png` |
+| Spriteark: like store ruter på én rad, samme festepunkt i hver rute (se del I i `DESIGN_BRIEF.md`) | `anim_<navn>.png` | `anim_kastesprut.png` |
+| HUD og menyer: rammer, ringer, hjerter og ikoner uten tekst (se del G) | `ui_<navn>.png` | `ui_panel.png`, `ui_hjerte_full.png` |
+| Løse deler til lagdelte skapninger (se del H) | `koret_<del>.png`, `klumpen_<del>.png` | `koret_munn0.png`, `klumpen_ansikt2.png` |
 
 Eksempel på et «ni ting»-ark med de ni første kuriositetene:
 
@@ -23,7 +26,11 @@ Eksempel på et «ni ting»-ark med de ni første kuriositetene:
 
 Et bilde med et navn som ikke finnes i manifestet, blir hoppet over med en melding. Det ødelegger ikke bygget.
 
+De nye fiendene fra ChatGPTs forslag lages som figurark på `mal_figur.png`: `figur_kasteren.png`, `figur_trille.png`, `figur_speil.png`, `figur_tannlege.png` og `figur_portier.png`. Rullestolhjulet (`hjul_trille_f.png`), portierens hode (`portierhode.png`) og våpnene (`vaapen_klump.png`, `vaapen_tang.png`, `vaapen_knippe.png`) er enkeltbilder. Hele lista står i `ART_BRIEF.md`, runde 7, 8 og 9.
+
 Spilleren settes sammen på nytt ved hver innleggelse. `figur_pasient.png` er mannen og `figur_pasient_kvinne.png` kvinnen; hårfarge, hudtone og kåpefarge legges på av spillet. Andre plagg er foreløpig tegnet i koden og kan erstattes med figurark som bare har kroppsraden fylt ut: `figur_tvang.png` (tvangstrøye), `figur_skjorte.png` (sykehusskjorte) og `figur_pyjamas.png` (stripete pyjamas). Småting til hodet kan leveres som enkeltbilder: `pynt_nattlue.png`, `pynt_papiljotter.png`, `pynt_harnett.png`, `pynt_hjelm.png`, `pynt_rosett.png`, `pynt_plaster.png` og `pynt_sting.png`, og fottøy som `sko_barfot.png` og `sko_sokk.png`.
+
+Utvidelsen høsten 2026 har fire nye runder i `ART_BRIEF.md`: runde 10 (møblene i de nye rommene, parken og skogen, og utgangene), runde 11 (hendelsene: øyet, kua, telefonen, heisen og de andre), runde 12 (drømmene: minnene, tegnene, døra og figurene uten ansikt) og runde 13 (gartnerne, kråkene, Huldra, Vedkubbemannen, Nøkken, Overgartneren og Den hvite hjorten). Figurene lages som figurark på `mal_figur.png` med navnet `figur_<type>.png`, for eksempel `figur_huldra.png`.
 
 ## Krav til bildene
 - PNG, helst med gjennomsiktig bakgrunn. Hvit eller ensfarget bakgrunn går også, den fjernes fra kantene og innover.

@@ -64,29 +64,41 @@ const ENEMIES = {
   oppasser: { name: 'Oppasser', hp: 24, speed: 2.5, r: .4, dmg: 8, xp: 10, teeth: [1, 3], look: 'oppasser' },
   yngel: { name: 'Avløpsyngel', hp: 16, speed: 4.3, r: .36, dmg: 6, xp: 6, teeth: [0, 1], look: 'yngel', morb: 3 }
 };
-const DEPTH_ENEMIES = { 1: ['pleier', 'kultist', 'oppasser', 'pleier', 'kultist'], 2: ['pleier', 'oppasser', 'yngel', 'kultist', 'oppasser', 'yngel'], 3: ['pleier', 'kultist', 'oppasser', 'kultist', 'pleier'], 4: ['yngel', 'kultist', 'pleier', 'yngel', 'oppasser', 'kultist'] };
+const DEPTH_ENEMIES = { 1: ['pleier', 'pleier', 'kultist', 'oppasser'], 2: ['pleier', 'kultist', 'oppasser', 'pleier', 'kultist'], 3: ['pleier', 'oppasser', 'yngel', 'kultist', 'oppasser', 'yngel'], 4: ['pleier', 'kultist', 'oppasser', 'kultist', 'pleier'], 5: ['yngel', 'kultist', 'yngel', 'oppasser', 'kultist'], 6: ['yngel', 'kultist', 'pleier', 'yngel', 'oppasser', 'kultist'] };
+/* Seks etasjer, men fiendene skal ikke bli dobbelt så sterke: styrken følger en egen skala.
+   Parken er som gamle 1. etasje, Dypet som gamle Dypet. */
+const STYRKE = { 1: 1, 2: 1.4, 3: 2, 4: 2.8, 5: 3.4, 6: 4 };
+const dybdeStyrke = d => STYRKE[d] ?? d;
 
 /* Sjefene. attacks trekkes tilfeldig; signaturangrepene (hookpull, chainspin, flood, jet, stamprain, paperstorm,
    isolate, pages, ink, rewrite) ligger i 22_sjefer.js. */
 const BOSSES = {
-  1: { type: 'krok', weapon: 'krok', name: 'Overlege Hektor Krok', title: 'Smertens saksbehandler', hp: 650, color: 0xe8e2d0, accent: 0x7a1d18, minion: 'kultist', minions: 2, attacks: ['slam', 'hooks', 'summon', 'hookpull', 'chainspin', 'hookpull'], puddle: null },
-  2: { type: 'rust', weapon: 'slange', name: 'Hydroterapeut Ragnvald Rust', title: 'Badevakt for de fortapte', hp: 950, color: 0x9cc7b4, accent: 0x2c5a5c, minion: 'oppasser', minions: 2, attacks: ['slam', 'hooks', 'summon', 'sweep', 'flood', 'jet', 'jet'], puddle: 'wet' },
-  3: { type: 'arkivar', weapon: 'stempelboss', name: 'Overarkivar Gunhild Paragraf', title: 'Hun som arkiverer alt, også deg', hp: 1150, color: 0x3a3440, accent: 0xb3261e, minion: 'kultist', minions: 2, attacks: ['stamprain', 'paperstorm', 'isolate', 'summon', 'sweep', 'stamprain', 'paperstorm'], puddle: null },
-  4: { type: 'journalen', weapon: null, name: 'Journalen', title: 'Den som opprettet deg', hp: 1500, color: 0x4a2d5a, accent: 0xb36be0, minion: 'yngel', minions: 4, attacks: ['slam', 'hooks', 'summon', 'sweep', 'pages', 'ink', 'rewrite', 'pages'], puddle: 'morb', tome: true, float: true }
+  2: { type: 'krok', weapon: 'krok', name: 'Overlege Hektor Krok', title: 'Smertens saksbehandler', hp: 650, color: 0xe8e2d0, accent: 0x7a1d18, minion: 'kultist', minions: 2, attacks: ['slam', 'hooks', 'summon', 'hookpull', 'chainspin', 'hookpull'], puddle: null },
+  3: { type: 'rust', weapon: 'slange', name: 'Hydroterapeut Ragnvald Rust', title: 'Badevakt for de fortapte', hp: 950, color: 0x9cc7b4, accent: 0x2c5a5c, minion: 'oppasser', minions: 2, attacks: ['slam', 'hooks', 'summon', 'sweep', 'flood', 'jet', 'jet'], puddle: 'wet' },
+  4: { type: 'arkivar', weapon: 'stempelboss', name: 'Overarkivar Gunhild Paragraf', title: 'Hun som arkiverer alt, også deg', hp: 1150, color: 0x3a3440, accent: 0xb3261e, minion: 'kultist', minions: 2, attacks: ['stamprain', 'paperstorm', 'isolate', 'summon', 'sweep', 'stamprain', 'paperstorm'], puddle: null },
+  6: { type: 'journalen', weapon: null, name: 'Journalen', title: 'Den som opprettet deg', hp: 1500, color: 0x4a2d5a, accent: 0xb36be0, minion: 'yngel', minions: 4, attacks: ['slam', 'hooks', 'summon', 'sweep', 'pages', 'ink', 'rewrite', 'pages'], puddle: 'morb', tome: true, float: true }
 };
+BOSSES[1] = BOSSES[2]; BOSSES[5] = BOSSES[4]; // reserver; sjefene trekkes fra puljen for hvert løp (31_sjefpulje.js)
+
 
 const THEMES = {
-  1: { name: '1. etasje: Mottak og bosted', tileA: '#d2cb86', tileB: '#8fa35e', grout: '#5d6a3a', wall: '#ddd4ad', wains: '#6f8a55', base: '#3b3322', top: '#1b140e', fog: 0x16130c, sky: 0xfff1c8, ground: 0x3a3524, pool: '#ffe6a0', corridor: .82 },
-  2: { name: 'Underetasjen: Behandling og hydroterapi', tileA: '#a8d6c4', tileB: '#5e9488', grout: '#2f5650', wall: '#c4ddd3', wains: '#3f6e6a', base: '#1e3331', top: '#0f1a19', fog: 0x0c1616, sky: 0xd8fff2, ground: 0x1e302d, pool: '#bfffe8', corridor: .78 },
-  3: { name: 'Kjelleren: Isolat og arkiv', tileA: '#cbbf9c', tileB: '#a6997a', grout: '#4a3f2c', wall: '#e6dcc2', wains: '#8a7a5a', base: '#2e2618', top: '#120e08', fog: 0x120e0a, sky: 0xfff0d0, ground: 0x2e281c, pool: '#fff0c0', corridor: .75 },
-  4: { name: 'Under grunnmuren: Dypet', tileA: '#6a5478', tileB: '#2f2340', grout: '#1a1024', wall: '#57445f', wains: '#2c1d36', base: '#140c1a', top: '#07040a', fog: 0x0a0610, sky: 0xd9b8ff, ground: 0x1a0f22, pool: '#c98cff', corridor: .7 }
+  2: { name: '1. etasje: Mottak og bosted', tileA: '#d2cb86', tileB: '#8fa35e', grout: '#5d6a3a', wall: '#ddd4ad', wains: '#6f8a55', base: '#3b3322', top: '#1b140e', fog: 0x16130c, sky: 0xfff1c8, ground: 0x3a3524, pool: '#ffe6a0', corridor: .82 },
+  3: { name: 'Underetasjen: Behandling og hydroterapi', tileA: '#a8d6c4', tileB: '#5e9488', grout: '#2f5650', wall: '#c4ddd3', wains: '#3f6e6a', base: '#1e3331', top: '#0f1a19', fog: 0x0c1616, sky: 0xd8fff2, ground: 0x1e302d, pool: '#bfffe8', corridor: .78 },
+  4: { name: 'Kjelleren: Isolat og arkiv', tileA: '#cbbf9c', tileB: '#a6997a', grout: '#4a3f2c', wall: '#e6dcc2', wains: '#8a7a5a', base: '#2e2618', top: '#120e08', fog: 0x120e0a, sky: 0xfff0d0, ground: 0x2e281c, pool: '#fff0c0', corridor: .75 },
+  6: { name: 'Under skogen: Dypet', tileA: '#6a5478', tileB: '#2f2340', grout: '#1a1024', wall: '#57445f', wains: '#2c1d36', base: '#140c1a', top: '#07040a', fog: 0x0a0610, sky: 0xd9b8ff, ground: 0x1a0f22, pool: '#c98cff', corridor: .7 },
+  1: { name: 'Parken: Hage og liggehall', ute: true, tileA: '#cdbb8e', tileB: '#a8966c', grout: '#4a3e28', wall: '#d8cfae', wains: '#5e7a4a', base: '#2e281c', top: '#141008', fog: 0x0a1210, sky: 0xc8dcff, ground: 0x18221a, pool: '#ffe2a0', corridor: .9 },
+  5: { name: 'Under grunnmuren: Nattskogen', ute: true, tileA: '#7a6a50', tileB: '#5e5040', grout: '#2a2218', wall: '#6a5238', wains: '#3a2a1a', base: '#1a120a', top: '#0a0604', fog: 0x05070c, sky: 0x9ab0ff, ground: 0x0c120c, pool: '#ffb070', corridor: .85 }
 };
 // Malte temaer: dempet palett, veggtopper og fargegradering per etasje (brukes av etterbehandlingen)
-Object.assign(THEMES[1], { tileA: '#d8d08e', tileB2: '#aebb74', grout: '#5d6a3a', corr: '#b9a878', cap: '#8a7d62', grade: { amb: '#f2ead8', lift: '#0a0604', gain: '#fff4e4', vig: .5 } });
-Object.assign(THEMES[2], { tileA: '#b4d8c8', tileB2: '#86b4a4', grout: '#2f5650', corr: '#8aa89c', cap: '#5f7a72', grade: { amb: '#a8c4c0', lift: '#040a0a', gain: '#e8fff8', vig: .6 } });
-Object.assign(THEMES[3], { tileB2: '#b3a684', corr: '#8f8268', cap: '#3a3024', grade: { amb: '#cfc4ae', lift: '#070503', gain: '#fff6e6', vig: .66 } });
-Object.assign(THEMES[4], { tileA: '#7a6488', tileB2: '#5a4668', grout: '#1a1024', corr: '#4e3e58', cap: '#4a3a52', grade: { amb: '#5a4a6e', lift: '#08030c', gain: '#f0e0ff', vig: .7 } });
-const MAX_DEPTH = 4;
+Object.assign(THEMES[2], { tileA: '#d8d08e', tileB2: '#aebb74', grout: '#5d6a3a', corr: '#b9a878', cap: '#8a7d62', grade: { amb: '#f2ead8', lift: '#0a0604', gain: '#fff4e4', vig: .5 } });
+Object.assign(THEMES[3], { tileA: '#b4d8c8', tileB2: '#86b4a4', grout: '#2f5650', corr: '#8aa89c', cap: '#5f7a72', grade: { amb: '#a8c4c0', lift: '#040a0a', gain: '#e8fff8', vig: .6 } });
+Object.assign(THEMES[4], { tileB2: '#b3a684', corr: '#8f8268', cap: '#3a3024', grade: { amb: '#cfc4ae', lift: '#070503', gain: '#fff6e6', vig: .66 } });
+Object.assign(THEMES[6], { tileA: '#7a6488', tileB2: '#5a4668', grout: '#1a1024', corr: '#4e3e58', cap: '#4a3a52', grade: { amb: '#5a4a6e', lift: '#08030c', gain: '#f0e0ff', vig: .7 } });
+Object.assign(THEMES[1], { tileB2: '#b8a67a', corr: '#a89a7c', cap: '#26361e', grade: { amb: '#b4c4d8', lift: '#04060a', gain: '#eef4ff', vig: .58 } });
+Object.assign(THEMES[5], { tileB2: '#6a5a44', corr: '#4a4a34', cap: '#101a10', grade: { amb: '#6874a0', lift: '#020308', gain: '#e8ecff', vig: .72 } });
+
+const MAX_DEPTH = 6;
+
 
 /* Oppvåkningssteder. unlock: hvordan de låses opp i metaprogresjonen */
 const AWAKENINGS = {
@@ -94,7 +106,7 @@ const AWAKENINGS = {
   likhus: { name: 'Likhuset', perk: 'Beinsag, 25 gulltenner og en snarvei: sjefslegen er merket på kartet.', problem: 'Lite helse, og kafeteriaen tror du er død. Alt koster mer.', template: 'likhus' },
   toalett: { name: 'Toalettet', perk: 'Rørveien avslører skattekammeret, og du har allerede litt Morbidium i blodet.', problem: 'Forurenset start. Dårlig førsteinntrykk gir høyere priser.', template: 'toalett' },
   soppel: { name: 'Søppelrommet', perk: 'Mer tilfeldig utstyr: et ekstra våpen og to evner.', problem: 'Utstyret var bevoktet. Noen vil ha det tilbake, nå.', template: 'soppel' },
-  vaskesjakt: { name: 'Vaskesjakten', perk: 'Du starter i underetasjen, ett nivå høyere.', problem: 'Hardere fiender før du rekker å utruste deg.', template: 'vask', depth: 2 },
+  vaskesjakt: { name: 'Vaskesjakten', perk: 'Du starter i underetasjen og hopper over parken og mottaket.', problem: 'Hardere fiender før du rekker å utruste deg.', template: 'vask', depth: 3 },
   operasjon: { name: 'Operasjonsbordet', perk: 'En umiddelbar særmutasjon: tilfeldig diagnose og en oppgradert evne.', problem: 'Operasjonen er fortsatt i gang. Kirurgen vil fullføre.', template: 'operasjon', unlock: 'bossKill' },
   kapell: { name: 'Kapellet', perk: 'Velsignet start: en tilfeldig kuriositet og en ekstra evne.', problem: 'Mørket følger med velsignelsen: 30 Morbidium i blodet fra første stund.', template: 'kapell', unlock: 'merk:rust' },
   vaktbod: { name: 'Vaktmesterens bod', perk: 'Nøkkelknippet og 40 gulltenner fra kaffeboksen.', problem: 'Olsen savner nøklene sine. Vaktmesterskapet er stengt for deg hele oppholdet.', template: 'vaktbod', unlock: 'merk:tenner' },
@@ -151,10 +163,12 @@ const LINES = {
 };
 
 const PA = {
-  1: ['God morgen, kjære pasienter. Husk at det er forbudt å dø i korridorene.', 'Kafeteriaen minner om at suppe ikke er en diagnose.', 'Pasienter med kappe bes melde seg i resepsjonen for utlevering av perspektiv.', 'Besøkstiden er avlyst. Besøkende er også avlyst.', 'Husk: et smil koster ingenting. Tannbehandling koster mye.'],
-  2: ['Hydroterapi er obligatorisk. Strøm er valgfritt.', 'Vannet i badene er rent. Det som bor i det, er en annen sak.', 'Kjære pasienter. Kjære pasienter. Husk å puste. Bygget gjør det allerede.', 'Vi minner om at elektriske apparater og badekar ikke er venner.'],
-  3: ['Arkivet minner om at alle pasienter arkiveres alfabetisk. Også de levende.', 'Isolatet er stille. Det er hele poenget. Slutt å banke.', 'Mistet skjema? Mistet sjel? Henvend dere til arkivet i åpningstiden, som er avlyst.', 'Tvangstrøyer leveres tilbake knyttet. Takk for forståelsen.', 'Overarkivaren minner om at hysj også gjelder skrik.'],
-  4: ['Kjære. Pasienter. Dere. Er. Hjemme.', 'Journalen er oppdatert. Journalen er oppdatert. Journalen er sulten.', 'Lunsj serveres nå. Dere er lunsj.', 'Utskrivning krever skjema null. Skjema null finnes ikke. Ennå.']
+  2: ['God morgen, kjære pasienter. Husk at det er forbudt å dø i korridorene.', 'Kafeteriaen minner om at suppe ikke er en diagnose.', 'Pasienter med kappe bes melde seg i resepsjonen for utlevering av perspektiv.', 'Besøkstiden er avlyst. Besøkende er også avlyst.', 'Husk: et smil koster ingenting. Tannbehandling koster mye.'],
+  3: ['Hydroterapi er obligatorisk. Strøm er valgfritt.', 'Vannet i badene er rent. Det som bor i det, er en annen sak.', 'Kjære pasienter. Kjære pasienter. Husk å puste. Bygget gjør det allerede.', 'Vi minner om at elektriske apparater og badekar ikke er venner.'],
+  4: ['Arkivet minner om at alle pasienter arkiveres alfabetisk. Også de levende.', 'Isolatet er stille. Det er hele poenget. Slutt å banke.', 'Mistet skjema? Mistet sjel? Henvend dere til arkivet i åpningstiden, som er avlyst.', 'Tvangstrøyer leveres tilbake knyttet. Takk for forståelsen.', 'Overarkivaren minner om at hysj også gjelder skrik.'],
+  6: ['Kjære. Pasienter. Dere. Er. Hjemme.', 'Journalen er oppdatert. Journalen er oppdatert. Journalen er sulten.', 'Lunsj serveres nå. Dere er lunsj.', 'Utskrivning krever skjema null. Skjema null finnes ikke. Ennå.'],
+  1: ['Pasienter i parken minnes om at gresset er lagt ut for å se på.', 'Liggehallen er åpen. Ta med teppe, og ta med pasienten som lå der før deg.', 'Porten er stengt av hensyn til deres egen trygghet. Og vår.', 'Fontenen er ikke drikkevann. Den er heller ikke vann.', 'Kråkene er ikke en del av behandlingen. De har bare kommet for å se.'],
+  5: ['Hallo? Er det noen der ute? Skogen har ikke tilgang til høyttaleren.', 'Denne skogen er ikke tegnet inn på kartet. Den er heller ikke tegnet inn i virkeligheten.', 'Pasienter som hører sang fra tjernet, bes ikke svare. Hun hører deg.', 'Kaffen i lysningen er servert. Vi vet ikke av hvem.']
 };
 
 const POSTERS = ['SMIL.\nDET ER\nOBLIGATORISK', 'HAR DU HUSKET\nSKJEMA 13-B?', 'MØRKET ER\nIKKE EN\nPERSONLIGHET', 'HOLD KAPPEN\nUNNA\nMASKINENE', 'SUPPE\nER\nMEDISIN', 'FRISK LUFT\nKUN MED\nTILLATELSE', 'IKKE MAT\nDUENE', 'SKJEMA FØRST\nSMERTE\nETTERPÅ'];
@@ -225,4 +239,4 @@ const NPC_LINES = {
 const OLSEN_LOCKER = ['Olsen prøver alle nøklene. Ingen passer. «Det er det samme hver dag,» sier han.', 'Olsen sparker i skapet. Skapet sparker tilbake.', 'Olsen legger øret mot døra. «Den puster,» hvisker han. «Eller så er det meg.»', 'Døra går opp. Den var ulåst hele tiden. Olsen sier ingenting på en lang stund.'];
 
 // mørkere veggtopper, så de ikke forveksles med korridorgulv
-Object.assign(THEMES[1], { cap: '#4a3f31' }); Object.assign(THEMES[2], { cap: '#2a3a37' }); Object.assign(THEMES[3], { cap: '#3a3024' }); Object.assign(THEMES[4], { cap: '#2c2034' });
+Object.assign(THEMES[2], { cap: '#4a3f31' }); Object.assign(THEMES[3], { cap: '#2a3a37' }); Object.assign(THEMES[4], { cap: '#3a3024' }); Object.assign(THEMES[6], { cap: '#2c2034' });

@@ -1,6 +1,6 @@
 # Morbidium: minne
 
-Sist oppdatert 2026-09-24.
+Sist oppdatert 2026-09-25.
 
 ## Hva prosjektet er
 Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og Hellraiser-mareritt med mørk humor som gjør narr av edgelords. Tilfeldig genererte etasjer satt sammen av rom. Designdokument: Morbidium-Design-v0_2.md.
@@ -10,18 +10,18 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Kamera: ortografisk, 52 grader helning, fast.
 - Figurer er 2.5D-papirdukker: illustrert hode og kropp som flate plater, armer og bein som tykke bånd bygget hvert bilde. Visninger forfra, bakfra og fra siden (speilet for venstre).
 - Rekvisitter er tegnet i 3/4-perspektiv og står som plater festet i forkant.
-- Gulv og vegger er ekte geometri med malte teksturer og uten lyssetting. Skygge langs vegger er malt inn.
+- Gulv og vegger er ekte geometri med malte teksturer. Rommene er 3D som standard (lys, skygger, tåke, se under); uten 3D er skyggen langs veggene malt inn.
 - Alle deler kan byttes mot PNG via SPRITES med samme festepunkt. Tegningen i koden er reserven.
-- UI: pergament, gullring rundt portrett og kart, evnekort med messingnål, dødskort med "DU ER DØD." og dødsårsak.
+- UI: pergament, gullring rundt portrett og kart, evnekort med messingnål og nummerskilt, dødskort med "DU ER DØD." og dødsårsak. ChatGPTs HUD-skisse (september 2026) er fulgt: rød sektor som teller ned i sekunder, ikonknapper, kompass med N, terskelstrek på Morbidium-stanga.
 - Skrift: Alfa Slab One (overskrifter og tall), Alegreya (brødtekst), Caveat (håndskrift i bobler og notater).
 
 ## Teknikk
 - Én selvstendig HTML-fil, Three.js r128 fra cdnjs.
-- Kilder i src/, satt sammen av build.py til dist/morbidium.html. Rekkefølge: 00_head, 01_core, 02_data, 03_generator, 04_render, 05_world, 06_musikk, 10_art, 11_doll, 12_paint, 13_rom, 14_pasient, 20_actors, 22_sjefer, 25_items, 26_fiender, 27_utstyr, 28_oppskrift, 32_meny, 33_merknader, 30_game. 32_meny og 33_merknader ligger før 30_game fordi konstantene der må finnes når 30_game starter.
-- Fire etasjer (MAX_DEPTH 4): Mottak (Krok), Underetasjen (Rust), Kjelleren: Isolat og arkiv (Overarkivar Gunhild Paragraf), Under grunnmuren: Dypet (Journalen). Signaturangrepene står i BOSS_MOVES i 22_sjefer.js.
+- Kilder i src/, satt sammen av build.py til dist/morbidium.html. Rekkefølge: 00_head, 01_core, 02_data, 03_generator, 04_render, 05_world, 06_musikk, 10_art, 11_doll, 12_paint, 13_rom, 14_pasient, 15_rom3d, 16_anim, 20_actors, 22_sjefer, 25_items, 26_fiender, 27_utstyr, 28_oppskrift, 29_monstre, 31_sjefpulje, 34_blod, 35_hendelser, 36_drom, 32_meny, 33_merknader, 37_utefiender, 30_game. 37_utefiender ligger etter 32_meny og 33_merknader fordi den legger nye fiender inn i fiendeindeksen (FIENDE_REKKE, SJEF_REKKE, FIENDE_INFO). 32_meny og 33_merknader ligger før 30_game fordi konstantene der må finnes når 30_game starter.
+- Seks etasjer (MAX_DEPTH 6, fra 25.9. kveld): 1 Parken (ute), 2 Mottak, 3 Underetasjen, 4 Kjelleren: Isolat og arkiv, 5 Nattskogen (ute, under grunnmuren), 6 Dypet. THEMES[d].ute markerer uteetasjene. Fiendenes styrke følger dybdeStyrke(d) (STYRKE i 02_data.js: 1, 1.4, 2, 2.8, 3.4, 4), så Dypet er like tungt som før. Sjefene i etasje 1 til 5 trekkes for hvert løp fra puljen (trekkSjefer(seed), lagret i G.run.sjefer, gjentar seg så lenge puljen har færre enn fem); Journalen står fast i etasje 6. Signaturangrepene står i BOSS_MOVES i 22_sjefer.js og 31_sjefpulje.js.
 - Render: ortografisk kamera, scenen tegnes til et mål, lys i eget lag (R.light), så ett etterbehandlingspass (gradering, papir, korn, vignett, blekkboiling, Morbidium, skade). Dukkene har egen shader (blink, kontur, oppløsning).
 - Spillflyt i 30_game.js: tilstander title, panel, play, journal, dead. G.run holder løpet (pasient, egenskaper, kort i slots og reserve), G.meta lagres i localStorage under morbidium_meta_v2.
-- Generatoren er ren data og testet: 900 av 900 etasjer gyldige, deterministisk.
+- Generatoren er ren data og testet: 1200 av 1200 etasjer gyldige, deterministisk.
 - Løpet lagres ved starten av hver etasje (localStorage morbidium_run_v1) og kan fortsettes fra tittelen. Død og utskrivning sletter det.
 - På berøringsskjerm er evnekortene i HUD-en selve evneknappene; body får klassen touch.
 - Toon-vann er en ShaderMaterial med delte uniformer for tid og ringer.
@@ -45,7 +45,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Claude koder, lager lyd og musikk og setter sammen bildene. ChatGPT lager bare bilder etter DESIGN_BRIEF.md. Tom laster opp til gpt-grafikk/ (erstattet assets/innboks/ 2026-09-24). Pages-bygget klipper og behandler bildene selv.
 - Figurer bygges som oppskrifter av deler (hode, hatt/hår, tilbehør, kropp, farging). Armer og bein tegnes alltid av koden.
 - Repoet ligger på GitHub som Tombonator3000/morbidium (opprettet 2026-09-24, innholdet kom som zip og ble pakket ut av Claude Code). GitHub-koblingen i Claude.ai virker ikke (peker på github.com); Claude Code er veien inn.
-- Tom vil at alt arbeid skjer direkte på main (bestemt 2026-09-24). Ikke lag egne grener eller pull requests uten at han ber om det. Hver push til main bygger og publiserer til GitHub Pages: https://tombonator3000.github.io/morbidium/
+- Tom vil at alt arbeid skjer direkte på main (bestemt 2026-09-24). Ikke lag egne grener eller pull requests uten at han ber om det. Økta 25.9. var låst til grenen claude/practical-babbage-nc80bu av miljøet, så den må flettes inn i main før Pages oppdateres. Hver push til main bygger og publiserer til GitHub Pages: https://tombonator3000.github.io/morbidium/
 - De 13 første evnekortene fra ChatGPT ligger i gpt-grafikk/. kort_due.png bruker den første, mer detaljerte duen som Tom valgte.
 - ChatGPT har også lagt inn fem ark med alle 40 kuriositeter, ett ark med de åtte pillene og glass_tomt.png. Bildebehandlingen klipper arkene til enkeltbilder ved bygging.
 - Spillerfiguren ligger i gpt-grafikk/figur_pasient.png som seks deler: hode og kropp sett forfra, bakfra og fra høyre side.
@@ -88,8 +88,12 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Tips.vis(id, forsinkelse) viser en lapp én gang (meta.tips); innstillingen tips slår dem av.
 - Manifestet oppdateres med tools/lag_manifest.py (fletter inn, fjerner aldri). ART_BRIEF.md lages av tools/lag_brief.py og viser hva som er levert.
 
-## Rom i 3D, prøve (15_rom3d.js)
-- D3.sett(på) fra applySettings (innstillingen d3, eller #3d). D3.onFloor() etter hver etasje og på tittelen. D3.tick(dt) hvert bilde.
+## Rom i 3D (15_rom3d.js), standard fra 2026-09-25
+- Kvalitet (innstillingen kvalitet: 0 automatisk, 1 lav, 2 middels, 3 høy) i D3.NIVA: skyggekart, antall punktlys, glød, støv, lysstråler, tåke, tilt-shift, kantlys og oppløsning. Automatisk (D3.maal) går ned et trinn etter to målinger under 40, 30 og 22 bilder i sekundet, lagrer trinnet i settings.kvAuto og slår til slutt 3D av (D3.nedgrader). Testnettlesere måles ikke med mindre D3.tvingMaal er satt.
+- Innstillingene har versjon (sv: 2). Eldre lagring får d3 slått på én gang; et nytt valg om å slå det av huskes.
+- Lys: vegglamper med egen lyskjegle og flimring (D3.lamper), lysstråler og lysflekk fra vinduene, bakketåke i to lag, mørke som slukker lysene og flimrer dem tilbake (D3.morke, brukt av sjefer, minisjefer og høy Morbidium). D3.lysVed(x, z) gir fargen fra de nærmeste lysene, brukt til kantlys på dukker og ting (settKant, uRimCol i SPRITE_FS) og til animasjoner.
+- Våte ting (userData.vaat: blod, pytter) blir Phong med litt egenglød i lysLag, så de ikke blir svarte i mørket.
+- D3.sett(på) fra applySettings (innstillingen d3; #2d slår av). D3.onFloor() etter hver etasje og på tittelen. D3.tick(dt) hvert bilde.
 - R.light registrerer lysplatene i R.kilder; D3 gir de åtte nærmeste et PointLight (spillerens lykt først). Månen er et DirectionalLight med skyggekart som følger kameraet.
 - Paint.mesh { gulv, topp, vegg } får MeshToonMaterial (gradient i fire trinn) og normaler. Vanlige MeshBasic-materialer i nivået blir Lambert. Alt huskes i D3.byttet og settes tilbake.
 - Toms retning (24.9. kveld): figurer og ting forblir 2D-tegningene (så alle bildene fra ChatGPT brukes), bare rommene, gulvet og effektene er 3D. Lavpoly-møblene er fjernet.
@@ -112,8 +116,8 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 
 ## Menyer (32_meny.js)
 - Alt er papir og skaleres til skjermen med CSS zoom (fitPanel), ingenting ruller. Smale skjermer (under 700 px eller stående) får egne smale varianter.
-- Tittelen: innleggelsesskjema med avkrysning. Pause: utklippstavle med portrett. Innstillinger: kartotekkort med fanene Lyd, Bilde, Spill, Styring, Data. Pasienthåndboka: hefte med åtte kapitler og notater i margen. Arkivet: skap med tre skuffer (pasientmapper med portrett og stempel, journalfragmenter, årsrapport).
-- Innstillinger (G.meta.settings, normSettings): vol, sfx, amb, kamera (ganger R.view 11.5), shake (styrke 0 til 1, var av/på før), flash, distort, lights, simple, tall, bobler, skilt, ui (størrelse på HUD via CSS-variabelen --ui og scale).
+- Tittelen: innleggelsesskjema med avkrysning. Pause: utklippstavle med portrett. Innstillinger: kartotekkort med fanene Lyd, Bilde, Spill, Styring, Data. Pasienthåndboka: hefte med ti kapitler og notater i margen. Kapittel 9 og 10 er fiendeindeksen (FIENDE_REKKE og SJEF_REKKE, fire kort per side, to på smal skjerm) med bilde fra fiendeBilde, hvor fienden bor, en kort tekst, et tips og hvor mange du har slått (meta.drapPer og meta.sjefDrap). Arkivet: skap med tre skuffer (pasientmapper med portrett og stempel, journalfragmenter, årsrapport).
+- Innstillinger (G.meta.settings, normSettings): vol, sfx, amb, kamera (ganger R.view 11.5), shake (styrke 0 til 1, var av/på før), flash, distort, lights, simple, tall, bobler, skilt, ui (størrelse på HUD via CSS-variabelen --ui og scale), d3, kvalitet, kvAuto, blod (blod og skrekkeffekter), lemmer, sv (versjon).
 - Data-fanen kan slette lagret løp og brenne arkivet (to trykk). Innstillingene beholdes.
 - Etasje 3 har alltid minst ett isolat eller kartotek (generatoren, testet i test_gen).
 
@@ -122,3 +126,69 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 
 ## Spesialrom (13_rom.js, Spesial)
 - Hemmelig rom i hver etasje bak sprukken vegg (F.crack er rutene; tre poeng: vanlig slag 1, tungt 3, eksplosjon 3). Forbannet rom i blindvei (torner tar et hjerte per inngang, glasset utløser bakhold). Blodofferrom med alter som tilbyr tre handler.
+
+## Animasjon (16_anim.js)
+- ANIM: kasteklump, kastesprut, blodsprut, oye, kjottbiter, hver med n ruter, fps og en tegnefunksjon som reserve. Spriteark fra ChatGPT (anim_<navn>.png) brukes når de finnes; build.py legger rutenettet inn som ANIM_ARK.
+- Anim.lag(navn, x, z, o): stående eller liggende plate (flat), løkke, én gang, baklengs (fart under 0), hold på siste bilde, farge (tint), festet til en annen gruppe (parent), lyses av lampene i 3D. Anim.tick i hovedløkka, Anim.clear ved ny etasje.
+- POSER (kast, brol, greip, sving, og klemme og rulle fra 31_sjefpulje): nøkkelbilder for hender, lening, hode, klem og hopp. Fiender får e.positur = { navn, t, dur }, og Doll.update tar st.pose.
+- behandle_bilder.py deler spriteark i ruter (like store, eller funnet ved de tomme stripene når arket har marg), beskjærer alle med samme boks og skalerer likt, så festepunktet står stille uansett format fra ChatGPT.
+
+## Blod og skrekk (34_blod.js)
+- Blod: flekker i InstancedMesh-er per tekstur (ring, farge per flekk), sprut i slagretningen, blod på veggene med drypp som renner (Blod.vegg, veggVed), kjøttbiter ved tunge drap (Blod.biter, lista heter bitene), blodige fotspor, blodspor etter sårede, drypp fra taket, øyne i veggene ved Morbidium over 50. Innstillingen blod slår alt utover vanlige flekker av (Blod.sett).
+- Kroker: hurt setter e.hpFor og e.raaSkade før skaden, så dødseffekten vet om slaget var tungt. R.fx.blod (blod på skjermen), R.fx.aarer (årer ved lite helse) og uFilm/uSplit/uTilt i etterbehandlingen (04_render.js).
+
+## Nye fiender og minisjefer (29_monstre.js)
+- Fra ChatGPTs forslag: kasteren, trille (sitter i rullestol, RIG.sete og hjul), speil (viser pasientens ansikt, sju års ulykke: G.run.buffs.ulykke, flaks minus 6 per stykk), klumpunge. Minisjefer (ENEMIES[t].mini, tittel): koret (Lagdukke), tannlege, portier (hodet er et eget tillegg som kastes, portierHode()).
+- Grotesk-registeret har kroker for avstand (keep), retrett, prat, hold, hopp, ai, tick og styring, så nye fiender kan legges til uten å røre updateEnemy.
+- Lagdukke (LAGDUKKE[type] med deler, lemmer og portrett) har samme grensesnitt som Doll.
+
+## Sjefpuljen og minisjefene (31_sjefpulje.js)
+- SJEF_PULJE, SJEF_DATA, SJEF_HP (helsa følger etasjen), sjefFor(depth), trekkSjefer(seed). Den Store Klumpen: klem, armslag, spytt (klumpunger), rull.
+- Mini.onFloor: rommet med frivillig risiko får alltid en minisjef, og fra etasje 2 er det 35 % sjanse for en til i et kamprom lenger inne. Den kommer etter siste bølge (combatTick), får lilla helsestang (#miniBar) og gir preparatglass og hjerte (Mini.dod, meta.minisjefer).
+
+## HUD og UI-settet fra ChatGPT (32_meny.js, del G i DESIGN_BRIEF.md)
+- UI_SETT: ui_panel, ui_knapp, ui_kort, ui_skilt, ui_utklipp (9-delt med border-image, snitt i bildepiksler, kant på skjermen, rammen går litt utenfor og endrer ikke størrelsen på boksen), ui_ring_portrett og ui_ring_kart (legges over). brukUIsett() kjøres etter at bildene er lastet; hjerteHtml bruker ui_hjerte_full/halv/tom når alle tre finnes, drawHeadMap bruker ui_hode. Uten bildene tegner CSS-en som før.
+- Neste steg (trenger kode): ui_bok, ui_fane, ui_stempel, ui_merke, ui_stang, ui_flaske.
+
+## Status for kunsten
+- ART_BRIEF.md: 287 av 361 bilder levert. Det som mangler er runde 7 (nye fiender, minisjefer og Klumpen, 52 bilder), runde 8 (fem spriteark) og runde 9 (UI-settet, 13 bilder). ChatGPTs Kasteren-pakke («Pakken til Claude») har ikke kommet inn i repoet.
+
+## Etasjene og rommene (utvidelsen, UTVIDELSE.md)
+- Planen står i UTVIDELSE.md: seks etasjer, rom som ser forskjellige ut, hendelser, pasienthistorier i drømmer, nye fiender og sjefer. Tom valgte seks etasjer der to er ute, korte drømmebaner og grov, kroppslig humor (revy 1923, ikke eksplisitt), med Lynch og Twin Peaks som tone.
+- Generatoren (03_generator.js): ROMTYPER[dybde] er kamprommene per etasje, trukket fra en stokket sekk. ROMSTIL[romtype] = [gulv, vegg, ute]. romStil(F, r) setter r.gulv, r.vegg og r.ute; i uteetasjene er alt som ikke er kamprom små paviljonger (i skogen koier). F.korridor har gulv og vegg for korridorene (grus og hekk i parken, sti og skog i skogen). F.vaer velges fra frøet.
+- Former: noen kamprom får L-form eller avskårne hjørner (r.form 'L' eller 'rund'). Dørene finnes nå som korridorruter ved siden av en rute i rommet, ikke ved rektangelets kant. inRoom i decorateRoom sjekker roomId.
+- topp(k, len) i decorateRoom plasserer store ting mot overveggen, så raden under, så nede, og til slutt et ledig sted.
+- Maling (12_paint.js): floorCanvas maler hver rute med GULV[stil] fra 17_romtyper.js (sjakk og planker som før). Veggene grupperes per stil i hver sin mesh (Paint.mesh.vegger, userData.veggStil), med høyde, topp og gjennomsiktighet fra VEGG[stil]. Paint.wallS har stilen per veggrute. Uteetasjene får Paint.mesh.bakke.
+- 3D: alle veggmeshene får toon-materiale, gjerder og ruiner er utklipp uten skygge. Vegglamper bare på innevegger (D3.inneVegg), lister og pilastre bare på pussede vegger (D3.listeVegg). Månen lyser sterkere ute.
+- 17_romtyper.js: GULV (tre, teppe, sekskant, linoleum, stein, parkett, betong, fliser, brostein, gress, grus, jord, mose, myr, is, sti), VEGG (panel, paviljong, tapet, fliser, mur, stein, polstret, tre, tommer, glass, hekk, gjerde, steinmur, skog, ruin), rundt 60 nye ting i ROM_ART (nøkler prop_<navn>), Landskap (bakke og trær utenfor), Vaer (regn, snø, ildfluer; tåke gjør 3D-tåka tykkere), gulvUnder(x, z) (myr gjør deg treg, på is glir du), UTGANGER per etasje, lys fra nye ting og Romtyper.tick.
+- Utgangene: porten (Parken), vinduet (Mottak), kloakken (Underetasjen), kullsjakta (Kjelleren), stien (Nattskogen), utskrivningen (Dypet). openTrapdoor bruker UTGANGER, og ankomstteksten vises i neste etasje. Drømmene skal komme her (trinn 3).
+- Lyd og musikk: Sound.lydDybde mapper seks etasjer til de gamle fire, ute får ugle, kråke, kvist og hund, Sound.vaer spiller regn eller vind. stykkeFor(d) gir 'park' og 'skog' for uteetasjene.
+- Gravsteinene på kirkegården har navnene til pasienter som har dødd før (meta.historie).
+
+## Hendelsene (35_hendelser.js)
+- HENDELSER[id] = { navn, dybder, plass, vekt, prompt, lag(h), tick(h, dt), samtale(h) }. plass er 'vegg' (en høy innevegg), 'gang' (en bred korridor) eller 'rom:a,b' (et kamprom av de typene, 'rom:*' for alle). Hendelser i rom kan først brukes når rommet er ryddet.
+- Hendelse.onFloor() legger ut to til fire per etasje med frøet. Nye hendelser først; blir puljen for liten (de nederste etasjene), kan en fra tidligere i løpet komme igjen med lavere vekt, men aldri en fra etasjen rett over (run.hendelser, run.hendForrige). Hendelse.tving(id) legger ut en bestemt hendelse (for testene).
+- Samtale.vis({ tittel, bilde, tekst, baklengs, valg }) viser panelet. Hvert valg har tekst, hint, kan() (sperret når den gir false) og gjor(), som gir neste side eller null for å lukke. Tallene 1 til 4 velger. Folge har småtingene valgene gir: tenner, hel, skade, morb, xp, kart, naerRom, kuriositet, lomme, flaske, fiender, hjerte.
+- h.brukt settes når et valg gir noe, så det ikke kan gjentas. Hendelse.borte(h) fjerner scenen (kjempen, lampemannen).
+- Minne på tvers av løp: meta.hendelser[id] teller hvor mange ganger du har møtt hver. Øyet husker forrige pasient (meta.oyetHusker), kua husker sparket (meta.kuSpark), telefonen, badekaret og kona med kubben sier noe annet andre gang.
+- Graven kan svekke sjefen i etasjen (run.sjefSvekk[d] tar 20 prosent av helsa når sjefen kommer). Hjemmebrent gir styrke i 25 sekunder og et spor av spy som fiendene sklir i (run.fyllT).
+- Portrettene: hendBilde(P) beskjærer tegningen til det som faktisk er tegnet (innhold()), hendFigur(type) tegner en dukke forfra, oyeBilde() er øyet tett på.
+- Atten hendelser: øyet, mannen som går baklengs, telefonen, kaffe og kake, kua, hjemmebrent, doet (utedo i parken), mannen i badekaret, heisen, rotteparlamentet, graven, den dansende pleieren, radioen, kaffeselskapet, kona med kubben, kjempen, tannfeen og mannen som er en lampe.
+
+## Drømmene (36_drom.js)
+- Historien trekkes fra frøet første gang den trengs (Drom.historie(), lagres i G.run.historie): hjem (sju steder), person med navn og kjønn, hendelse (bare de som passer hjemmet), skyld (seks), tegn som går igjen (sju) og et felles minne. Drom.ord(H) gir alt tekstene trenger, med pronomen.
+- Utgangen etter sjefen (descend) setter G.run.dromVent = neste dybde. startFloor ser det og bygger en drøm i stedet for etasjen: G.drom = Drom.lag(depth) med eget tema (DROM_TEMA), egen liten etasje (tre rom på rad, 50 x 26 ruter) og egen musikk (STYKKER.drom og losje). Løpet lagres med neste dybde og dromVent, så Fortsett spiller drømmen på nytt. Når drømmen er over, settes dromVent til 0 og startFloor bygger den virkelige etasjen.
+- Kapitlene (DROM_KAP): 1 Hjemme, 2 Personen, 3 Dagen det skjedde, 4 Det du gjorde, 5 Det som er sant. Utgangen fra etasje 5 gir alltid kapittel 5; de andre går i rekkefølge. Hvert kapittel har intro, tre minner (ett i hvert rom), figurer med tomme papiransikter (blank_m, blank_k), personen, og et valg ved døra.
+- Skyggen er pasienten selv i svart (Pasient.dukke med mørk tint). Den våkner ved første minne og følger sakte etter. Tar den deg igjen, våkner du for tidlig med 25 Morbidium, og valget blir 'flukt'. I kapittel 4 snakker den med skylden din, i kapittel 5 står den med ryggen til og snur seg når minnene er funnet.
+- Valgene: tilgivelse, sannheten, gjentakelse eller fornektelse (flukt teller som fornektelse). Drom.slutt() tar det som kom oftest, kapittel 5 teller dobbelt og vinner uavgjort. Slutten vises før utskrivningsbrevet (utskrivningsbrev er pakket inn), og Drom.mappe() skriver det pasienten har drømt i pasientmappa (meta.historie[].drom), både ved død og utskrivning.
+- En pasient fra før kan stå i drømmen din med navnet sitt og fortelle om sin egen drøm.
+- Gulvet sikksakk og veggen forheng finnes bare i drømmene. F.taake overstyrer tåka i 3D. G.ekstraDukker er dukker utenfor fiendene som 3D skal lyse opp (hendelsene og drømmene).
+- Drom.hopp(slutt) hopper ut av drømmen (testene bruker den). Spilleren kan også velge «Våkn med en gang» i innledningen.
+
+## Parken og Nattskogen: fiender og sjefer (37_utefiender.js)
+- Parken (etasje 1): gartneren (to klipp med hagesaksa, riva drar deg inntil) og kråka (flyr i flokk, stuper i en linje, blir liggende om den treffer veggen). Kråka er en Lagdukke som svever og slår med vingene.
+- Nattskogen (etasje 5): Huldra (vakker forfra, en råtten stamme bakfra; snur ryggen til når hun slår, og sangen hennes drar deg mot henne, e.lokker), Vedkubbemannen (flis i vifte, skaller på nært hold, går til siden når han ikke ser deg) og Nøkken (under overflaten er han usynlig og kan ikke treffes, e.dukket; han kommer opp, drar deg under og spiller fele).
+- Kålhodet er en liten kål med tenner som Overgartneren planter.
+- Sjefene: Overgartner Ansgar Hekk (saks, hekkring som blokkerer ruter i seks sekunder med to åpninger, gjødsel som mokk og røyk, kålhoder) og Den hvite hjorten (storm i en rett linje som ender i BONK mot veggen, geviret rundt seg, rødt månelys, og tåke med kopier der den selv blir halvt borte). Begge ligger i SJEF_PULJE, så etasje 1 til 5 trekker nå fem av seks.
+- Fiendeindeksen har 22 fiender og 10 sjefer. Håndboka har 17 sider.
+- Bildene fra ChatGPT til utvidelsen står i runde 10 til 13 i ART_BRIEF.md. tools/lag_manifest.py går gjennom seks etasjer og lager også utgangene, hendelsene (HEND_ART) og drømmene (DROM_ART). Gravsteiner med navn tas ikke med, fordi navnene tegnes av koden.

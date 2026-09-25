@@ -182,7 +182,7 @@ function killEntity(e, src) {
 function hurtPlayer(dmg, src) {
   const P = G.player; if (!P.alive || G.state !== 'play') return 0;
   if (P.iframe > 0 || P.invuln > 0) { if (P.iframe > 0 && !P.dodgeText) { numText(P.x, P.z, 'bom', 'info'); P.dodgeText = true; } return 0; }
-  let d = dmg * (1 - Math.min(.3, (P.stats.helse - 1) * .03)) * (G.depth >= 2 ? 1 : .9);
+  let d = dmg * (1 - Math.min(.3, (P.stats.helse - 1) * .03)) * (G.depth >= 3 ? 1 : .9);
   if (P.deny) {
     const up = P.deny.up; Sound.play('paper');
     if (up === 'b') {
@@ -212,7 +212,7 @@ function slowMo(t, s) {
 }
 
 /* ---------- pytter og strøm ---------- */
-const CONDUCTIVE = { wet: 1, soup: 1, vomit: 1, blod: 1 };
+const CONDUCTIVE = { wet: 1, soup: 1, vomit: 1, blod: 1, mokk: 1, myr: 1, tjern: 1 };
 function addPuddle(x, z, kind, r = 1, life = 16) {
   if (tIdx(x, z) < 0 || !G.F.tiles[tIdx(x, z)]) return null;
   for (const p of G.puddles) if (p.kind === kind && d2(p.x, p.z, x, z) < (p.r * .7) * (p.r * .7)) { p.r = Math.min(2.6, Math.max(p.r, r) + .15); p.life = Math.max(p.life, life); p.mesh.scale.set(p.r * 2, p.r * 2, 1); return p; }
@@ -257,6 +257,8 @@ function groundEffects(e, dt, speed) {
       if (e.kind === 'enemy' && e.alive) numText(e.x, e.z, 'ZAPP', 'crit', 2.2);
     }
   }
+  if ((p.kind === 'mokk' || p.kind === 'myr') && e.kind === 'player') e.mokkT = .2;
+  if (p.kind === 'tjern' && e.kind === 'player') e.mokkT = .35; // dypt og kaldt: du vasser
   if (p.kind === 'morb') {
     if (e.kind === 'player') addMorb(dt * 3.2);
     else if (e.type === 'yngel' && e.hp < e.max) e.hp = Math.min(e.max, e.hp + dt * 4);
@@ -273,9 +275,9 @@ function spawnProps() {
   G.props = []; G.npcs = [];
   const F = G.F, th = G.th;
   for (const r of F.rooms) for (const p of r.props) {
-    if (p.k === 'puddle') { addPuddle(p.x, p.z, p.kind || 'wet', rnd(.9, 1.4), 1e9); continue; }
+    if (p.k === 'puddle') { addPuddle(p.x, p.z, p.kind || 'wet', p.r || rnd(.9, 1.4), 1e9); continue; }
     if (p.k === 'npc') { spawnNPC(p, r); continue; }
-    const P = propArt(p), flat = p.k === 'drain' || p.k === 'trapdoor' || p.k === 'forbannet';
+    const P = propArt(p), flat = p.k === 'drain' || p.k === 'trapdoor' || p.k === 'forbannet' || (typeof FLATE_TING === 'object' && !!FLATE_TING[p.k]);
     const blocking = F.block[Math.floor(p.z) * F.W + Math.floor(p.x)] === 1 || (p.fd || 1) > 1 || (p.fw || 1) > 1;
     const zf = flat ? p.z : blocking ? p.z + (p.fd || 1) / 2 - .04 : p.z + .2;
     const rr = ((p.rot || 0) % TAU + TAU) % TAU, side = rr > .5 && rr < TAU - .5 && Math.abs(rr - Math.PI) > .5;
@@ -283,7 +285,7 @@ function spawnProps() {
     R.level.add(g);
     const o = { p, g, U: g.userData.U, m: g.userData.m || g, kind: p.k, x: p.x, z: p.z, room: r.id, alive: true };
     if (BREAK[p.k]) { o.hp = p.brk || BREAK[p.k]; o.brk = true; }
-    if (p.k === 'lamp') { o.faulty = !!p.faulty || (F.depth >= 3 && Math.random() < .5); o.spark = 0; o.sparkT = rnd(2, 6); o.hp = 1; o.light = R.light(p.x + .2, p.z + .5, 3.4, th.pool, .7, R.levelL); }
+    if (p.k === 'lamp') { o.faulty = !!p.faulty || (F.depth >= 4 && Math.random() < .5); o.spark = 0; o.sparkT = rnd(2, 6); o.hp = 1; o.light = R.light(p.x + .2, p.z + .5, 3.4, th.pool, .7, R.levelL); }
     if (p.k === 'candles') o.light = R.light(p.x, p.z + .2, 1.8, '#ffb24a', .6, R.levelL);
     if (p.k === 'journalskap') o.light = R.light(p.x, p.z + .8, 2.6, '#b36be0', .7, R.levelL);
     if (p.k === 'altar') o.light = R.light(p.x, p.z + .6, 3, '#9a4ac8', .5, R.levelL);
