@@ -10,6 +10,7 @@
 ## Tegnelister, effekter og kombo, 2026-09-25 natt
 - [x] Tegnelister for alt som mangler bilde: tools/lag_tegnelister.py skriver tegnelister/ med ni lister (én ChatGPT-samtale hver), 59 ark og bilder for de 245 som mangler, og 11 delark til oppskriftssystemet. Referansebilder av dagens kodetegninger i samme rutenett som malen.
 - [ ] Tom og ChatGPT: tegne arkene i tegnelister/, liste 1 først. Kjør tools/lag_tegnelister.py etter levering, så krymper listene.
+- [x] Flettet inn i main som PR #3 og publisert på GitHub Pages.
 - [x] Flere effekter og shadere (38_effekter.js og 04_render.js): sjokkbølger, zoomslag, negativ, lynblink, brennende skjermkant, drømmeslør, gnister, røyk, damp, sporer, Morbidium og møll på skjermkortet, lyn i regnværet, teslaspolens buer og regnringer.
 - [x] Kombo langt over toppen (39_kombo.js): treffkjede med åtte nivåer, flerdrap opp til pandemi, overkill, miljødrap, perfekt unnvikelse, tredje slag, kortkjede, sjefdrap, fanfarer for synergier og forvandlinger, kunngjørerstemme og trist trombone. Lydmotoren har fått kirkeklang, vibrato, forvrengning, filtersveip og en kompressor.
 - [ ] Tom: spille og si om kombolyden er passe mye over toppen. Kunngjøreren og fanfarene kan slås av under Lyd.
