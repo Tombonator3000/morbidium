@@ -138,7 +138,7 @@ const D3 = {
           if (this.q.straaler) { kj = new THREE.Mesh(this.kjegleGeo(), this.straaleMat(th.pool || '#ffd89a', .22)); kj.position.set(0, 0, .3); kj.renderOrder = 5; g.add(kj); this.egne.push(kj.material); }
           // noen lamper flimrer, flere jo lenger ned i bygget
           this.lamper.push({ lp, pm, kj, base: .45, farge: new THREE.Color('#ffd89a'), flimrer: Math.random() < .12 + dybdeStyrke(G.depth) * .07, t: Math.random() * 10, burst: 0 });
-        } else {
+        } else if ((Paint.wallS && Paint.wallS[(z - 1) * F.W + x]) !== 'forheng') { // ingen vinduer i de røde forhengene
           // vindu: ramme, glass i månelys og en lysstripe ned på gulvet
           const fr = new THREE.Mesh(R.geo('d3vr', () => new THREE.BoxGeometry(.9, 1.0, .06)), ramme); fr.position.set(0, 1.45, 0); g.add(fr);
           for (const [dx, dy] of [[-.2, .22], [.2, .22], [-.2, -.2], [.2, -.2]]) { const q = new THREE.Mesh(R.geo('d3vg', () => new THREE.PlaneGeometry(.34, .36)), glass); q.position.set(dx, 1.45 + dy, .035); g.add(q); }

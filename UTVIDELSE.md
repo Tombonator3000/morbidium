@@ -91,6 +91,8 @@ Hver pasient får et liv før innleggelsen, trukket fra frøet:
 
 Drømmen kommer mellom etasjene, så etasjen du rømte fra, trenger ikke å bygges opp igjen. Løpet lagres med neste etasje før drømmen starter.
 
+**Slik ble det.** Kapitlene går i rekkefølge, men utgangen fra Nattskogen gir alltid kapittel 5, så et løp som starter lenger ned likevel ender i det røde rommet. Innledningen har et valg om å våkne med en gang for den som har sett drømmene før; det teller som fornektelse. Skyggen går saktere enn pasienten, men tar deg igjen hvis du blir stående.
+
 ## Nye fiender og sjefer
 
 - **Parken:** gartnere med rive og hagesaks, og kråkeflokker som stuper ned. I tillegg pleiere på kveldstur, Kasteren og Trillepasienten.
