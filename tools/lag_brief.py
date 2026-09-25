@@ -134,7 +134,7 @@ def beskriv(k):
     if k == 'skudd_slim': return 'a small glob of green-yellow phlegm (projectile)'
     if k.startswith('blob_'):
         typ, v = k.split('_')[1], k.split('_')[2]
-        return {'tvang': 'an enemy patient in a straitjacket, arms bound, hopping, wild eyes', 'rotte': 'a fat grey archive rat with a paper slip in its mouth', 'oyeblomst': 'an eye flower: a fleshy stalk rooted in the floor with a big bloodshot eye as its bloom', 'journalen': 'FINAL BOSS: the Journal, a huge floating leather-bound patient journal with tentacles and teeth, pages flapping', 'flue': 'a fat bluebottle meat fly with big red eyes', 'svulst': 'a walking pink tumor with veins, one eye and a grin', 'lunge': 'a pink human lung walking on its own, tar spots, tiny sad face', 'yngel': 'drain spawn: a small purple slime creature with mismatched eyes and a toothy grin'}.get(typ, typ) + '. ' + VIEW.get(v, v)
+        return {'tvang': 'an enemy patient in a straitjacket, arms bound, hopping, wild eyes', 'rotte': 'a fat grey archive rat with a paper slip in its mouth', 'oyeblomst': 'an eye flower: a fleshy stalk rooted in the floor with a big bloodshot eye as its bloom', 'journalen': 'FINAL BOSS: the Journal, a huge floating leather-bound patient journal with tentacles and teeth, pages flapping', 'flue': 'a fat bluebottle meat fly with big red eyes', 'svulst': 'a walking pink tumor with veins, one eye and a grin', 'lunge': 'a pink human lung walking on its own, tar spots, tiny sad face', 'yngel': 'drain spawn: a small purple slime creature with mismatched eyes and a toothy grin', 'kaalhode': 'a small cabbage head with a mouth full of sharp teeth and two little eyes'}.get(typ, typ) + '. ' + VIEW.get(v, v)
     if k.startswith('kort_'): return CARD.get(k[5:], k[5:]) + '. Square card illustration, subject centered'
     if k.startswith('seng_'):
         kind = next(x for x in SENG if k[5:].startswith(x)); return SENG[kind] + ', ' + RETN[k[-1]]
@@ -159,7 +159,78 @@ def format_(m):
     return 'kvadrat' if .8 <= r <= 1.25 else ('stående' if r < .8 else 'liggende')
 
 NY = {'kasteren', 'trille', 'speil', 'tannlege', 'portier', 'klumpunge'}
+# utvidelsen høsten 2026 (UTVIDELSE.md): figurene og tingene som kom med de seks etasjene, hendelsene og drømmene
+FIG.update({
+  'gartner': 'a park gardener with a wide straw hat, a big white mustache, a red nose and a pipe, white shirt and a dark green apron with suspenders',
+  'huldra': 'the Huldra from Norwegian folklore: a beautiful young woman with long golden hair and a crown of white wood anemones, red bunad with black and gold embroidery. SEEN FROM BEHIND (back view) she is a hollow rotten tree trunk with moss, fungus and beetles, and she has a cow tail',
+  'vedkubbe': 'the Log Man: a man whose head is a birch log standing on end, with two glowing knot-hole eyes and a crack for a mouth, wearing a black and white Norwegian lusekofte sweater with pewter clasps',
+  'nokken': 'the Nokken (Norwegian water spirit): a pale green man with long wet black hair, big sad eyes, bare ribs, holding a Hardanger fiddle across his chest, dripping water',
+  'baklengs': 'a pale man in a neat black suit and tie with his eyes closed and a small calm smile (he walks backwards and talks backwards)',
+  'blank_m': 'a man in a dark 1910s suit and tie whose face is a blank sheet of paper with no features at all, dark combed hair (a figure in a dream)',
+  'blank_k': 'a woman in a long dark red dress with a white collar and her hair in a bun, whose face is a blank sheet of paper with no features at all (a figure in a dream)',
+  'ansikt_m': 'the same man in a dark 1910s suit, but now with an ordinary, gentle, slightly sad face',
+  'ansikt_k': 'the same woman in a long dark red dress, but now with an ordinary, gentle, slightly sad face',
+  'hekk': 'BOSS: Head Gardener Ansgar Hekk, huge and red-faced, a wide straw hat with a rose in the band, an enormous white walrus mustache, white shirt, a dark green apron with garden tools in the pocket and manure stains'
+})
+UTV = {
+  'prop_kjele': 'a big iron boiler with pipes, a pressure gauge and a glowing firebox', 'prop_komfyr': 'a black cast-iron kitchen stove with pots on top',
+  'prop_piano': 'an old upright piano with brass candle holders, front view', 'prop_rontgen': 'a 1920s X-ray machine: a glass tube on a big jointed arm over a stand',
+  'prop_langbord': 'a long wooden dining-hall table with white plates and cups, front view', 'prop_grammofon': 'a 1920s gramophone with a big brass horn on a small wooden cabinet',
+  'prop_lenestol': 'a worn floral armchair, front view', 'prop_kortbord': 'a small card table with playing cards and a glass of cognac',
+  'prop_elektrostol': 'an electroshock therapy chair with leather straps and a metal head cap with wires', 'prop_spole': 'a tall induction coil on a wooden base with a copper ring on top',
+  'prop_tannlegestol': 'an old dentist chair with a drill arm', 'prop_instrumentbord': 'a small steel instrument table with pliers and probes',
+  'prop_spyttkum': 'a white enamel spittoon on a stand', 'prop_tannglass': 'a glass jar full of pulled teeth', 'prop_lysskjerm': 'an X-ray light box on a stand showing the bones of a hand',
+  'prop_frisorstol': 'a barber chair of cracked leather and chrome', 'prop_harhaug': 'a pile of cut hair on the floor, seen from above (flat)',
+  'prop_bjorn': 'a stuffed brown bear standing upright with one glass eye missing', 'prop_globus': 'an old globe on a wooden stand',
+  'prop_gryte': 'a big steel soup pot', 'prop_kjottkrok': 'meat hooks on a rail with sausages and a ham', 'prop_kullhaug': 'a heap of coal with a shovel stuck in it',
+  'prop_ror': 'rusty pipes with a valve wheel', 'prop_kors': 'a tall wooden crucifix', 'prop_plantebord': 'a greenhouse potting table with seedlings in clay pots',
+  'prop_kjempeplante': 'a giant carnivorous plant with glowing pods', 'prop_vannkanne': 'a zinc watering can', 'prop_bronn': 'a stone well with a small wooden roof and a bucket',
+  'prop_tre': 'a large leafy park tree, front view', 'prop_lyktestolpe': 'a cast-iron gas street lamp, lit', 'prop_busk': 'a round clipped hedge bush',
+  'prop_blomsterbed': 'a flower bed with red and white flowers, seen from above (flat)', 'prop_hagenisse': 'a garden gnome with a red cap, slightly sinister',
+  'prop_fuglebad': 'a stone birdbath', 'prop_lysthus': 'a small white wooden gazebo with a pointed roof', 'prop_engel': 'a weeping stone angel on a plinth',
+  'prop_grav': 'an open grave with a spade in the dirt pile, seen from above (flat)', 'prop_fontene': 'a round stone fountain with water in the basin',
+  'prop_statue': 'a classical marble statue of a woman on a plinth', 'prop_siv': 'a clump of reeds', 'prop_snomann': 'a crooked snowman with coal eyes',
+  'prop_vak': 'a black hole in the ice, seen from above (flat)', 'prop_liggestol': 'a wooden sanatorium deck chair with a plaid blanket', 'prop_teppe': 'a folded plaid blanket on the ground, flat',
+  'prop_kjerre': 'a wooden hand cart', 'prop_vedstabel': 'a stack of firewood', 'prop_bjork': 'a tall white birch tree', 'prop_bjork_dod': 'a dead white birch tree without leaves',
+  'prop_gran': 'a dark spruce tree', 'prop_stubbe': 'a tree stump', 'prop_sopp': 'two toadstools, red with white dots', 'prop_stein': 'a mossy boulder',
+  'prop_baal': 'a campfire in a ring of stones, burning', 'prop_robat': 'a wooden rowing boat pulled up on land', 'prop_ruinmur': 'a crumbling stone ruin wall',
+  'prop_vedovn': 'a black wood-burning stove with a glowing door', 'prop_gevir': 'deer antlers mounted on a wooden plaque',
+  'prop_porten': 'a tall wrought-iron park gate, slightly open', 'prop_vindu': 'an open window with a night sky outside', 'prop_kloakk': 'a round sewer grate seen from above (flat), dark water below',
+  'prop_kullsjakt': 'a square coal chute hatch in the floor with a ladder, seen from above (flat)', 'prop_skilt': 'a wooden signpost pointing out of a forest',
+  'prop_utgang': 'a lit exit door with bright white light behind it',
+  'prop_telefon': 'a wooden wall telephone with a rotary dial and the receiver hanging on its cord', 'prop_kaffebord': 'a small cafe table with a cup of black coffee and a slice of cream cake with one cherry',
+  'prop_ku': 'a brown and white cow standing sideways, calm wet eyes and a brass bell', 'prop_brennevin': 'a patient in long underwear next to a copper moonshine still on a crate',
+  'prop_badekarmann': 'a man in a dark suit and hat sitting fully dressed in a clawfoot bathtub of grey water, reading a newspaper', 'prop_heis': 'an old cage elevator; inside stands a lift operator in a red uniform and cap with no face',
+  'prop_rotter': 'six rats sitting in a ring around a candle stump, the biggest wearing a white judge wig', 'prop_radiobord': 'a 1920s wooden radio set on a small table',
+  'prop_damer': 'three old ladies in Norwegian bunad sitting on tree stumps drinking coffee; the third one has a cow tail', 'prop_utedo': 'a wooden outhouse with a heart cut into the door',
+  'prop_kubbekona': 'an old woman in a shawl and round glasses cradling a firewood log like a baby', 'prop_kjempe': 'a very tall thin man in a black tuxedo and bow tie, his small bald head far up',
+  'prop_tannfe': 'a woman in a nightgown with moth wings lying under an iron hospital bed, counting a pile of teeth', 'prop_lampemann': 'a patient in striped pyjamas standing stiffly with a lampshade on his head and an electric cord coming out of his sleeve',
+  'prop_lampemann_paa': 'the same lamp patient, but the lampshade glows warm yellow',
+  'drom_lue': 'a red knitted hat lying on a wooden stool', 'drom_ur': 'a gold pocket watch on a small wooden table', 'drom_symaskin': 'a black and gold antique sewing machine on a small table',
+  'drom_kopp': 'a half-full cup of black coffee with steam, on a small table', 'drom_hest': 'a white horse standing sideways, calm and slightly unreal', 'drom_soldat': 'a tin soldier in a red coat, missing one foot, standing on a stool',
+  'drom_hvitveis': 'a glass of white wood anemones on a stool', 'drom_kaape_7a2a2e': "a woman's dark red coat hanging on a coat stand", 'drom_kaape_4a4a52': "a man's grey coat hanging on a coat stand",
+  'drom_bord': 'a kitchen table set for four', 'drom_brev': 'a small table with a handwritten letter and an envelope', 'drom_foto': 'an old framed photograph of two people on an easel; their faces are blank',
+  'drom_vindu_sno': 'a freestanding window frame, snow falling at night outside', 'drom_vindu_rim': 'a freestanding window frame covered in frost patterns', 'drom_vindu_regn': 'a freestanding window frame with rain outside',
+  'drom_vindu_brann': 'a freestanding window frame with fire outside', 'drom_vindu_taake': 'a freestanding window frame with thick fog outside', 'drom_vindu_klart': 'a freestanding window frame with a starry night outside',
+  'drom_notat': "a lectern with an open policeman's notebook", 'drom_speil': 'a standing oval mirror', 'drom_sko': 'a pair of dry leather shoes on a doormat',
+  'drom_koffert': 'a packed brown suitcase with a train ticket on top', 'drom_bok': 'a prayer book open on a stand', 'drom_kommode': 'a wooden chest of drawers with one drawer open',
+  'drom_mappe': 'a patient file folder on a small table', 'drom_dorlaast': 'a closed wooden door with a key in the lock', 'drom_dor': 'a closed door in a dark frame', 'drom_dor_aapen': 'the same door wide open with warm white light pouring out',
+  'kraake_kropp': 'a black crow seen from the side facing right, one pale eye, the body only (the wing is a separate image)', 'kraake_vinge': 'one black crow wing, spread',
+  'hjort_kropp': 'BOSS: the body of an enormous white stag seen from the side facing right, no head and no legs (the game draws the legs)', 'hjort_hode': 'BOSS: the neck and head of the white stag with huge antlers, but the face is a sad human face with tears',
+  'flis': 'a sharp splinter of wood', 'vaapen_hagesaks': 'garden hedge shears with wooden handles', 'vaapen_storsaks': 'enormous garden hedge shears with long wooden handles'
+}
+MISC.update(UTV)
+UTV_FIG = {'gartner', 'huldra', 'vedkubbe', 'nokken', 'baklengs', 'blank_m', 'blank_k', 'ansikt_m', 'ansikt_k', 'hekk', 'kaalhode'}
+er_fig = lambda k, typer: any(k.startswith(p + '_' + t + '_') for t in typer for p in ('hode', 'kropp', 'blob'))
 RUNDER = [
+  ('Runde 10: uterom og de nye rommene', lambda k: k in UTV and k.startswith('prop_') and not k.startswith(('prop_telefon', 'prop_kaffebord', 'prop_ku', 'prop_brennevin', 'prop_badekarmann', 'prop_heis', 'prop_rotter', 'prop_radiobord', 'prop_damer', 'prop_utedo', 'prop_kubbekona', 'prop_kjempe', 'prop_tannfe', 'prop_lampemann')),
+   'Møblene til de nye romtypene, parken og Nattskogen, og utgangene fra hver etasje. Forfra, som de andre møblene. Det som ligger flatt på gulvet (grav, vak, kloakk, kullsjakt, blomsterbed), tegnes rett ovenfra.'),
+  ('Runde 11: hendelsene', lambda k: k in UTV and k.startswith(('prop_telefon', 'prop_kaffebord', 'prop_ku', 'prop_brennevin', 'prop_badekarmann', 'prop_heis', 'prop_rotter', 'prop_radiobord', 'prop_damer', 'prop_utedo', 'prop_kubbekona', 'prop_kjempe', 'prop_tannfe', 'prop_lampemann')) or er_fig(k, {'baklengs'}),
+   'De absurde hendelsene. Tonen er David Lynch på et norsk sanatorium i 1923: hverdagslig, litt feil, aldri skummelt på den åpenbare måten. Bildene vises også stort i samtalepanelet.'),
+  ('Runde 12: drømmene', lambda k: k.startswith('drom_') or er_fig(k, {'blank_m', 'blank_k', 'ansikt_m', 'ansikt_k'}),
+   'Minnene, tegnene som går igjen, døra og figurene uten ansikt. Litt mykere og blekere enn resten, som et gammelt fotografi. Figurene uten ansikt skal ha et helt blankt papirark der ansiktet skulle vært, ingen trekk i det hele tatt.'),
+  ('Runde 13: Parken og Nattskogen, fiender og sjefer', lambda k: er_fig(k, UTV_FIG - {'baklengs', 'blank_m', 'blank_k', 'ansikt_m', 'ansikt_k'}) or k.startswith(('kraake_', 'hjort_')) or k in ('flis', 'vaapen_hagesaks', 'vaapen_storsaks'),
+   'Gartnerne og kråkene i parken, Huldra, Vedkubbemannen og Nøkken i skogen, og de to nye sjefene. Hjorten og kråka er satt sammen av deler; tegn hver del for seg.'),
   ('Runde 7: nye fiender, minisjefer og Den Store Klumpen', lambda k: any(k.startswith(p + '_' + t) for t in NY for p in ('hode', 'kropp', 'blob')) or k.startswith(('koret_', 'klumpen_')) or k in ('portierhode', 'hjul_trille_f', 'vaapen_klump', 'vaapen_tang', 'vaapen_knippe', 'glasskar'), 'Fiendene ChatGPT foreslo. Kasteren, Trillepasienten, Speilpasienten, Tannlegen og Portieren lages som figurark på mal_figur.png: figur_kasteren.png, figur_trille.png, figur_speil.png, figur_tannlege.png og figur_portier.png. Hviskekoret og Klumpen er lagdelte: kroppen alene, og munner, ører, ansikter og øyne hver for seg, så spillet kan bevege dem.'),
   ('Runde 8: animasjoner (spriteark)', lambda k: k.startswith('anim_'), 'Ett bilde med like store ruter på én rad, lest fra venstre. Samme festepunkt i hver rute (samme midtpunkt eller samme bakkelinje), ellers hopper figuren. Filnavnet er anim_<navn>.png.'),
   ('Runde 9: HUD og menyer (UI-settet)', lambda k: k.startswith('ui_'), 'Rammer og ikoner til HUD-en og menyene, etter ChatGPTs egne skisser. Paneler, kort, knapper, skilt og utklippstavle strekkes av spillet (9-delt): hjørnene beholder størrelsen og sidene strekkes, så all pynt må ligge i kanten og midten må være jevn. Ringene må være helt gjennomsiktige i midten.'),

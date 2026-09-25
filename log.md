@@ -474,3 +474,9 @@ Alle tidspunkt er UTC.
 - Sjefpuljen har seks sjefer, så etasje 1 til 5 trekker fem forskjellige. Fiendeindeksen i håndboka har 22 fiender og 10 sjefer (17 sider).
 - Rettet underveis: hekkene visnet på sjefens egen tidtaker og ble stående for alltid hvis sjefen døde først; nå har de sin egen. Huldras sang drar litt svakere, så du kan løpe deg løs.
 - Tester: ny del for fiendene i Parken og Nattskogen (alle går til angrep, kråka stuper, Huldra drar deg til seg, Nøkken går under og kan ikke treffes der), begge sjefene med alle angrep i sjeftesten, og håndboktestene teller de nye sidene. To tester fra hendelsene og Huldra var ustabile (for få rom av riktig type, og andre fiender som slo spilleren bort under målingen); begge er gjort robuste.
+
+## 2026-09-25 22:08 Trinn 5 av utvidelsen: bildene til ChatGPT
+- tools/lag_manifest.py går nå gjennom alle seks etasjene og lager også utgangene, hendelsene og drømmene, så alle nye bildedeler kommer i manifestet. 171 nye nøkler, 532 i alt. Gravsteinene med navn er holdt utenfor, fordi navnene tegnes av koden.
+- tools/lag_brief.py har fire nye runder i ART_BRIEF.md med engelske beskrivelser til ChatGPT: runde 10 (møblene i de nye rommene, uteområdene og utgangene, 59 bilder), runde 11 (hendelsene, 24), runde 12 (drømmene og figurene uten ansikt, 52) og runde 13 (de nye fiendene og sjefene, 35).
+- DESIGN_BRIEF.md og gpt-grafikk/LESMEG.md sier hva som bør bestilles først: figurarkene til de nye fiendene, så figurene uten ansikt og hendelsene.
+- Tester på det ferdige bygget: test_ekstra 131 av 131, generator 1800 av 1800, gjennomspilling uten feil (med drøm mellom etasjene).

@@ -17,7 +17,8 @@
 - [ ] Senere: et kapittel om drømmene i Pasienthåndboka, og egne bilder fra ChatGPT for minnene, figurene uten ansikt og det røde rommet.
 - [x] Trinn 4: nye fiender og sjefer for Parken og Nattskogen (gartnere, kråker, Huldra, Vedkubbemannen, Nøkken, kålhoder, Overgartner Ansgar Hekk, Den hvite hjorten).
 - [ ] Tom: slåss mot Overgartneren og hjorten og si om de er for lette eller for tunge.
-- [ ] Trinn 5: nye nøkler i manifestet og en ny runde i ART_BRIEF.md for ChatGPT (møblene, uteting, utgangene).
+- [x] Trinn 5: nye nøkler i manifestet (171 nye, 532 i alt) og fire nye runder i ART_BRIEF.md for ChatGPT (runde 10 til 13: møblene og uteområdene, hendelsene, drømmene, de nye fiendene og sjefene).
+- [ ] Tom: bestille bildene i runde 13 først (figurarkene til de nye fiendene), så runde 11 og 12. Se DESIGN_BRIEF.md.
 - [ ] Tom: prøve de nye etasjene og si om parken og skogen er mørke nok, og om løpet blir for langt.
 
 ## Økta 2026-09-25 (3D, grafikk, blod, nye fiender, sjefer, håndbok og HUD)
