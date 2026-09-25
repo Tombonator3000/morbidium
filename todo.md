@@ -15,7 +15,8 @@
 - [x] Trinn 3: pasienthistoriene og drømmebanene mellom etasjene, slutten og arkivet.
 - [ ] Tom: gå gjennom en hel runde med drømmer og si om tekstene treffer, og om skyggen er for treg eller for rask.
 - [ ] Senere: et kapittel om drømmene i Pasienthåndboka, og egne bilder fra ChatGPT for minnene, figurene uten ansikt og det røde rommet.
-- [ ] Trinn 4: nye fiender og sjefer for Parken og Nattskogen (gartnere, kråker, Huldra, Vedkubbemannen, Nøkken, Overgartner Ansgar Hekk, Den hvite hjorten).
+- [x] Trinn 4: nye fiender og sjefer for Parken og Nattskogen (gartnere, kråker, Huldra, Vedkubbemannen, Nøkken, kålhoder, Overgartner Ansgar Hekk, Den hvite hjorten).
+- [ ] Tom: slåss mot Overgartneren og hjorten og si om de er for lette eller for tunge.
 - [ ] Trinn 5: nye nøkler i manifestet og en ny runde i ART_BRIEF.md for ChatGPT (møblene, uteting, utgangene).
 - [ ] Tom: prøve de nye etasjene og si om parken og skogen er mørke nok, og om løpet blir for langt.
 

@@ -17,7 +17,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 
 ## Teknikk
 - Én selvstendig HTML-fil, Three.js r128 fra cdnjs.
-- Kilder i src/, satt sammen av build.py til dist/morbidium.html. Rekkefølge: 00_head, 01_core, 02_data, 03_generator, 04_render, 05_world, 06_musikk, 10_art, 11_doll, 12_paint, 13_rom, 14_pasient, 15_rom3d, 16_anim, 20_actors, 22_sjefer, 25_items, 26_fiender, 27_utstyr, 28_oppskrift, 29_monstre, 31_sjefpulje, 34_blod, 35_hendelser, 36_drom, 32_meny, 33_merknader, 30_game. 32_meny og 33_merknader ligger før 30_game fordi konstantene der må finnes når 30_game starter.
+- Kilder i src/, satt sammen av build.py til dist/morbidium.html. Rekkefølge: 00_head, 01_core, 02_data, 03_generator, 04_render, 05_world, 06_musikk, 10_art, 11_doll, 12_paint, 13_rom, 14_pasient, 15_rom3d, 16_anim, 20_actors, 22_sjefer, 25_items, 26_fiender, 27_utstyr, 28_oppskrift, 29_monstre, 31_sjefpulje, 34_blod, 35_hendelser, 36_drom, 32_meny, 33_merknader, 37_utefiender, 30_game. 37_utefiender ligger etter 32_meny og 33_merknader fordi den legger nye fiender inn i fiendeindeksen (FIENDE_REKKE, SJEF_REKKE, FIENDE_INFO). 32_meny og 33_merknader ligger før 30_game fordi konstantene der må finnes når 30_game starter.
 - Seks etasjer (MAX_DEPTH 6, fra 25.9. kveld): 1 Parken (ute), 2 Mottak, 3 Underetasjen, 4 Kjelleren: Isolat og arkiv, 5 Nattskogen (ute, under grunnmuren), 6 Dypet. THEMES[d].ute markerer uteetasjene. Fiendenes styrke følger dybdeStyrke(d) (STYRKE i 02_data.js: 1, 1.4, 2, 2.8, 3.4, 4), så Dypet er like tungt som før. Sjefene i etasje 1 til 5 trekkes for hvert løp fra puljen (trekkSjefer(seed), lagret i G.run.sjefer, gjentar seg så lenge puljen har færre enn fem); Journalen står fast i etasje 6. Signaturangrepene står i BOSS_MOVES i 22_sjefer.js og 31_sjefpulje.js.
 - Render: ortografisk kamera, scenen tegnes til et mål, lys i eget lag (R.light), så ett etterbehandlingspass (gradering, papir, korn, vignett, blekkboiling, Morbidium, skade). Dukkene har egen shader (blink, kontur, oppløsning).
 - Spillflyt i 30_game.js: tilstander title, panel, play, journal, dead. G.run holder løpet (pasient, egenskaper, kort i slots og reserve), G.meta lagres i localStorage under morbidium_meta_v2.
@@ -184,3 +184,10 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - En pasient fra før kan stå i drømmen din med navnet sitt og fortelle om sin egen drøm.
 - Gulvet sikksakk og veggen forheng finnes bare i drømmene. F.taake overstyrer tåka i 3D. G.ekstraDukker er dukker utenfor fiendene som 3D skal lyse opp (hendelsene og drømmene).
 - Drom.hopp(slutt) hopper ut av drømmen (testene bruker den). Spilleren kan også velge «Våkn med en gang» i innledningen.
+
+## Parken og Nattskogen: fiender og sjefer (37_utefiender.js)
+- Parken (etasje 1): gartneren (to klipp med hagesaksa, riva drar deg inntil) og kråka (flyr i flokk, stuper i en linje, blir liggende om den treffer veggen). Kråka er en Lagdukke som svever og slår med vingene.
+- Nattskogen (etasje 5): Huldra (vakker forfra, en råtten stamme bakfra; snur ryggen til når hun slår, og sangen hennes drar deg mot henne, e.lokker), Vedkubbemannen (flis i vifte, skaller på nært hold, går til siden når han ikke ser deg) og Nøkken (under overflaten er han usynlig og kan ikke treffes, e.dukket; han kommer opp, drar deg under og spiller fele).
+- Kålhodet er en liten kål med tenner som Overgartneren planter.
+- Sjefene: Overgartner Ansgar Hekk (saks, hekkring som blokkerer ruter i seks sekunder med to åpninger, gjødsel som mokk og røyk, kålhoder) og Den hvite hjorten (storm i en rett linje som ender i BONK mot veggen, geviret rundt seg, rødt månelys, og tåke med kopier der den selv blir halvt borte). Begge ligger i SJEF_PULJE, så etasje 1 til 5 trekker nå fem av seks.
+- Fiendeindeksen har 22 fiender og 10 sjefer. Håndboka har 17 sider.
