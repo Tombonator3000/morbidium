@@ -148,7 +148,7 @@ function clearFloor() {
   for (const f of G.fxl) R.remove(f.obj); G.fxl = [];
   for (const b of G.barriers) R.remove(b.g); G.barriers = [];
   if (G.titleDolls) { G.titleDolls.forEach(d => d.dispose()); G.titleDolls = null; }
-  G.props = []; clearCage(); Items.clear(); clearVFX(); Particles.clear(); FX.clear(); G.lock = null; G.trapdoor = null; G.flow = null; G.combat = null; G.corpses = [];
+  G.props = []; clearCage(); Items.clear(); clearVFX(); Anim.clear(); Particles.clear(); FX.clear(); G.lock = null; G.trapdoor = null; G.flow = null; G.combat = null; G.corpses = [];
 }
 function decorateLevel() {
   const F = G.F, rng = mulberry32(F.seed || 7);
@@ -672,12 +672,12 @@ function loop(now) {
     if (A.pauseP) openPause(); else if (A.journalP) openJournal();
     let ts = 1; if (G.hitstop > 0) { G.hitstop -= dt; ts = .06; }
     if (G.slow.t > 0) { G.slow.t -= dt; ts = Math.min(ts, G.slow.s); } else G.slow.s = 1;
-    const sdt = dt * ts; G.time += sdt; if (R.water) R.water.u.uTime.value += sdt;
+    const sdt = dt * ts; G.time += sdt; if (R.water) R.water.u.uTime.value += sdt; D3.maal(dt);
     updatePlayer(sdt, A);
     const edt = G.slowEnemies > 0 ? sdt * .3 : sdt;
     for (const e of G.enemies) updateEnemy(e, edt); G.enemies = G.enemies.filter(e => !e.gone);
     if (G.boss) { updateBoss(G.boss, edt); if (G.boss.gone) G.boss = null; }
-    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt); updateZones(sdt); Spesial.update(sdt); Aktiv.update(sdt); Oppskrift.update(sdt);
+    Items.update(sdt); updateAllies(sdt); updateProjectiles(sdt); updatePuddles(sdt); updateProps(sdt); updatePickups(sdt); updateTele(sdt); updateFx(sdt); updateVFX(sdt); Anim.tick(sdt); Blod.tick(sdt); updateBarriers(sdt); updateNPCs(sdt); updateCage(sdt); updateZones(sdt); Spesial.update(sdt); Aktiv.update(sdt); Oppskrift.update(sdt);
     if (hallucinate) hallucinate(sdt);
     G.flowT = (G.flowT || 0) - sdt; if (G.flowT <= 0 && P.alive) { G.flowT = .25; buildFlow(Math.floor(P.x), Math.floor(P.z)); }
     roomLogic(sdt); interactLogic(A);
@@ -720,10 +720,11 @@ function boot() {
   step('Klargjør partikler og kontroller');
   Particles.init(); Input.init($('game'));
   G.meta = loadMeta();
-  if (window.__recover) { G.meta.settings.simple = true; R.lowTex = true; R.dpr = 1; R.resize(); }
+  if (window.__recover) { G.meta.settings.simple = true; R.lowTex = true; R.dpr = R.dprMax = 1; R.resize(); }
   try { if (localStorage.getItem('morbidium_simple') === '1') { G.meta.settings.simple = true; localStorage.removeItem('morbidium_simple'); saveMeta(); } } catch (e) { }
   if (/enkel/.test(location.hash)) G.meta.settings.simple = true;
   if (/3d/.test(location.hash)) G.meta.settings.d3 = true;
+  if (/2d/.test(location.hash)) G.meta.settings.d3 = false;
   applySettings();
   R.onSafe = why => { G.meta.settings.simple = true; saveMeta(); toast('Enkel grafikk', 'Skjermkortet ga ' + why + ', så etterbehandlingen er slått av'); };
   $('vignette').style.display = 'none';
@@ -733,7 +734,7 @@ function boot() {
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };
-  Object.assign(window, { rolig, D3, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { rolig, D3, Anim, ANIM, POSER, posStat, Blod, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
   step('Pakker ut bilder');
   Art.preload().then(() => { step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }
