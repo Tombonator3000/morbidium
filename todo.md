@@ -12,7 +12,9 @@
 - [x] Trinn 1: seks etasjer (Parken og Nattskogen ute), dybdeskala, gulv og vegger per romtype, L-rom og rotunder, 19 nye romtyper, bakke, trær og vær ute, utgangene per etasje, lyd og musikk for uteetasjene.
 - [x] Trinn 2: hendelsene. Samtalepanel med valg, atten hendelser (fire flere enn planlagt, så seks etasjer har nok), minne på tvers av løp.
 - [ ] Tom: prøve hendelsene og si hvilke som er morsomme og hvilke som bør skrives om. Tekstene står i src/35_hendelser.js.
-- [ ] Trinn 3: pasienthistoriene og drømmebanene mellom etasjene, slutten og arkivet.
+- [x] Trinn 3: pasienthistoriene og drømmebanene mellom etasjene, slutten og arkivet.
+- [ ] Tom: gå gjennom en hel runde med drømmer og si om tekstene treffer, og om skyggen er for treg eller for rask.
+- [ ] Senere: et kapittel om drømmene i Pasienthåndboka, og egne bilder fra ChatGPT for minnene, figurene uten ansikt og det røde rommet.
 - [ ] Trinn 4: nye fiender og sjefer for Parken og Nattskogen (gartnere, kråker, Huldra, Vedkubbemannen, Nøkken, Overgartner Ansgar Hekk, Den hvite hjorten).
 - [ ] Trinn 5: nye nøkler i manifestet og en ny runde i ART_BRIEF.md for ChatGPT (møblene, uteting, utgangene).
 - [ ] Tom: prøve de nye etasjene og si om parken og skogen er mørke nok, og om løpet blir for langt.
