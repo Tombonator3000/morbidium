@@ -8,10 +8,12 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og He
 - Håndkontroll og berøring virker også. Hele oversikten står i Pasienthåndboka på tittelskjermen og i pausemenyen.
 
 ## Innhold
-- Fire etasjer med hver sin overlege: Mottak og bosted, Underetasjen, Isolat og arkiv, og under grunnmuren Journalen selv.
+- Fire etasjer med hver sin overlege, trukket fra en pulje for hvert løp: Krok, Rust, Overarkivaren eller Den Store Klumpen, og under grunnmuren Journalen selv. Minisjefer venter i rommet med frivillig risiko.
+- Rommene er 3D som standard, med lamper, måneskinn, skygger og tåke. Kvaliteten justeres av seg selv, og 3D kan slås av under Bilde.
 - Hver pasient settes sammen på nytt: kjønn, hår, hud, klær og pynt. Liket blir liggende der pasienten døde.
 - Kuriositeter som stables og kombineres, piller med ukjent virkning, apparater og lommerusk, evnekort i et frenologisk hode, diagnoser som følger av måten du spiller på.
-- Tjenesterom, hemmelige rom bak sprukne vegger, forbannede rom og blodoffer. Fiender settes sammen av deler, og noen er navngitte mestere.
+- Tjenesterom, hemmelige rom bak sprukne vegger, forbannede rom og blodoffer. Fiender settes sammen av deler, og noen er navngitte mestere. Pasienthåndboka har en fiendeindeks med bilde av alt som bor i bygget.
+- Blod som spruter på vegger og gulv, kjøttbiter ved tunge slag, og øyne som åpner seg i veggene når Morbidium stiger.
 - Musikk laget i nettleseren som følger kampen, pasienthåndbok, arkiv med pasientmapper, merknader som låser opp nytt innhold, og gjeninnleggelse etter første utskrivning.
 
 ## Bygg

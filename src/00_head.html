@@ -41,16 +41,19 @@ body{ height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:
 #hud{ position:fixed; inset:0; pointer-events:none; }
 #badge{ position:absolute; left:calc(12px + env(safe-area-inset-left,0px)); top:calc(10px + env(safe-area-inset-top,0px)); display:flex; align-items:flex-start; }
 #medal{ position:relative; width:86px; height:86px; border-radius:50%; background:#7d9aa6; border:6px solid var(--gold);
-  box-shadow:0 0 0 3px var(--ink), inset 0 0 0 3px var(--ink), 4px 5px 0 3px rgba(20,12,8,.5); overflow:hidden; z-index:2; }
-#medal canvas{ width:100%; height:100%; display:block; }
+  box-shadow:0 0 0 3px var(--ink), inset 0 0 0 3px var(--ink), 4px 5px 0 3px rgba(20,12,8,.5); z-index:2; }
+#medal canvas{ width:100%; height:100%; display:block; border-radius:50%; }
+#hearts img.uihjerte{ width:24px; height:22px; object-fit:contain; }
 #plate{ margin:8px 0 0 -14px; padding:6px 14px 8px 22px; background:var(--parch); border:3px solid var(--ink); border-radius:0 10px 10px 0; box-shadow:4px 4px 0 rgba(20,12,8,.5); min-width:230px; }
 #plate .nm{ font-family:var(--display); font-size:16px; line-height:1; }
 #plate .nm small{ font-family:var(--hand); font-size:18px; margin-left:6px; color:#6b4a2c; }
-#hearts{ display:flex; gap:3px; margin-top:6px; }
+#hearts{ display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; max-width:270px; } /* ti hjerter per rad, som i Isaac */
 #hearts svg{ width:24px; height:22px; }
 #row2{ display:flex; align-items:center; gap:10px; margin-top:6px; font-family:var(--display); font-size:15px; }
 .vial{ position:relative; width:96px; height:13px; border:3px solid var(--ink); border-radius:8px; background:#3d2a44; overflow:hidden; }
 .vial i{ position:absolute; left:0; top:0; bottom:0; width:22%; background:linear-gradient(180deg,#b36be0,var(--morb)); }
+.vial .terskel{ position:absolute; left:75%; top:-1px; bottom:-1px; width:3px; background:#d8322a; box-shadow:0 0 0 1px var(--ink); }
+.morbikon{ width:12px; height:16px; margin-right:-6px; flex:none; }
 .teeth{ display:flex; align-items:center; gap:4px; }
 .teeth svg{ width:16px; height:18px; }
 
@@ -68,8 +71,8 @@ body{ height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:
 .acard::before{ content:""; position:absolute; left:50%; top:-8px; width:14px; height:14px; margin-left:-7px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #ffe28a, var(--gold) 55%, var(--gold-d)); border:2px solid var(--ink); }
 .acard svg{ position:absolute; left:50%; top:12px; width:44px; height:44px; transform:translateX(-50%); }
 .acard .nm{ position:absolute; left:3px; right:3px; bottom:5px; text-align:center; font-weight:800; font-size:11px; line-height:1.05; }
-.acard .k{ position:absolute; right:-7px; bottom:-7px; width:24px; height:24px; border-radius:50%; background:var(--ink); color:var(--parch-l); font-family:var(--display); font-size:13px; line-height:22px; text-align:center; border:2px solid var(--gold); }
-.acard .cd{ position:absolute; inset:0; background:rgba(42,26,20,.62); color:var(--parch-l); display:flex; align-items:center; justify-content:center; font-family:var(--display); font-size:22px; border-radius:2px; }
+.acard .k{ position:absolute; left:-9px; top:-9px; width:24px; height:25px; border-radius:5px; background:var(--ink); color:var(--parch-l); font-family:var(--display); font-size:14px; line-height:22px; text-align:center; border:2px solid var(--gold); z-index:2; box-shadow:2px 2px 0 rgba(20,12,8,.45); }
+.acard .cd{ position:absolute; inset:0; background:conic-gradient(rgba(170,30,24,.62) calc(var(--p,1) * 1turn), rgba(42,26,20,.66) 0); color:var(--parch-l); display:flex; align-items:center; justify-content:center; font-family:var(--display); font-size:20px; border-radius:2px; -webkit-text-stroke:1.5px var(--ink); paint-order:stroke fill; }
 
 /* våpenkort */
 #weapon{ position:absolute; left:calc(12px + env(safe-area-inset-left,0px)); bottom:calc(14px + env(safe-area-inset-bottom,0px)); width:170px; background:var(--parch); border:3px solid var(--ink); border-radius:6px; box-shadow:4px 4px 0 rgba(20,12,8,.5); padding:6px 10px 8px; display:flex; gap:8px; align-items:center; transform:rotate(-1deg); }
@@ -79,8 +82,9 @@ body{ height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:
 
 /* kart i gullring */
 #mapring{ position:absolute; right:calc(14px + env(safe-area-inset-right,0px)); bottom:calc(14px + env(safe-area-inset-bottom,0px)); width:150px; height:150px; border-radius:50%;
-  background:#1c1410; border:8px solid var(--gold); box-shadow:0 0 0 3px var(--ink), inset 0 0 0 3px var(--ink), inset 0 0 0 7px var(--gold-d), 4px 5px 0 3px rgba(20,12,8,.5); overflow:hidden; }
-#mapring canvas{ width:100%; height:100%; display:block; }
+  background:#1c1410; border:8px solid var(--gold); box-shadow:0 0 0 3px var(--ink), inset 0 0 0 3px var(--ink), inset 0 0 0 7px var(--gold-d), 4px 5px 0 3px rgba(20,12,8,.5); }
+#mapring canvas{ width:100%; height:100%; display:block; border-radius:50%; }
+#mapring .nord{ position:absolute; left:50%; top:-15px; transform:translateX(-50%); width:24px; height:24px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #ffe28a, var(--gold) 60%, var(--gold-d)); border:2px solid var(--ink); font-family:var(--display); font-size:13px; line-height:20px; text-align:center; color:var(--ink); z-index:3; }
 #mapring::after{ content:""; position:absolute; inset:-2px; border-radius:50%; background:
   radial-gradient(circle at 50% 0%, var(--gold) 0 7px, var(--ink) 7px 9px, transparent 9px),
   radial-gradient(circle at 100% 50%, var(--gold) 0 7px, var(--ink) 7px 9px, transparent 9px),
@@ -89,6 +93,8 @@ body{ height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:
 
 /* verktøylinje for testen */
 #tools{ position:absolute; right:calc(12px + env(safe-area-inset-right,0px)); top:calc(12px + env(safe-area-inset-top,0px)); display:flex; gap:8px; pointer-events:auto; }
+#tools .btn{ display:flex; flex-direction:column; align-items:center; gap:1px; padding:4px 11px 5px; font-size:13px; }
+#tools .btn svg,#tools .btn img{ width:28px; height:22px; display:block; }
 .btn{ font-family:var(--display); font-size:14px; background:var(--parch); color:var(--ink); border:3px solid var(--ink); border-radius:6px; padding:6px 12px; cursor:pointer; box-shadow:3px 3px 0 rgba(20,12,8,.5); }
 .btn:hover{ background:var(--parch-l); } .btn:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
 .btn.big{ font-size:19px; padding:9px 22px; background:var(--gold); }
@@ -347,6 +353,17 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
 .hnote::before{ content:"Notert i margen: "; display:block; font-size:15px; color:#6b4a2c; }
 .hnote.solo{ margin-top:auto; text-align:right; }
 .hnav{ display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-top:12px; font-family:var(--hand); font-size:20px; } .hnav .btn[disabled]{ opacity:.35; cursor:default; }
+.findeks{ display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:1fr; gap:12px 16px; flex:1; min-height:0; }
+.fkort{ display:flex; gap:10px; align-items:flex-start; background:rgba(255,250,235,.5); border:2px solid rgba(42,26,20,.45); border-radius:4px; padding:8px 9px; box-shadow:2px 3px 0 rgba(42,26,20,.12); }
+.fkort canvas{ width:92px; height:109px; flex:none; background:#f7f0dc; border:2px solid var(--ink); box-shadow:3px 3px 0 rgba(0,0,0,.25); transform:rotate(-1.5deg); }
+.fkort:nth-child(even) canvas{ transform:rotate(1.5deg); }
+.ftekst{ flex:1; font-size:13px; line-height:1.22; min-width:0; } .ftekst p{ margin:2px 0; }
+.hsidenote{ margin-top:18px; font-size:19px; }
+.fnavn{ font-family:var(--display); font-size:16px; line-height:1.05; }
+.fsted{ font-size:11.5px; color:#6b4a2c; font-style:italic; margin-top:1px; }
+.fraad{ color:#2a4a8a; } .fraad::before{ content:"Råd: "; font-weight:800; }
+.ftall{ font-family:var(--hand); font-size:17px; line-height:1; color:var(--red); }
+.hefte.smal .findeks{ grid-template-columns:1fr; }
 .hefte.smal{ width:460px; height:auto; min-height:760px; flex-direction:column; } .hefte.smal .hside{ width:auto; border-radius:6px 6px 0 0; padding:14px 16px; } .hefte.smal .hpage{ border-left:3px solid var(--ink); border-top:none; border-radius:0 0 6px 6px; }
 .hefte.smal .htabs{ flex-direction:row; flex-wrap:wrap; gap:4px; } .hefte.smal .htab{ border:2px solid rgba(42,26,20,.4); border-radius:4px; font-size:14px; padding:3px 6px; } .hefte.smal .htab.on::after{ content:none; } .hefte.smal .htab.on{ background:rgba(232,185,58,.35); }
 .hefte.smal .hsub{ margin:4px 0 10px; } .hefte.smal .hcols{ flex-direction:column; } .hefte.smal .hart{ width:auto; flex-direction:row; } .hefte.smal .hart canvas{ max-width:120px; }
@@ -435,7 +452,7 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
 .skap.smal{ width:480px; } .skap.smal .mapper{ grid-template-columns:repeat(2,1fr); } .skap.smal .frags{ grid-template-columns:1fr; } .skap.smal .rgrid{ grid-template-columns:repeat(2,1fr); } .skap.smal .skuff .skilt{ font-size:12px; width:86%; } .skap.smal .skuff .skilt small{ font-size:13px; }
 
 @media (max-width:720px){
-  #plate{ min-width:0; } #medal{ width:66px; height:66px; } #hearts svg{ width:19px; height:18px; }
+  #plate{ min-width:0; } #medal{ width:66px; height:66px; } #hearts svg{ width:19px; height:18px; } #hearts{ max-width:220px; } #hearts img.uihjerte{ width:19px; height:18px; }
   .acard{ width:56px; height:72px; } .acard svg{ width:34px; height:34px; top:9px; } .acard .nm{ font-size:9px; }
   #weapon{ display:none; } #help{ display:none; } #roomsign{ display:none; } #cons{ display:none; } #prompt{ bottom:calc(98px + env(safe-area-inset-bottom,0px)); }
   #mapring{ top:calc(116px + env(safe-area-inset-top,0px)); bottom:auto; width:92px; height:92px; border-width:6px; }
@@ -481,7 +498,7 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
 <div id="vignette"></div><div id="fx"></div>
 <div id="hud" class="hidden">
   <div id="badge"><div id="medal"></div><div id="plate"><div class="nm"><span id="pname">Pasient</span><small id="pnr"></small></div><div id="hearts"></div>
-    <div id="row2"><div class="vial" title="Morbidium"><i id="morb"></i></div><div class="teeth"><svg viewBox="0 0 16 18"><path d="M2 3c2-3 5-1 6 0 1-1 4-3 6 0 1 3-1 6-2 8-1 3-1 6-3 6-1 0-1-4-1-5 0 1 0 5-1 5-2 0-2-3-3-6C3 9 1 6 2 3z" fill="#f4e6a8" stroke="#2a1a14" stroke-width="1.6"/></svg><span id="teeth">0</span></div><span id="lvl">Nv 1</span><div id="pips"></div></div><div id="xpbar"><i id="xp"></i></div><div id="items"></div></div></div>
+    <div id="row2"><svg class="morbikon" viewBox="0 0 12 16"><path d="M6 1C4 5 1.5 7.5 1.5 10.5a4.5 4.5 0 0 0 9 0C10.5 7.5 8 5 6 1z" fill="#8a3ac0" stroke="#2a1a14" stroke-width="1.5"/><circle cx="4.4" cy="10" r="1.2" fill="#e0a8ff"/></svg><div class="vial" title="Morbidium. Over den røde streken ser du ting som ikke er der."><i id="morb"></i><b class="terskel"></b></div><div class="teeth"><svg viewBox="0 0 16 18"><path d="M2 3c2-3 5-1 6 0 1-1 4-3 6 0 1 3-1 6-2 8-1 3-1 6-3 6-1 0-1-4-1-5 0 1 0 5-1 5-2 0-2-3-3-6C3 9 1 6 2 3z" fill="#f4e6a8" stroke="#2a1a14" stroke-width="1.6"/></svg><span id="teeth">0</span></div><span id="lvl">Nv 1</span><div id="pips"></div></div><div id="xpbar"><i id="xp"></i></div><div id="items"></div></div></div>
   <div id="roomsign"><div class="ribbon" id="floorName"></div></div>
   <div id="pa"></div>
   <div id="bossBar" class="hidden"><div id="bossName"></div><div id="bossTitle"></div><div class="bbar"><div id="bossFill"></div></div></div>
@@ -490,9 +507,9 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
   <div id="weapon"><canvas id="wpc" width="88" height="132"></canvas><div><b id="wname"></b><i id="wdesc"></i></div></div>
   <div id="cons" class="paper"><canvas id="consc" width="80" height="104"></canvas><span id="consn">Tom</span><span class="n" id="consk">F</span></div>
   <div id="akt" class="paper hidden"><canvas id="aktc" width="80" height="80"></canvas><div class="pips" id="aktp"></div><span class="n">V</span></div>
-  <div id="mapring"><canvas id="map" width="200" height="200"></canvas></div>
+  <div id="mapring"><canvas id="map" width="200" height="200"></canvas><b class="nord">N</b></div>
   <div id="prompt" class="hidden"></div>
-  <div id="tools"><button class="btn" id="bJournal">Journal</button><button class="btn" id="bPause">Pause</button></div>
+  <div id="tools"><button class="btn" id="bJournal"><svg viewBox="0 0 28 22"><path d="M14 5c-3-2-7-3-12-2v15c5-1 9 0 12 2 3-2 7-3 12-2V3c-5-1-9 0-12 2z" fill="#f6ead0" stroke="#2a1a14" stroke-width="2" stroke-linejoin="round"/><path d="M14 5v15" stroke="#2a1a14" stroke-width="2"/><path d="M5 7.5c2.5-.5 4.5 0 6 .8M5 11c2.5-.5 4.5 0 6 .8M17 8.3c1.5-.8 3.5-1.3 6-.8M17 11.8c1.5-.8 3.5-1.3 6-.8" stroke="#8a6a4a" stroke-width="1.3" fill="none"/></svg>Journal</button><button class="btn" id="bPause"><svg viewBox="0 0 28 22"><rect x="7" y="3" width="5" height="16" rx="1.5" fill="#2a1a14"/><rect x="16" y="3" width="5" height="16" rx="1.5" fill="#2a1a14"/></svg>Pause</button></div>
 </div>
 <div id="touch" class="hidden"><div id="stick"><i></i></div><div id="tbtns"><button data-t="active" id="tAkt" class="hidden">Aktiv</button><button data-t="use">Bruk</button><button data-t="interact">Snakk</button><button data-t="heavy">Tungt</button><button data-t="dodge">Rull</button><button data-t="attack">Slag</button></div></div>
 <div id="toast"></div><div id="bigstamp"></div>

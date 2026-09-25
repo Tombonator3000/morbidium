@@ -10,7 +10,7 @@ Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke red
 4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).
 5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.
 
-Status: 287 av 287 bilder er levert. Kolonnen «Levert» viser hvilke.
+Status: 287 av 361 bilder er levert. Kolonnen «Levert» viser hvilke.
 
 ## Stilblokk (lim inn i ChatGPT)
 
@@ -24,6 +24,97 @@ Technical: PNG with a TRANSPARENT background. Exactly one object, centered, full
 - Samme stil i alle bilder er viktigere enn at hvert enkelt bilde er perfekt. Bruk samme ChatGPT-samtale for en hel runde.
 - Gjennomsiktig bakgrunn er best. Hvit eller ensfarget bakgrunn går også, verktøyet fjerner den fra kantene og innover.
 - Ikke tegn skygge på bakken. Spillet legger på skygge og lys selv.
+
+## Runde 7: nye fiender, minisjefer og Den Store Klumpen (52 bilder, 0 levert)
+
+Fiendene ChatGPT foreslo. Kasteren, Trillepasienten, Speilpasienten, Tannlegen og Portieren lages som figurark på mal_figur.png: figur_kasteren.png, figur_trille.png, figur_speil.png, figur_tannlege.png og figur_portier.png. Hviskekoret og Klumpen er lagdelte: kroppen alene, og munner, ører, ansikter og øyne hver for seg, så spillet kan bevege dem.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
+| `blob_klumpunge_b.png` | klumpunge. back view, facing away | kvadrat |  |
+| `blob_klumpunge_f.png` | klumpunge. front view, facing the viewer | kvadrat |  |
+| `blob_klumpunge_s.png` | klumpunge. side view, facing right | kvadrat |  |
+| `glasskar.png` | a small shard of broken mirror glass | kvadrat |  |
+| `hjul_trille_f.png` | ONE big wooden wheelchair wheel with spokes and a rubber tire, seen straight from the side (the game spins it) | kvadrat |  |
+| `hode_kasteren_b.png` | HEAD ONLY (no neck, no body) of the Thrower: a skinny old man with wild grey hair sticking out in all directions, huge round glasses that magnify his mismatched eyes, open mouth with the tongue hanging out, a mustard-yellow bathrobe with brown stains and a lumpy pocket. back view, facing away | kvadrat |  |
+| `hode_kasteren_f.png` | HEAD ONLY (no neck, no body) of the Thrower: a skinny old man with wild grey hair sticking out in all directions, huge round glasses that magnify his mismatched eyes, open mouth with the tongue hanging out, a mustard-yellow bathrobe with brown stains and a lumpy pocket. front view, facing the viewer | kvadrat |  |
+| `hode_kasteren_s.png` | HEAD ONLY (no neck, no body) of the Thrower: a skinny old man with wild grey hair sticking out in all directions, huge round glasses that magnify his mismatched eyes, open mouth with the tongue hanging out, a mustard-yellow bathrobe with brown stains and a lumpy pocket. side view, facing right | kvadrat |  |
+| `hode_portier_b.png` | HEAD ONLY (no neck, no body) of MINI-BOSS the Headless Doorman: a tall doorman in a dark green uniform with two rows of gold buttons and gold epaulettes, but with NO HEAD, only a bloody neck stump above a high collar (the head part is just the stump and collar). back view, facing away | liggende |  |
+| `hode_portier_f.png` | HEAD ONLY (no neck, no body) of MINI-BOSS the Headless Doorman: a tall doorman in a dark green uniform with two rows of gold buttons and gold epaulettes, but with NO HEAD, only a bloody neck stump above a high collar (the head part is just the stump and collar). front view, facing the viewer | liggende |  |
+| `hode_portier_s.png` | HEAD ONLY (no neck, no body) of MINI-BOSS the Headless Doorman: a tall doorman in a dark green uniform with two rows of gold buttons and gold epaulettes, but with NO HEAD, only a bloody neck stump above a high collar (the head part is just the stump and collar). side view, facing right | liggende |  |
+| `hode_speil_b.png` | HEAD ONLY (no neck, no body) of the Mirror Patient: a thin patient whose head is an ornate gilded hand mirror on its handle (the glass is blank and cracked, the game shows a reflection in it), grey-green hospital gown with shards of mirror glued into it and a little blood around them. back view, facing away | kvadrat |  |
+| `hode_speil_f.png` | HEAD ONLY (no neck, no body) of the Mirror Patient: a thin patient whose head is an ornate gilded hand mirror on its handle (the glass is blank and cracked, the game shows a reflection in it), grey-green hospital gown with shards of mirror glued into it and a little blood around them. front view, facing the viewer | kvadrat |  |
+| `hode_speil_s.png` | HEAD ONLY (no neck, no body) of the Mirror Patient: a thin patient whose head is an ornate gilded hand mirror on its handle (the glass is blank and cracked, the game shows a reflection in it), grey-green hospital gown with shards of mirror glued into it and a little blood around them. side view, facing right | kvadrat |  |
+| `hode_tannlege_b.png` | HEAD ONLY (no neck, no body) of MINI-BOSS the Dentist: bald with a round head mirror on a headband, pince-nez, a big waxed mustache, a manic grin with several gold teeth, white coat with blood spots and a leather bandolier of pulled teeth. back view, facing away | kvadrat |  |
+| `hode_tannlege_f.png` | HEAD ONLY (no neck, no body) of MINI-BOSS the Dentist: bald with a round head mirror on a headband, pince-nez, a big waxed mustache, a manic grin with several gold teeth, white coat with blood spots and a leather bandolier of pulled teeth. front view, facing the viewer | kvadrat |  |
+| `hode_tannlege_s.png` | HEAD ONLY (no neck, no body) of MINI-BOSS the Dentist: bald with a round head mirror on a headband, pince-nez, a big waxed mustache, a manic grin with several gold teeth, white coat with blood spots and a leather bandolier of pulled teeth. side view, facing right | kvadrat |  |
+| `hode_trille_b.png` | HEAD ONLY (no neck, no body) of the Wheelchair Patient: a bald old man with a bandage wound around his head and over one eye and a toothless grin, slumped in a creaky wooden wheelchair with big spoked wheels, a red and green plaid blanket over his knees and an IV stand with a yellow bag behind him (the body part is the chair, blanket and torso together; the chair reaches the floor). back view, facing away | kvadrat |  |
+| `hode_trille_f.png` | HEAD ONLY (no neck, no body) of the Wheelchair Patient: a bald old man with a bandage wound around his head and over one eye and a toothless grin, slumped in a creaky wooden wheelchair with big spoked wheels, a red and green plaid blanket over his knees and an IV stand with a yellow bag behind him (the body part is the chair, blanket and torso together; the chair reaches the floor). front view, facing the viewer | kvadrat |  |
+| `hode_trille_s.png` | HEAD ONLY (no neck, no body) of the Wheelchair Patient: a bald old man with a bandage wound around his head and over one eye and a toothless grin, slumped in a creaky wooden wheelchair with big spoked wheels, a red and green plaid blanket over his knees and an IV stand with a yellow bag behind him (the body part is the chair, blanket and torso together; the chair reaches the floor). side view, facing right | kvadrat |  |
+| `klumpen_ansikt0.png` | ONE human face sunk into pink flesh, screaming with the eyes squeezed shut, drawn alone | kvadrat |  |
+| `klumpen_ansikt1.png` | ONE human face sunk into pink flesh, sleeping and drooling, drawn alone | kvadrat |  |
+| `klumpen_ansikt2.png` | ONE human face sunk into pink flesh, smiling far too wide with many teeth, drawn alone | kvadrat |  |
+| `klumpen_ansikt3.png` | ONE human face sunk into pink flesh, wearing round glasses and looking worried, drawn alone | kvadrat |  |
+| `klumpen_kropp.png` | BOSS the Big Lump, BODY ONLY: a huge mound of fused human flesh in different skin tones, with stitches, bandages, a stuck IV needle with a tube, a piece of a yellow bathrobe and a striped pyjama patch grown into it. No faces and no arms (the game adds them) | kvadrat |  |
+| `klumpen_lue.png` | a red and white striped nightcap with a white pompom, drawn alone | kvadrat |  |
+| `klumpen_oye.png` | ONE loose bloodshot eyeball with a green iris | kvadrat |  |
+| `koret_kropp.png` | MINI-BOSS the Whispering Choir, BODY ONLY: a floating torn burgundy choir robe with a white ruffled collar, a tall column of pale pink flesh bursting out of the collar with stitches, and three lit candles on top. No mouths and no ears (the game adds them) | stående |  |
+| `koret_munn0.png` | ONE human mouth with red lips and teeth, half open, drawn alone | kvadrat |  |
+| `koret_munn1.png` | ONE human mouth with red lips, teeth and the tongue sticking out, drawn alone | kvadrat |  |
+| `koret_munn2.png` | ONE wide human mouth with red lips and teeth, whispering, drawn alone | kvadrat |  |
+| `koret_ore0.png` | ONE human ear, fleshy pink, drawn alone | stående |  |
+| `koret_ore1.png` | ONE human ear with a small gold earring, drawn alone | stående |  |
+| `kropp_kasteren_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Thrower: a skinny old man with wild grey hair sticking out in all directions, huge round glasses that magnify his mismatched eyes, open mouth with the tongue hanging out, a mustard-yellow bathrobe with brown stains and a lumpy pocket. back view, facing away | liggende |  |
+| `kropp_kasteren_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Thrower: a skinny old man with wild grey hair sticking out in all directions, huge round glasses that magnify his mismatched eyes, open mouth with the tongue hanging out, a mustard-yellow bathrobe with brown stains and a lumpy pocket. front view, facing the viewer | liggende |  |
+| `kropp_kasteren_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Thrower: a skinny old man with wild grey hair sticking out in all directions, huge round glasses that magnify his mismatched eyes, open mouth with the tongue hanging out, a mustard-yellow bathrobe with brown stains and a lumpy pocket. side view, facing right | liggende |  |
+| `kropp_portier_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of MINI-BOSS the Headless Doorman: a tall doorman in a dark green uniform with two rows of gold buttons and gold epaulettes, but with NO HEAD, only a bloody neck stump above a high collar (the head part is just the stump and collar). back view, facing away | liggende |  |
+| `kropp_portier_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of MINI-BOSS the Headless Doorman: a tall doorman in a dark green uniform with two rows of gold buttons and gold epaulettes, but with NO HEAD, only a bloody neck stump above a high collar (the head part is just the stump and collar). front view, facing the viewer | liggende |  |
+| `kropp_portier_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of MINI-BOSS the Headless Doorman: a tall doorman in a dark green uniform with two rows of gold buttons and gold epaulettes, but with NO HEAD, only a bloody neck stump above a high collar (the head part is just the stump and collar). side view, facing right | liggende |  |
+| `kropp_speil_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Mirror Patient: a thin patient whose head is an ornate gilded hand mirror on its handle (the glass is blank and cracked, the game shows a reflection in it), grey-green hospital gown with shards of mirror glued into it and a little blood around them. back view, facing away | liggende |  |
+| `kropp_speil_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Mirror Patient: a thin patient whose head is an ornate gilded hand mirror on its handle (the glass is blank and cracked, the game shows a reflection in it), grey-green hospital gown with shards of mirror glued into it and a little blood around them. front view, facing the viewer | liggende |  |
+| `kropp_speil_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Mirror Patient: a thin patient whose head is an ornate gilded hand mirror on its handle (the glass is blank and cracked, the game shows a reflection in it), grey-green hospital gown with shards of mirror glued into it and a little blood around them. side view, facing right | liggende |  |
+| `kropp_tannlege_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of MINI-BOSS the Dentist: bald with a round head mirror on a headband, pince-nez, a big waxed mustache, a manic grin with several gold teeth, white coat with blood spots and a leather bandolier of pulled teeth. back view, facing away | liggende |  |
+| `kropp_tannlege_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of MINI-BOSS the Dentist: bald with a round head mirror on a headband, pince-nez, a big waxed mustache, a manic grin with several gold teeth, white coat with blood spots and a leather bandolier of pulled teeth. front view, facing the viewer | liggende |  |
+| `kropp_tannlege_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of MINI-BOSS the Dentist: bald with a round head mirror on a headband, pince-nez, a big waxed mustache, a manic grin with several gold teeth, white coat with blood spots and a leather bandolier of pulled teeth. side view, facing right | liggende |  |
+| `kropp_trille_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Wheelchair Patient: a bald old man with a bandage wound around his head and over one eye and a toothless grin, slumped in a creaky wooden wheelchair with big spoked wheels, a red and green plaid blanket over his knees and an IV stand with a yellow bag behind him (the body part is the chair, blanket and torso together; the chair reaches the floor). back view, facing away | kvadrat |  |
+| `kropp_trille_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Wheelchair Patient: a bald old man with a bandage wound around his head and over one eye and a toothless grin, slumped in a creaky wooden wheelchair with big spoked wheels, a red and green plaid blanket over his knees and an IV stand with a yellow bag behind him (the body part is the chair, blanket and torso together; the chair reaches the floor). front view, facing the viewer | kvadrat |  |
+| `kropp_trille_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Wheelchair Patient: a bald old man with a bandage wound around his head and over one eye and a toothless grin, slumped in a creaky wooden wheelchair with big spoked wheels, a red and green plaid blanket over his knees and an IV stand with a yellow bag behind him (the body part is the chair, blanket and torso together; the chair reaches the floor). side view, facing right | kvadrat |  |
+| `portierhode.png` | the doorman's severed head carried as an object: pale and surprised, big mustache, green doorman's cap with a gold band, a little blood at the neck | kvadrat |  |
+| `vaapen_klump.png` | a brown lump the Thrower holds in his hand (you know what it is), drawn alone | kvadrat |  |
+| `vaapen_knippe.png` | a huge iron key ring with five big old brass keys, handle down | kvadrat |  |
+| `vaapen_tang.png` | a giant pair of dental pliers with a gold tooth in the jaws, handles down | stående |  |
+
+## Runde 8: animasjoner (spriteark) (5 bilder, 0 levert)
+
+Ett bilde med like store ruter på én rad, lest fra venstre. Samme festepunkt i hver rute (samme midtpunkt eller samme bakkelinje), ellers hopper figuren. Filnavnet er anim_<navn>.png.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
+| `anim_blodsprut.png` | SPRITE SHEET, 6 equal cells in ONE row: a burst of droplets exploding outward and falling. Draw it in WHITE and light grey with dark outlines (the game colors it red, purple or yellow). Same ground line in every cell | ark, 6 ruter på rad |  |
+| `anim_kasteklump.png` | SPRITE SHEET, 4 equal squares in ONE row: a brown lump spinning in the air, a quarter turn more in each frame. Same size and same center in every square | ark, 4 ruter på rad |  |
+| `anim_kastesprut.png` | SPRITE SHEET, 4 equal cells in ONE row: a brown splash hitting the floor, from a small impact to a big splat with droplets flying up, then settling. Same ground line in every cell | ark, 4 ruter på rad |  |
+| `anim_kjottbiter.png` | SHEET, 6 equal squares in ONE row, six different small gore bits, one per square: a chunk of meat, a bone, an eyeball with a nerve, a gold tooth, a finger, a piece of liver | ark, 6 ruter på rad |  |
+| `anim_oye.png` | SPRITE SHEET, 5 equal cells in ONE row: an eye opening in a crack in a wall, from a closed slit to wide open, bloodshot white, NO pupil (the game adds the pupil). Same center in every cell | ark, 5 ruter på rad |  |
+
+## Runde 9: HUD og menyer (UI-settet) (13 bilder, 0 levert)
+
+Rammer og ikoner til HUD-en og menyene, etter ChatGPTs egne skisser. Paneler, kort, knapper, skilt og utklippstavle strekkes av spillet (9-delt): hjørnene beholder størrelsen og sidene strekkes, så all pynt må ligge i kanten og midten må være jevn. Ringene må være helt gjennomsiktige i midten.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
+| `ui_hjerte_full.png` | UI ICON: a full red cartoon heart with an ink outline and a small highlight | kvadrat |  |
+| `ui_hjerte_halv.png` | UI ICON: the same heart, left half red and right half empty grey | kvadrat |  |
+| `ui_hjerte_tom.png` | UI ICON: the same heart, empty and dark grey | kvadrat |  |
+| `ui_hode.png` | UI: a phrenology head in profile facing LEFT, bald, with neck and shoulders cut off, a pale parchment-colored bust with ink outlines. NO brain regions and NO text (the game draws the four regions and labels on top). Square image, the skull fills the upper two thirds | kvadrat |  |
+| `ui_ikon_journal.png` | UI ICON: an open leather-bound book, simple and bold | kvadrat |  |
+| `ui_ikon_pause.png` | UI ICON: two thick vertical pause bars drawn in ink | kvadrat |  |
+| `ui_knapp.png` | UI 9-SLICE BUTTON: a small empty parchment tile with a thick ink outline and a tiny brass pin in the top right corner. Nothing inside | kvadrat |  |
+| `ui_kort.png` | UI 9-SLICE ABILITY CARD FRAME: an empty cream paper card with faint blue ruled lines, rounded corners and a brass pin at the top center. No picture, no text | stående |  |
+| `ui_panel.png` | UI 9-SLICE PANEL: an empty parchment panel with a slightly torn edge, dark ink outline and small brass pins in the four corners. Nothing inside. Keep all detail within the outer 10 % so the middle can be stretched | liggende |  |
+| `ui_ring_kart.png` | UI RING: a brass compass ring with a small N at the top and four knobs, the center COMPLETELY TRANSPARENT (the map goes inside) | kvadrat |  |
+| `ui_ring_portrett.png` | UI RING: a thick round gold frame with rivets and an ink outline, the center COMPLETELY TRANSPARENT (a portrait goes inside) | kvadrat |  |
+| `ui_skilt.png` | UI 9-SLICE SIGN: an empty wide parchment plaque with brass screws at both ends, for the room name. No text | liggende |  |
+| `ui_utklipp.png` | UI 9-SLICE CLIPBOARD: an empty brown wooden clipboard with a brass clamp at the top center and a sheet of lined paper, seen straight on. No text | stående |  |
 
 ## Runde 1: kuriositetene (Isaac-gjenstander), apparater og lommerusk (71 bilder, 71 levert)
 
@@ -242,19 +333,22 @@ Små ting. Enkle former, tydelig kontur.
 | `tillegg_tunge.png` | a tiny add-on worn by the player character: a tongue sticking out. Tiny, drawn alone | stående | ja |
 | `torner.png` | a tangle of black thorny vines (a hazard lying on the floor) | kvadrat | ja |
 
-## Runde 5: våpen (7 bilder, 7 levert)
+## Runde 5: våpen (10 bilder, 7 levert)
 
 Våpenet står loddrett med håndtaket nederst og tuppen opp. Spillet roterer det selv.
 
 | Filnavn | Beskrivelse til ChatGPT | Format | Levert |
 |---|---|---|---|
 | `vaapen_bekken.png` | a white enamel bedpan on a handle | stående | ja |
+| `vaapen_gasskolbe.png` | a glass ether bottle with a cork, held as a weapon | stående |  |
 | `vaapen_krok.png` | a surgeon's large bone hook | stående | ja |
 | `vaapen_mopp.png` | a janitor's mop, wooden handle, grey clamp, strings dripping purple | stående | ja |
 | `vaapen_sag.png` | a bone saw with a wooden handle | stående | ja |
+| `vaapen_skjemabunke.png` | a messy stack of official paper forms held as a weapon | kvadrat |  |
 | `vaapen_slange.png` | a rubber hose with a brass nozzle | stående | ja |
 | `vaapen_sproyte.png` | a large glass syringe | stående | ja |
 | `vaapen_stativ.png` | an IV drip stand: metal pole with an empty drip bag | stående | ja |
+| `vaapen_stempelboss.png` | a giant wooden office stamp with a red rubber foot, handle down | stående |  |
 
 ## Runde 6: figurer (91 bilder, 91 levert)
 
@@ -353,3 +447,9 @@ Vanskeligst. Be først om et figurark (samme figur forfra, bakfra, fra siden), o
 | `sko_sokk.png` | ONE grey wool sock with a red band, side view | liggende | ja |
 | `sko_stovel.png` | ONE black pointy boot, side view | liggende | ja |
 | `sko_tofler.png` | ONE pink bunny slipper with little ears, front view | liggende | ja |
+
+## Øvrige
+
+| Filnavn | Beskrivelse | Format | Levert |
+|---|---|---|---|
+| `pupill.png` | a small red iris with a black pupil and a white highlight | kvadrat |  |
