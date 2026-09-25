@@ -2,6 +2,8 @@
 
 Denne briefen forklarer hva ChatGPT skal tegne til Morbidium, og hvordan bildene må se ut for at Claude kan bruke dem uten manuelt arbeid. Den detaljerte lista over hver enkelt bildedel spillet bruker i dag, ligger i `ART_BRIEF.md`.
 
+Vil du bare vite hva som mangler og hva du skal lime inn, gå rett til `tegnelister/LESMEG.md`. Der er alt som mangler samlet i ferdige ark med filnavn, mal, prompt og et referansebilde av dagens kodetegning, én liste per ChatGPT-samtale.
+
 ## Arbeidsdelingen
 
 - **ChatGPT** tegner. Bare bilder, ingen kode.
@@ -88,7 +90,7 @@ Forslag til første serier:
 | `hoder_kultister.png` | tung eyeliner og surmule, falske hoggtenner, blek med tårer malt på |
 | `hatter_personale.png` | sykepleierlue med rødt kors, operasjonslue, pannebånd med legespeil (farges) |
 | `hatter_kultister.png` | spiss hette, flosshatt med liten hodeskalle, krone av stearinlys |
-| `har_diverse.png` | knute, sleikt bakover, bustete |
+| `har_personale.png` | knute, sleikt bakover, bustete (serien må hete `personale`, `kultister` eller `pasienter`, ellers finner spillet den ikke) |
 | `tilbehor_ansikt.png` | runde briller, operasjonsmaske, gassmaske fra 1920-tallet |
 | `kropper_uniformer.png` | sykepleieruniform, legefrakk, oppasserdrakt (farges) |
 | `kropper_pasienter.png` | sykehusskjorte, tvangstrøye, morgenkåpe (farges) |

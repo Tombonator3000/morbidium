@@ -484,3 +484,11 @@ Alle tidspunkt er UTC.
 ## 2026-09-25 21:53 Utvidelsen ferdig, alt ligger i PR #2
 - Alle fem trinnene i UTVIDELSE.md er gjort og pushet til grenen claude/practical-babbage-nc80bu, som oppdaterer PR #2. Den må flettes inn i main før GitHub Pages viser noe av det.
 - Retting: overskriften på forrige oppføring hadde feil klokkeslett (22:08). Riktig er 21:52.
+
+## 2026-09-25 22:51 PR #2 flettet, og tegnelister for alt som mangler bilde
+- PR #2 er flettet inn i main. Grenen claude/practical-babbage-nc80bu er satt tilbake til main, så neste runde blir en ny PR.
+- Nytt verktøy tools/lag_tegnelister.py. Det regner ut hva som mangler (manifestet minus det som ligger i gpt-grafikk/) og skriver tegnelister/: én liste per ChatGPT-samtale, med filnavn, mal og en ferdig engelsk prompt for hvert ark. 245 manglende bilder er samlet i 59 ark og bilder: 15 figurark, 16 «ni ting»-ark, 5 spriteark, 8 UI-bilder og 15 enkeltbilder for det som er for stort til en rute. I tillegg 11 delark til oppskriftssystemet, med seriene spillet faktisk leter etter.
+- Med --bilder tegner verktøyet dagens kodetegninger inn i samme rutenett som malen (tegnelister/referanse/ref_*.png, 50 bilder, 2 MB), så ChatGPT ser hva som skal i hver rute. Nøklene ligger i PNG-en, så en referanse som ikke lenger passer arket, blir ikke vist.
+- tegnelister/tegneliste.csv har den samme oversikten som regneark. Kjøres verktøyet på nytt etter levering, forsvinner det som er ferdig, og et delvis levert ark får nytt filnavn med bare det som gjenstår.
+- kiste12 (kista i begravelsesrommet) og pupill hadde ingen runde i ART_BRIEF.md; nå er de med i runde 3 og 4. DESIGN_BRIEF.md foreslo har_diverse.png, men spillet leter bare etter seriene personale, kultister og pasienter, så forslaget heter nå har_personale.png.
+- lag_brief.py og lag_manifest.py kan importeres uten å skrive filer, så det nye verktøyet bruker de samme beskrivelsene og den samme nettleseroppstarten.

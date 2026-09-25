@@ -5,6 +5,7 @@ Alt ChatGPT tegner til Morbidium, legges i denne mappa. Herfra plukker verktøye
 ## Før du tegner
 - Les `DESIGN_BRIEF.md`. Den har stilblokken som limes inn først i hver ChatGPT-samtale, reglene og arktypene.
 - Lista over hvert enkelt bilde spillet trenger, med beskrivelse og format, står i `ART_BRIEF.md`.
+- Det som mangler, er samlet i ferdige ark i `tegnelister/` (start med `tegnelister/LESMEG.md`): filnavn, mal, prompt og referansebilde for hvert ark.
 - Malene som lastes opp til ChatGPT ligger i `maler/`.
 
 ## Filnavnet er alt

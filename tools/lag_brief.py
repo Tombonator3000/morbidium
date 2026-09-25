@@ -94,7 +94,7 @@ MISC = {
   'vaapen_klump': 'a brown lump the Thrower holds in his hand (you know what it is), drawn alone', 'vaapen_tang': 'a giant pair of dental pliers with a gold tooth in the jaws, handles down',
   'vaapen_knippe': 'a huge iron key ring with five big old brass keys, handle down', 'vaapen_stempelboss': 'a giant wooden office stamp with a red rubber foot, handle down',
   'vaapen_skjemabunke': 'a messy stack of official paper forms held as a weapon', 'vaapen_gasskolbe': 'a glass ether bottle with a cork, held as a weapon',
-  'glasskar': 'a small shard of broken mirror glass', 'pupill': 'a small red iris with a black pupil and a white highlight',
+  'glasskar': 'a small shard of broken mirror glass', 'kiste12': 'a dark wooden coffin with a slightly raised lid and a small brass name plate, lying lengthwise into the picture (one tile wide, two tiles deep)', 'pupill': 'a small red iris with a black pupil and a white highlight',
   'anim_kasteklump': 'SPRITE SHEET, 4 equal squares in ONE row: a brown lump spinning in the air, a quarter turn more in each frame. Same size and same center in every square',
   'anim_kastesprut': 'SPRITE SHEET, 4 equal cells in ONE row: a brown splash hitting the floor, from a small impact to a big splat with droplets flying up, then settling. Same ground line in every cell',
   'anim_blodsprut': 'SPRITE SHEET, 6 equal cells in ONE row: a burst of droplets exploding outward and falling. Draw it in WHITE and light grey with dark outlines (the game colors it red, purple or yellow). Same ground line in every cell',
@@ -236,37 +236,42 @@ RUNDER = [
   ('Runde 9: HUD og menyer (UI-settet)', lambda k: k.startswith('ui_'), 'Rammer og ikoner til HUD-en og menyene, etter ChatGPTs egne skisser. Paneler, kort, knapper, skilt og utklippstavle strekkes av spillet (9-delt): hjørnene beholder størrelsen og sidene strekkes, så all pynt må ligge i kanten og midten må være jevn. Ringene må være helt gjennomsiktige i midten.'),
   ('Runde 1: kuriositetene (Isaac-gjenstander), apparater og lommerusk', lambda k: k.startswith(('kur_', 'pille_', 'akt_', 'lomme_')) or k == 'glass_tomt', 'Gjenstandene man plukker opp og kombinerer. Små, tydelige og groteske, som gjenstandene i The Binding of Isaac. Bruk gjerne «ni ting»-arket fra DESIGN_BRIEF.md.'),
   ('Runde 2: evnekortene', lambda k: k.startswith('kort_'), 'Størst gevinst først. Kortene vises i HUD-en og i journalen. Motivet midt i bildet, spillet tegner selve kortrammen.'),
-  ('Runde 3: rekvisitter og møbler', lambda k: k.startswith(('prop_', 'seng_', 'skap', 'hylle', 'disk_', 'kiste_')) or k in ('journalskap', 'olsenskap', 'pult', 'sjakt', 'alter3', 'kommodef', 'garderobes', 'sperre', 'lik', 'celle', 'medisinskap', 'offeralter', 'sprekkvegg') or k.startswith(('arkivhylle', 'vaskemaskin', 'verktoytavle')), 'Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbelet helt nederst i motivet.'),
-  ('Runde 4: plukk, effekter, tillegg og pynt', lambda k: k in ('hjerte', 'morbdrape', 'tann', 'due_figur', 'stempelmerke', 'skyggehand_p', 'stjerne', 'skudd_slim', 'torner', 'isolatvegg', 'stempelfall', 'kortplukk') or k.startswith(('flaske_', 'puff', 'tillegg_', 'pynt_')), 'Små ting. Enkle former, tydelig kontur.'),
+  ('Runde 3: rekvisitter og møbler', lambda k: k.startswith(('prop_', 'seng_', 'skap', 'hylle', 'disk_', 'kiste')) or k in ('journalskap', 'olsenskap', 'pult', 'sjakt', 'alter3', 'kommodef', 'garderobes', 'sperre', 'lik', 'celle', 'medisinskap', 'offeralter', 'sprekkvegg') or k.startswith(('arkivhylle', 'vaskemaskin', 'verktoytavle')), 'Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbelet helt nederst i motivet.'),
+  ('Runde 4: plukk, effekter, tillegg og pynt', lambda k: k in ('hjerte', 'morbdrape', 'tann', 'due_figur', 'stempelmerke', 'skyggehand_p', 'stjerne', 'skudd_slim', 'torner', 'isolatvegg', 'stempelfall', 'kortplukk', 'pupill') or k.startswith(('flaske_', 'puff', 'tillegg_', 'pynt_')), 'Små ting. Enkle former, tydelig kontur.'),
   ('Runde 5: våpen', lambda k: k.startswith('vaapen_'), 'Våpenet står loddrett med håndtaket nederst og tuppen opp. Spillet roterer det selv.'),
   ('Runde 6: figurer', lambda k: k.startswith(('hode_', 'kropp_', 'kappe_', 'blob_', 'sko_')), 'Vanskeligst. Be først om et figurark (samme figur forfra, bakfra, fra siden), og deretter om hode og kropp hver for seg fra arket. Armer og bein tegner spillet selv som tykke streker, så de skal ikke være med.'),
 ]
 STIL = '''Style: hand-drawn cartoon game art in the style of Conan Chop Chop mixed with Castle Crashers. Thick dark brown ink outlines (#2a1a14) with a slightly wobbly, hand-inked line that is heavier on the lower right. Flat colors with one darker cel-shade tone on the lower right and a small light highlight on the upper left. Muted, warm 1920s palette. Setting: a 1920s Norwegian sanatorium, Lovecraftian and a bit gross, but with dark humor. Camera: seen from the front and slightly above (about 50 degrees), like a top-down action game, so objects show their front and a little of their top.
 Technical: PNG with a TRANSPARENT background. Exactly one object, centered, fully visible (not cropped). No ground shadow, no text, no frame, no background scenery.'''
 
-ut = ['# Morbidium: kunstbrief for bildegenerering', '',
- 'Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke rediger den for hånd; endre skriptet og kjør det på nytt.', '',
- '## Slik gjør du det', '',
- '1. Lim inn stilblokken under i ChatGPT én gang, og be den bruke stilen for alle bildene i samtalen.',
- '2. Be om ett bilde om gangen: «Draw: <beskrivelse fra tabellen>». Bruk formatet i tabellen (kvadrat 1024x1024, stående 1024x1536, liggende 1536x1024).',
- '3. Last ned bildet som PNG og gi det nøyaktig filnavnet fra tabellen, for eksempel `kort_due.png`.',
- '4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).',
- '5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.', '',
- '## Stilblokk (lim inn i ChatGPT)', '', '```', STIL, '```', '',
- '## Tips', '',
- '- Samme stil i alle bilder er viktigere enn at hvert enkelt bilde er perfekt. Bruk samme ChatGPT-samtale for en hel runde.',
- '- Gjennomsiktig bakgrunn er best. Hvit eller ensfarget bakgrunn går også, verktøyet fjerner den fra kantene og innover.',
- '- Ikke tegn skygge på bakken. Spillet legger på skygge og lys selv.', '']
-brukt = set()
-for tittel, f, merk in RUNDER:
-    ks = sorted(k for k in man if f(k) and k not in brukt); brukt |= set(ks)
-    lev = sum(1 for k in ks if k in LEV)
-    ut += [f'## {tittel} ({len(ks)} bilder, {lev} levert)', '', merk, '', '| Filnavn | Beskrivelse til ChatGPT | Format | Levert |', '|---|---|---|---|']
-    ut += [f'| `{k}.png` | {beskriv(k)} | {format_(man[k])} | {"ja" if k in LEV else ""} |' for k in ks]
-    ut.append('')
-rest = sorted(k for k in man if k not in brukt)
-if rest: ut += ['## Øvrige', '', '| Filnavn | Beskrivelse | Format | Levert |', '|---|---|---|---|'] + [f'| `{k}.png` | {beskriv(k)} | {format_(man[k])} | {"ja" if k in LEV else ""} |' for k in rest] + ['']
-ut.insert(ut.index('## Stilblokk (lim inn i ChatGPT)'), f'Status: {sum(1 for k in man if k in LEV)} av {len(man)} bilder er levert. Kolonnen «Levert» viser hvilke.')
-ut.insert(ut.index('## Stilblokk (lim inn i ChatGPT)'), '')
-(ROT / 'ART_BRIEF.md').write_text('\n'.join(ut), encoding='utf-8')
-print('skrev ART_BRIEF.md med', len(man), 'bilder,', len(rest), 'uten runde')
+def skriv():
+    """Skriver ART_BRIEF.md. Skilt ut som funksjon så tools/lag_tegnelister.py kan hente beskrivelsene uten å skrive fila."""
+    ut = ['# Morbidium: kunstbrief for bildegenerering', '',
+     'Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke rediger den for hånd; endre skriptet og kjør det på nytt.', '',
+     '## Slik gjør du det', '',
+     '1. Lim inn stilblokken under i ChatGPT én gang, og be den bruke stilen for alle bildene i samtalen.',
+     '2. Be om ett bilde om gangen: «Draw: <beskrivelse fra tabellen>». Bruk formatet i tabellen (kvadrat 1024x1024, stående 1024x1536, liggende 1536x1024).',
+     '3. Last ned bildet som PNG og gi det nøyaktig filnavnet fra tabellen, for eksempel `kort_due.png`.',
+     '4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).',
+     '5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.', '',
+     '## Stilblokk (lim inn i ChatGPT)', '', '```', STIL, '```', '',
+     '## Tips', '',
+     '- Samme stil i alle bilder er viktigere enn at hvert enkelt bilde er perfekt. Bruk samme ChatGPT-samtale for en hel runde.',
+     '- Gjennomsiktig bakgrunn er best. Hvit eller ensfarget bakgrunn går også, verktøyet fjerner den fra kantene og innover.',
+     '- Ikke tegn skygge på bakken. Spillet legger på skygge og lys selv.', '']
+    brukt = set()
+    for tittel, f, merk in RUNDER:
+        ks = sorted(k for k in man if f(k) and k not in brukt); brukt |= set(ks)
+        lev = sum(1 for k in ks if k in LEV)
+        ut += [f'## {tittel} ({len(ks)} bilder, {lev} levert)', '', merk, '', '| Filnavn | Beskrivelse til ChatGPT | Format | Levert |', '|---|---|---|---|']
+        ut += [f'| `{k}.png` | {beskriv(k)} | {format_(man[k])} | {"ja" if k in LEV else ""} |' for k in ks]
+        ut.append('')
+    rest = sorted(k for k in man if k not in brukt)
+    if rest: ut += ['## Øvrige', '', '| Filnavn | Beskrivelse | Format | Levert |', '|---|---|---|---|'] + [f'| `{k}.png` | {beskriv(k)} | {format_(man[k])} | {"ja" if k in LEV else ""} |' for k in rest] + ['']
+    ut.insert(ut.index('## Stilblokk (lim inn i ChatGPT)'), f'Status: {sum(1 for k in man if k in LEV)} av {len(man)} bilder er levert. Kolonnen «Levert» viser hvilke.')
+    ut.insert(ut.index('## Stilblokk (lim inn i ChatGPT)'), '')
+    (ROT / 'ART_BRIEF.md').write_text('\n'.join(ut), encoding='utf-8')
+    print('skrev ART_BRIEF.md med', len(man), 'bilder,', len(rest), 'uten runde')
+
+if __name__ == '__main__':
+    skriv()

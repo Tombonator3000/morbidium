@@ -1,0 +1,71 @@
+nr;liste;type;filnavn;mal;bilder;nokler
+1a;Fiendene og minisjefene i sanatoriet;figurark;figur_kasteren.png;mal_figur.png;6;hode_kasteren_f hode_kasteren_b hode_kasteren_s kropp_kasteren_f kropp_kasteren_b kropp_kasteren_s
+1b;Fiendene og minisjefene i sanatoriet;figurark;figur_trille.png;mal_figur.png;6;hode_trille_f hode_trille_b hode_trille_s kropp_trille_f kropp_trille_b kropp_trille_s
+1c;Fiendene og minisjefene i sanatoriet;figurark;figur_speil.png;mal_figur.png;6;hode_speil_f hode_speil_b hode_speil_s kropp_speil_f kropp_speil_b kropp_speil_s
+1d;Fiendene og minisjefene i sanatoriet;figurark;figur_tannlege.png;mal_figur.png;6;hode_tannlege_f hode_tannlege_b hode_tannlege_s kropp_tannlege_f kropp_tannlege_b kropp_tannlege_s
+1e;Fiendene og minisjefene i sanatoriet;figurark;figur_portier.png;mal_figur.png;6;hode_portier_f hode_portier_b hode_portier_s kropp_portier_f kropp_portier_b kropp_portier_s
+1f;Fiendene og minisjefene i sanatoriet;«ni ting»-ark;ark__hjul_trille_f__vaapen_klump__glasskar__vaapen_tang__vaapen_knippe__portierhode__vaapen_gasskolbe__vaapen_skjemabunke__vaapen_stempelboss.png;mal_ni_ting.png;9;hjul_trille_f vaapen_klump glasskar vaapen_tang vaapen_knippe portierhode vaapen_gasskolbe vaapen_skjemabunke vaapen_stempelboss
+2a;Hviskekoret og Den Store Klumpen;enkeltbilde;koret_kropp.png;;1;koret_kropp
+2b;Hviskekoret og Den Store Klumpen;«ni ting»-ark;ark__koret_munn0__koret_munn1__koret_munn2__koret_ore0__koret_ore1__pupill.png;mal_ni_ting.png;6;koret_munn0 koret_munn1 koret_munn2 koret_ore0 koret_ore1 pupill
+2c;Hviskekoret og Den Store Klumpen;enkeltbilde;klumpen_kropp.png;;1;klumpen_kropp
+2d;Hviskekoret og Den Store Klumpen;«ni ting»-ark;ark__klumpen_ansikt0__klumpen_ansikt1__klumpen_ansikt2__klumpen_ansikt3__klumpen_oye__klumpen_lue__blob_klumpunge_f__blob_klumpunge_b__blob_klumpunge_s.png;mal_ni_ting.png;9;klumpen_ansikt0 klumpen_ansikt1 klumpen_ansikt2 klumpen_ansikt3 klumpen_oye klumpen_lue blob_klumpunge_f blob_klumpunge_b blob_klumpunge_s
+3a;Spriteark;spriteark;anim_kastesprut.png;;1;anim_kastesprut
+3b;Spriteark;spriteark;anim_blodsprut.png;;1;anim_blodsprut
+3c;Spriteark;spriteark;anim_kasteklump.png;;1;anim_kasteklump
+3d;Spriteark;spriteark;anim_oye.png;;1;anim_oye
+3e;Spriteark;spriteark;anim_kjottbiter.png;;1;anim_kjottbiter
+4a;HUD og menyer;«ni ting»-ark;ark__ui_hjerte_full__ui_hjerte_halv__ui_hjerte_tom__ui_ikon_journal__ui_ikon_pause.png;mal_ni_ting.png;5;ui_hjerte_full ui_hjerte_halv ui_hjerte_tom ui_ikon_journal ui_ikon_pause
+4b;HUD og menyer;UI-bilde;ui_ring_portrett.png;;1;ui_ring_portrett
+4c;HUD og menyer;UI-bilde;ui_ring_kart.png;;1;ui_ring_kart
+4d;HUD og menyer;UI-bilde;ui_panel.png;;1;ui_panel
+4e;HUD og menyer;UI-bilde;ui_knapp.png;;1;ui_knapp
+4f;HUD og menyer;UI-bilde;ui_kort.png;;1;ui_kort
+4g;HUD og menyer;UI-bilde;ui_skilt.png;;1;ui_skilt
+4h;HUD og menyer;UI-bilde;ui_utklipp.png;;1;ui_utklipp
+4i;HUD og menyer;UI-bilde;ui_hode.png;;1;ui_hode
+5a;Parken og Nattskogen: fiender og sjefer;figurark;figur_gartner.png;mal_figur.png;6;hode_gartner_f hode_gartner_b hode_gartner_s kropp_gartner_f kropp_gartner_b kropp_gartner_s
+5b;Parken og Nattskogen: fiender og sjefer;figurark;figur_huldra.png;mal_figur.png;6;hode_huldra_f hode_huldra_b hode_huldra_s kropp_huldra_f kropp_huldra_b kropp_huldra_s
+5c;Parken og Nattskogen: fiender og sjefer;figurark;figur_vedkubbe.png;mal_figur.png;6;hode_vedkubbe_f hode_vedkubbe_b hode_vedkubbe_s kropp_vedkubbe_f kropp_vedkubbe_b kropp_vedkubbe_s
+5d;Parken og Nattskogen: fiender og sjefer;figurark;figur_nokken.png;mal_figur.png;6;hode_nokken_f hode_nokken_b hode_nokken_s kropp_nokken_f kropp_nokken_b kropp_nokken_s
+5e;Parken og Nattskogen: fiender og sjefer;figurark;figur_hekk.png;mal_figur.png;2;hode_hekk_f kropp_hekk_f
+5f;Parken og Nattskogen: fiender og sjefer;enkeltbilde;hjort_kropp.png;;1;hjort_kropp
+5g;Parken og Nattskogen: fiender og sjefer;enkeltbilde;hjort_hode.png;;1;hjort_hode
+5h;Parken og Nattskogen: fiender og sjefer;«ni ting»-ark;ark__kraake_kropp__kraake_vinge__blob_kaalhode_f__blob_kaalhode_b__blob_kaalhode_s__vaapen_hagesaks__vaapen_storsaks.png;mal_ni_ting.png;7;kraake_kropp kraake_vinge blob_kaalhode_f blob_kaalhode_b blob_kaalhode_s vaapen_hagesaks vaapen_storsaks
+6a;Hendelsene;figurark;figur_baklengs.png;mal_figur.png;6;hode_baklengs_f hode_baklengs_b hode_baklengs_s kropp_baklengs_f kropp_baklengs_b kropp_baklengs_s
+6b;Hendelsene;«ni ting»-ark;ark__prop_telefon__prop_kaffebord__prop_ku__prop_brennevin__prop_badekarmann__prop_heis__prop_rotter__prop_radiobord__prop_utedo.png;mal_ni_ting.png;9;prop_telefon prop_kaffebord prop_ku prop_brennevin prop_badekarmann prop_heis prop_rotter prop_radiobord prop_utedo
+6c;Hendelsene;«ni ting»-ark;ark__prop_kubbekona__prop_tannfe__prop_tannglass__prop_lampemann__prop_lampemann_paa.png;mal_ni_ting.png;5;prop_kubbekona prop_tannfe prop_tannglass prop_lampemann prop_lampemann_paa
+6d;Hendelsene;enkeltbilde;prop_damer.png;;1;prop_damer
+6e;Hendelsene;enkeltbilde;prop_kjempe.png;;1;prop_kjempe
+7a;Drømmene;figurark;figur_blank_m.png;mal_figur.png;6;hode_blank_m_f hode_blank_m_b hode_blank_m_s kropp_blank_m_f kropp_blank_m_b kropp_blank_m_s
+7b;Drømmene;figurark;figur_ansikt_m.png;mal_figur.png;6;hode_ansikt_m_f hode_ansikt_m_b hode_ansikt_m_s kropp_ansikt_m_f kropp_ansikt_m_b kropp_ansikt_m_s
+7c;Drømmene;figurark;figur_blank_k.png;mal_figur.png;6;hode_blank_k_f hode_blank_k_b hode_blank_k_s kropp_blank_k_f kropp_blank_k_b kropp_blank_k_s
+7d;Drømmene;figurark;figur_ansikt_k.png;mal_figur.png;6;hode_ansikt_k_f hode_ansikt_k_b hode_ansikt_k_s kropp_ansikt_k_f kropp_ansikt_k_b kropp_ansikt_k_s
+7e;Drømmene;«ni ting»-ark;ark__drom_vindu_sno__drom_vindu_rim__drom_vindu_regn__drom_vindu_brann__drom_vindu_taake__drom_vindu_klart__drom_dor__drom_dor_aapen__drom_dorlaast.png;mal_ni_ting.png;9;drom_vindu_sno drom_vindu_rim drom_vindu_regn drom_vindu_brann drom_vindu_taake drom_vindu_klart drom_dor drom_dor_aapen drom_dorlaast
+7f;Drømmene;«ni ting»-ark;ark__drom_lue__drom_ur__drom_symaskin__drom_kopp__drom_soldat__drom_hvitveis__drom_kaape_7a2a2e__drom_kaape_4a4a52__drom_sko.png;mal_ni_ting.png;9;drom_lue drom_ur drom_symaskin drom_kopp drom_soldat drom_hvitveis drom_kaape_7a2a2e drom_kaape_4a4a52 drom_sko
+7g;Drømmene;«ni ting»-ark;ark__drom_bord__drom_brev__drom_foto__drom_notat__drom_speil__drom_koffert__drom_bok__drom_kommode__drom_mappe.png;mal_ni_ting.png;9;drom_bord drom_brev drom_foto drom_notat drom_speil drom_koffert drom_bok drom_kommode drom_mappe
+7h;Drømmene;enkeltbilde;drom_hest.png;;1;drom_hest
+8a;Møblene i de nye rommene, parken og skogen;«ni ting»-ark;ark__prop_elektrostol__prop_spole__prop_rontgen__prop_lysskjerm__prop_tannlegestol__prop_instrumentbord__prop_spyttkum__prop_frisorstol__prop_harhaug.png;mal_ni_ting.png;9;prop_elektrostol prop_spole prop_rontgen prop_lysskjerm prop_tannlegestol prop_instrumentbord prop_spyttkum prop_frisorstol prop_harhaug
+8b;Møblene i de nye rommene, parken og skogen;«ni ting»-ark;ark__prop_piano__prop_grammofon__prop_lenestol__prop_kortbord__prop_globus__prop_bjorn__prop_gevir__prop_kors__kiste12.png;mal_ni_ting.png;9;prop_piano prop_grammofon prop_lenestol prop_kortbord prop_globus prop_bjorn prop_gevir prop_kors kiste12
+8c;Møblene i de nye rommene, parken og skogen;«ni ting»-ark;ark__prop_komfyr__prop_gryte__prop_kjottkrok__prop_kjele__prop_kullhaug__prop_ror__prop_vedovn__prop_kloakk__prop_kullsjakt.png;mal_ni_ting.png;9;prop_komfyr prop_gryte prop_kjottkrok prop_kjele prop_kullhaug prop_ror prop_vedovn prop_kloakk prop_kullsjakt
+8d;Møblene i de nye rommene, parken og skogen;«ni ting»-ark;ark__prop_plantebord__prop_kjempeplante__prop_vannkanne__prop_busk__prop_blomsterbed__prop_hagenisse__prop_fuglebad__prop_bronn__prop_lyktestolpe.png;mal_ni_ting.png;9;prop_plantebord prop_kjempeplante prop_vannkanne prop_busk prop_blomsterbed prop_hagenisse prop_fuglebad prop_bronn prop_lyktestolpe
+8e;Møblene i de nye rommene, parken og skogen;«ni ting»-ark;ark__prop_engel__prop_grav__prop_statue__prop_fontene__prop_siv__prop_vak__prop_snomann__prop_liggestol__prop_teppe.png;mal_ni_ting.png;9;prop_engel prop_grav prop_statue prop_fontene prop_siv prop_vak prop_snomann prop_liggestol prop_teppe
+8f;Møblene i de nye rommene, parken og skogen;«ni ting»-ark;ark__prop_baal__prop_stubbe__prop_sopp__prop_stein__prop_vedstabel__prop_robat__prop_ruinmur__prop_skilt__prop_kjerre.png;mal_ni_ting.png;9;prop_baal prop_stubbe prop_sopp prop_stein prop_vedstabel prop_robat prop_ruinmur prop_skilt prop_kjerre
+8g;Møblene i de nye rommene, parken og skogen;enkeltbilde;prop_utgang.png;;1;prop_utgang
+8h;Møblene i de nye rommene, parken og skogen;enkeltbilde;prop_vindu.png;;1;prop_vindu
+8i;Møblene i de nye rommene, parken og skogen;enkeltbilde;prop_porten.png;;1;prop_porten
+8j;Møblene i de nye rommene, parken og skogen;enkeltbilde;prop_langbord.png;;1;prop_langbord
+8k;Møblene i de nye rommene, parken og skogen;enkeltbilde;prop_tre.png;;1;prop_tre
+8l;Møblene i de nye rommene, parken og skogen;enkeltbilde;prop_bjork.png;;1;prop_bjork
+8m;Møblene i de nye rommene, parken og skogen;enkeltbilde;prop_bjork_dod.png;;1;prop_bjork_dod
+8n;Møblene i de nye rommene, parken og skogen;enkeltbilde;prop_lysthus.png;;1;prop_lysthus
+9a;Delark til oppskriftssystemet;delark;hoder_pasienter.png;mal_hoder.png;0;
+9b;Delark til oppskriftssystemet;delark;hoder_kultister.png;mal_hoder.png;0;
+9c;Delark til oppskriftssystemet;delark;kropper_pasienter.png;mal_kropper.png;0;
+9d;Delark til oppskriftssystemet;delark;kropper_kultister.png;mal_kropper.png;0;
+9e;Delark til oppskriftssystemet;delark;hatter_kultister.png;mal_hatter_og_har.png;0;
+9f;Delark til oppskriftssystemet;delark;tilbehor_ansikt.png;mal_tilbehor.png;0;
+9g;Delark til oppskriftssystemet;delark;har_personale.png;mal_hatter_og_har.png;0;
+9h;Delark til oppskriftssystemet;delark;kropper_personale.png;mal_kropper.png;0;
+9i;Delark til oppskriftssystemet;delark;hatter_pasienter.png;mal_hatter_og_har.png;0;
+9j;Delark til oppskriftssystemet;delark;har_pasienter.png;mal_hatter_og_har.png;0;
+9k;Delark til oppskriftssystemet;delark;har_kultister.png;mal_hatter_og_har.png;0;
