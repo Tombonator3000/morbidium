@@ -567,3 +567,8 @@ Alle tidspunkt er UTC.
 - Kapittelvalget i drømmene tåler nå at testene hopper over startetasjen (den gamle regelen gjelder da). Det var årsaken til at drømmetesten feilet i siste fulle kjøring (166 av 167) når løpet tilfeldigvis startet i vaskesjakten.
 - Bildene: nye reservetegninger for journalsidene 2, 3 og 4, tre av sluttbildene og forstanderen, pluss Venterommet og skrinet. Manifestet har 544 nøkler. Runde 14 og liste 10 har fått nye beskrivelser og to nye bilder (fire bestillinger). Siden «Tegnelister» er oppdatert på samme adresse.
 - Tester: del 31 sjekker nå også Venterommet, skrinet med kjettingene og forstanderen som løses. Del 25, 26 og 31 går gjennom, og røyktesten er kjørt både i 2D og 3D uten konsollfeil.
+
+## 2026-09-26 01:57 Hele testpakken grønn før PR
+- Generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 171 av 171 (med de nye sjekkene for Venterommet, skrinet, kjettingene og forstanderen som løses).
+- Tom sendte ønsket om historien en gang til. Han har fått et sammendrag av det som er gjort, og tilbud om neste steg: knytte drømmene direkte til havet og Avdeling Null, kjettinger i kampen mot Journalen, og bjelle og hav som lyd i Dypet.
+- Neste: PR til main og fletting.
