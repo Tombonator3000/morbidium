@@ -662,3 +662,9 @@ Alle tidspunkt er UTC.
   2. Hver papirdukke (fiender, personale, figurer i drømmene) har to strekbånd med 3200 punkter hver, rundt 150 kB i grafikkminnet. Doll.dispose og Lagdukke.dispose koblet bare roten løs. Nå frigjøres strekbåndene og materialene (dukkeKast i 11_doll.js). Teksturene og firkantene deles og blir liggende.
   3. Flekkene på gulvet, plakatene og dørene til tjenesterommene fikk nye teksturer og materialer i hver etasje uten å bli registrert for opprydding (12_paint.js). Nå havner de i Paint.owned.
 - Etter rettingene ligger grafikkminnet flatt på rundt 52 MB (tekstur 41, render-buffere 7, buffere 4) gjennom tolv etasjeskifter med fiender. Små teksturer som fortsatt dukker opp, er bilder av møbler som bufres første gang de vises. De flater ut.
+
+## 2026-09-26 09:27 WebGL som mistes, hentes tilbake i stedet for å stoppe spillet
+- Før viste spillet feilmeldingen «Noe gikk galt» med en gang WebGL-konteksten ble mistet. Det skjer på mobil ved lite minne, men også når nettleseren legges i bakgrunnen.
+- Nå (R.mistet og R.hentet i 04_render.js): spillet pauser og viser «Grafikken ble borte». Three.js bygger opp igjen teksturer, render-mål og shadere når konteksten kommer tilbake. Deretter går grafikken ned et trinn: oppløsningen settes ned (dprMax minus 0,5, minst 1), og 3D går ett nivå ned (middels til lav, lav til 2D). Kommer grafikken ikke tilbake på åtte sekunder, vises feilmeldingen med «Prøv enkel grafikk» som før. Testmodus-rapporten får med når det skjer.
+- Selvtesten ved oppstart (hvitt eller tomt bilde gir enkel grafikk) tolket en mistet kontekst som tomt bilde og slo av 3D helt. Den ser nå bort fra mistet kontekst.
+- Testet ved å miste konteksten med vilje (WEBGL_lose_context) i mobilprofil: pause, tilbake etter ett sekund, dpr fra 1,5 til 1 og 3D fra middels til lav, bildet tegnes riktig igjen, ingen feilmelding og ingen konsollfeil.

@@ -21,12 +21,30 @@ const R = {
   init(canvas) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches); this.dpr = this.dprMax = Math.min(devicePixelRatio || 1, this.coarse ? 1.5 : 2); this.renderer.setPixelRatio(1);
-    canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); if (window.showErr) showErr('Grafikken gikk tom for minne eller krasjet (WebGL-konteksten ble mistet).', true); });
+    canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); this.mistet(); });
+    canvas.addEventListener('webglcontextrestored', () => this.hentet());
     this.scene = new THREE.Scene(); this.lscene = new THREE.Scene();
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 300);
     this.dyn = new THREE.Group(); this.scene.add(this.dyn);
     this.makeTextures(); this.makePost(); this.resize();
     addEventListener('resize', () => this.resize());
+  },
+  /* WebGL kan mistes på mobil: for lite minne, eller når nettleseren legges i bakgrunnen. Three.js bygger opp igjen
+     det den eier når konteksten kommer tilbake. Spillet pauser, venter, går ned til lettere grafikk (lavere oppløsning
+     og et trinn ned i 3D) og fortsetter. Kommer grafikken ikke tilbake på åtte sekunder, vises feilmeldingen med
+     «Prøv enkel grafikk» som før. */
+  mistet() {
+    this.tapt = true; this.tapN = (this.tapN || 0) + 1;
+    if (typeof Testmodus === 'object') Testmodus.feil.push({ t: performance.now(), m: 'WebGL mistet (' + this.tapN + '. gang)' });
+    try { if (G.state === 'play') openPause(); toast('Grafikken ble borte', 'Venter på at den kommer tilbake'); } catch (e) { }
+    clearTimeout(this.tapTimer);
+    this.tapTimer = setTimeout(() => { if (this.tapt && window.showErr) showErr('Grafikken gikk tom for minne eller krasjet (WebGL-konteksten ble mistet), og kom ikke tilbake.', true); }, 8000);
+  },
+  hentet() {
+    this.tapt = false; clearTimeout(this.tapTimer); this.checkN = 3;
+    if (typeof Testmodus === 'object') Testmodus.feil.push({ t: performance.now(), m: 'WebGL hentet tilbake' });
+    this.dprMax = Math.max(1, (this.dprMax || 1) - .5); this.dpr = Math.min(this.dpr, this.dprMax); this.resize();
+    try { if (D3.on) D3.nedgrader(); else toast('Grafikken er tilbake', 'Oppløsningen er satt litt ned'); } catch (e) { }
   },
   resize() {
     const w = innerWidth, h = innerHeight, a = w / h, vh = Math.max(this.view, 10.5 / a), c = this.camera;
@@ -205,12 +223,13 @@ const R = {
     if (this.safe) { const r = this.renderer; this.fx.hurt = Math.max(0, this.fx.hurt - dt * 2.5); this.fx.flash = Math.max(0, this.fx.flash - dt * 5); r.setRenderTarget(null); r.setClearColor(this.clear || 0x16130c, 1); r.clear(); r.render(this.scene, this.camera); return; }
     this.renderPost(dt);
     // selvtest: blir bildet helt hvitt eller helt tomt, byttes det til enkel grafikk
-    if (this.checkN < 3 && (++this.frameN || (this.frameN = 1)) % 20 === 0) {
+    // (ikke mens WebGL er mistet: det er ikke et hvitt eller tomt bilde, og mistet/hentet tar seg av det)
+    if (this.checkN < 3 && !this.tapt && (++this.frameN || (this.frameN = 1)) % 20 === 0) {
       this.checkN++;
       try {
         const gl = this.renderer.getContext(), w = gl.drawingBufferWidth, h = gl.drawingBufferHeight, px = new Uint8Array(4); let white = 0, blank = 0;
         for (let i = 1; i <= 3; i++) for (let j = 1; j <= 3; j++) { gl.readPixels(Math.floor(w * i / 4), Math.floor(h * j / 4), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); if (px[0] > 247 && px[1] > 247 && px[2] > 247) white++; if (px[0] + px[1] + px[2] === 0) blank++; }
-        if (white >= 8 || blank >= 9 || gl.isContextLost()) { this.safe = true; this.onSafe && this.onSafe(white >= 8 ? 'hvitt bilde' : 'tomt bilde'); }
+        if (!gl.isContextLost() && (white >= 8 || blank >= 9)) { this.safe = true; this.onSafe && this.onSafe(white >= 8 ? 'hvitt bilde' : 'tomt bilde'); }
       } catch (e) { }
     }
   },
