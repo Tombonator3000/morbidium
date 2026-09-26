@@ -166,6 +166,9 @@ const Vaatt = {
     const f = R.fx.blod, ff = R.fx.blodFlip; _treff.call(Blod, e, src, d, hp0);
     if (e && e.kind === 'player' && Vaatt.aktiv() && Vaatt.blodOk()) { R.fx.blod = f; R.fx.blodFlip = ff; Vaatt.treff(clamp(d / Math.max(10, e.maxHp || 30) * 3, .35, 1.6), src); }
   };
+  // slås blod og skrekk av, forsvinner blodet på glasset med en gang (vannet blir)
+  const _sett = Blod.sett;
+  Blod.sett = function (on) { _sett.call(Blod, on); if (!Blod.on) { Vaatt.draper = Vaatt.draper.filter(d => !d.blod); Vaatt.spor = Vaatt.spor.filter(s => !s.blod); } };
   const _dod = Blod.dod;
   Blod.dod = function (e, src) { _dod.call(Blod, e, src); if (e && e.type !== 'flue') Vaatt.naert(e.x, e.z, e.type === 'rotte' ? .3 : 1); };
   const _sjef = Blod.sjefDod;

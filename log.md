@@ -621,3 +621,10 @@ Alle tidspunkt er UTC.
 - To små rettelser i 42_lyd.js: dronen i en ny etasje stemmes med en gang etter musikken (før skjedde det bare når stykket byttet), og base64-teksten til hver lyd slippes når lyden er pakket ut, så den ikke ligger i minnet to ganger.
 - Delene 12, 32, 33 og 34 går gjennom hver for seg. Generatoren ga 1800 av 1800, og gjennomspillingen gikk uten feil. Full kjøring av test_ekstra pågår.
 - README.md (nye avsnitt om lyd, musikk og vått på skjermen, og takk til Freesound, VCSL og iMUSE som forbilde), AGENTS.md (regel for frie lyder, nye filer), memory.md (tre nye deler) og todo.md (ny runde med spørsmål til Tom) er oppdatert.
+
+## 2026-09-26 07:08 Full testkjøring: fem feil, fire tidsfølsomme tester gjort robuste
+- Full kjøring på grenen: generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 186 av 191.
+- Én feil var ventet: blodtesten i del 18 så etter det gamle, ferdigmalte blodet i kanten, som nå er byttet ut med dråpene. Testen godtar nå dråper på glasset som blod på skjermen. Samtidig forsvinner blodet på glasset med en gang når «Blod og skrekkeffekter» slås av (Blod.sett), som resten av blodet.
+- De fire andre ventet en fast tid i sanntid på noe som skjer i spilltid: det tunge slaget mot den sprukne veggen og bølgene i bakholdet (del 6), og Kasteren som kaster (del 19). Del 9 (liket kan undersøkes) feilet fordi en gravstein på kirkegården sto nærmere enn liket. Samme testdeler kjørt mot main på denne maskinen: bakholdet og liket feiler der også, så de fantes fra før. Maskinen er mye tregere enn i forrige økt (main gir rundt 5 bilder i sekundet i testnettleseren, mot 9 da).
+- Målt: grenen går rundt 5 til 10 prosent tregere enn main i testnettleseren, men målingene spriker like mye (4,4 til 5,0 mot 4,9 til 5,6), og verken opptakene, musikkens klang eller dråpene står ut hver for seg.
+- Rettet: del 6 og 19 venter nå på spilltid, og del 9 prøver flere sider av liket til det er det nærmeste som kan undersøkes. Del 6, 9, 17, 18, 19 og 20 går gjennom. En ny full kjøring går nå.
