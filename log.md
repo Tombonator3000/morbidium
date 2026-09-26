@@ -524,3 +524,17 @@ Alle tidspunkt er UTC.
 - Pytter og vann speiler lampene og lykta i nærheten (vannshaderen), og tåka lyser opp rundt punktlysene i 3D (15_rom3d.js).
 - tools/lag_tegnelister.py kan også lage én side med alle arkene og kopieringsknapper (--side), til mobilen.
 - Ny testdel 30 i test_ekstra (dybde). Den går gjennom i 2D; hele pakken kjøres når historien er på plass.
+
+## 2026-09-26 00:38 En bedre historie (del 2 av Toms nye bestilling)
+- Ny fil src/41_historie.js. Hovedhistorien sies nå tydelig i stedet for bare å hintes: Morbidium sanatorium ble grunnlagt i 1887 av forstander dr. Mathias Morbeck («M.» i journalen). Han kjøpte en journal i svart skinn for å skrive ned alle sinn i huset, og journalen begynte å skrive tilbake. Morbidium er blekket den skriver med, bygget vokser nedover for hver pasient som slutter å lese, og pasienten er den samme sjela under nye navn.
+- En journalside før hver drøm (fem i alt), med knappen «Les videre» inn i drømmen. Siden nevner sjefen som nettopp ble behandlet (bare hvis den faktisk ble det, ikke etter heisen), en bit av sannheten om huset, og hva Journalen mener om valget i forrige kapittel. Escape går videre til innledningen, så valget om å våkne med en gang ikke forsvinner.
+- Kapitlene følger startetasjen: fra vaskesjakten blir det kapittel 1, 4 og 5, så skylda alltid kommer før sannheten. Før ble det 1, 2 og 5.
+- Personen i drømmene passer til alderen (ingen bestefar til en på sytti).
+- Forstanderen sitter i Dypet og leser. Du kan spørre hvem som skriver, lese over skulderen hans (der står linjer fra din egen historie), ta pennen fra ham (Journalen blir svakere, litt mer Morbidium, ny merknad «Pennen»), eller la ham lese i fred.
+- Sjefene: en ny tale ved en tredjedel helse for alle sju, slengord i kampen, og siste ord når de dør. Journalen spør «Hvem opprettet denne journalen?» og svarer selv litt etter. Hjorten kjenner igjen den hvite hesten fra drømmen.
+- Høyttaleren, Hviskekoret og radioen bruker personen og tegnet fra drømmene. Personalet vet hvor de er (suppe i parken, elg i suppa i skogen), og vaktmester Olsen har en historie om nøklene gjennom alle seks etasjene.
+- Siste side før etterordet ved utskrivningen, og brevet følger slutten: gjentakelse gir et innkallingsbrev med stempelet INNKALT, og har pasienten pennen, signerer pasienten selv. Legens konklusjon på kortet følger også slutten.
+- Seks nye journalfragmenter, fra forstanderens første notat i 1887 til «Hele historien». Nye merknader for Klumpen, Hekk og Hjorten, som manglet.
+- Årstall og småfeil: ingen har jobbet der i førti år i 1923 når huset er fra 1887, så arkivaren og gartneren sier trettiseks. Radioen sender på prøvesendingen (Kringkastingselskapet kom først i 1925). Øyet i sprekken sa alltid «han» om sjefen; nå passer det til sjefen i etasjen. Krittskriften «Ikke stol på ...» bruker sjefen som faktisk er trukket til den etasjen.
+- Reservetegninger for ti nye bilder (historie_1 til 5, fire sluttbilder og prop_forstander) til ChatGPT leverer ekte.
+- Ny testdel 31 i test_ekstra (historie), og sluttesten i del 26 klikker seg gjennom siste side. Del 26 og 31 går gjennom.

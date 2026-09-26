@@ -229,6 +229,16 @@ Object.assign(Sound.lib, {
    'rom:a,b' (et kamprom av disse typene, nås når det er ryddet).
    lag(h) bygger scenen, samtale(h) gir første samtaleside.
    ============================================================ */
+/* hva øyet i sprekken ser: sjefen i denne etasjen, med riktig pronomen */
+const OYE_SER = {
+  krok: 'Jeg ser hvor overlegen sitter. Han plukker nesen og tørker det under stolen.',
+  rust: 'Jeg ser hvor hydroterapeuten sitter. Han plukker nesen og skyller det ned i sluket.',
+  arkivar: 'Jeg ser hvor overarkivaren sitter. Hun plukker nesen og arkiverer det under P.',
+  klumpen: 'Jeg ser hvor Klumpen ligger. De plukker nesen, alle sammen, i hverandres neser.',
+  hekk: 'Jeg ser hvor overgartneren sitter. Han plukker nesen og gjødsler rosene med det.',
+  hjort: 'Jeg ser hvor hjorten står. Den har ikke nese. Den har et ansikt den har lånt.',
+  journalen: 'Jeg ser hvor Journalen ligger. Den blar i seg selv og leser om deg, høyt.'
+};
 const HENDELSER = {
   oyet: {
     navn: 'Øyet i sprekken', dybder: [2, 3, 4, 6], plass: 'vegg', vekt: 3, prompt: 'Se inn i sprekken',
@@ -249,7 +259,7 @@ const HENDELSER = {
         : `«Du igjen,» sier øyet. «Forrige gang var du ${forrige || 'en annen'}. Jeg husker alle som går forbi. Jeg har ingenting annet å gjøre.»`;
       m.oyetHusker = `${Folge.fornavn()}, med ${(G.run.look && G.run.look.klaer) === 'tvang' ? 'tvangstrøye' : 'morgenkåpe'}`;
       return { tittel: 'Øyet i sprekken', bilde: () => oyeBilde(1), tekst: intro, valg: [
-        { tekst: 'Spør hva det ser', gjor: () => ({ tekst: `«Jeg ser alt bak veggene. Jeg ser hvor overlegen sitter. Han plukker nesen og tørker det under stolen.»\n«For ti tenner kan du se det samme.»`, valg: [
+        { tekst: 'Spør hva det ser', gjor: () => ({ tekst: `«Jeg ser alt bak veggene. ${OYE_SER[(typeof sjefFor === 'function' ? sjefFor(G.depth) : {}).type] || OYE_SER.krok}»\n«For ti tenner kan du se det samme.»`, valg: [
           { tekst: 'Betal ti gulltenner', hint: 'Viser hele etasjen på kartet', kan: () => G.player.teeth >= 10, gjor: () => { h.brukt = true; Folge.tenner(-10); Folge.kart('alt'); return { tekst: 'Øyet blunker to ganger. Plutselig vet du hvor alt er. Det er ikke en god følelse, men det er praktisk.' }; } },
           { tekst: 'Nei takk', gjor: () => ({ tekst: '«Gjerrigknark,» sier øyet, og ruller seg bort.' }) }] }) },
         { tekst: 'Stikk fingeren inn', hint: 'Det kan gå begge veier', gjor: () => { h.brukt = true; const r = Math.random(); if (r < .45) { Folge.tenner(15); return { tekst: 'Det er varmt og vått der inne. Noe suger forsiktig på fingeren. Når du drar den ut, har den fått femten gulltenner rundt seg, som ringer.' }; } if (r < .75) { Folge.skade(6, 'self'); return { tekst: 'Øyet har tenner. Det visste du ikke. Nå vet du det.' }; } Folge.morb(15); Folge.kuriositet(); return { tekst: 'Du får fingeren tilbake. Det er ikke din finger. Den er litt lengre, og den har en ring. Den fungerer helt fint.' }; } },
@@ -418,7 +428,7 @@ const HENDELSER = {
     tick(h, dt) { if (!h.brukt && Math.random() < dt * .2 && d2(G.player.x, G.player.z, h.x, h.z) < 30) Sound.mumble(3, 190); },
     samtale(h) {
       const B = typeof sjefFor === 'function' ? sjefFor(G.depth) : null, nr = (G.run.patient && G.run.patient.nr) || 0;
-      return { tittel: 'Radioen', bilde: () => hendBilde(HEND_ART.radio()), tekst: `Et hørespill på Kringkastingen. «...og så gikk pasient nummer ${nr} inn i rommet med søylene, og der ventet ${B ? B.name : 'overlegen'}. Pasienten hadde ${pick(['glemt tøflene', 'en tann for mye', 'ingen plan', 'en mopp og god tid'])}...»`, valg: [
+      return { tittel: 'Radioen', bilde: () => hendBilde(HEND_ART.radio()), tekst: `Et hørespill på prøvesendingen. «...og så gikk pasient nummer ${nr} inn i rommet med søylene, og der ventet ${B ? B.name : 'overlegen'}. Pasienten hadde ${pick(['glemt tøflene', 'en tann for mye', 'ingen plan', 'en mopp og god tid'])}...»`, valg: [
         { tekst: 'Skru opp', gjor: () => { h.brukt = true; Folge.kart('sjef'); Folge.xp(10); return { tekst: 'Fortelleren beskriver veien til overlegen så nøyaktig at du kunne gått den med lukkede øyne. Så kommer reklame for levertran.' }; } },
         { tekst: 'Bytt kanal', gjor: () => { h.brukt = true; Folge.hel(6); Folge.morb(5); return { tekst: 'En mann leser opp oppskriften på lutefisk, veldig langsomt. Du blir sulten og kvalm på samme tid, og det er en slags helse.' }; } },
         { tekst: 'Skru av', gjor: () => ({ tekst: 'Det blir stille. Så hører du hørespillet fortsette inni hodet ditt.' }) }] };
