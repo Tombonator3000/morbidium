@@ -75,10 +75,11 @@ function openPause() {
   const r = G.run, p = r && r.patient;
   openPanel(`<div class="fit clip paper"><div class="clamp"></div><div class="ptitle">Pause</div>
     ${p ? `<div class="pwho"><span id="pPort"></span><div><b>${esc(p.name)}</b><br>Pasient ${p.nr}, ${esc(depthName(G.depth))}<br><span class="svak">${G.player ? G.player.teeth : 0} gulltenner, ${r.kills || 0} fiender slått</span></div></div>` : ''}
-    <div class="pmenu"><button class="tbtn gold" data-close><b>Fortsett</b></button><button class="tbtn" id="pJ"><b>Journalen</b></button><button class="tbtn" id="pH"><b>Pasienthåndboka</b></button><button class="tbtn" id="pS"><b>Innstillinger</b></button><button class="tbtn" id="pQ"><b>Avslutt til tittelen</b></button></div>
+    <div class="pmenu"><button class="tbtn gold" data-close><b>Fortsett</b></button><button class="tbtn" id="pJ"><b>Journalen</b></button>${G.player && G.seen ? '<button class="tbtn" id="pK"><b>Kartet</b></button>' : ''}<button class="tbtn" id="pH"><b>Pasienthåndboka</b></button><button class="tbtn" id="pS"><b>Innstillinger</b></button><button class="tbtn" id="pQ"><b>Avslutt til tittelen</b></button></div>
     <div class="hint">Løpet lagres ved starten av hver etasje.</div></div>`);
   if (p) { const c = portraitCanvas('pasient', r.look); c.className = 'pport'; place('#pPort', c); }
   $('pJ').onclick = () => { closePanel(); openJournal(); };
+  if ($('pK')) $('pK').onclick = () => Kart.apne({ onBack: openPause });
   $('pH').onclick = () => openHandbook({ onBack: openPause });
   $('pS').onclick = () => openSettings(false, openPause);
   $('pQ').onclick = () => { closePanel(); showTitle(); };
@@ -97,6 +98,7 @@ const KONTROLLER = [
   ['Snakk, åpne, undersøk', 'E', 'Y', 'Snakk'],
   ['Drikk flaske', 'F eller G', 'Pil ned', 'Bruk'],
   ['Bruk apparat', 'V eller X', 'Pil opp', 'Aktiv'],
+  ['Kartet', 'M eller klikk på kartet', 'Pil høyre', 'Trykk på kartet'],
   ['Journalen', 'Tab eller I', 'Select', 'Journal oppe til høyre'],
   ['Pause', 'Esc eller P', 'Start', 'Pause oppe til høyre']
 ];

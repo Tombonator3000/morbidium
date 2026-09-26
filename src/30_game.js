@@ -200,7 +200,7 @@ function startFloor(depth, first) {
     const g = propSprite(null, c.x, c.z + .3, { P: corpseArt(ld.look) }); R.level.add(g); G.corpses.push({ x: c.x, z: c.z, g, ld });
     if (!ld.looted) Items.splat(c.x, c.z + .2, '#6a0a0a', 1.1, .7);
   }
-  Spor.onFloor(); Bygg.onFloor(); D3.onFloor(); if (!G.drom) { Tips.vis('gaa', 1500); Tips.vis('kort', 10500); }
+  Spor.onFloor(); Bygg.onFloor(); D3.onFloor(); if (!G.drom) { Tips.vis('gaa', 1500); Tips.vis('kort', 10500); if (depth >= 2) Tips.vis('kart', 19500); }
   Sound.startAmbience(depth); Musikk.spill(G.drom ? G.drom.musikk : stykkeFor(depth)); G.paT = G.drom ? 1e9 : rnd(18, 30);
   $('floorName').textContent = G.th.name; hudCardsKey = ''; drawWeaponCard();
   show('hud', true); show('title', false); G.state = 'play';
@@ -406,7 +406,7 @@ function openPanel(html, o = {}) {
   el.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closePanel());
 }
 function closePanel() {
-  show('panel', false); const o = G.panelO || {};
+  show('panel', false); const o = G.panelO || {}; if (o.onClose) o.onClose();
   if (o.onBack) { G.panelO = null; o.onBack(); return; }
   G.state = G.prevState === 'title' ? 'title' : (G.player && G.player.alive ? 'play' : G.prevState || 'title');
   if (G.state === 'title') show('title', true);
@@ -681,7 +681,7 @@ function loop(now) {
   Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); D3.tick(dt); Effekter.tick(dt); Dybde.tick(dt); Vaatt.tick(dt); Testmodus.tick();
   if (G.state === 'play') {
     const P = G.player;
-    if (A.pauseP) openPause(); else if (A.journalP) openJournal();
+    if (A.pauseP) openPause(); else if (A.journalP) openJournal(); else if (A.kartP) Kart.apne();
     let ts = 1; if (G.hitstop > 0) { G.hitstop -= dt; ts = .06; }
     if (G.slow.t > 0) { G.slow.t -= dt; ts = Math.min(ts, G.slow.s); } else G.slow.s = 1;
     const sdt = dt * ts; G.time += sdt; if (R.water) R.water.u.uTime.value += sdt; D3.maal(dt);
@@ -714,7 +714,8 @@ function loop(now) {
     if (G.titleDolls) G.titleDolls.forEach((d, i) => d.update(dt, { raise: i === 0 && Math.sin(G.titleT) > .3, headTilt: i === 0 ? .25 : 0 }));
     Particles.update(dt); FX.update(dt);
   } else if (G.state === 'panel') {
-    if (A.pauseP) closePanel();
+    // B lukker som Esc. M lukker kartet igjen; pil høyre på håndkontrollen åpner det bare, for den skal bla i menyene
+    if (A.pauseP || A.tilbakeP || (A.kartP && !A.pad && Kart.aapen())) closePanel();
     FX.update(dt);
   } else if (G.state === 'journal') {
     if (A.pauseP || A.journalP) closeJournal();
@@ -742,12 +743,13 @@ function boot() {
   R.onSafe = why => { G.meta.settings.simple = true; saveMeta(); toast('Enkel grafikk', 'Skjermkortet ga ' + why + ', så etterbehandlingen er slått av'); };
   $('vignette').style.display = 'none';
   addEventListener('pointerdown', () => { Sound.init(); applySettings(); }, { once: true }); addEventListener('keydown', () => { Sound.init(); applySettings(); }, { once: true });
-  $('bJournal').onclick = () => openJournal(); $('bPause').onclick = () => openPause();
+  $('bJournal').onclick = () => openJournal(); $('bPause').onclick = () => openPause(); Kart.init();
   window.MORBIDIUM = G; Object.assign(window, { Items, ITEMS, spawnEnemy, itemIcon, jarPart, pillPart, addonPart, shotPart, LOOKS, PILL_COL, BLOBS, R, hurt, descend, finishCombat, openService, killEntity, Art, RIG, PROPS, CARD_ART, WEAPONS, THEMES, charPart, propArt, weaponPart, shoePart, cardArtCanvas, generateFloor, CONSUMABLES, heartPart, morbPart, bottlePart, cardPart, pigeonPart, stampDecal, handPart, toothPart, starPart, puffPart, barrierArt });
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };
   Object.assign(window, { Testmodus, MENING, MENING_FANER, Vaatt, SKALA, midiHz, hzMidi, Lydbank, Stemning, LYD_KART, LYD_INNSLAG, LYD_STEMT, LYD_DUKK, BESETNING, ROM_BESETNING, MUS_INS, FOTGULV, STEMNING_ETASJE, STEMNING_ROM, FIENDESTEMME, LYD_META, Historie, HISTORIE_ART, Kjeder, HENDELSER_HISTORIE, JOURNALSIDER, SJEF_EPITAF, SISTE_SIDE, NPC_DYP, OYE_SER, PA, LINES, NPC_LINES, LORE, bossOnHurt, Dybde, Kombo, KOMBO_NIVA, FLERDRAP, Glod, GLOD_TYPER, Lyn, Uvaer, Regnringer, Effekter, meleeHit, stampBig, runStats, FIENDE_INFO, FIENDE_REKKE, SJEF_REKKE, Drom, DROM_KAP, DROM_HJEM, DROM_SLUTT, DROM_ART, DROM_TEGN, DROM_SKYLD, Samtale, Hendelse, HENDELSER, Folge, HEND_ART, hendBilde, innhold, rolig, SPRITES, hbSider, saveMeta, MAX_DEPTH, THEMES, UTGANGER, gulvUnder, Vaer, Landskap, GULV, VEGG, ROMSTIL, ROMTYPER, openTrapdoor, findInteract, stykkeFor, brukUIsett, UI_SETT, hjerteHtml, portierHode, skarPart, speilbilde, ordPart, WEAPON_ART, kastKlump, sendOrd, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { Kart, drawMap, KONTROLLER, TIPS, Input, SERVICES });
   step('Pakker ut bilder');
   Art.preload().then(() => { try { brukUIsett(); } catch (e) { } step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }

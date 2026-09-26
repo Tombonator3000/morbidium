@@ -84,12 +84,16 @@ body{ height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:
 #mapring{ position:absolute; right:calc(14px + env(safe-area-inset-right,0px)); bottom:calc(14px + env(safe-area-inset-bottom,0px)); width:150px; height:150px; border-radius:50%;
   background:#1c1410; border:8px solid var(--gold); box-shadow:0 0 0 3px var(--ink), inset 0 0 0 3px var(--ink), inset 0 0 0 7px var(--gold-d), 4px 5px 0 3px rgba(20,12,8,.5); }
 #mapring canvas{ width:100%; height:100%; display:block; border-radius:50%; }
-#mapring .nord{ position:absolute; left:50%; top:-15px; transform:translateX(-50%); width:24px; height:24px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #ffe28a, var(--gold) 60%, var(--gold-d)); border:2px solid var(--ink); font-family:var(--display); font-size:13px; line-height:20px; text-align:center; color:var(--ink); z-index:3; }
+#mapring .nord, .kkart .nord{ position:absolute; left:50%; top:-15px; transform:translateX(-50%); width:24px; height:24px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #ffe28a, var(--gold) 60%, var(--gold-d)); border:2px solid var(--ink); font-family:var(--display); font-size:13px; line-height:20px; text-align:center; color:var(--ink); z-index:3; }
 #mapring::after{ content:""; position:absolute; inset:-2px; border-radius:50%; background:
   radial-gradient(circle at 50% 0%, var(--gold) 0 7px, var(--ink) 7px 9px, transparent 9px),
   radial-gradient(circle at 100% 50%, var(--gold) 0 7px, var(--ink) 7px 9px, transparent 9px),
   radial-gradient(circle at 50% 100%, var(--gold) 0 7px, var(--ink) 7px 9px, transparent 9px),
   radial-gradient(circle at 0% 50%, var(--gold) 0 7px, var(--ink) 7px 9px, transparent 9px); }
+/* ringen er knappen til det store kartet (45_kart.js). På berøringsskjerm viser en liten lupe at den kan trykkes på */
+#mapring{ pointer-events:auto; cursor:pointer; -webkit-tap-highlight-color:transparent; } body:not(.touch) #mapring:hover{ filter:brightness(1.08); }
+#mapring .kluppe{ display:none; position:absolute; left:-7px; bottom:-7px; width:26px; height:26px; padding:3px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #ffe28a, var(--gold) 60%, var(--gold-d)); border:2px solid var(--ink); box-shadow:2px 2px 0 rgba(20,12,8,.45); z-index:5; }
+#mapring .kluppe svg{ display:block; width:100%; height:100%; } body.touch #mapring .kluppe{ display:block; }
 
 /* verktøylinje for testen */
 #tools{ position:absolute; right:calc(12px + env(safe-area-inset-right,0px)); top:calc(12px + env(safe-area-inset-top,0px)); display:flex; gap:8px; pointer-events:auto; }
@@ -492,6 +496,32 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
   #tools{ top:auto; bottom:calc(98px + env(safe-area-inset-bottom,0px)); left:calc(12px + env(safe-area-inset-left,0px)); right:auto; flex-direction:column; }
   .btn{ font-size:12px; padding:4px 8px; }
 }
+/* det store kartet (45_kart.js): en plantegning på papir. Kartet i gullramme med nagler og nordnål, tegnforklaringen ved siden av.
+   Tre oppsett, valgt i koden: bredt (PC), smalt (stående telefon, forklaringen under) og liggende telefon (lavt, alt side om side) */
+.kartark{ width:940px; padding:20px 22px 18px; display:grid; grid-template-columns:auto 1fr; gap:24px; align-items:stretch; }
+.kkart{ position:relative; align-self:start; padding:3px; border:8px solid var(--gold); border-radius:10px; background:#eadbb0; box-shadow:0 0 0 3px var(--ink), inset 0 0 0 3px var(--ink), 6px 7px 0 3px rgba(20,12,8,.45); }
+.kkart canvas{ display:block; border-radius:3px; }
+.kkart::after{ content:""; position:absolute; inset:-13px; pointer-events:none; background:
+  radial-gradient(circle at 9px 9px, var(--gold) 0 6px, var(--ink) 6px 8px, transparent 8px), radial-gradient(circle at calc(100% - 9px) 9px, var(--gold) 0 6px, var(--ink) 6px 8px, transparent 8px),
+  radial-gradient(circle at 9px calc(100% - 9px), var(--gold) 0 6px, var(--ink) 6px 8px, transparent 8px), radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), var(--gold) 0 6px, var(--ink) 6px 8px, transparent 8px); }
+.kkart .nord{ top:-17px; }
+.kpil{ position:absolute; left:0; top:0; width:30px; height:30px; margin:-15px 0 0 -15px; overflow:visible; pointer-events:none; filter:drop-shadow(0 0 3px rgba(255,226,138,.95)); animation:kpuls 1.4s ease-in-out infinite; }
+.kpil path{ fill:var(--gold); stroke:var(--ink); stroke-width:2.4; stroke-linejoin:round; }
+@keyframes kpuls{ 50%{ scale:1.22; } }
+.kside{ position:relative; display:flex; flex-direction:column; gap:10px; min-width:0; }
+.kplan{ position:absolute; right:-8px; top:-6px; transform:rotate(7deg); font-family:var(--display); font-size:12px; letter-spacing:.12em; color:var(--red); border:3px double var(--red); padding:2px 8px; background:rgba(246,234,208,.55); pointer-events:none; }
+.ktittel{ font-family:var(--display); font-size:30px; line-height:1; padding-right:96px; } .ktittel small{ display:block; margin-top:5px; font-family:var(--hand); font-size:25px; line-height:1; color:#6b3a22; }
+.kund{ font-weight:800; font-size:13px; letter-spacing:.08em; text-transform:uppercase; border-bottom:3px double var(--ink); padding-bottom:6px; }
+.ktall{ display:flex; flex-wrap:wrap; gap:2px 16px; font-weight:700; font-size:15px; } .ktall b{ font-family:var(--display); font-weight:normal; font-size:19px; color:#9a6a10; margin-right:5px; }
+.kleg{ list-style:none; margin:2px 0 0; padding:0; display:grid; grid-template-columns:1fr; gap:5px 12px; align-content:start; }
+.kleg li{ display:flex; align-items:center; gap:8px; min-width:0; font-weight:800; font-size:15px; line-height:1.1; } .kleg li > span{ min-width:0; overflow-wrap:anywhere; }
+.kleg canvas{ width:30px; height:30px; flex:none; } .kleg small{ display:block; font-family:var(--hand); font-weight:600; font-size:18px; line-height:1; color:#6b4a2c; }
+.kside .btnrow{ margin-top:auto; justify-content:flex-start; } .khint{ font-family:var(--hand); font-size:19px; color:#6b4a2c; }
+.kartark.smal{ width:460px; grid-template-columns:1fr; gap:14px; padding:18px 16px 14px; } .kartark.smal .kkart{ justify-self:center; } .kartark.smal .kleg{ grid-template-columns:1fr 1fr; } .kartark.smal .ktittel{ font-size:26px; }
+.kartark.smal .kleg li{ font-size:14px; } .kartark.smal .kleg small{ font-size:16px; } .kartark.smal .kside .btnrow{ justify-content:center; } .kartark.smal .khint{ text-align:center; }
+.kartark.lig{ width:740px; gap:16px; padding:14px 16px 12px; } .kartark.lig .kside{ gap:7px; } .kartark.lig .ktittel{ font-size:23px; padding-right:90px; } .kartark.lig .ktittel small{ font-size:19px; } .kartark.lig .ktall{ font-size:13px; } .kartark.lig .ktall b{ font-size:16px; }
+.kartark.lig .kleg{ grid-template-columns:1fr 1fr; gap:3px 10px; } .kartark.lig .kleg li{ font-size:12.5px; gap:6px; } .kartark.lig .kleg small{ font-size:15px; } .kartark.lig .kleg canvas{ width:24px; height:24px; }
+@media (prefers-reduced-motion: reduce){ .kpil{ animation:none; } }
 /* testmodus (44_testmodus.js): måleren til venstre og panelet med spørsmålene og rapporten */
 #testHud{ position:absolute; left:calc(8px + env(safe-area-inset-left,0px)); top:38%; pointer-events:none; font:600 11px/1.35 ui-monospace, Menlo, Consolas, monospace; color:#f6ead0; background:rgba(20,12,8,.62); border:1px solid rgba(246,234,208,.25); border-radius:4px; padding:4px 7px; white-space:pre; }
 #testpanel{ position:fixed; inset:0; z-index:40; display:flex; padding:10px; background:rgba(14,9,7,.78); pointer-events:auto; overflow:auto; } #testpanel > *{ margin:auto; }
@@ -605,7 +635,7 @@ body.touch .bubble{ font-size:16px; max-width:170px; padding:3px 8px 4px; border
   <div id="weapon"><canvas id="wpc" width="88" height="132"></canvas><div><b id="wname"></b><i id="wdesc"></i></div></div>
   <div id="cons" class="paper"><canvas id="consc" width="80" height="104"></canvas><span id="consn">Tom</span><span class="n" id="consk">F</span></div>
   <div id="akt" class="paper hidden"><canvas id="aktc" width="80" height="80"></canvas><div class="pips" id="aktp"></div><span class="n">V</span></div>
-  <div id="mapring"><canvas id="map" width="200" height="200"></canvas><b class="nord">N</b></div>
+  <div id="mapring" role="button" aria-label="Kartet (M)" title="Kartet (M)"><canvas id="map" width="200" height="200"></canvas><b class="nord">N</b><b class="kluppe" aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.2" fill="#f6ead0" stroke="#2a1a14" stroke-width="2.2"/><path d="M12.4 12.4 17 17" stroke="#2a1a14" stroke-width="3.2" stroke-linecap="round"/></svg></b></div>
   <div id="prompt" class="hidden"></div>
   <div id="kombo"><b></b><span></span><i></i></div>
   <div id="tools"><button class="btn" id="bJournal"><svg viewBox="0 0 28 22"><path d="M14 5c-3-2-7-3-12-2v15c5-1 9 0 12 2 3-2 7-3 12-2V3c-5-1-9 0-12 2z" fill="#f6ead0" stroke="#2a1a14" stroke-width="2" stroke-linejoin="round"/><path d="M14 5v15" stroke="#2a1a14" stroke-width="2"/><path d="M5 7.5c2.5-.5 4.5 0 6 .8M5 11c2.5-.5 4.5 0 6 .8M17 8.3c1.5-.8 3.5-1.3 6-.8M17 11.8c1.5-.8 3.5-1.3 6-.8" stroke="#8a6a4a" stroke-width="1.3" fill="none"/></svg>Journal</button><button class="btn" id="bPause"><svg viewBox="0 0 28 22"><rect x="7" y="3" width="5" height="16" rx="1.5" fill="#2a1a14"/><rect x="16" y="3" width="5" height="16" rx="1.5" fill="#2a1a14"/></svg>Pause</button></div>

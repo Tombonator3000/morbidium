@@ -116,6 +116,7 @@ const TIPS = {
   gaa: { kb: 'WASD eller piltastene for å gå. Musa sikter.', pad: 'Venstre spak for å gå, høyre spak sikter.', touch: 'Spaken nede til venstre for å gå.' },
   slag: { kb: 'Dørene er låst til rommet er ryddet. Klikk for å slå, hold høyre knapp for tungt slag, mellomrom for å rulle.', pad: 'Dørene er låst til rommet er ryddet. A slår, hold X for tungt slag, B ruller.', touch: 'Dørene er låst til rommet er ryddet. Slag, Tungt og Rull nede til høyre.' },
   kort: { kb: 'Tastene 1 til 4 bruker evnekortene. Tab åpner journalen.', pad: 'LB, RB, LT og RT bruker evnekortene. Select åpner journalen.', touch: 'Trykk på kortene for å bruke evnene.' },
+  kart: { kb: 'M eller et klikk på kartet viser hele etasjen.', pad: 'Pil høyre viser hele etasjen på kartet.', touch: 'Trykk på kartet for å se hele etasjen.' },
   tjeneste: { kb: 'E for å snakke. Gulltenner er pengene her inne.', pad: 'Y for å snakke. Gulltenner er pengene her inne.', touch: 'Snakk-knappen for å handle. Gulltenner er pengene her inne.' },
   lav: { alle: 'Lite helse igjen. Kafeteriaen har suppe, og fiender slipper av og til hjerter.' },
   niva: { kb: 'Nytt nivå. Tab åpner journalen, der poengene fordeles.', pad: 'Nytt nivå. Select åpner journalen, der poengene fordeles.', touch: 'Nytt nivå. Journal-knappen oppe til høyre, der poengene fordeles.' },
