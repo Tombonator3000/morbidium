@@ -24,7 +24,8 @@ Lista har nå 19 åpne spørsmål til Tom (lyd, blod, mørke, vanskelighet, hist
 - [ ] Tom: spill på samme telefon igjen, gjerne med https://tombonator3000.github.io/morbidium/?testmodus, både stående og liggende. Si fra om noe fortsatt er for smått, kuttet av eller vanskelig å treffe med fingeren. Rapporten viser telefonen, skjermkortet og om grafikken ble mistet underveis.
 - [ ] Tom: hvilken telefon og nettleser var det? Det avgjør om startkvaliteten på mobil bør settes lavere.
 - [ ] Claude, hvis grafikken fortsatt mistes: starte på lav 3D-kvalitet på berøringsskjerm, mindre skyggekart, og pakke ut stemningslydene først når de trengs.
-- [ ] Claude, senere: en test som følger grafikkminnet over mange etasjeskifter, så nye lekkasjer blir oppdaget.
+- [x] Claude: en test som følger grafikkminnet over etasjeskifter (testdel 36), så nye lekkasjer blir oppdaget. Den fanger lekkasjene fra før rettingen med god margin.
+- [x] Gjennomgang av hele endringen før fletting, med skeptikere per funn. 14 funn rettet (blant annet tittelen som havnet øverst på PC, rulling mellom paneler og fast kvalitet ved mistet grafikk).
 
 ## Lyd, musikk og vått på skjermen, 2026-09-26 morgen
 - [x] 165 frie lyder (CC0): 102 effekter og stemningslyder fra Freesound og 63 instrumenttoner fra VCSL, med verktøy (tools/lag_lyd.py) og kildeliste (assets/lyd/KILDER.md).
