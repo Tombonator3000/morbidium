@@ -639,3 +639,7 @@ Alle tidspunkt er UTC.
 - Den publiserte fila (6,4 MB, 314 innebygde bilder og 165 lyder) er lastet ned og testet på PC og mobil: alle lydene pakkes ut uten feil, musikken spiller og går over med bro, stemningssløyfene går, dråpene kommer når pasienten blir truffet, og det er ingen konsollfeil.
 - Skjermbildet fra mobilen viste at bloddråpene ble for store på stående skjerm, fordi størrelsen fulgte høyden på bildet. Nå følger størrelse og fart den korteste siden (Vaatt.kk), så dråpene er like store på stående mobil som på PC. Liggende skjerm er som før. Sjekket med skjermbilde på 390 x 844, og testdel 34 går gjennom.
 - Grenen claude/practical-babbage-nc80bu er satt lik main igjen. Rettelsen og denne oppføringen flettes inn som en egen liten PR.
+
+## 2026-09-26 08:12 Forslag til neste steg etter lydrunden
+- Tom spurte hva neste steg bør være. Svaret er det samme som i forrige runde, bare tydeligere: todo.md har nå 19 åpne spørsmål til Tom som bare kan besvares ved å spille, og ingenting av lyden, musikken eller dråpene er hørt eller sett på ekte maskiner. Flaskehalsen er tilbakemelding, ikke flere systemer.
+- Forslaget står øverst i todo.md: testmodus og løpsrapport, «Si din mening» i pausemenyen med spørsmålene som knapper, så tre eller fire løp på PC og mobil, og deretter justering av lydmiks, blod, vanskelighet, lengde og ytelse. Små ting som kan tas når som helst: seks lyder som er hentet, men ikke koblet inn (bokslag, dørsmell, gulvknirk, radiosus, riving og sluk), og en fast testklokke for nettlesertestene.

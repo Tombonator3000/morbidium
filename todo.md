@@ -7,13 +7,15 @@
 - [ ] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt).
 - [ ] Slette grenen claude/funny-newton-cgnzav på GitHub (Claude Code får ikke lov til det). Alt på den finnes i main.
 
-## Forslag til neste steg (Claude, 2026-09-26)
-Spillet har fått mye nytt innhold på kort tid, men ingenting er spilltestet på ekte maskinvare. Neste steg bør derfor være å spille, ikke bygge mer.
-- [ ] Claude, når Tom sier ja: en testmodus med bilder i sekundet og kvalitetsnivå i et hjørne, og en rapport etter hvert løp som kan kopieres (tid per etasje, skade tatt og fra hva, dødsårsak, kuriositeter og kort, lengste kombo, valgene i drømmene).
-- [ ] Tom: spille tre eller fire løp på PC og mobil og lime inn rapportene sammen med det som føltes feil.
-- [ ] Claude: balanse ut fra rapportene (vanskelighetskurven gjennom seks etasjer, priser, sjefene, lengden på et løp).
+## Forslag til neste steg (Claude, 2026-09-26 morgen, etter lydrunden)
+Lista har nå 19 åpne spørsmål til Tom (lyd, blod, mørke, vanskelighet, historien, sjefene), og ingen av dem kan besvares uten å spille. Flaskehalsen er tilbakemelding fra ekte spilling på ekte maskiner, ikke flere systemer. Neste steg bør gjøre det lett å gi den.
+- [ ] Claude, når Tom sier ja: testmodus med bilder i sekundet, kvalitetsnivå og minne i et hjørne, og en rapport etter hvert løp som kan kopieres med én knapp (tid per etasje, skade tatt og fra hva, dødsårsak, kuriositeter og kort, lengste kombo, valgene i drømmene, laveste bilder i sekundet, hvor lang tid lydene brukte på å pakkes ut).
+- [ ] Claude, sammen med testmodusen: «Si din mening» i pausemenyen, der spørsmålene fra denne lista er knapper (for lite, passe, for mye) pluss et felt for fritekst, og svarene havner i samme rapport. Da blir de 19 spørsmålene et par minutter etter et løp.
+- [ ] Tom: spille tre eller fire løp på PC og mobil, gjerne med hodetelefoner, og lime inn rapportene.
+- [ ] Claude: justere ut fra rapportene: lydmiksen, mengden blod på skjermen, vanskelighetskurven gjennom seks etasjer, lengden på et løp og ytelsen på mobil.
+- [ ] Claude, små ting som kan tas når som helst: koble inn de seks lydene som er hentet, men ikke brukt (bokslag når journalen lukkes, dørsmell når rommet låses, gulvknirk, radiosus i radiohendelsen, riving ved overkill, sluk på badet), og en fast testklokke så nettlesertestene ikke avhenger av hvor rask maskinen er.
 - [ ] Tom og ChatGPT, i denne rekkefølgen: liste 10 (historien, fire bestillinger), liste 5 og 1 (fiendene i parken og første etasje), hjertene og ringene i liste 4.
-- [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, andre halvdel av UI-settet, og resten av testene over på spilltid.
+- [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, og andre halvdel av UI-settet.
 
 ## Lyd, musikk og vått på skjermen, 2026-09-26 morgen
 - [x] 165 frie lyder (CC0): 102 effekter og stemningslyder fra Freesound og 63 instrumenttoner fra VCSL, med verktøy (tools/lag_lyd.py) og kildeliste (assets/lyd/KILDER.md).
