@@ -69,3 +69,7 @@ nr;liste;type;filnavn;mal;bilder;nokler
 9i;Delark til oppskriftssystemet;delark;hatter_pasienter.png;mal_hatter_og_har.png;0;
 9j;Delark til oppskriftssystemet;delark;har_pasienter.png;mal_hatter_og_har.png;0;
 9k;Delark til oppskriftssystemet;delark;har_kultister.png;mal_hatter_og_har.png;0;
+10a;Historien;«ni ting»-ark;ark__historie_1__historie_2__historie_3__historie_4__historie_5__historie_slutt_tilgivelse__historie_slutt_sannheten__historie_slutt_gjentakelse__historie_slutt_fornektelse.png;mal_ni_ting.png;9;historie_1 historie_2 historie_3 historie_4 historie_5 historie_slutt_tilgivelse historie_slutt_sannheten historie_slutt_gjentakelse historie_slutt_fornektelse
+10b;Historien;enkeltbilde;prop_forstander.png;;1;prop_forstander
+10c;Historien;enkeltbilde;prop_venterom.png;;1;prop_venterom
+10d;Historien;enkeltbilde;prop_skrin.png;;1;prop_skrin

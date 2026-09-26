@@ -53,20 +53,22 @@ const Merknad = {
 function utskrivningsbrev(onDone) {
   const r = G.run, P = G.player, p = r.patient, min = Math.max(1, Math.round((performance.now() - r.t0) / 60000));
   const diag = (P.diag || []).map(d => DIAGNOSES[d] && DIAGNOSES[d].name).filter(Boolean), kur = (r.items || []).map(i => ITEMS[i] && ITEMS[i].name).filter(Boolean), tf = (r.transforms || []).map(t => TRANSFORMS[t] && TRANSFORMS[t].name).filter(Boolean);
-  const liste = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' og ' + a[a.length - 1] : a[0];
+  const liste = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' og ' + a[a.length - 1] : a[0], Bv = Historie.brev();
   const avsnitt = [
-    `Etter ${min} ${min === 1 ? 'minutt' : 'minutter'} under vår omsorg, ${r.kills || 0} behandlede ansatte og ${r.rooms || 0} ryddede rom er De herved utskrevet fra Morbidium sanatorium.`,
+    `Etter ${min} ${min === 1 ? 'minutt' : 'minutter'} under vår omsorg, ${r.kills || 0} behandlede ansatte og ${r.rooms || 0} ryddede rom er De herved utskrevet fra Morbidium sanatorium${Bv.sl === 'gjentakelse' ? ', og innkalt på nytt fra i morgen tidlig' : ''}.`,
+    Bv.samme,
     diag.length ? `Vi noterer at De under oppholdet utviklet ${liste(diag.map(d => d.toLowerCase()))}. Dette regnes fra i dag av som personlighet.` : 'De utviklet ingen diagnoser under oppholdet. Det er i seg selv mistenkelig, og er notert.',
     kur.length ? `De forlater oss med ${kur.length} ${kur.length === 1 ? 'kuriositet' : 'kuriositeter'} i lommene, blant annet ${kur[0].toLowerCase()}. Vi ber Dem returnere ${(kur[1] || kur[0]).toLowerCase()} innen fjorten dager.` : 'De forlater oss med tomme lommer, noe vaktmester Olsen ønsker å få skriftlig.',
     tf.length ? `Personalet har bedt oss nevne at De ikke lenger er helt menneskelig (${liste(tf)}). Kafeteriaen tar ikke imot Dem i denne formen.` : '',
     P.morb >= 60 ? 'Mørket i blodet Deres er fortsatt målbart. Unngå trapper som bare går ned.' : 'Blodprøvene er nesten normale. Vi har sendt dem tilbake for sikkerhets skyld.',
-    'Journalen er lukket. Den ba oss si at den savner Dem.'
+    Bv.avslutning
   ].filter(Boolean);
   const forste = !Merknad.har('utskrevet');
   openPanel(`<div class="fit brev paper"><div class="bhode"><b>MORBIDIUM SANATORIUM</b><span>Avdeling for oppstyrret sinn. Grunnlagt 1887.</span></div>
-    <div class="bdato">24. september 1923</div><div class="btil">Til ${esc(p.name)}, pasient nr. ${p.nr}</div><h2>Utskrivningsbrev</h2>
+    <div class="bdato">24. september 1923</div><div class="btil">Til ${esc(p.name)}, pasient nr. ${p.nr}</div><h2>${esc(Bv.tittel)}</h2>
     ${avsnitt.map(a => `<p>${esc(a)}</p>`).join('')}
-    <div class="bslutt"><div><div class="bhilsen">Med vennlig hilsen</div><div class="bsign">Overlegen</div></div><div class="bstempel">UTSKREVET</div></div>
+    <div class="bslutt"><div><div class="bhilsen">Med vennlig hilsen</div><div class="bsign">${esc(Bv.sign)}</div></div><div class="bstempel">${esc(Bv.stempel)}</div></div>
+    ${Bv.egen ? '<p class="bps">P.S. Brevet er signert av pasienten selv, med forstanderens penn. Det er ikke lov. Det er gjort.</p>' : ''}
     ${forste ? '<p class="bps">P.S. De er velkommen tilbake. Gjeninnleggelse er nå mulig fra innleggelsen.</p>' : ''}
     <div class="btnrow"><button class="btn big" id="bOk">Ta imot papirene</button></div></div>`, { onBack: onDone });
   $('bOk').onclick = () => closePanel(); Sound.play('paper'); fitPanel();
@@ -74,7 +76,7 @@ function utskrivningsbrev(onDone) {
 
 /* ---------- spor etter tidligere pasienter: rablinger med kritt på gulvet ---------- */
 const SPOR_TEKST = [
-  h => `Ikke stol på ${((BOSSES[h.depth] || BOSSES[1]).name.split(' ').slice(-1)[0])}.`,
+  h => `Ikke stol på ${((typeof sjefFor === 'function' ? sjefFor(h.depth || 1) : BOSSES[h.depth] || BOSSES[2]).name.split(' ').slice(-1)[0])}.`,
   () => 'Suppa er ikke suppe.',
   () => 'Rull. Bare rull.',
   h => `Jeg slo ${h.kills || 0}. De slo tilbake.`,

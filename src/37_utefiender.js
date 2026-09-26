@@ -340,7 +340,7 @@ Object.assign(Grotesk.tick, {
 /* ============================================================
    OVERGARTNER ANSGAR HEKK
    ============================================================ */
-SJEF_DATA.hekk = { type: 'hekk', weapon: 'storsaks', name: 'Overgartner Ansgar Hekk', title: 'Førti år i parken', hp: 1000, minion: 'gartner', minions: 2, attacks: ['saks', 'hekkring', 'gjodsel', 'kaal', 'saks', 'gjodsel', 'summon'], puddle: 'mokk', skygge: 1.2 };
+SJEF_DATA.hekk = { type: 'hekk', weapon: 'storsaks', name: 'Overgartner Ansgar Hekk', title: 'Trettiseks år i parken', hp: 1000, minion: 'gartner', minions: 2, attacks: ['saks', 'hekkring', 'gjodsel', 'kaal', 'saks', 'gjodsel', 'summon'], puddle: 'mokk', skygge: 1.2 };
 RIG.hekk = { hip: .5, hipW: .2, neck: .92, shW: .46, shY: .82, armW: .2, legW: .17, handR: .12, arm: '#f0ece0', leg: '#5a4430', hand: '#e0b090', shoe: 'stovel', scale: 1.45, headLag: .7 };
 BOSS_ART.hekk = {
   head: g => {
@@ -364,7 +364,7 @@ BOSS_ART.hekk = {
   }
 };
 Object.assign(LINES.bossIntro, { hekk: ['Hvem har tråkket på plenen min?', 'Jeg har klippet større hekker enn deg.', 'Alt skal stå rett. Også du.'] });
-Object.assign(LINES.monolog, { hekk: ['Førti år har jeg stelt denne parken.', 'Førti år, og ingen har sagt takk.', 'Nå skal jeg klippe deg til, så du passer inn.'] });
+Object.assign(LINES.monolog, { hekk: ['Trettiseks år har jeg stelt denne parken.', 'Trettiseks år, og ingen har sagt takk.', 'Nå skal jeg klippe deg til, så du passer inn.'] });
 Object.assign(LINES.boss, { hekk: ['Klipp!', 'Rett linje!', 'Gjødsel!', 'Luk ugresset!', 'Ingen går på plenen!'] });
 Object.assign(BOSS_MOVES, {
   /* digre hagesakser: to klipp foran seg og et langt stikk */

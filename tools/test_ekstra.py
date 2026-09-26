@@ -359,8 +359,10 @@ async def main():
           if (!r) return null; const f = G.props.filter(o => o.room === r.id && o.byggS).length; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; window.__rom = r.id; return { rom: r.id, skjult: f }; }""")
         await pg.wait_for_timeout(250)
         midt = await pg.evaluate("() => MORBIDIUM.props.filter(o => o.room === window.__rom && o.byggS).length")
-        await pg.wait_for_timeout(1500)
-        etter = await pg.evaluate("() => ({ igjen: MORBIDIUM.props.filter(o => o.room === window.__rom && o.byggS).length, feil: MORBIDIUM.props.filter(o => o.room === window.__rom && o.g.scale.y < .5 && !o.byggS && o.p.k !== 'drain').length })")
+        # animasjonen går i spilltid, og testnettleseren går langt under sanntid, så vi venter på at den blir ferdig (høyst 12 sekunder)
+        etter = await pg.evaluate("""async () => { const G = MORBIDIUM, igjen = () => G.props.filter(o => o.room === window.__rom && o.byggS).length;
+          for (let i = 0; i < 120 && igjen() > 0; i++) await new Promise(r => setTimeout(r, 100));
+          return { igjen: igjen(), feil: G.props.filter(o => o.room === window.__rom && o.g.scale.y < .5 && !o.byggS && o.p.k !== 'drain').length }; }""")
         sjekk('møblene i et rom bygges opp når pasienten kommer inn', r is not None and r['skjult'] > 0 and etter == {'igjen': 0, 'feil': 0}, [r, midt, etter])
         sjekk('første tips vises som lapp', t1['tips'] and len(t1['tekst']) > 10, t1)
         await pg.evaluate("() => rolig()")
@@ -672,8 +674,8 @@ async def main():
         sjekk('skyggen kan ta deg igjen, og da våkner du for tidlig med Morbidium i blodet', dr['tatt'], dr)
         sjekk('kapittel 5 er det røde rommet, og skyggen snur seg', dr['kap5'] and dr['snudd'] and dr['dypet'], dr)
         sjekk('slutten følger valgene (kapittel 5 teller dobbelt), og pasientmappa får historien', dr['slutt'] == 'sannheten' and dr['slutt2'] == 'fornektelse' and dr['mappe'] and 'Fra ' in dr['mappe']['tekst'] and dr['mappe']['tekst'].endswith('.'), dr)
-        ep = await pg.evaluate("""async () => { const vent = t => new Promise(r => setTimeout(r, t)); showWin(); await vent(1500); const tekst = (document.querySelector('.samtale .stekst') || {}).innerText || ''; const knapp = document.getElementById('epOk'); if (knapp) knapp.click(); await vent(500); return { tekst: tekst.slice(0, 60), brev: !!document.querySelector('.brev') }; }""")
-        sjekk('ved utskrivningen kommer slutten på historien før brevet', len(ep['tekst']) > 20 and ep['brev'], ep)
+        ep = await pg.evaluate("""async () => { const vent = t => new Promise(r => setTimeout(r, t)); showWin(); for (let i = 0; i < 40 && !document.getElementById('sisteOk'); i++) await vent(100); const siste = document.getElementById('sisteOk'); if (siste) siste.click(); await vent(400); const tekst = (document.querySelector('.samtale .stekst') || {}).innerText || ''; const knapp = document.getElementById('epOk'); if (knapp) knapp.click(); await vent(500); return { siste: !!siste, tekst: tekst.slice(0, 60), brev: !!document.querySelector('.brev') }; }""")
+        sjekk('ved utskrivningen kommer siste side og slutten på historien før brevet', ep['siste'] and len(ep['tekst']) > 20 and ep['brev'], ep)
         await pg.screenshot(path='/tmp/e_13drom.png')
         sjekk('ingen konsollfeil (drømmer)', not pg.errs, pg.errs[:6])
         await pg.close()
@@ -687,7 +689,7 @@ async def main():
             const fl = typer.map((t, i) => { const a = i / typer.length * Math.PI * 2, s = freeSpot(P.x + Math.sin(a) * 3.5, P.z + Math.cos(a) * 3.5, 3), e = spawnEnemy(t, s.x, s.z, false, d); e.t = 0; return e; });
             for (let k = 0; k < 44; k++) { await vent(250); P.hp = 9999; for (const e of fl) { const S = ut.sett[e.type] || (ut.sett[e.type] = {}); S[e.state] = 1; if (e.lokker > 0) S.lokker = 1; if (e.dukket) S.nede = 1; if (e.dukket === false) S.oppe = 1; } }
             ut['levende' + d] = fl.filter(e => e.alive).length;
-            if (d === 5) { for (const e of fl) if (e.type === 'vedkubbe') hurt(e, 99999, { from: 'player' }); for (const e of fl) if (e.type === 'nokken') { e.cd = 99; e.stille = 99; } await vent(300); const h = fl.find(e => e.type === 'huldra'), sp = freeSpot(P.x + 4, P.z, 3); h.x = sp.x; h.z = sp.z; h.stille = 99; h.cd = 99; h.state = 'chase'; const x0 = Math.hypot(P.x - h.x, P.z - h.z); h.lokker = 1.5; await vent(700); ut.dratt = x0 > 1.5 && Math.hypot(P.x - h.x, P.z - h.z) < x0 - .3; h.stille = 0; for (const e of fl) if (e.type === 'nokken') { e.cd = 0; e.stille = 0; } const n = fl.find(e => e.type === 'nokken'); n.dukket = true; const h0 = n.hp; hurt(n, 30, { from: 'player' }); ut.nokkenUrort = n.hp === h0; n.dukket = false; hurt(n, 30, { from: 'player' }); ut.nokkenTruffet = n.hp < h0; }
+            if (d === 5) { for (const e of fl) if (e.type === 'vedkubbe') hurt(e, 99999, { from: 'player' }); for (const e of fl) if (e.type === 'nokken') { e.cd = 99; e.stille = 99; } await vent(300); const h = fl.find(e => e.type === 'huldra'), sp = freeSpot(P.x + 4, P.z, 3); h.x = sp.x; h.z = sp.z; h.stille = 99; h.cd = 99; h.state = 'chase'; const x0 = Math.hypot(P.x - h.x, P.z - h.z); h.lokker = 1.5; const gl = G.time; for (let i = 0; i < 100 && G.time - gl < .7 && !(Math.hypot(P.x - h.x, P.z - h.z) < x0 - .3); i++) await vent(100); ut.dratt = x0 > 1.5 && Math.hypot(P.x - h.x, P.z - h.z) < x0 - .3; h.stille = 0; for (const e of fl) if (e.type === 'nokken') { e.cd = 0; e.stille = 0; } const n = fl.find(e => e.type === 'nokken'); n.dukket = true; const h0 = n.hp; hurt(n, 30, { from: 'player' }); ut.nokkenUrort = n.hp === h0; n.dukket = false; hurt(n, 30, { from: 'player' }); ut.nokkenTruffet = n.hp < h0; }
             for (const e of fl) hurt(e, 99999, { from: 'player' });
           }
           ut.indeks = ['gartner', 'kraake', 'kaalhode', 'huldra', 'vedkubbe', 'nokken', 'hekk', 'hjort'].every(t => (FIENDE_INFO[t] || [])[0]) && SJEF_PULJE.includes('hekk') && SJEF_PULJE.includes('hjort');
@@ -709,7 +711,7 @@ async def main():
           // etterbehandlingen: alt slår inn neste bilde og dør ut av seg selv
           R.sjokk(P.x, P.z, 1.2); R.zoomStot(P.x, P.z, .8); R.negativ(.1); R.fx.lyn = 1; await vent(120);
           ut.paa = u.uSjokk.value[0].w > .1 && u.uZoom.value.z > .1 && u.uNeg.value > .5 && u.uLyn.value > .1;
-          await vent(1800); ut.av = u.uSjokk.value[0].w === 0 && u.uZoom.value.z === 0 && u.uNeg.value === 0 && u.uLyn.value === 0 && R.sjokkL.length === 0;
+          const avNaa = () => u.uSjokk.value[0].w === 0 && u.uZoom.value.z === 0 && u.uNeg.value === 0 && u.uLyn.value === 0 && R.sjokkL.length === 0, ge = G.time; for (let i = 0; i < 150 && !avNaa() && G.time - ge < 4; i++) await vent(100); ut.av = avNaa();
           // uten forvrengning og uten glimt blir de borte
           R.distortOn = false; R.flashOn = false; R.sjokk(P.x, P.z, 1); R.zoomStot(P.x, P.z, 1); R.negativ(); R.fx.lyn = 1; await vent(120);
           ut.skaansom = u.uSjokk.value[0].w === 0 && u.uZoom.value.z === 0 && u.uNeg.value === 0 && u.uLyn.value === 0; R.distortOn = true; R.flashOn = true; await vent(900);
@@ -799,6 +801,139 @@ async def main():
         await pg.wait_for_timeout(300)
         await pg.screenshot(path='/tmp/e_16kombo.png')
         sjekk('ingen konsollfeil (kombo)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 30) Dybde: lykteskygger, kontaktskygger, varmeflimmer, speiling i vannet, lysende tåke, takstøv og kameradykk
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        dy = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, u = R.post.uniforms, ut = {};
+          startFloor(2, false); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat' && !r.ute && r.w >= 8) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
+          // kontaktskyggene males med etasjen og byttes ut ved neste
+          const ao1 = Dybde.ao; ut.ao = !!(ao1 && ao1.m.parent === R.level);
+          // lykteskygger: fiendene nær lykta kaster skygge bort fra pasienten
+          const fl = [[2, 0], [-1.5, 1.2], [0, -2]].map(([dx, dz]) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy('pleier', s.x, s.z, false, 2); e.stun = 99; e.hp = e.max = 1e6; e.state = 'chase'; return e; });
+          await vent(900); const retning = fl.every(e => { const m = Dybde.skygger.get(e); if (!m) return false; const d = Math.hypot(e.x - P.x, e.z - P.z), ux = (e.x - P.x) / d, uz = (e.z - P.z) / d, a = Math.atan2(-ux, -uz); return Math.abs(Math.atan2(Math.sin(m.rotation.z - a), Math.cos(m.rotation.z - a))) < .05 && m.material.opacity > .05; });
+          ut.skygger = retning; for (const e of fl) killEntity(e, {}); await vent(300); ut.skyggerBorte = fl.every(e => !Dybde.skygger.has(e));
+          R.lightsOn = false; const s2 = freeSpot(P.x + 1.5, P.z, 2), e2 = spawnEnemy('pleier', s2.x, s2.z, false, 2); e2.stun = 99; e2.state = 'chase'; await vent(400); ut.utenLys = Dybde.skygger.size === 0; R.lightsOn = true; killEntity(e2, {});
+          // varmeflimmer over et bål, bare med forvrengning på
+          const baal = { kind: 'baal', x: P.x + 2, z: P.z - 1, alive: true, g: { position: { z: P.z - .8 } } }; G.props.push(baal); await vent(250);
+          ut.varme = (R.varmeL || []).some(h => Math.abs(h.x - baal.x) < .01) && u.uVarme.value.some(v => v.w > 0);
+          R.distortOn = false; await vent(250); ut.varmeAv = u.uVarme.value.every(v => v.w === 0); R.distortOn = true; G.props.splice(G.props.indexOf(baal), 1);
+          // vannet speiler lykta, og tåka lyser opp rundt lampene i 3D
+          addPuddle(P.x + .8, P.z, 'wet', 1.2, 60); await vent(500); ut.speil = R.water.u.uLysF.value.some(v => v.x + v.y + v.z > 0);
+          ut.taake = !D3.on || !D3.q.taake || (!!D3.taakeLys && D3.taakeLys.f.value.some(v => v.x + v.y + v.z > 0));
+          // takstøv inne når det smeller, og det lander og blir borte
+          Dybde.stovT = 0; R.shake(.8); ut.stov = Dybde.stov.length > 0; await spill(2.6); ut.stovBorte = Dybde.stov.length === 0;
+          // kameradykk når sjefen kommer, og ikke uten skjermristing
+          spawnBoss(G.depth, P.x + 3, P.z - 2); await vent(900); ut.dykk = R.camera.zoom > 1.04 && R.kam.holdT > 0;
+          if (G.boss) killEntity(G.boss, {}); R.kam.hold = R.kam.kick = R.kam.holdT = 0; await vent(900); R.shakeOn = false; R.kamZoom(.2, 2); await vent(500); ut.dykkAv = Math.abs(R.camera.zoom - 1) < .01; R.shakeOn = true; R.kam.hold = R.kam.holdT = 0;
+          // enkel grafikk: ingen kontaktskygger eller lykteskygger
+          R.safe = true; startFloor(1, false); await vent(300); ut.enkel = !Dybde.ao && Dybde.skygger.size === 0; R.safe = false; startFloor(2, false); await vent(300); ut.aoIgjen = !!Dybde.ao && Dybde.ao !== ao1 && ao1.m.parent !== R.level && Dybde.ao.m.parent === R.level;
+          return ut; }""")
+        sjekk('kontaktskyggene males med etasjen, og fiendene nær lykta kaster skygge bort fra pasienten', dy['ao'] and dy['skygger'] and dy['skyggerBorte'], dy)
+        sjekk('uten lys og skygge blir lykteskyggene borte, og enkel grafikk lager ingen skygger', dy['utenLys'] and dy['enkel'] and dy['aoIgjen'], dy)
+        sjekk('varmeflimmer over bålet, og ikke uten forvrengning', dy['varme'] and dy['varmeAv'], dy)
+        sjekk('vannet speiler lykta, og tåka lyser opp rundt lampene', dy['speil'] and dy['taake'], dy)
+        sjekk('takstøv drysser ned når det smeller, og blir borte når det har landet', dy['stov'] and dy['stovBorte'], dy)
+        sjekk('kameraet dykker inn når sjefen kommer, men ikke uten skjermristing', dy['dykk'] and dy['dykkAv'], dy)
+        await pg.screenshot(path='/tmp/e_17dybde.png')
+        sjekk('ingen konsollfeil (dybde)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 31) Historien: journalsidene før drømmene, forstanderen i Dypet, sjefenes nye replikker, personlige linjer, siste side og brevet
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, 'eget')
+        hi = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const tittel = () => (document.querySelector('#panel:not(.hidden) .samtale .stittel') || document.querySelector('.samtale .stittel') || {}).textContent || '', tekst = () => (document.querySelector('.samtale .stekst') || {}).innerText || '';
+          const venteTittel = async (s, maks = 40) => { for (let i = 0; i < maks && !tittel().startsWith(s); i++) await vent(100); return tittel(); };
+          // side 1 før første drøm: ingen sjef nevnt når ingen er behandlet, og «Les videre» går inn i drømmen.
+          // Innleggelsen tilbyr tre tilfeldige oppvåkninger, så testen setter Eget rom (etasje 1), ellers følger kapitlene en annen startetasje.
+          G.run.awk = 'eget'; startFloor(1, false); rolig(); G.run.behandlet = []; descend(); ut.side1 = await venteTittel('Journalen, side 1'); ut.tekst1 = tekst();
+          ut.knapp = ((document.querySelector('[data-sv]') || {}).innerText || '').split('\\n')[0]; Samtale.velg(0); ut.intro1 = await venteTittel('Kapittel 1');
+          // side 2 etter en behandlet sjef: gravskriften, sannheten om huset og forrige valg. Escape går til innledningen.
+          closePanel(); Drom.hopp('tilgivelse'); await vent(400); rolig(); G.run.behandlet = [2]; const B2 = sjefFor(2); descend(); ut.side2 = await venteTittel('Journalen, side 2'); ut.tekst2 = tekst();
+          ut.epitaf = ut.tekst2.startsWith(SJEF_EPITAF[B2.type]); ut.valgMerk = ut.tekst2.includes('tilgivelse') && ut.tekst2.includes('1887');
+          closePanel(); ut.etterEsc = await venteTittel('Kapittel 2', 20); closePanel(); Drom.hopp('sannheten'); await vent(400);
+          // kapitlene følger startetasjen, så skylda alltid kommer før sannheten
+          const awk = G.run.awk; G.run.awk = 'vaskesjakt'; ut.vask = [3, 4, 5].map(f => Historie.kapittelFor(G.run.historie, f)); G.run.awk = 'eget'; ut.eget = [1, 2, 3, 4, 5].map(f => Historie.kapittelFor(G.run.historie, f)); G.run.awk = awk;
+          // alle sidene blir hele setninger, og personen passer til alderen
+          const run = G.run, gammel = run.historie, fro = run.seed, alder = run.patient.age, feil = []; let n = 0;
+          for (let s = 1; s <= 160; s++) { run.historie = null; run.seed = s * 7919; run.patient.age = alder; const H = Drom.historie(); H.sett = s % 6; H.valg = { 1: 'tilgivelse', 2: 'flukt', 3: 'gjentakelse', 4: 'sannheten' }; run.behandlet = [1, 2, 3, 4, 5];
+            for (const kap of [1, 2, 3, 4, 5]) for (const fra of [1, 2, 3, 4, 5]) { const s0 = Historie.side({ kap, fra, H }); n++; if (!s0 || /undefined|NaN|\\$\\{|\\[object|null/.test(s0.tekst + s0.tittel)) feil.push(kap + ': ' + (s0 && s0.tekst.slice(0, 80))); }
+            for (const a of [19, 30, 50, 70]) { run.patient.age = a; run.historie = null; const H2 = Drom.historie(); if ((a > 45 && H2.rolle === 'bestefar') || (a > 58 && ['mor', 'far'].includes(H2.rolle)) || (a < 22 && H2.rolle === 'barn')) feil.push('alder ' + a + ' ' + H2.rolle); } }
+          run.historie = gammel; run.seed = fro; run.patient.age = alder; run.behandlet = [2]; ut.sider = n; ut.feil = feil.slice(0, 4); ut.antallFeil = feil.length;
+          // personlige linjer fra drømmene i høyttaleren og koret, og Olsen følger etasjen
+          run.historie.sett = 4; startFloor(3, false); await vent(300); const S = Drom.ord(run.historie), navn = run.patient.name;
+          ut.pa = PA[3].filter(l => l.includes(navn)).length; ut.koret = LINES.koret.some(l => l.includes(S.N)); ut.olsen3 = NPC_LINES.vaktmester.some(l => l.includes('Kjelleren var ikke der'));
+          startFloor(4, false); await vent(300); ut.paBorte = PA[3].every(l => !l.includes(navn)); ut.olsen4 = NPC_LINES.vaktmester.some(l => l.includes('fjerde nøkkelen')) && !NPC_LINES.vaktmester.some(l => l.includes('Kjelleren var ikke der'));
+          // forstanderen i Dypet: fire valg, du kan lese over skulderen, og pennen gjør Journalen svakere
+          startFloor(6, false); rolig(); await vent(300); ut.naturlig = Hendelse.aktive.some(h => h.id === 'forstanderen');
+          const h = Hendelse.aktive.find(h => h.id === 'forstanderen') || Hendelse.tving('forstanderen'); P.x = h.x; P.z = h.z + 1.2; R.snapCamera(P.x, P.z); await vent(300);
+          const it = findInteract(); ut.prompt = it && it.t; it.fn(); ut.forstander = await venteTittel('Forstander'); ut.fvalg = document.querySelectorAll('[data-sv]').length;
+          Samtale.velg(1); await vent(150); ut.les = tekst().includes('håndskrift'); Samtale.velg(0); await vent(100);
+          Samtale.vis(h.H.samtale(h)); await vent(100); Samtale.velg(2); await vent(150); ut.penn = run.pennen === true && Merknad.har('pennen'); Samtale.velg(0); await vent(100);
+          // sjefene: en ny tale ved en tredjedel helse, slengord i kampen og siste ord når de dør
+          const B = G.boss || spawnBoss(6, P.x + 3, P.z); ut.pennSvak = B.hp <= B.max * .81; B.t = 0; B.state = 'chase'; await vent(100);
+          B.hp = B.max * .6; bossOnHurt(B, 1); ut.tale1 = B.mono === (LINES.monolog[B.type] || LINES.monolog[6]);
+          B.monoT = 0; B.phase = 'fight'; B.state = 'chase'; B.hp = B.max * .3; bossOnHurt(B, 1); ut.tale2 = B.phasesDone === 2 && B.mono === LINES.monolog2[B.type];
+          const bobler = () => [...document.querySelectorAll('#fx .bubble')].map(e => e.textContent);
+          ut.tale2boble = bobler().includes(LINES.monolog2[B.type][0]);
+          B.state = 'chase'; B.phase = 'fight'; B.cd = 99; B.slengT = .01; for (let i = 0; i < 30 && !bobler().some(t => LINES.boss[B.type].includes(t)); i++) { B.state = 'chase'; B.cd = 99; await vent(100); }
+          ut.sleng = bobler().some(t => LINES.boss[B.type].includes(t));
+          hurt(B, 1e7, { from: 'player' }); for (let i = 0; i < 10 && !bobler().includes(LINES.bossDod[B.type]); i++) await vent(100); ut.sisteOrd = bobler().includes(LINES.bossDod[B.type]); ut.behandlet = run.behandlet.includes(6);
+          await vent(2000);
+          // slutten: siste side, Escape går videre til etterordet, og gjentakelse gir et innkallingsbrev signert av pasienten
+          if (G.state === 'panel') closePanel(); run.historie.sett = 5; run.historie.valg = { 1: 'gjentakelse', 2: 'gjentakelse', 3: 'sannheten', 4: 'gjentakelse', 5: 'gjentakelse' };
+          showWin(); for (let i = 0; i < 40 && !document.getElementById('sisteOk'); i++) await vent(100); ut.siste = tittel() === 'Siste side' && tekst().includes('side én');
+          closePanel(); await vent(200); ut.etterord = tittel() === DROM_SLUTT.gjentakelse.navn; const k = document.getElementById('epOk'); if (k) k.click(); await vent(400);
+          ut.brev = (document.querySelector('.brev h2') || {}).textContent; ut.sign = (document.querySelector('.bsign') || {}).textContent === navn; ut.stempel = (document.querySelector('.bstempel') || {}).textContent;
+          ut.brevTekst = [...document.querySelectorAll('.brev p')].map(e => e.textContent).join(' ');
+          return ut; }""")
+        sjekk('en journalside før drømmen, uten sjef når ingen er behandlet, og «Les videre» går inn i drømmen', hi['side1'] == 'Journalen, side 1' and 'behandlet' not in hi['tekst1'] and hi['knapp'].endswith('Les videre') and hi['intro1'].startswith('Kapittel 1'), {k: hi[k] for k in ('side1', 'knapp', 'intro1')})
+        sjekk('side 2 nevner sjefen som ble behandlet, grunnleggelsen og forrige valg, og Escape går til drømmen', hi['side2'] == 'Journalen, side 2' and hi['epitaf'] and hi['valgMerk'] and hi['etterEsc'].startswith('Kapittel 2'), {k: hi[k] for k in ('side2', 'epitaf', 'valgMerk', 'etterEsc')})
+        sjekk('kapitlene følger startetasjen (1 4 5 fra vaskesjakten), og tusenvis av journalsider blir hele setninger', hi['vask'] == [1, 4, 5] and hi['eget'] == [1, 2, 3, 4, 5] and hi['sider'] >= 4000 and hi['antallFeil'] == 0, {k: hi[k] for k in ('vask', 'eget', 'sider', 'feil')})
+        sjekk('høyttaleren og koret får linjer fra drømmene, og Olsen og personalet følger etasjen', hi['pa'] >= 2 and hi['koret'] and hi['olsen3'] and hi['paBorte'] and hi['olsen4'], {k: hi[k] for k in ('pa', 'koret', 'olsen3', 'paBorte', 'olsen4')})
+        sjekk('forstanderen sitter i Dypet med fire valg, du kan lese over skulderen, og pennen svekker Journalen', hi['prompt'] and hi['forstander'].startswith('Forstander') and hi['fvalg'] == 4 and hi['les'] and hi['penn'] and hi['pennSvak'], {k: hi[k] for k in ('naturlig', 'prompt', 'forstander', 'fvalg', 'les', 'penn', 'pennSvak')})
+        sjekk('sjefen holder en ny tale ved en tredjedel helse, slenger ord i kampen og får siste ord', hi['tale1'] and hi['tale2'] and hi['tale2boble'] and hi['sleng'] and hi['sisteOrd'] and hi['behandlet'], {k: hi[k] for k in ('tale1', 'tale2', 'tale2boble', 'sleng', 'sisteOrd', 'behandlet')})
+        sjekk('siste side før etterordet, Escape går videre, og gjentakelse gir innkallingsbrev signert av pasienten', hi['siste'] and hi['etterord'] and hi['brev'] == 'Innkallingsbrev' and hi['sign'] and hi['stempel'] == 'INNKALT' and 'samme dag' in hi['brevTekst'] and 'forstanderens penn' in hi['brevTekst'], {k: hi[k] for k in ('siste', 'etterord', 'brev', 'sign', 'stempel')})
+        hk = await pg.evaluate("""async () => { const vent = t => new Promise(r => setTimeout(r, t)); document.getElementById('bOk').click(); await vent(500);
+          return { kort: (document.querySelector('.dcard .cause') || {}).textContent, stempel: (document.querySelector('.dcard .stamp') || {}).textContent, lore: LORE[LORE.length - 1].t, oye: ['krok', 'rust', 'arkivar', 'klumpen', 'hekk', 'hjort', 'journalen'].every(t => OYE_SER[t] && LINES.monolog2[t] && LINES.bossDod[t]), merk: ['klumpen', 'hekk', 'hjort', 'pennen'].every(k => MERKNADER[k]) }; }""")
+        sjekk('dødskortet følger slutten, og fragmentene, øyet, talene og merknadene dekker alle sjefene', hk['kort'].startswith('Pasienten er innkalt') and hk['stempel'] == 'INNKALT' and hk['lore'] == 'Hele historien' and hk['oye'] and hk['merk'], hk)
+        await pg.screenshot(path='/tmp/e_18historie.png')
+        sjekk('ingen konsollfeil (historie)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # Avdeling Null og Venterommet: den lille legen, instrumentskrinet med kjettingene, og forstanderen som løses fra krokene
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, 'eget')
+        ny = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); };
+          const tekst = () => (document.querySelector('#panel:not(.hidden) .samtale .stekst') || {}).innerText || '';
+          let h = null; for (const d of [4, 3, 2, 6, 4, 3]) { startFloor(d, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('venterom'); if (h) break; }
+          ut.venterom = !!h;
+          if (h) { const s = freeSpot(h.x, h.z + 1.3, 2); P.x = s.x; P.z = s.z; R.snapCamera(P.x, P.z); await vent(300); const it = findInteract(); ut.vPrompt = it && it.t; it.fn(); await vent(150);
+            ut.bak = ((document.querySelector('.samtale .baklengs') || {}).textContent || '').includes('neffaK'); ut.vValg = document.querySelectorAll('[data-sv]').length;
+            Samtale.velg(2); await vent(150); ut.drommer = tekst().includes('Den som ligger under'); closePanel(); await vent(100); ut.vBorte = !!h.ferdig; }
+          // instrumentskrinet: kjettingene kommer når panelet er lukket, treffer pasienten og etterlater en gave
+          h = null; for (const d of [3, 4, 2, 6]) { startFloor(d, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('skrin'); if (h) break; }
+          ut.skrin = !!h;
+          if (h) { P.hp = P.maxHp = 300; const s = freeSpot(h.x, h.z + 1.2, 2); P.x = s.x; P.z = s.z; R.snapCamera(P.x, P.z); await vent(300); findInteract().fn(); await vent(150);
+            Samtale.velg(0); await vent(150); const hp0 = P.hp, n0 = G.run.items.length; ut.forLukk = Kjeder.liste.length === 0; closePanel();
+            for (let i = 0; i < 200 && !Kjeder.liste.some(K => K.truffet); i++) await vent(50); ut.kjeder = Kjeder.liste.length;
+            await spill(2.2); ut.skade = P.hp < hp0 && P.lastCause === 'kroker'; ut.gave = G.run.items.length > n0; ut.kjederBorte = Kjeder.liste.length === 0; }
+          // forstanderen: løs ham fra krokene, og kjettingene henter ham ned
+          startFloor(6, false); rolig(); await vent(300); h = Hendelse.aktive.find(x => x.id === 'forstanderen') || Hendelse.tving('forstanderen');
+          P.x = h.x; P.z = h.z + 1.2; R.snapCamera(P.x, P.z); await vent(300); findInteract().fn(); await vent(150); Samtale.velg(3); await vent(150); ut.losTekst = tekst().includes('første kroken'); closePanel();
+          await spill(2.4); ut.losBorte = !!h.ferdig && G.run.forstanderLos === true && Merknad.har('loslatt') && Kjeder.liste.length === 0;
+          const B = spawnBoss(6, P.x + 3, P.z); ut.sterkere = B.max > sjefFor(6).hp * 1.19; killEntity(B, {}); await vent(200);
+          ut.sign = Historie.brev().sign; Drom.historie(); G.run.historie.sett = 5; G.run.historie.valg = { 5: 'tilgivelse' }; ut.tomStol = Historie.siste(G.run.historie).tekst.includes('tom stol');
+          // en ny etasje rydder bort kjettinger som henger igjen
+          Kjeder.rundt({ x: P.x, y: 1, z: P.z }, 3, { hold: 5 }); startFloor(5, false); ut.rydda = Kjeder.liste.length === 0;
+          return ut; }""")
+        sjekk('Venterommet bak forhenget: den lille legen snakker baklengs, har fire valg og forteller hvem som drømmer', ny['venterom'] and ny['vPrompt'] == 'Gå gjennom forhenget' and ny['bak'] and ny['vValg'] == 4 and ny['drommer'] and ny['vBorte'], ny)
+        sjekk('instrumentskrinet: kjettingene kommer først når panelet er lukket, treffer pasienten og etterlater en gave', ny['skrin'] and ny['forLukk'] and ny['kjeder'] >= 3 and ny['skade'] and ny['gave'] and ny['kjederBorte'], ny)
+        sjekk('forstanderen kan løses fra krokene: kjettingene henter ham, Journalen blir sterkere, og siste side får en tom stol', ny['losTekst'] and ny['losBorte'] and ny['sterkere'] and ny['sign'] == 'M. Morbeck, tidligere forstander' and ny['tomStol'] and ny['rydda'], ny)
+        await pg.screenshot(path='/tmp/e_19avdeling_null.png')
+        sjekk('ingen konsollfeil (Avdeling Null og Venterommet)', not pg.errs, pg.errs[:6])
         await pg.close()
 
         await b.close()

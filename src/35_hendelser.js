@@ -229,6 +229,16 @@ Object.assign(Sound.lib, {
    'rom:a,b' (et kamprom av disse typene, nås når det er ryddet).
    lag(h) bygger scenen, samtale(h) gir første samtaleside.
    ============================================================ */
+/* hva øyet i sprekken ser: sjefen i denne etasjen, med riktig pronomen */
+const OYE_SER = {
+  krok: 'Jeg ser hvor overlegen sitter. Han plukker nesen og tørker det under stolen.',
+  rust: 'Jeg ser hvor hydroterapeuten sitter. Han plukker nesen og skyller det ned i sluket.',
+  arkivar: 'Jeg ser hvor overarkivaren sitter. Hun plukker nesen og arkiverer det under P.',
+  klumpen: 'Jeg ser hvor Klumpen ligger. De plukker nesen, alle sammen, i hverandres neser.',
+  hekk: 'Jeg ser hvor overgartneren sitter. Han plukker nesen og gjødsler rosene med det.',
+  hjort: 'Jeg ser hvor hjorten står. Den har ikke nese. Den har et ansikt den har lånt.',
+  journalen: 'Jeg ser hvor Journalen ligger. Den blar i seg selv og leser om deg, høyt.'
+};
 const HENDELSER = {
   oyet: {
     navn: 'Øyet i sprekken', dybder: [2, 3, 4, 6], plass: 'vegg', vekt: 3, prompt: 'Se inn i sprekken',
@@ -249,7 +259,7 @@ const HENDELSER = {
         : `«Du igjen,» sier øyet. «Forrige gang var du ${forrige || 'en annen'}. Jeg husker alle som går forbi. Jeg har ingenting annet å gjøre.»`;
       m.oyetHusker = `${Folge.fornavn()}, med ${(G.run.look && G.run.look.klaer) === 'tvang' ? 'tvangstrøye' : 'morgenkåpe'}`;
       return { tittel: 'Øyet i sprekken', bilde: () => oyeBilde(1), tekst: intro, valg: [
-        { tekst: 'Spør hva det ser', gjor: () => ({ tekst: `«Jeg ser alt bak veggene. Jeg ser hvor overlegen sitter. Han plukker nesen og tørker det under stolen.»\n«For ti tenner kan du se det samme.»`, valg: [
+        { tekst: 'Spør hva det ser', gjor: () => ({ tekst: `«Jeg ser alt bak veggene. ${OYE_SER[(typeof sjefFor === 'function' ? sjefFor(G.depth) : {}).type] || OYE_SER.krok}»\n«For ti tenner kan du se det samme.»`, valg: [
           { tekst: 'Betal ti gulltenner', hint: 'Viser hele etasjen på kartet', kan: () => G.player.teeth >= 10, gjor: () => { h.brukt = true; Folge.tenner(-10); Folge.kart('alt'); return { tekst: 'Øyet blunker to ganger. Plutselig vet du hvor alt er. Det er ikke en god følelse, men det er praktisk.' }; } },
           { tekst: 'Nei takk', gjor: () => ({ tekst: '«Gjerrigknark,» sier øyet, og ruller seg bort.' }) }] }) },
         { tekst: 'Stikk fingeren inn', hint: 'Det kan gå begge veier', gjor: () => { h.brukt = true; const r = Math.random(); if (r < .45) { Folge.tenner(15); return { tekst: 'Det er varmt og vått der inne. Noe suger forsiktig på fingeren. Når du drar den ut, har den fått femten gulltenner rundt seg, som ringer.' }; } if (r < .75) { Folge.skade(6, 'self'); return { tekst: 'Øyet har tenner. Det visste du ikke. Nå vet du det.' }; } Folge.morb(15); Folge.kuriositet(); return { tekst: 'Du får fingeren tilbake. Det er ikke din finger. Den er litt lengre, og den har en ring. Den fungerer helt fint.' }; } },
@@ -418,7 +428,7 @@ const HENDELSER = {
     tick(h, dt) { if (!h.brukt && Math.random() < dt * .2 && d2(G.player.x, G.player.z, h.x, h.z) < 30) Sound.mumble(3, 190); },
     samtale(h) {
       const B = typeof sjefFor === 'function' ? sjefFor(G.depth) : null, nr = (G.run.patient && G.run.patient.nr) || 0;
-      return { tittel: 'Radioen', bilde: () => hendBilde(HEND_ART.radio()), tekst: `Et hørespill på Kringkastingen. «...og så gikk pasient nummer ${nr} inn i rommet med søylene, og der ventet ${B ? B.name : 'overlegen'}. Pasienten hadde ${pick(['glemt tøflene', 'en tann for mye', 'ingen plan', 'en mopp og god tid'])}...»`, valg: [
+      return { tittel: 'Radioen', bilde: () => hendBilde(HEND_ART.radio()), tekst: `Et hørespill på prøvesendingen. «...og så gikk pasient nummer ${nr} inn i rommet med søylene, og der ventet ${B ? B.name : 'overlegen'}. Pasienten hadde ${pick(['glemt tøflene', 'en tann for mye', 'ingen plan', 'en mopp og god tid'])}...»`, valg: [
         { tekst: 'Skru opp', gjor: () => { h.brukt = true; Folge.kart('sjef'); Folge.xp(10); return { tekst: 'Fortelleren beskriver veien til overlegen så nøyaktig at du kunne gått den med lukkede øyne. Så kommer reklame for levertran.' }; } },
         { tekst: 'Bytt kanal', gjor: () => { h.brukt = true; Folge.hel(6); Folge.morb(5); return { tekst: 'En mann leser opp oppskriften på lutefisk, veldig langsomt. Du blir sulten og kvalm på samme tid, og det er en slags helse.' }; } },
         { tekst: 'Skru av', gjor: () => ({ tekst: 'Det blir stille. Så hører du hørespillet fortsette inni hodet ditt.' }) }] };
@@ -441,7 +451,7 @@ const HENDELSER = {
       const B = typeof sjefFor === 'function' ? sjefFor(Math.min(MAX_DEPTH, G.depth + 1)) : null, n = B ? B.name : 'noen';
       const igjen = Folge.ganger('kubbekona') > 1 ? '«Kubben husker deg,» sier kona før du rekker å si noe. «Den sier du har blitt tynnere.»\n' : '';
       return { tittel: 'Kona med kubben', bilde: () => hendBilde(HEND_ART.kubbekona()), tekst: igjen + 'En gammel kone i sjal står på stien og holder en vedkubbe i armene, slik man holder et spedbarn. «Kubben min har sett noe,» sier hun. «Den vil at jeg skal si det til deg. Jeg liker det ikke.»', valg: [
-        { tekst: '«Hva har den sett?»', gjor: () => { h.brukt = true; Folge.xp(15); Folge.kart('sjef'); return { tekst: `Hun legger øret mot kubben og lytter lenge. «Den sier at ${n} venter lenger nede. Den sier at ${n} har kalde hender og varm kaffe.»\nHun ser opp. «Og den sier at du skal passe deg for kaka. Den sier ikke hvilken kake. Det gjør den aldri.»` }; } },
+        { tekst: '«Hva har den sett?»', gjor: () => { h.brukt = true; Folge.xp(15); Folge.kart('sjef'); return { tekst: `Hun legger øret mot kubben og lytter lenge. «Den sier at ${n} venter lenger nede. Den sier at ${n} har kalde hender og varm kaffe.»\nHun ser opp. «Den sier at det er vann under grunnmuren, og at vannet drømmer. Kubber vet sånt. De har røtter.»\n«Og den sier at du skal passe deg for kaka. Den sier ikke hvilken kake. Det gjør den aldri.»` }; } },
         { tekst: 'Be om å få holde kubben', gjor: () => { h.brukt = true; Folge.hel(20); Folge.morb(-15); return { tekst: 'Kubben er tung og varm, som om den har ligget i sola hele dagen. Du vugger den litt. Kona ser på deg som på et barnebarn hun ikke har bestemt seg for om hun liker. Du føler deg bedre enn du har gjort på lenge.' }; } },
         { tekst: 'Spør om du kan fyre med den', gjor: () => { h.brukt = true; Folge.skade(6, 'self'); Folge.morb(15); return { tekst: '«FYRE?» Hun slår deg i hodet med kubben, to ganger. Kubben sier ingenting, men du kjenner at den er skuffet over deg.' }; } }] };
     }
@@ -452,7 +462,7 @@ const HENDELSER = {
     samtale(h) {
       const B = typeof sjefFor === 'function' ? sjefFor(G.depth) : null;
       const sant = pick([`Overlegen her heter ${B ? B.name : 'noe med O'}.`, 'Skatten ligger der du ikke har vært.', 'Den som ringer, er ikke den du tror.']);
-      const tull = shuf(['Uglene har flyttet inn i veggene.', 'Kaffen i kanna er kald, men den husker at den var varm.', 'Det står en hest i kjelleren. Ikke spør meg hvordan.', 'Mannen som går baklengs, er ikke født ennå.', 'Tannfeen ligger etter med arbeidet.']).slice(0, 2);
+      const tull = shuf(['Uglene har flyttet inn i veggene.', 'Kaffen i kanna er kald, men den husker at den var varm.', 'Det står en hest i kjelleren. Ikke spør meg hvordan.', 'Mannen som går baklengs, er ikke født ennå.', 'Tannfeen ligger etter med arbeidet.', 'Det er et hav under kjelleren. Det har lav puls.', 'Bjella du hører om natten, er ikke til deg. Ennå.']).slice(0, 2);
       const tre = shuf([sant, ...tull]);
       return { tittel: 'Kjempen', bilde: () => hendBilde(HEND_ART.kjempe()), tekst: 'En mann i smoking står midt i rommet. Han er så høy at hodet nesten forsvinner i mørket under taket. Han bøyer seg ikke ned. Stemmen kommer langt ovenfra og veldig langsomt.\n«Jeg skal si deg tre ting,» sier han. «To av dem er sanne.»', valg: [
         { tekst: 'Lytt', gjor: () => { h.brukt = true; Folge.xp(20); Folge.kart('skatt'); Hendelse.borte(h); return { tekst: `«Én: ${tre[0]}»\n«To: ${tre[1]}»\n«Tre: ${tre[2]}»\nSå promper han, langt der oppe. Det tar en god stund før lukten når ned til deg, og da er han borte.` }; } },
