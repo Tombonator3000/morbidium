@@ -1,6 +1,6 @@
 # Morbidium: minne
 
-Sist oppdatert 2026-09-25.
+Sist oppdatert 2026-09-26.
 
 ## Hva prosjektet er
 Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og Hellraiser-mareritt med mørk humor som gjør narr av edgelords. Tilfeldig genererte etasjer satt sammen av rom. Designdokument: Morbidium-Design-v0_2.md.
@@ -279,4 +279,13 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - MENING: 26 spørsmål fra todo.md i fire faner (lyd, bilde, spill, historie), tre svar hver. Panelet (#testpanel, z-index 40) ligger over #panel og lukkes med Escape uten å lukke pausen under. Tastene i panelet stoppes, så friteksten ikke styrer spillet.
 - Rapporten (Testmodus.tekst) er ren tekst på norsk som Tom kopierer og limer inn i samtalen. Lagres ved døden og utskrivningen i G.meta.testrapporter (de fem siste), og oppdateres når svarene endres etterpå. Data-fanen har «Kopier siste» og «Kopier alle». Kopieringen bruker navigator.clipboard og faller tilbake på å merke feltet og document.execCommand('copy').
 - Feil i konsollen (error og unhandledrejection) tas vare på (de åtte siste) og kommer med i rapporten.
+
+## Mobil (26.9.): grafikkminnet, mistet WebGL og layout
+- Tom fikk «Noe gikk galt» på mobil fordi grafikkminnet vokste for hver etasje (rundt 12 MB per etasje med fiender). Tre lekkasjer er tettet: skyggekartet til månelyset (D3.riv kaster lysene med dispose), strekbåndene og materialene til dukkene (dukkeKast i 11_doll.js, brukt av Doll og Lagdukke), og teksturer og materialer til flekker, plakater og dører (Paint.owned i 12_paint.js). Grafikkminnet ligger nå flatt rundt 52 MB. Regel: alt som lages per etasje, må frigjøres i riv eller dispose; R.remove kobler bare løs.
+- Målt ved å pakke inn WebGL-kallene (texImage2D, texStorage2D, renderbufferStorage, bufferData og sletting) og summere per etasje i en mobilprofil. renderer.info.memory er en grov, billig kontroll.
+- Mistet WebGL (R.mistet og R.hentet i 04_render.js): pause, «Grafikken ble borte», three bygger opp igjen, og grafikken går ned et trinn (dprMax minus 0,5 og ett nivå ned i 3D). Åtte sekunder uten retur gir feilmeldingen. Mistes den mens siden er skjult (bytte av app), teller klokka først når siden synes igjen, og det blir ingen nedgradering. Selvtesten ved oppstart ser bort fra mistet kontekst.
+- Layout: .screen sentrerer med auto-marger, så det som er høyere enn skjermen, kan rulles. passInn (32_meny.js) skalerer papirflater til plassen innenfor panelets marger, og ikke under 0,75 på berøringsskjerm. Liggende telefon (orientation:landscape og max-height:500px): HUD-en i hjørnene, kortene nederst, dødskortet og utskrivningen i to kolonner, butikken side om side. Stående: journalen med 430 brede sider (max-width:560px), smalt brev (.brev.smal), tipslappen under merket. Mer enn 20 hjerter blir «+N».
+- Rulling: openPanel nullstiller rullingen for et nytt panel, men ikke når det samme panelet tegnes på nytt (butikken, fanene). Nullstillingen må skje etter at panelet vises. Knapper som får fokus når et panel åpnes, bruker focus({ preventScroll: true }).
+- body har touch-action:none, men panelene med overflow:auto kan likevel rulles med fingeren (Blink slipper panorering til igjen for rullbare elementer). Synthesized scroll gesture i CDP virker ikke i testnettleseren; bruk Input.dispatchTouchEvent.
+- Testdel 36 i test_ekstra dekker dette.
 
