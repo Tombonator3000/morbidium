@@ -21,12 +21,13 @@ const D3 = {
   },
   /* valgt nivå: fast i innstillingene (1 lav, 2 middels, 3 høy) eller automatisk (0) */
   kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse ? 'middels' : 'hoy'); },
-  /* «Lys og skygge» av (R.lightsOn) gir et jevnt opplyst rom: ingen punktlys, skygger, lysstråler eller kantlys */
-  Q() { const q = this.NIVA[this.kval()] || this.NIVA.hoy; return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },
+  /* «Lys og skygge» av (R.lightsOn) gir et jevnt opplyst rom: ingen punktlys, skygger, lysstråler eller kantlys.
+     Telefoner og TV får høyst 1024 i skyggekartet, også på høy: 2048 med dybdebuffer tar rundt 24 MB mer grafikkminne, og telefoner har mistet WebGL av mindre */
+  Q() { let q = this.NIVA[this.kval()] || this.NIVA.hoy; if ((R.coarse || R.tv) && q.skygge > 1024) q = Object.assign({}, q, { skygge: 1024 }); return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },
   /* oppløsningen følger nivået når 3D er på; uten 3D brukes det skjermen tåler */
   dpr() { const k = this.on ? Math.min(R.dprMax || 1, this.Q().dpr) : (R.dprMax || 1); if (Math.abs(k - R.dpr) > .01) { R.dpr = k; R.resize(); } },
   /* kalles fra applySettings: nytt nivå bygger 3D-laget på nytt */
-  nokkel() { return this.kval() + (R.lightsOn ? '' : '-flat'); },
+  nokkel() { return this.kval() + (R.lightsOn ? '' : '-flat') + (R.coarse || R.tv ? '-mob' : ''); },
   kvalitet() { const k = this.nokkel(); if (k === this.kSist) return; this.kSist = k; if (this.on) { this.dpr(); this.onFloor(); } },
   /* automatisk kvalitet: måler bildefrekvensen i spill, to sekunder om gangen. To lave målinger på rad gir et trinn ned.
      Hopper over fanebytter og automatiske testnettlesere, som bare har programvaregrafikk. */
@@ -66,6 +67,9 @@ const D3 = {
     const hemi = new THREE.HemisphereLight('#8a90c8', '#2a1a14', Q.flat ? .45 : .16);
     const mane = new THREE.DirectionalLight('#9aaee8', .42); mane.castShadow = Q.skygge > 0;
     if (Q.skygge) mane.shadow.mapSize.set(Q.skygge, Q.skygge); const sc2 = mane.shadow.camera; sc2.left = -16; sc2.right = 16; sc2.top = 16; sc2.bottom = -16; sc2.near = 1; sc2.far = 60; mane.shadow.bias = -.0015; mane.shadow.normalBias = .02;
+    // skyggekameraet følger kameraet, men bare i hele ruter av skyggekartet (se tick), ellers kryper kantene på alle faste skygger
+    // når kameraet glir. Aksene er de samme som lookAt gir skyggekameraet: z mot månen, x vannrett, y oppover i kartet
+    this.maneB = null; if (Q.skygge) { const off = new THREE.Vector3(-7, 16, 9), z = off.clone().normalize(), x = new THREE.Vector3(0, 1, 0).cross(z).normalize(); this.maneB = { off, x, y: z.clone().cross(x), z, texel: (sc2.right - sc2.left) / Q.skygge, t: new THREE.Vector3() }; }
     if (F.ute) { mane.intensity = .78; mane.color.set('#a8bce8'); } // ute lyser månen sterkere
     this.maneI = mane.intensity; // lynet (38_effekter.js) løfter månelyset et øyeblikk, så alt kaster skarp skygge
     sc.add(amb, hemi, mane, mane.target); this.mane = mane; this.ting.push(amb, hemi, mane, mane.target);
@@ -84,7 +88,7 @@ const D3 = {
     this.lamper = []; this.tidU = this.tidU || { value: 0 };
     this.vegglamper(F, th); this.arkitektur(F, th); if (Q.stov) this.stov(Q.stov); if (Q.taake) this.taake(F, th);
     for (const o of G.props) { o.d3 = true; this.moble(o); }
-    R.post.uniforms.uLights.value = 0;
+    R.post.uniforms.uLights.value = 0; R.renderer.shadowMap.needsUpdate = true;
     this.bygd = true; this.t = 0;
   },
   riv() {
@@ -99,6 +103,7 @@ const D3 = {
     if (G.props) for (const o of G.props) { o.d3 = false; if (o.U && o.U.tint0) o.U.uTint.value.copy(o.U.tint0); utenKant(o.U); }
     this.lamper = []; this.morkeT = 0; this.taakeLys = null;
     if (R.post) R.post.uniforms.uLights.value = R.lightsOn ? 1 : 0;
+    if (R.renderer) R.renderer.shadowMap.autoUpdate = true;
     this.bygd = false;
   },
   /* veggstiler: lamper henger bare på innevegger, og lister og pilastre bare på pussede vegger */
@@ -327,8 +332,15 @@ const D3 = {
   },
   tick(dt) {
     if (!this.on || !this.bygd || !G.F) return;
-    this.t += dt; if (this.tidU) this.tidU.value += dt; const cx = R.camT.x, cz = R.camT.z, P = G.player;
-    this.mane.position.set(cx - 7, 16, cz + 9); this.mane.target.position.set(cx, 0, cz); this.mane.target.updateMatrixWorld();
+    this.t += dt; if (this.tidU) this.tidU.value += dt; const cx = R.camT.x, cz = R.camT.z, P = G.player, B = this.maneB;
+    // månen: samme retning og lengde som før, men midtpunktet rundes av til en hel rute i skyggekartet på tvers av lyset,
+    // og skyves langs lyset ned på gulvet igjen. Da ligger rutene fast i verden, og kantene står stille når kameraet glir
+    if (B) { const t = B.t.set(cx, 0, cz), s = B.texel, u = Math.round(t.dot(B.x) / s) * s, v = Math.round(t.dot(B.y) / s) * s; t.copy(B.x).multiplyScalar(u).addScaledVector(B.y, v); t.addScaledVector(B.z, -t.y / B.z.y); this.mane.target.position.copy(t); this.mane.position.copy(t).add(B.off); }
+    else { this.mane.position.set(cx - 7, 16, cz + 9); this.mane.target.position.set(cx, 0, cz); }
+    this.mane.target.updateMatrixWorld();
+    // skyggekartet tegnes bare når noe kan flytte seg (spill og tittel), og én gang til hver gang tilstanden skifter.
+    // I pausen, panelene og journalen står det stille, så telefonen slipper skyggepasset
+    const SM = R.renderer.shadowMap; SM.autoUpdate = G.state === 'play' || G.state === 'title'; if (G.state !== this.stSist) { this.stSist = G.state; SM.needsUpdate = true; }
     this.mane.intensity = (this.maneI || .42) + (R.flashOn ? R.fx.lyn || 0 : 0) * 2.8;
     // mye Morbidium: av og til slukner lyset
     if (P && P.alive && P.morb >= 70 && R.distortOn && G.state === 'play') { this.morkeR = (this.morkeR ?? rnd(8, 20)) - dt; if (this.morkeR <= 0) { this.morkeR = rnd(15, 35); this.morke(rnd(.7, 1.3), .12); } }
