@@ -639,3 +639,81 @@ Alle tidspunkt er UTC.
 - Den publiserte fila (6,4 MB, 314 innebygde bilder og 165 lyder) er lastet ned og testet på PC og mobil: alle lydene pakkes ut uten feil, musikken spiller og går over med bro, stemningssløyfene går, dråpene kommer når pasienten blir truffet, og det er ingen konsollfeil.
 - Skjermbildet fra mobilen viste at bloddråpene ble for store på stående skjerm, fordi størrelsen fulgte høyden på bildet. Nå følger størrelse og fart den korteste siden (Vaatt.kk), så dråpene er like store på stående mobil som på PC. Liggende skjerm er som før. Sjekket med skjermbilde på 390 x 844, og testdel 34 går gjennom.
 - Grenen claude/practical-babbage-nc80bu er satt lik main igjen. Rettelsen og denne oppføringen flettes inn som en egen liten PR.
+
+## 2026-09-26 08:12 Forslag til neste steg etter lydrunden
+- Tom spurte hva neste steg bør være. Svaret er det samme som i forrige runde, bare tydeligere: todo.md har nå 19 åpne spørsmål til Tom som bare kan besvares ved å spille, og ingenting av lyden, musikken eller dråpene er hørt eller sett på ekte maskiner. Flaskehalsen er tilbakemelding, ikke flere systemer.
+- Forslaget står øverst i todo.md: testmodus og løpsrapport, «Si din mening» i pausemenyen med spørsmålene som knapper, så tre eller fire løp på PC og mobil, og deretter justering av lydmiks, blod, vanskelighet, lengde og ytelse. Små ting som kan tas når som helst: seks lyder som er hentet, men ikke koblet inn (bokslag, dørsmell, gulvknirk, radiosus, riving og sluk), og en fast testklokke for nettlesertestene.
+
+## 2026-09-26 08:57 Testmodus og «Si din mening» (Toms ja til forslaget)
+- Tom sa ja til å starte med testmodusen og tilbakemeldingsknappene.
+- Ny modul src/44_testmodus.js. Testmodus slås på under Innstillinger, Spill, eller med ?testmodus i adressen (én gang per lasting, så den kan slås av igjen).
+- Måleren til venstre på skjermen: bilder i sekundet (nå og laveste), 3D og kvalitet, minne (Chrome), hvor mye lydene bruker, hvor mange lyder som er pakket ut, musikken (stykke, neste stykke, besetning, kamp eller sjef og hvor mye musikk det er nå) og antall dråper på skjermen.
+- Rapporten for løpet: versjon (dato og commit, lagt inn av build.py som BYGG), enhet (nettleser, system, skjerm, berøring, kjerner, minne, skjermkort, lydkort), innstillingene, oppstartstid og hvor lang tid lydene brukte, pasienten, slutten (dødsårsak, rom, om sjefen levde, eller utskrivning og brev), hver etasje og drøm (tid, drap, skade etter kilde, helse, tenner, sjefen og hvor lang tid behandlingen tok, bilder i sekundet), kuriositeter, kort, våpen, nivå, lengste kombo, valgene i drømmene, ytelse og kvalitetsbytter, feil i konsollen, svarene og friteksten.
+- «Si din mening»: et kartotekkort med fanene Lyd, Bilde, Spill, Historien og Rapport. 26 spørsmål fra todo.md med tre knapper hver (trykk en gang til for å angre), fritekst, og en knapp som kopierer rapporten (med reserve når nettleseren ikke gir tilgang til utklippstavla). Panelet ligger over alt annet, og Escape lukker bare det.
+- Pausemenyen får «Si din mening» og «Testrapport», dødsskjermen og utskrivningen får «Testrapport». Rapporten lagres ved slutten av løpet (de fem siste), oppdateres hvis svarene endres etterpå, og kan kopieres fra Data-fanen.
+- Røyktest på PC og mobil med skjermbilder: måleren, pausemenyen, spørsmålene, rapporten, døden og innstillingene virker, ingen konsollfeil. Ny testdel 35 i test_ekstra går gjennom. Den fant én ekte feil: med ?testmodus i adressen gikk testmodus ikke an å slå av.
+
+## 2026-09-26 09:24 Mobilen mistet WebGL: lekkasjer i grafikkminnet funnet og tettet
+- Tom fikk «Noe gikk galt: grafikken gikk tom for minne (WebGL-konteksten ble mistet)» på mobil. PC går fint. Han ba også om at layout og bruk tilpasses mobil.
+- Den fulle testkjøringen av testmodusen ble stoppet halvveis (generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 72 av 72 så langt), fordi mobilrettingen endrer bygget.
+- Målt med et eget skript som følger med på alt spillet legger i grafikkminnet (teksturer, render-buffere og vertex-buffere) i en mobilprofil (412 x 839, dpr 2,625, berøring). Grafikkminnet vokste for hver etasje, også i versjonen fra før lydrunden. Med 15 fiender som dør per etasje gikk den publiserte versjonen fra rundt 65 til nesten 190 MB over tolv etasjeskifter, omtrent 12 MB per etasje. Et langt løp med drømmer blir mer enn en telefon tåler.
+- Tre lekkasjer:
+  1. Skyggekartet til månelyset (1024 x 1024 på mobil, med dybdebuffer, 8 MB) ble aldri frigjort når 3D-rommet ble revet (D3.riv i 15_rom3d.js). R.remove kobler bare løs. Nå kastes lysene med dispose, som tar skyggekartet.
+  2. Hver papirdukke (fiender, personale, figurer i drømmene) har to strekbånd med 3200 punkter hver, rundt 150 kB i grafikkminnet. Doll.dispose og Lagdukke.dispose koblet bare roten løs. Nå frigjøres strekbåndene og materialene (dukkeKast i 11_doll.js). Teksturene og firkantene deles og blir liggende.
+  3. Flekkene på gulvet, plakatene og dørene til tjenesterommene fikk nye teksturer og materialer i hver etasje uten å bli registrert for opprydding (12_paint.js). Nå havner de i Paint.owned.
+- Etter rettingene ligger grafikkminnet flatt på rundt 52 MB (tekstur 41, render-buffere 7, buffere 4) gjennom tolv etasjeskifter med fiender. Små teksturer som fortsatt dukker opp, er bilder av møbler som bufres første gang de vises. De flater ut.
+
+## 2026-09-26 09:27 WebGL som mistes, hentes tilbake i stedet for å stoppe spillet
+- Før viste spillet feilmeldingen «Noe gikk galt» med en gang WebGL-konteksten ble mistet. Det skjer på mobil ved lite minne, men også når nettleseren legges i bakgrunnen.
+- Nå (R.mistet og R.hentet i 04_render.js): spillet pauser og viser «Grafikken ble borte». Three.js bygger opp igjen teksturer, render-mål og shadere når konteksten kommer tilbake. Deretter går grafikken ned et trinn: oppløsningen settes ned (dprMax minus 0,5, minst 1), og 3D går ett nivå ned (middels til lav, lav til 2D). Kommer grafikken ikke tilbake på åtte sekunder, vises feilmeldingen med «Prøv enkel grafikk» som før. Testmodus-rapporten får med når det skjer.
+- Selvtesten ved oppstart (hvitt eller tomt bilde gir enkel grafikk) tolket en mistet kontekst som tomt bilde og slo av 3D helt. Den ser nå bort fra mistet kontekst.
+- Testet ved å miste konteksten med vilje (WEBGL_lose_context) i mobilprofil: pause, tilbake etter ett sekund, dpr fra 1,5 til 1 og 3D fra middels til lav, bildet tegnes riktig igjen, ingen feilmelding og ingen konsollfeil.
+
+## 2026-09-26 10:19 Mobil: layout og bruk tilpasset
+- Gikk gjennom alle skjermene med skjermbilder i mobilprofil (iPhone, 390 x 844 stående og 844 x 390 liggende, dpr 3, berøring): tittel, innleggelse, spill, kamp, pause, journal, håndbok, innstillinger, butikk, hendelse, død, utskrivningsbrev og utskrivning.
+- Skjermene (.screen) sentreres nå med auto-marger i stedet for justify-content. Det som er høyere enn skjermen, kan rulles i stedet for å bli kuttet i toppen.
+- Papirflatene skaleres med passInn (32_meny.js). På telefon går de ikke under 75 prosent, så teksten kan leses og knappene treffes. Blir de da høyere enn skjermen, rulles panelet. Testpanelet bruker det samme.
+- Liggende telefon: merket, kartet og knappene i toppen blir mindre og flyttes ut i hjørnene, kortene legges nederst mellom spaken og knappene, rommets skilt skjules, og tittelen blir mindre. Dødskortet og utskrivningen får to kolonner (båren til venstre, tallene på én rad til høyre), og butikken legger personen til venstre og varene til høyre. Alt får plass uten rulling.
+- Stående telefon: tipslappen flyttes ned under merket, snakkeboblene blir større, og testmåleren flyttes til høyre. Journalen får en smalere side (430 i stedet for 640), så den skaleres ned til rundt 0,78 i stedet for 0,55. Utskrivningsbrevet får en smal utgave, så teksten ikke blir uleselig liten.
+- Mer enn 20 hjerter vises som to rader og «+N», i stedet for å fylle skjermen.
+- Rulling: et nytt panel begynner alltid øverst, og et panel som tegnes på nytt (butikken etter et kjøp, en ny fane i innstillingene) beholder rullingen. Nullstillingen må skje etter at panelet vises, fordi nettleseren husker rullingen til et skjult panel og legger den tilbake. Knappene som får fokus når et panel åpnes, får det uten at panelet ruller (preventScroll). Hvert steg i en samtale begynner øverst.
+- Sjekket at panelene kan rulles med fingeren selv om body har touch-action:none (sveip med ekte berøringshendelser i testen).
+- WebGL som mistes mens spillet ligger i bakgrunnen (bytte av app): de åtte sekundene før feilmeldingen telles først når siden synes igjen, og grafikken settes ikke ned når den kommer tilbake. Før kunne feilmeldingen dukke opp med en gang man kom tilbake til spillet. Testet med skjult side i ni sekunder: ingen feilmelding, ingen nedgradering, og feilmeldingen kommer fortsatt etter åtte sekunder når siden synes og grafikken ikke kommer tilbake.
+- Ingen konsollfeil i noen av rundene.
+
+## 2026-09-26 10:25 Testdel 36 for mobil, og papirflatene regner med panelets marger
+- Ny testdel 36 i tools/test_ekstra.py, med liggende og stående telefon (berøring, iPhone): HUD-en overlapper ikke liggende, innstillingene kan rulles med fingeren (ekte berøringshendelser), et nytt panel begynner øverst selv om det forrige var rullet, butikken ligger side om side, dødskortet og utskrivningen får plass uten rulling, brevet begynner øverst, høyst 20 hjerter og «+N», journalen og brevet skaleres ikke under 0,7 stående, og mistet grafikk: i bakgrunnen pause uten feilmelding og uten nedgradering, synlig tilbake med lettere grafikk.
+- Testen fant én feil: passInn regnet med 20 piksler marg, men panelene har 16 på hver side (32). Utskrivningen kunne derfor rulles 12 piksler liggende. passInn måler nå plassen innenfor margene på panelet flata ligger i. På PC blir papirflatene rundt to prosent mindre.
+
+## 2026-09-26 10:27 Dokumentasjon for mobilrettingene
+- memory.md: ny del om mobil (lekkasjene og regelen om å frigjøre alt per etasje, hvordan grafikkminnet ble målt, mistet WebGL i forgrunn og bakgrunn, layout med passInn og de to telefonoppsettene, rulling og fokus, touch-action og hvordan berøring testes).
+- todo.md: ny del for mobil med det som er gjort, og det Tom bør gjøre: spille på samme telefon igjen med ?testmodus, stående og liggende, og si hvilken telefon og nettleser det var.
+- AGENTS.md: to nye regler, om grafikkminne per etasje og om nye papirflater på mobil.
+- README.md: telefon stående og liggende. Rettet også «fire genererte etasjer» til seks.
+- Den fulle testkjøringen på det endelige bygget går i en egen arbeidskopi.
+
+## 2026-09-26 10:29 Lekkasjetest for grafikkminnet i testdel 36 (ikke kalibrert ennå)
+- Testdel 36 bygger fire etasjer med seks fiender som dør i hver, to ganger, og sammenligner renderer.info.memory (teksturer og geometrier) etter første og andre runde. Den andre runden skal ikke legge igjen noe. Grensene (høyst 4 teksturer og 12 geometrier) er satt før testen er kjørt, og justeres når den store testkjøringen er ferdig og testen er prøvd mot versjonen fra før rettingen.
+
+## 2026-09-26 10:53 Full testkjøring grønn, og minnesjekken er kalibrert
+- Full testkjøring på det endelige bygget (ab64245, i egen arbeidskopi, uten andre nettlesere i gang samtidig): generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 210 av 210. De fire sjekkene som feilet i forrige runde (del 28, 29, 30 og 33), gikk gjennom. De feilet fordi maskinen var belastet av skjermbilderundene mine samtidig, og spilltiden rakk ikke fram innenfor taket på 20 sekunder.
+- Minnesjekken i del 36 kjørt mot bygget fra før lekkasjerettingene (1f410e9): +16 teksturer og +67 geometrier per runde med fire etasjer. Mot det rettede bygget: +2 til +3 teksturer og -1 til -2 geometrier. Grensene er satt til 6 teksturer og 12 geometrier, så sjekken fanger lekkasjen med god margin.
+- «2D» i den stående telefonen i del 36 var ikke en feil: test_ekstra åpner spillet med ?2d. Minnesjekken slår 3D på selv.
+
+## 2026-09-26 11:36 Gjennomgang før fletting: 14 funn, rettet
+- Kjørte en gjennomgang av hele endringen (testmodus og mobil) med fire lesere, hver med sin kant (grafikkminne og mistet WebGL, layout, panelflyt og rulling, testene), og to skeptikere per funn som prøvde å avkrefte det. 16 funn, 14 overlevde. Rettet:
+  1. Tittelmenyen havnet øverst på skjermen, også på PC: #title h1{ margin:0 } slo den nye auto-margen. Auto-margene på .screen har nå !important. Testdel 36 sjekker at tittelen står midt på skjermen på PC.
+  2. Et nytt panel som ble åpnet fra et annet panel (brevet etter epilogen, pausen etter innstillingene, håndboka fra innstillingene), beholdt den gamle rullingen. openPanel nullstiller nå rullingen for alle nye paneler, og bare det samme panelet tegnet på nytt (samme klasse og id på det øverste elementet, som butikken etter et kjøp eller innstillingene etter et valg) beholder den. Siste side og epilogen, som er samme slags panel, nullstiller selv.
+  3. Mistet grafikk med fast kvalitet (Innstillinger, Bilde): med «Lav» ble 3D slått av, med «Høy» ble ingenting satt ned selv om meldingen sa det. Nå står spillerens valg, og bare oppløsningen går ned. Meldingen sier «Alt er som før» når oppløsningen allerede var på det laveste.
+  4. Tipslappen dekket merket og knappene i toppen på små liggende telefoner (667 bred), og lå litt over merket stående. Den ligger nå i sonen mellom merket og knappene, og testen tar den med i overlappsjekken.
+  5. Brevet byttet ikke mellom smal og bred utgave når telefonen ble snudd. Nå har det en refit.
+  6. Testpanelet slapp gjennom taster når fokus var utenfor det (P lukket pausen under, og spillet gikk videre bak panelet). Nå stoppes alle taster mens det er åpent, og det begynner øverst når det åpnes.
+  7. Over 200 i helse viste «+N» alltid som fullt. Nå viser det «+fulle/skjulte», for eksempel +10/20.
+  8. Minnesjekken kunne ikke skille en lekkasje i skyggekartet alene (4 teksturer per runde) fra støyen. Testen sjekker nå direkte at skyggekartet til månen frigjøres når neste etasje bygges, og at 3D faktisk er bygd. Butikksjekken kunne passere uten at noe ble rullet, så testen åpner nå håndboka (som er høyere enn skjermen) fra de rullede innstillingene.
+- Avkreftet: at listene i arkitekturen (InstancedMesh) lekker, og at rommets skilt skjules på PC-vinduer som er lave (det gjelder bare liggende vinduer under 500 piksler).
+- Testdel 36 går gjennom med alle de nye sjekkene. Skjermbilder av tittelen på PC, stående og liggende ser riktige ut.
+
+## 2026-09-26 11:37 memory og todo etter gjennomgangen
+- memory.md: regelen for rulling i openPanel (samme panel beholder, alt annet begynner øverst), fast kvalitet ved mistet grafikk, tipslappen liggende, hjertene som +fulle/skjulte, !important på auto-margene, tastene i testpanelet, og minnesjekken i testdel 36.
+- todo.md: minnetesten og gjennomgangen er gjort.
+- Full testkjøring på 8777830 går i egen arbeidskopi.

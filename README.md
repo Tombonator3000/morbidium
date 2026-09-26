@@ -1,11 +1,12 @@
 # Morbidium
 
-Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og Hellraiser, men med mørk humor som gjør narr av edgelords. Tegnet i en stil som låner fra Conan Chop Chop og Castle Crashers. Hver pasient våkner et nytt sted, kjemper seg gjennom fire genererte etasjer, samler groteske kuriositeter som kombineres til stadig merkeligere angrep, og dør som regel på en pinlig måte.
+Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og Hellraiser, men med mørk humor som gjør narr av edgelords. Tegnet i en stil som låner fra Conan Chop Chop og Castle Crashers. Hver pasient våkner et nytt sted, kjemper seg gjennom seks genererte etasjer, samler groteske kuriositeter som kombineres til stadig merkeligere angrep, og dør som regel på en pinlig måte.
 
 ## Spill
 - Nettleser: https://tombonator3000.github.io/morbidium/
 - Tastatur og mus: WASD, mus for å sikte, venstreklikk slag, høyreklikk tungt slag, mellomrom rull, 1 til 4 evner, V apparat, F flaske, E snakk, Tab journal, Esc pause.
-- Håndkontroll og berøring virker også. Hele oversikten står i Pasienthåndboka på tittelskjermen og i pausemenyen.
+- Håndkontroll og berøring virker også. På telefon kan du spille både stående og liggende: HUD-en og menyene legger seg etter skjermen, og det som ikke får plass, kan rulles med fingeren. Hele oversikten står i Pasienthåndboka på tittelskjermen og i pausemenyen.
+- Testmodus: https://tombonator3000.github.io/morbidium/?testmodus (eller Innstillinger, Spill). Viser bilder i sekundet og minne i et hjørne, gir «Si din mening» med spørsmål som knapper i pausemenyen, og lager en rapport etter hvert løp som kan kopieres og limes inn til Claude.
 
 ## Innhold
 - Seks etasjer: Parken utenfor, mottaket, underetasjen, kjelleren, Nattskogen som ikke burde finnes under grunnmuren, og Dypet. Hver har en overlege trukket fra en pulje for hvert løp, og nederst venter alltid Journalen. Minisjefer venter i rommet med frivillig risiko.

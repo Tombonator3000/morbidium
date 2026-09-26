@@ -439,7 +439,7 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
 .merke.ok{ background:#f4efe2; border-color:var(--ink); color:var(--ink); box-shadow:3px 4px 0 rgba(0,0,0,.4); } .merke:nth-child(2n).ok{ transform:rotate(1deg); }
 .merke .mst{ position:absolute; right:-6px; bottom:-8px; transform:rotate(-10deg); font-family:var(--display); font-size:12px; color:var(--red); border:3px double var(--red); padding:0 5px; background:rgba(244,239,226,.8); }
 .skap.smal .merker{ grid-template-columns:repeat(2,1fr); } .skap.smal .skuffer{ grid-template-columns:repeat(2,1fr); }
-.brev{ width:640px; padding:26px 38px 22px; font-size:16px; line-height:1.4; }
+.brev{ width:640px; padding:26px 38px 22px; font-size:16px; line-height:1.4; } .brev.smal{ width:440px; padding:18px 22px 16px; } /* stående mobil: smalere brev, så teksten ikke skaleres ned til det uleselige */
 .brev::before{ background:#f7f1e0 !important; }
 .bhode{ text-align:center; border-bottom:3px double var(--ink); padding-bottom:8px; } .bhode b{ display:block; font-family:var(--display); font-weight:normal; font-size:26px; letter-spacing:.06em; } .bhode span{ font-size:13px; font-weight:800; letter-spacing:.08em; }
 .bdato{ text-align:right; font-family:var(--hand); font-size:20px; margin-top:8px; } .btil{ font-weight:800; }
@@ -491,6 +491,71 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
   #mapring{ top:calc(116px + env(safe-area-inset-top,0px)); bottom:auto; width:92px; height:92px; border-width:6px; }
   #tools{ top:auto; bottom:calc(98px + env(safe-area-inset-bottom,0px)); left:calc(12px + env(safe-area-inset-left,0px)); right:auto; flex-direction:column; }
   .btn{ font-size:12px; padding:4px 8px; }
+}
+/* testmodus (44_testmodus.js): måleren til venstre og panelet med spørsmålene og rapporten */
+#testHud{ position:absolute; left:calc(8px + env(safe-area-inset-left,0px)); top:38%; pointer-events:none; font:600 11px/1.35 ui-monospace, Menlo, Consolas, monospace; color:#f6ead0; background:rgba(20,12,8,.62); border:1px solid rgba(246,234,208,.25); border-radius:4px; padding:4px 7px; white-space:pre; }
+#testpanel{ position:fixed; inset:0; z-index:40; display:flex; padding:10px; background:rgba(14,9,7,.78); pointer-events:auto; overflow:auto; } #testpanel > *{ margin:auto; }
+#testpanel.hidden{ display:none; }
+.mrad{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; margin:7px 0; font-weight:800; font-size:16px; line-height:1.15; }
+.mvalg{ display:flex; gap:4px; }
+.mvalg button{ font-family:var(--hand); font-size:18px; line-height:1.1; padding:2px 8px; min-width:82px; border:2px solid var(--ink); border-radius:4px; background:var(--parch-l); color:var(--ink); cursor:pointer; }
+.mvalg button.on{ background:var(--gold); box-shadow:inset 0 0 0 2px var(--ink); }
+.mvalg button:focus-visible{ outline:3px solid var(--gold); outline-offset:1px; }
+.mfri{ display:block; font-weight:800; font-size:15px; margin:4px 0 8px; }
+#mFri,#trTekst{ display:block; width:100%; box-sizing:border-box; margin-top:4px; border:2px solid var(--ink); border-radius:4px; background:#fffaf0; color:var(--ink); padding:6px 8px; resize:none; }
+#mFri{ font:16px/1.3 var(--body); }
+#trTekst{ font:11.5px/1.35 ui-monospace, Menlo, Consolas, monospace; white-space:pre; overflow:auto; }
+.tstatus{ font-family:var(--hand); font-size:21px; color:var(--red); text-align:center; min-height:24px; margin-top:4px; }
+.kort.smal .mrad{ grid-template-columns:1fr; gap:3px; margin:6px 0 10px; } .kort.smal .mvalg button{ flex:1; min-width:0; font-size:17px; }
+/* ---------- mobil: HUD, bobler, tipslapper og menyer som får plass (26.9.) ---------- */
+/* skjermene sentreres med auto-marger i stedet for justify-content: det som er høyere enn skjermen, kan da rulles i stedet for å bli kuttet i toppen */
+.screen{ justify-content:flex-start; } .screen > :first-child{ margin-top:auto !important; } .screen > :last-child{ margin-bottom:auto !important; } /* !important: #title h1{ margin:0 } ville ellers vunnet og lagt tittelmenyen øverst */
+.dodskjerm{ display:flex; flex-direction:column; align-items:center; }
+.hplus{ align-self:center; font-family:var(--display); font-size:15px; color:var(--red); -webkit-text-stroke:0; margin-left:2px; }
+body.touch .bubble{ font-size:16px; max-width:170px; padding:3px 8px 4px; border-width:2px; box-shadow:3px 3px 0 rgba(42,26,20,.5); }
+/* stående telefon: journalen får en smalere side, som skaleres mindre ned (rundt 0,78 i stedet for 0,55), så teksten og kortene blir større */
+@media (max-width:560px){
+  .book.single{ width:430px; }
+  .book.single .mug{ width:130px; } .book.single .jrow{ gap:12px; } .book.single .stat .nm{ width:76px; }
+  .book.single .quote{ position:relative; right:auto; top:auto; margin:6px 0 0; font-size:17px; }
+  .book.single .pocket{ position:relative; right:auto; bottom:auto; margin:44px auto 6px; }
+}
+@media (orientation:portrait){
+  body.touch #tips{ top:calc(128px + env(safe-area-inset-top,0px)); left:calc(50% - 46px); max-width:min(250px,62vw); font-size:14px; padding:7px 12px 7px 13px; }
+  body.touch #testHud{ left:auto; right:calc(8px + env(safe-area-inset-right,0px)); top:calc(346px + env(safe-area-inset-top,0px)); font-size:9.5px; }
+}
+/* liggende telefon: lite høyde, så alt i toppen blir mindre og flyttes ut i hjørnene, og kortene legges nederst mellom spaken og knappene */
+@media (orientation:landscape) and (max-height:500px){
+  body.touch #badge{ scale:.72; transform-origin:top left; }
+  #roomsign{ display:none; }
+  body.touch #mapring{ top:calc(6px + env(safe-area-inset-top,0px)); right:calc(8px + env(safe-area-inset-right,0px)); width:78px; height:78px; border-width:5px; }
+  body.touch #tools{ top:calc(8px + env(safe-area-inset-top,0px)); right:calc(96px + env(safe-area-inset-right,0px)); flex-direction:row; }
+  body.touch #cards{ bottom:calc(6px + env(safe-area-inset-bottom,0px)); gap:6px; }
+  body.touch #cards .acard{ width:50px; height:64px; } body.touch #cards .acard .nm{ font-size:8px; }
+  body.touch #prompt{ bottom:calc(80px + env(safe-area-inset-bottom,0px)); font-size:14px; }
+  /* tipslappen i sonen mellom merket (slutter rundt 255 px) og knappene i toppen (begynner 229 px fra høyre kant) */
+  body.touch #tips{ --sone:min(300px, calc(100vw - 500px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px))); top:calc(6px + env(safe-area-inset-top,0px)); left:calc(263px + env(safe-area-inset-left,0px) + var(--sone) / 2); max-width:var(--sone); font-size:13px; padding:6px 10px 6px 12px; }
+  body.touch #kombo{ top:calc(60px + env(safe-area-inset-top,0px)); }
+  #stick{ width:110px; height:110px; }
+  #tbtns{ scale:.88; transform-origin:bottom right; }
+  body.touch #testHud{ top:calc(96px + env(safe-area-inset-top,0px)); font-size:9.5px; }
+  #title h1{ font-size:46px; -webkit-text-stroke:3px var(--ink); } #title .sub{ font-size:19px; margin:2px 0 8px; }
+  /* dødskortet og utskrivningen i to kolonner: båren til venstre og tallene på én rad til høyre, så overskriften og knappene får plass uten rulling */
+  .dodskjerm .hdr{ font-size:40px !important; margin:0 0 8px; }
+  .dodskjerm .dcard{ width:min(700px,94vw); display:grid; grid-template-columns:300px 1fr; grid-template-rows:auto auto 1fr; column-gap:18px; padding:0 18px 12px 0; }
+  .dodskjerm .dcard .slab{ grid-row:1 / 4; margin:0 0 -12px; height:auto; min-height:150px; border-bottom:0; border-right:4px solid var(--ink); border-radius:4px 0 0 4px; }
+  .dodskjerm .dcard .alive{ grid-column:2; margin:10px 0 0; }
+  .dodskjerm .dcard dl{ grid-column:2; display:grid; grid-template-columns:repeat(3,1fr); column-gap:6px; align-items:end; }
+  .dodskjerm .dcard dt{ font-size:13px; line-height:1.1; margin-top:6px; } .dodskjerm .dcard dd{ font-size:22px; }
+  .dodskjerm dt:nth-of-type(-n+3){ grid-row:1; } .dodskjerm dd:nth-of-type(-n+3){ grid-row:2; }
+  .dodskjerm dt:nth-of-type(n+4), .dodskjerm dd:nth-of-type(n+4){ grid-column:1 / -1; }
+  .dodskjerm .dcard .cause{ font-size:17px; }
+  .dodskjerm .dcard .nymerk{ grid-column:2; margin:8px 0 0; }
+  .dodskjerm .dcard .stamp{ right:auto; left:196px; top:96px; }
+  .dodskjerm .btnrow{ margin-top:10px; }
+  /* butikken: personen til venstre og varene til høyre i stedet for over hverandre */
+  .shop{ flex-wrap:nowrap; align-items:flex-start; } .shop .who{ width:170px; padding:10px; } .shop .who canvas{ width:84px; height:84px; } .shop .who .line{ font-size:18px; }
+  .shop .list{ width:min(600px, calc(100vw - 230px)); }
 }
 @media (prefers-reduced-motion: reduce){ #toast{ transition:none; } }
 </style>

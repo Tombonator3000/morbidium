@@ -7,13 +7,25 @@
 - [ ] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt).
 - [ ] Slette grenen claude/funny-newton-cgnzav på GitHub (Claude Code får ikke lov til det). Alt på den finnes i main.
 
-## Forslag til neste steg (Claude, 2026-09-26)
-Spillet har fått mye nytt innhold på kort tid, men ingenting er spilltestet på ekte maskinvare. Neste steg bør derfor være å spille, ikke bygge mer.
-- [ ] Claude, når Tom sier ja: en testmodus med bilder i sekundet og kvalitetsnivå i et hjørne, og en rapport etter hvert løp som kan kopieres (tid per etasje, skade tatt og fra hva, dødsårsak, kuriositeter og kort, lengste kombo, valgene i drømmene).
-- [ ] Tom: spille tre eller fire løp på PC og mobil og lime inn rapportene sammen med det som føltes feil.
-- [ ] Claude: balanse ut fra rapportene (vanskelighetskurven gjennom seks etasjer, priser, sjefene, lengden på et løp).
+## Forslag til neste steg (Claude, 2026-09-26 morgen, etter lydrunden)
+Lista har nå 19 åpne spørsmål til Tom (lyd, blod, mørke, vanskelighet, historien, sjefene), og ingen av dem kan besvares uten å spille. Flaskehalsen er tilbakemelding fra ekte spilling på ekte maskiner, ikke flere systemer. Neste steg bør gjøre det lett å gi den.
+- [x] Claude (gjort 26.9. morgen): testmodus med bilder i sekundet, kvalitetsnivå og minne i et hjørne, og en rapport etter hvert løp som kan kopieres med én knapp (tid per etasje, skade tatt og fra hva, dødsårsak, kuriositeter og kort, lengste kombo, valgene i drømmene, laveste bilder i sekundet, hvor lang tid lydene brukte på å pakkes ut).
+- [x] Claude (gjort 26.9. morgen): «Si din mening» i pausemenyen, der spørsmålene fra denne lista er knapper (for lite, passe, for mye) pluss et felt for fritekst, og svarene havner i samme rapport. Da blir de 19 spørsmålene et par minutter etter et løp.
+- [ ] Tom: spille tre eller fire løp på PC og mobil, gjerne med hodetelefoner, og lime inn rapportene. Slik: åpne https://tombonator3000.github.io/morbidium/?testmodus (eller slå på Testmodus under Innstillinger, Spill). Svar på spørsmålene under «Si din mening» i pausen når du har lyst. Når pasienten dør eller blir skrevet ut: trykk «Testrapport», så «Kopier rapporten», og lim den inn i samtalen med Claude. Glemmer du det, ligger de fem siste rapportene under Innstillinger, Data.
+- [ ] Claude: justere ut fra rapportene: lydmiksen, mengden blod på skjermen, vanskelighetskurven gjennom seks etasjer, lengden på et løp og ytelsen på mobil.
+- [ ] Claude, små ting som kan tas når som helst: koble inn de seks lydene som er hentet, men ikke brukt (bokslag når journalen lukkes, dørsmell når rommet låses, gulvknirk, radiosus i radiohendelsen, riving ved overkill, sluk på badet), og en fast testklokke så nettlesertestene ikke avhenger av hvor rask maskinen er.
 - [ ] Tom og ChatGPT, i denne rekkefølgen: liste 10 (historien, fire bestillinger), liste 5 og 1 (fiendene i parken og første etasje), hjertene og ringene i liste 4.
-- [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, andre halvdel av UI-settet, og resten av testene over på spilltid.
+- [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, og andre halvdel av UI-settet.
+
+## Mobil, 2026-09-26 formiddag (Tom: «Noe gikk galt», WebGL mistet)
+- [x] Tre lekkasjer i grafikkminnet tettet (skyggekartet, strekbåndene til dukkene, flekker, plakater og dører). Minnet ligger flatt i stedet for å vokse rundt 12 MB per etasje.
+- [x] Mistet WebGL gir pause og kommer tilbake med lettere grafikk i stedet for «Noe gikk galt». Bytte av app gir ingen feilmelding og ingen nedgradering.
+- [x] Menyene får plass eller kan rulles med fingeren, liggende og stående. HUD-en i hjørnene liggende, dødskortet og utskrivningen i to kolonner, butikken side om side, større journal og brev stående, høyst 20 hjerter.
+- [ ] Tom: spill på samme telefon igjen, gjerne med https://tombonator3000.github.io/morbidium/?testmodus, både stående og liggende. Si fra om noe fortsatt er for smått, kuttet av eller vanskelig å treffe med fingeren. Rapporten viser telefonen, skjermkortet og om grafikken ble mistet underveis.
+- [ ] Tom: hvilken telefon og nettleser var det? Det avgjør om startkvaliteten på mobil bør settes lavere.
+- [ ] Claude, hvis grafikken fortsatt mistes: starte på lav 3D-kvalitet på berøringsskjerm, mindre skyggekart, og pakke ut stemningslydene først når de trengs.
+- [x] Claude: en test som følger grafikkminnet over etasjeskifter (testdel 36), så nye lekkasjer blir oppdaget. Den fanger lekkasjene fra før rettingen med god margin.
+- [x] Gjennomgang av hele endringen før fletting, med skeptikere per funn. 14 funn rettet (blant annet tittelen som havnet øverst på PC, rulling mellom paneler og fast kvalitet ved mistet grafikk).
 
 ## Lyd, musikk og vått på skjermen, 2026-09-26 morgen
 - [x] 165 frie lyder (CC0): 102 effekter og stemningslyder fra Freesound og 63 instrumenttoner fra VCSL, med verktøy (tools/lag_lyd.py) og kildeliste (assets/lyd/KILDER.md).
