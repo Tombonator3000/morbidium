@@ -189,7 +189,7 @@ function playerDie() {
 function gainXp(v) {
   const P = G.player; P.xp += v * (1 + (P.stats.fatteevne - 1) * .1);
   const need = () => 40 + (P.level - 1) * 55;
-  while (P.xp >= need()) { P.xp -= need(); P.level++; P.points++; Sound.play('level'); toast('Nytt nivå', 'Et poeng å fordele i journalen (Tab)'); Tips.vis('niva', 2500); numText(P.x, P.z, 'NIVÅ ' + P.level, 'crit', 2.8); }
+  while (P.xp >= need()) { P.xp -= need(); P.level++; P.points++; Sound.play('level'); toast('Nytt nivå', 'Et poeng å fordele i journalen' + Input.parentes('journal')); Tips.vis('niva', 2500); numText(P.x, P.z, 'NIVÅ ' + P.level, 'crit', 2.8); }
 }
 function checkDiagnoses() {
   const P = G.player, c = P.counters; if (P.diag.length >= 3) return;

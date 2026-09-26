@@ -101,6 +101,10 @@ body{ height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:
 #tools .btn svg,#tools .btn img{ width:28px; height:22px; display:block; }
 .btn{ font-family:var(--display); font-size:14px; background:var(--parch); color:var(--ink); border:3px solid var(--ink); border-radius:6px; padding:6px 12px; cursor:pointer; box-shadow:3px 3px 0 rgba(20,12,8,.5); }
 .btn:hover{ background:var(--parch-l); } .btn:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+/* håndkontroll i menyene (MenyNav i 32_meny.js): skriptet flytter fokus, og da viser ikke nettleseren :focus-visible */
+body.pad #title :focus, body.pad #panel :focus, body.pad #journal :focus, body.pad #testpanel :focus{ outline:4px solid var(--gold); outline-offset:3px; }
+.jcard:focus-visible, #journal .tab:focus-visible, #journal .plus:focus-visible, #journal .slot:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+body.pad .acard .k{ width:30px; left:-12px; font-size:12px; }
 .btn.big{ font-size:19px; padding:9px 22px; background:var(--gold); }
 #help{ position:absolute; left:50%; bottom:calc(122px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); font-weight:700; font-size:14px; color:var(--parch-l); background:rgba(20,12,8,.62); border:2px solid rgba(236,217,168,.35); border-radius:6px; padding:5px 12px; white-space:nowrap; }
 #help kbd{ font-family:var(--display); font-size:12px; color:var(--gold); }
