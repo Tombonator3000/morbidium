@@ -8,7 +8,8 @@ Kilder:
 Hver lyd får et navn, det samme som Sound.play() bruker i spillet. Flere lyder med samme navn blir
 varianter (navn, navn_2, navn_3), og spillet velger tilfeldig. Instrumentprøvene heter ins_<instrument>_<n>,
 får tonehøyden målt (rot, MIDI) og, for toner som holdes (orgel, psalter, vinglass, saks), en sløyfe midt i.
-Stemningslydene (amb_*) får halen blandet inn i starten, så de kan gå i sløyfe uten klikk.
+Stemningslydene (amb_*) får halen blandet inn i starten, så de kan gå i sløyfe uten klikk. Sløyfepunktene står
+i sekunder i lyd.json (sloyfe: [start, slutt]); spillet legger til stillheten nettleseren setter foran MP3-en.
 
 Ferdige filer: assets/lyd/<navn>.mp3 og assets/lyd/lyd.json (lengde, tonehøyde, sløyfe og kilde), og
 assets/lyd/KILDER.md med alle forfattere. Mellomlager: .lydcache/ (ikke i git).
@@ -235,7 +236,10 @@ def klipp(x, sr, fra=0.0, lengde=None, ut=None, sloyfe=False, holdt=False):
     inn = min(len(x), int(sr * .002)); x[:inn] *= np.linspace(0, 1, inn)
     if sloyfe:  # halen blandes inn i starten: slutten går rett over i begynnelsen
         X = min(int(sr * 1.0), len(x) // 3); L = len(x) - X
-        k = np.linspace(0, 1, X); y = x[:L].copy(); y[:X] = x[:X] * np.sqrt(k) + x[L:L + X] * np.sqrt(1 - k); return y
+        k = np.linspace(0, 1, X); y = x[:L].copy(); y[:X] = x[:X] * np.sqrt(k) + x[L:L + X] * np.sqrt(1 - k)
+        # litt av slutten legges foran og litt av starten bak, og sløyfa går mellom dem. Da tåler den at
+        # nettleserne legger ulikt mye stillhet foran en MP3 (koderens forsinkelse), uten klikk og hull.
+        P = int(sr * .15); return np.concatenate([y[L - P:], y, y[:P]]), [P, P + L]
     if not holdt:
         u = min(len(x), int(sr * (ut if ut is not None else min(.08, len(x) / sr * .2)))); x[len(x) - u:] *= np.linspace(1, 0, u) ** 1.5
     return x
@@ -266,7 +270,7 @@ def holdesloyfe(x, sr, rot):
     k = np.linspace(0, 1, X); x = x.copy(); x[le - X:le] = x[le - X:le] * np.sqrt(1 - k) + x[ls - X:ls] * np.sqrt(k)
     fade = min(len(x) - le, int(sr * .05))
     if fade > 0: x[le:le + fade] *= np.linspace(1, 0, fade)
-    return x[:le + fade], [round(ls / sr, 4), round(le / sr, 4)]
+    return x[:le + fade], [round(ls / sr, 6), round(le / sr, 6)]  # seks desimaler: et helt antall perioder også for lyse toner
 
 # ---------- hovedløkka ----------
 def lag(bare=None):
@@ -280,10 +284,11 @@ def lag(bare=None):
             gammel = json.loads((UT / 'lyd.json').read_text(encoding='utf-8')).get(fil) if (UT / 'lyd.json').exists() else None
             if gammel: meta[fil] = gammel; continue
         kilde = freesound(i, bruker); x = les(kilde, sr)
-        x = klipp(x, sr, o.get('fra', 0), o.get('lengde'), o.get('ut'), sloyfe=bool(amb))
+        x = klipp(x, sr, o.get('fra', 0), o.get('lengde'), o.get('ut'), sloyfe=bool(amb)); sl = False
+        if amb: x, (a, b) = x; sl = [round(a / sr, 6), round(b / sr, 6)]
         x = normaliser(x, o.get('maal', -12.0 if navn.startswith('amb_') else -1.0))
         skriv(x, sr, br, UT / f'{fil}.mp3')
-        meta[fil] = {'gruppe': navn, 'type': 'amb' if navn.startswith('amb_') else 'sfx', 'sek': round(len(x) / sr, 3), 'sloyfe': bool(amb),
+        meta[fil] = {'gruppe': navn, 'type': 'amb' if navn.startswith('amb_') else 'sfx', 'sek': round(len(x) / sr, 3), 'sloyfe': sl,
                      'kilde': 'Freesound', 'id': i, 'bruker': bruker, 'tittel': tittel, 'side': f'https://freesound.org/people/{bruker}/sounds/{i}/', 'lisens': 'CC0 1.0'}
         nye.append(fil)
     for ins, (mappe, filer, o) in INSTRUMENTER.items():

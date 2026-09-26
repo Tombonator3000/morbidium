@@ -584,3 +584,13 @@ Alle tidspunkt er UTC.
 - 102 lydeffekter og stemningslyder fra Freesound, alle CC0 1.0: fottrinn på stein, tre, gress og vann, dører, kjettinger, glass, blodsprut, slag, skrik, hunder, kråker, torden, regn, vind, bål, drypp, hav, summing i rørene og mer.
 - 63 instrumenttoner fra Versilian Community Sample Library (VCSL, CC0): orgel, orgelbass, piano, glockenspiel, vibrafon, rørklokker, harpe, cembalo, vinglass, psalter, saksofon, pauker, bekken, skarptromme, stortromme, gong, håndbjeller, triangel og treblokk. Grunntonene er sjekket med frekvensanalyse, og holdetoner har løkkepunkter på hele perioder.
 - Alt er 1,55 MB (instrumenter 0,83, effekter 0,49, stemning 0,23). Nedlastingene ligger i .lydcache/, som git ignorerer.
+
+## 2026-09-26 06:08 Lydbanken: de innspilte lydene er koblet inn i spillet (del 2 av lydrunden)
+- build.py bygger inn lydene i assets/lyd/ som base64 (LYDFILER) med metadata (LYD_META) rett etter 01_core.js. Fila blir 6,4 MB, 2,1 MB av det er lyd.
+- Ny modul src/42_lyd.js. Lydbanken pakker ut lydene i bakgrunnen etter første trykk, fire om gangen og effektene først, i lydenes egen samplingsfrekvens (30 MB i minnet i stedet for rundt 48). Til en lyd er klar, spilles synthlyden som før.
+- LYD_KART oversetter spillets lydnavn til opptak: slag, treff, blod, dører, papir, glass, kjettinger, torden, bjella, sjefens gong og pauker, dyr og stemningslyder. Varianten velges tilfeldig (aldri den samme to ganger på rad) med litt ulik tonehøyde, og noe av synthlyden ligger under der den gir trykk. Høyst fem like lyder på 80 ms.
+- Fottrinn etter gulvet (tre, stein, fliser, gress, grus, myr, is, teppe) og i pytter. Stemningssløyfer per etasje (natt og vind i parken, summing, drypp, tikkende klokke, havet og dronen i Dypet), per rom (drypp på badet, summing i elektro- og røntgenrommet, knitring i fyrrommet), regn og vind, knitring fra bål og ovner etter avstand, og havet under huset i drømmene. Fiender som kommer mot deg, stønner, hvisker eller piper, fra riktig side.
+- Sløyfene har litt ekstra lyd på hver side (tools/lag_lyd.py), så de går rundt uten klikk selv om nettleserne legger ulikt mye stillhet foran en MP3. Holdetonene i instrumentene har løkkepunkter med seks desimaler.
+- Dronen fra synthen kan nå dempes og stemmes (Sound.stemDrone), til musikken i neste steg.
+- Ny innstilling under Lyd: «Innspilte lyder». Av betyr bare synth, og da pakkes ingenting ut.
+- Røyktest i testnettleseren: alle 165 lydene pakket ut på 6,9 sekunder uten feil, alle kan spilles, kartet, fottrinn, stemningen, regnet og stemmene virker, ingen konsollfeil.

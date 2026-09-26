@@ -5,9 +5,12 @@
   "id": 650574,
   "kilde": "Freesound",
   "lisens": "CC0 1.0",
-  "sek": 3.995,
+  "sek": 4.295,
   "side": "https://freesound.org/people/soundofsong/sounds/650574/",
-  "sloyfe": true,
+  "sloyfe": [
+   0.15,
+   4.145375
+  ],
   "tittel": "fire crackling loop.wav",
   "type": "amb"
  },
@@ -17,9 +20,12 @@
   "id": 619320,
   "kilde": "Freesound",
   "lisens": "CC0 1.0",
-  "sek": 5.54,
+  "sek": 5.84,
   "side": "https://freesound.org/people/aSuperiorPotato/sounds/619320/",
-  "sloyfe": true,
+  "sloyfe": [
+   0.15,
+   5.690292
+  ],
   "tittel": "Facility Hum Ambience Loopable",
   "type": "amb"
  },
@@ -29,9 +35,12 @@
   "id": 249985,
   "kilde": "Freesound",
   "lisens": "CC0 1.0",
-  "sek": 10.0,
+  "sek": 10.3,
   "side": "https://freesound.org/people/Werra/sounds/249985/",
-  "sloyfe": true,
+  "sloyfe": [
+   0.15,
+   10.15
+  ],
   "tittel": "Eerie Dark Drone Soundscape",
   "type": "amb"
  },
@@ -41,9 +50,12 @@
   "id": 696438,
   "kilde": "Freesound",
   "lisens": "CC0 1.0",
-  "sek": 5.696,
+  "sek": 5.996,
   "side": "https://freesound.org/people/Patrick_Corra/sounds/696438/",
-  "sloyfe": true,
+  "sloyfe": [
+   0.15,
+   5.845792
+  ],
   "tittel": "Water drops with reverb",
   "type": "amb"
  },
@@ -53,9 +65,12 @@
   "id": 179927,
   "kilde": "Freesound",
   "lisens": "CC0 1.0",
-  "sek": 10.0,
+  "sek": 10.3,
   "side": "https://freesound.org/people/yosarrian/sounds/179927/",
-  "sloyfe": true,
+  "sloyfe": [
+   0.15,
+   10.15
+  ],
   "tittel": "underwater",
   "type": "amb"
  },
@@ -65,9 +80,12 @@
   "id": 129678,
   "kilde": "Freesound",
   "lisens": "CC0 1.0",
-  "sek": 8.0,
+  "sek": 8.3,
   "side": "https://freesound.org/people/FreethinkerAnon/sounds/129678/",
-  "sloyfe": true,
+  "sloyfe": [
+   0.15,
+   8.15
+  ],
   "tittel": "crickets",
   "type": "amb"
  },
@@ -77,9 +95,12 @@
   "id": 265627,
   "kilde": "Freesound",
   "lisens": "CC0 1.0",
-  "sek": 9.0,
+  "sek": 9.3,
   "side": "https://freesound.org/people/director89/sounds/265627/",
-  "sloyfe": true,
+  "sloyfe": [
+   0.15,
+   9.15
+  ],
   "tittel": "Rain-Atmo.WAV",
   "type": "amb"
  },
@@ -89,9 +110,12 @@
   "id": 146932,
   "kilde": "Freesound",
   "lisens": "CC0 1.0",
-  "sek": 6.11,
+  "sek": 6.41,
   "side": "https://freesound.org/people/crashoverride6/sounds/146932/",
-  "sloyfe": true,
+  "sloyfe": [
+   0.15,
+   6.260125
+  ],
   "tittel": "Wind Gust",
   "type": "amb"
  },
@@ -849,7 +873,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1619
+   2.161875
   ],
   "type": "ins"
  },
@@ -863,7 +887,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1607
+   2.160656
   ],
   "type": "ins"
  },
@@ -877,7 +901,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.16
+   2.159969
   ],
   "type": "ins"
  },
@@ -891,7 +915,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1607
+   2.160656
   ],
   "type": "ins"
  },
@@ -905,7 +929,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.16
+   2.159969
   ],
   "type": "ins"
  },
@@ -919,7 +943,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1657
+   2.165688
   ],
   "type": "ins"
  },
@@ -933,7 +957,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1553
+   2.15525
   ],
   "type": "ins"
  },
@@ -947,7 +971,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1581
+   2.158063
   ],
   "type": "ins"
  },
@@ -1060,7 +1084,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1619
+   2.161875
   ],
   "type": "ins"
  },
@@ -1074,7 +1098,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1589
+   2.158875
   ],
   "type": "ins"
  },
@@ -1088,7 +1112,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1593
+   2.159281
   ],
   "type": "ins"
  },
@@ -1102,7 +1126,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.16
+   2.159969
   ],
   "type": "ins"
  },
@@ -1116,7 +1140,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.684,
-   1.6204
+   1.620437
   ],
   "type": "ins"
  },
@@ -1130,7 +1154,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.684,
-   1.6204
+   1.620437
   ],
   "type": "ins"
  },
@@ -1144,7 +1168,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.684,
-   1.6204
+   1.620437
   ],
   "type": "ins"
  },
@@ -1279,7 +1303,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1607
+   2.160687
   ],
   "type": "ins"
  },
@@ -1293,7 +1317,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.1607
+   2.160656
   ],
   "type": "ins"
  },
@@ -1321,7 +1345,7 @@
   "side": "https://github.com/sgossner/VCSL",
   "sloyfe": [
    0.912,
-   2.16
+   2.160031
   ],
   "type": "ins"
  },
@@ -1355,9 +1379,12 @@
   "id": 212181,
   "kilde": "Freesound",
   "lisens": "CC0 1.0",
-  "sek": 2.764,
+  "sek": 3.064,
   "side": "https://freesound.org/people/OwlStorm/sounds/212181/",
-  "sloyfe": true,
+  "sloyfe": [
+   0.15,
+   2.913687
+  ],
   "tittel": "Loopable Ticking Clock",
   "type": "sfx"
  },
@@ -1835,9 +1862,12 @@
   "id": 556717,
   "kilde": "Freesound",
   "lisens": "CC0 1.0",
-  "sek": 1.674,
+  "sek": 1.974,
   "side": "https://freesound.org/people/NachtmahrTV/sounds/556717/",
-  "sloyfe": true,
+  "sloyfe": [
+   0.15,
+   1.823937
+  ],
   "tittel": "Electricity Sound",
   "type": "sfx"
  },
