@@ -174,10 +174,11 @@ const Testmodus = {
       el = document.createElement('div'); el.id = 'testpanel'; el.className = 'hidden'; document.body.appendChild(el);
       // tastene i panelet (fritekst) skal ikke styre spillet
       el.addEventListener('keydown', e => { if (e.code === 'Escape') this.lukk(); e.stopPropagation(); });
-      addEventListener('keydown', e => { if (this.apen && e.code === 'Escape') { this.lukk(); e.stopPropagation(); e.preventDefault(); } }, true);
+      // mens panelet er åpent, når ingen taster spillet (P eller Escape ville ellers lukke pausen under), men skriving i feltene virker
+      addEventListener('keydown', e => { if (!this.apen) return; if (e.code === 'Escape') { this.lukk(); e.preventDefault(); } e.stopPropagation(); }, true);
       addEventListener('resize', () => { if (this.apen) this.tilpass(); });
     }
-    this.fane = fane; this.apen = true; el.classList.remove('hidden'); this.tegn();
+    this.fane = fane; this.apen = true; el.classList.remove('hidden'); this.tegn(); el.scrollTop = 0;
   },
   lukk() { const el = $('testpanel'); if (el) el.classList.add('hidden'); this.apen = false; const T = this.data(); if (T && T.slutt) this.lagre(); },
   tegn() {

@@ -1125,15 +1125,26 @@ async def main():
                 await cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': x, 'y': y + dy * i / steg}]})
                 await asyncio.sleep(0.016)
             await cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2500)
+        tit = await pg.evaluate("() => { const t = document.getElementById('title'), a = t.firstElementChild.getBoundingClientRect(), z = t.lastElementChild.getBoundingClientRect(); return { over: Math.round(a.top), under: Math.round(innerHeight - z.bottom) }; }")
+        sjekk('tittelmenyen står midt på skjermen på PC', abs(tit['over'] - tit['under']) < 40 and tit['over'] > 40, tit)
+        await pg.close()
         ctx, pg = await mobil({'width': 844, 'height': 390})
+        await pg.evaluate("() => { MORBIDIUM.meta.tips = {}; MORBIDIUM.meta.settings.tips = true; Tips.vis('sjef'); }"); await pg.wait_for_timeout(1000)
         hud = await pg.evaluate("""() => { const r = id => { const b = document.getElementById(id).getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
-          const over = (a, c) => a[0] < c[2] && c[0] < a[2] && a[1] < c[3] && c[1] < a[3], k = ['badge', 'mapring', 'tools', 'cards', 'stick', 'tbtns'].map(r), par = [];
+          const over = (a, c) => a[0] < c[2] && c[0] < a[2] && a[1] < c[3] && c[1] < a[3], k = ['badge', 'mapring', 'tools', 'cards', 'stick', 'tbtns', 'tips'].map(r), par = [];
           for (let i = 0; i < k.length; i++) for (let j = i + 1; j < k.length; j++) if (over(k[i], k[j])) par.push(i + '-' + j); return { par, skilt: getComputedStyle(document.getElementById('roomsign')).display }; }""")
-        sjekk('liggende: merket, kartet, knappene i toppen, kortene, spaken og slagknappene overlapper ikke', not hud['par'] and hud['skilt'] == 'none', hud)
+        sjekk('liggende: merket, kartet, knappene i toppen, kortene, spaken, slagknappene og tipslappen overlapper ikke', not hud['par'] and hud['skilt'] == 'none', hud)
         # innstillingene er høyere enn skjermen: de kan rulles med fingeren, og neste panel begynner øverst likevel
         await pg.evaluate("() => openSettings(false, null, 'bilde')"); await pg.wait_for_timeout(500)
         await sveip(pg, 422, 280, -150); await pg.wait_for_timeout(600)
         ru = await pg.evaluate("() => { const p = document.getElementById('panel'); return { hoy: p.scrollHeight > p.clientHeight, rullet: p.scrollTop }; }")
+        ru['panel'] = await pg.evaluate("""async () => { const p = document.getElementById('panel'), vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          p.scrollTop = 100; openSettings(false, null, 'bilde'); await vent(200); ut.sammeBeholder = p.scrollTop;
+          p.scrollTop = 999; openHandbook({}, 2, 0); await vent(300); ut.hbHoy = p.scrollHeight > p.clientHeight; ut.hbTopp = p.scrollTop;
+          return ut; }""")
+        sjekk('det samme panelet tegnet på nytt beholder rullingen, og et nytt panel åpnet fra et annet begynner øverst', abs(ru['panel']['sammeBeholder'] - 100) <= 2 and ru['panel']['hbHoy'] and ru['panel']['hbTopp'] == 0, ru['panel'])
         await pg.evaluate("() => { document.getElementById('panel').scrollTop = 999; closePanel(); openService('kafeteria'); }"); await pg.wait_for_timeout(600)
         ru['butikk'] = await pg.evaluate("""() => { const p = document.getElementById('panel'), w = document.querySelector('.shop .who').getBoundingClientRect(), l = document.querySelector('.shop .list').getBoundingClientRect();
           return { top: p.scrollTop, sideomside: Math.abs(w.top - l.top) < 30 && w.right <= l.left + 1, fokus: document.activeElement.classList.contains('offer') }; }""")
@@ -1156,11 +1167,11 @@ async def main():
         await ctx.close()
         ctx, pg = await mobil({'width': 390, 'height': 844})
         st = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
-          P.maxHp = 400; P.hp = 400; await vent(400); ut.hjerter = document.querySelectorAll('#hearts > *:not(.hplus)').length; ut.pluss = (document.querySelector('#hearts .hplus') || {}).textContent;
+          P.maxHp = 400; P.hp = 300; await vent(400); ut.hjerter = document.querySelectorAll('#hearts > *:not(.hplus)').length; ut.pluss = (document.querySelector('#hearts .hplus') || {}).textContent;
           openJournal(); await vent(600); const m = /scale\(([\d.]+)\)/.exec(document.querySelector('#journal .jwrap').style.transform); ut.journal = m ? +m[1] : 0;
           const q = document.querySelector('#journal .quote'); ut.sitat = q ? getComputedStyle(q).position : ''; closeJournal();
           return ut; }""")
-        sjekk('stående: høyst 20 hjerter og «+N» for resten', st['hjerter'] == 20 and st['pluss'] == '+20', st)
+        sjekk('stående: høyst 20 hjerter, og «+fulle/skjulte» for resten', st['hjerter'] == 20 and st['pluss'] == '+10/20', st)
         sjekk('stående: journalen får en smalere side og skaleres ikke under 0,7', st['journal'] >= .7 and st['sitat'] == 'relative', st)
         await pg.evaluate("() => showWin()"); await pg.wait_for_function("() => !!document.getElementById('bOk')", timeout=20000); await pg.wait_for_timeout(300)
         st['brev'] = await pg.evaluate("() => { const f = document.querySelector('.brev'); return { smal: f.classList.contains('smal'), zoom: +f.style.zoom }; }")
@@ -1176,8 +1187,12 @@ async def main():
           const runde = async () => { for (let d = 1; d <= 4; d++) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
             await vent(150); const P = G.player; for (let i = 0; i < 6; i++) { const s = freeSpot(P.x + 2 + i * .3, P.z, 4), e = spawnEnemy('pleier', s.x, s.z, false, d); killEntity(e, {}); } await vent(250); } };
           await runde(); const m1 = { t: info.textures, g: info.geometries }; await runde(); const m2 = { t: info.textures, g: info.geometries };
-          return { m1, m2, d3: D3.on, kval: D3.kval() }; }""")
-        sjekk('grafikkminnet vokser ikke når de samme etasjene bygges på nytt (skyggekart, flekker, plakater, dører og dukker frigjøres)', mem['d3'] and mem['m2']['t'] - mem['m1']['t'] <= 6 and mem['m2']['g'] - mem['m1']['g'] <= 12, mem)
+          // skyggekartet direkte: kartet til månen i denne etasjen skal kastes når neste etasje bygges
+          const kart = D3.mane && D3.mane.shadow && D3.mane.shadow.map; let kastet = false; if (kart) kart.addEventListener('dispose', () => { kastet = true; });
+          startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200);
+          return { m1, m2, d3: D3.on, bygd: D3.bygd, kval: D3.kval(), kart: !!kart, kastet }; }""")
+        sjekk('skyggekartet til månen frigjøres når neste etasje bygges', mem['kart'] and mem['kastet'], mem)
+        sjekk('grafikkminnet vokser ikke når de samme etasjene bygges på nytt (flekker, plakater, dører og dukker frigjøres)', mem['d3'] and mem['bygd'] and mem['m2']['t'] - mem['m1']['t'] <= 6 and mem['m2']['g'] - mem['m1']['g'] <= 12, mem)
         tap = await pg.evaluate("""async () => { const vent = t => new Promise(r => setTimeout(r, t)), gl = R.renderer.getContext(), x = gl.getExtension('WEBGL_lose_context'), ut = {};
           const kv = () => [R.dprMax, D3.on ? D3.kval() : '2D'];
           let skjult = false; Object.defineProperty(document, 'hidden', { configurable: true, get: () => skjult });
@@ -1189,9 +1204,14 @@ async def main():
           // synlig: tilbake med lettere grafikk
           const for2 = kv(); x.loseContext(); await vent(500); x.restoreContext(); for (let i = 0; i < 50 && R.tapt; i++) await vent(100); await vent(300);
           const etter = kv(); ut.synlig = { tilbake: !R.tapt, ned: etter[0] < for2[0] || etter[1] !== for2[1] || for2[0] === 1 && for2[1] === '2D', feil: !document.getElementById('err').classList.contains('hidden'), for: for2, etter };
+          // fast kvalitet (lav): 3D blir på, og valget står
+          const s = MORBIDIUM.meta.settings; s.kvalitet = 1; applySettings(); await vent(300);
+          x.loseContext(); await vent(500); x.restoreContext(); for (let i = 0; i < 50 && R.tapt; i++) await vent(100); await vent(300);
+          ut.fast = { on: D3.on, kval: D3.kval(), d3: s.d3 !== false, kvalitet: s.kvalitet }; s.kvalitet = 0; applySettings();
           delete document.hidden; return ut; }""")
         sjekk('mistet grafikk i bakgrunnen gir pause uten feilmelding, og kommer tilbake uten nedgradering', tap['pause'] and tap['skjult'] and tap['bakgrunn']['tilbake'] and tap['bakgrunn']['lik'] and not tap['bakgrunn']['feil'], tap)
         sjekk('mistet grafikk mens spillet synes, kommer tilbake med lettere grafikk', tap['synlig']['tilbake'] and tap['synlig']['ned'] and not tap['synlig']['feil'], tap['synlig'])
+        sjekk('med fast kvalitet står spillerens valg når grafikken kommer tilbake (3D blir på)', tap['fast'] == {'on': True, 'kval': 'lav', 'd3': True, 'kvalitet': 1}, tap['fast'])
         await pg.screenshot(path='/tmp/e_22mobil.png')
         sjekk('ingen konsollfeil (mobil stående)', not [e for e in pg.errs if 'CONTEXT_LOST' not in e], pg.errs[:6])
         await ctx.close()

@@ -512,6 +512,7 @@ const Drom = {
     const H = G.run.historie, S = this.ord(H), sl = DROM_SLUTT[this.slutt(H)];
     openPanel(`<div class="paper samtale"><div class="sbilde"></div><div class="sinnhold"><div class="stittel">${esc(sl.navn)}</div><div class="stekst">${sl.tekst(S).split('\n').map(t => `<p>${esc(t)}</p>`).join('')}</div><div class="svalg"><button id="epOk"><b>1</b> Gå ut porten</button></div></div></div>`);
     try { document.querySelector('.samtale .sbilde').appendChild(this.portrettFor(H)); } catch (e) { }
+    $('panel').scrollTop = 0; // samme slags panel som siste side, så openPanel ville beholdt rullingen derfra
     $('epOk').onclick = () => videre(); $('epOk').focus({ preventScroll: true }); Sound.play('paper');
   },
   portrettFor(H) { return hendBilde(DROM_ART[H.tegn](), '#120c16'); }

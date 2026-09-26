@@ -70,7 +70,7 @@ function utskrivningsbrev(onDone) {
     <div class="bslutt"><div><div class="bhilsen">Med vennlig hilsen</div><div class="bsign">${esc(Bv.sign)}</div></div><div class="bstempel">${esc(Bv.stempel)}</div></div>
     ${Bv.egen ? '<p class="bps">P.S. Brevet er signert av pasienten selv, med forstanderens penn. Det er ikke lov. Det er gjort.</p>' : ''}
     ${forste ? '<p class="bps">P.S. De er velkommen tilbake. Gjeninnleggelse er nå mulig fra innleggelsen.</p>' : ''}
-    <div class="btnrow"><button class="btn big" id="bOk">Ta imot papirene</button></div></div>`, { onBack: onDone });
+    <div class="btnrow"><button class="btn big" id="bOk">Ta imot papirene</button></div></div>`, { onBack: onDone, refit: () => { const b = document.querySelector('#panel .brev'); if (b) b.classList.toggle('smal', narrow()); fitPanel(); } });
   $('bOk').onclick = () => closePanel(); Sound.play('paper'); fitPanel();
 }
 

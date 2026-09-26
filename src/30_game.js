@@ -398,9 +398,11 @@ function openService(svc, npc) {
 
 /* ---------- paneler ---------- */
 function openPanel(html, o = {}) {
-  // et nytt panel begynner øverst; et panel som tegnes på nytt (butikken etter et kjøp, en ny fane) beholder rullingen.
+  // et nytt panel begynner øverst, også når det åpnes fra et annet panel (brevet etter epilogen, pausen etter innstillingene).
+  // Det samme panelet tegnet på nytt (butikken etter et kjøp, innstillingene etter et valg) beholder rullingen.
   // Rullingen nullstilles etter at panelet vises: mens det er skjult, husker nettleseren den gamle og legger den tilbake
-  const el = $('panel'), ny = G.state !== 'panel'; el.innerHTML = html; show('panel', true); if (ny) el.scrollTop = 0; G.prevState = G.state === 'panel' ? G.prevState : G.state; G.state = 'panel'; G.panelO = o;
+  const el = $('panel'), hvem = f => f ? f.className + '#' + f.id : '', for0 = G.state === 'panel' && !el.classList.contains('hidden') ? hvem(el.firstElementChild) : '';
+  el.innerHTML = html; show('panel', true); if (!for0 || for0 !== hvem(el.firstElementChild)) el.scrollTop = 0; G.prevState = G.state === 'panel' ? G.prevState : G.state; G.state = 'panel'; G.panelO = o;
   el.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closePanel());
 }
 function closePanel() {
@@ -589,7 +591,7 @@ function hudUpdate() {
   const P = G.player; if (!P) return;
   const nh = Math.ceil(P.maxHp / 10), h = [];
   for (let i = 0; i < Math.min(nh, 20); i++) { const v = clamp((P.hp - i * 10) / 10, 0, 1); h.push(hjerteHtml(v, HEART)); }
-  if (nh > 20) h.push(`<span class="hplus">+${nh - 20}</span>`); // flere enn to rader tar hele skjermen på mobil
+  if (nh > 20) h.push(`<span class="hplus">+${clamp(Math.ceil((P.hp - 200) / 10), 0, nh - 20)}/${nh - 20}</span>`); // flere enn to rader tar hele skjermen på mobil; tallet viser de fulle av de skjulte
   const need = 40 + (P.level - 1) * 55;
   const key = h.join('') + P.teeth + Math.round(P.morb) + P.level + Math.round(P.xp) + P.dodge + P.dodgeMax + G.run.patient.name;
   if (key !== hudKey) {
