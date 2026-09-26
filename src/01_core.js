@@ -295,7 +295,7 @@ const Sound = {
     const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = depth >= 3 ? 220 : 320; lp.Q.value = 3;
     const lfo = this.ctx.createOscillator(), lfoG = this.ctx.createGain(); lfo.frequency.value = 0.07; lfoG.gain.value = 90;
     lfo.connect(lfoG); lfoG.connect(lp.frequency); lfo.start(now);
-    const g = this.ctx.createGain(); g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(ute ? .22 : .5, now + 3);
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime((ute ? .22 : .5) * (this.droneNiva ?? 1), now + 3);
     lp.connect(g); g.connect(this.amb);
     const oscs = [base, base * 1.006, base * 1.5 * (depth >= 3 ? 1.06 : 1)].map(fr => {
       const o = this.ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = fr;
@@ -304,7 +304,12 @@ const Sound = {
     const n = this.ctx.createBufferSource(); n.buffer = this.brownBuf || this.noiseBuf; n.loop = true;
     const nf = this.ctx.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = depth >= 2 ? 500 : 900; nf.Q.value = .8;
     const ng = this.ctx.createGain(); ng.gain.value = depth >= 2 ? .1 : .05; n.connect(nf); nf.connect(ng); ng.connect(g); n.start(now);
-    this.ambNodes = [...oscs, lfo, n, g];
+    this.ambNodes = [...oscs, lfo, n, g]; this.drone = { oscs, k: [1, 1.006, 1.5 * (depth >= 3 ? 1.06 : 1)] };
+  },
+  /* musikken stemmer dronen etter grunntonen i stykket som spilles (06_musikk.js), så suset i veggene og musikken går i hop */
+  stemDrone(hz) {
+    if (!this.drone || !this.ready) return; let f = hz; while (f > 70) f /= 2; while (f < 35) f *= 2;
+    this.drone.oscs.forEach((o, i) => o.frequency.setTargetAtTime(f * this.drone.k[i], this.ctx.currentTime, 2.5));
   },
   /* Stemningslyder: en tilfeldig lyd fra etasjen hvert tiende til tjuende sekund.
      Tonerekka fra the-deep-ones er erstattet av musikken i 06_musikk.js. */
@@ -328,6 +333,6 @@ const Sound = {
   },
   stopAmbience() {
     for (const n of this.ambNodes) { try { if (n.stop) n.stop(); else n.disconnect(); } catch (e) { } }
-    this.ambNodes = [];
+    this.ambNodes = []; this.drone = null;
   }
 };

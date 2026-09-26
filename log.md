@@ -577,3 +577,59 @@ Alle tidspunkt er UTC.
 - PR #6 (mer 3D, historien som Hellraiser møter Twin Peaks med Lovecraft-stemning, og grafikklista til ChatGPT) er flettet inn i main som ad7634b. GitHub Actions bygget og publiserte til GitHub Pages uten feil (kjøring 40).
 - Den publiserte fila (4,2 MB, 314 innebygde bilder) er lastet ned og testet lokalt på PC og mobil: et nytt løp starter med 3D, kombotelleren virker, og historien, kjettingene, Venterommet, skrinet og Dybde er med. Ingen konsollfeil.
 - Grenen claude/practical-babbage-nc80bu er satt lik main igjen. Denne oppføringen flettes inn i main som en egen liten PR.
+
+## 2026-09-26 05:49 Frie lyder hentet og lagt i assets/lyd (del 1 av lydrunden)
+- Tom ba om mer og bedre lyd, gratis lyder og effekter, musikk som glir over i lyd slik iMUSE gjorde hos LucasArts, og blod og vann som renner nedover skjermen. Denne oppføringen gjelder bare lydfilene.
+- Nytt verktøy tools/lag_lyd.py henter lydene, klipper, normaliserer og lager MP3. Det sjekker lisensen på hver lydside før nedlasting og skriver assets/lyd/lyd.json (gruppe, type, lengde, løkkepunkter, grunntone, kilde) og assets/lyd/KILDER.md med navn på alle som har spilt inn.
+- 102 lydeffekter og stemningslyder fra Freesound, alle CC0 1.0: fottrinn på stein, tre, gress og vann, dører, kjettinger, glass, blodsprut, slag, skrik, hunder, kråker, torden, regn, vind, bål, drypp, hav, summing i rørene og mer.
+- 63 instrumenttoner fra Versilian Community Sample Library (VCSL, CC0): orgel, orgelbass, piano, glockenspiel, vibrafon, rørklokker, harpe, cembalo, vinglass, psalter, saksofon, pauker, bekken, skarptromme, stortromme, gong, håndbjeller, triangel og treblokk. Grunntonene er sjekket med frekvensanalyse, og holdetoner har løkkepunkter på hele perioder.
+- Alt er 1,55 MB (instrumenter 0,83, effekter 0,49, stemning 0,23). Nedlastingene ligger i .lydcache/, som git ignorerer.
+
+## 2026-09-26 06:02 Lydbanken: de innspilte lydene er koblet inn i spillet (del 2 av lydrunden)
+- build.py bygger inn lydene i assets/lyd/ som base64 (LYDFILER) med metadata (LYD_META) rett etter 01_core.js. Fila blir 6,4 MB, 2,1 MB av det er lyd.
+- Ny modul src/42_lyd.js. Lydbanken pakker ut lydene i bakgrunnen etter første trykk, fire om gangen og effektene først, i lydenes egen samplingsfrekvens (30 MB i minnet i stedet for rundt 48). Til en lyd er klar, spilles synthlyden som før.
+- LYD_KART oversetter spillets lydnavn til opptak: slag, treff, blod, dører, papir, glass, kjettinger, torden, bjella, sjefens gong og pauker, dyr og stemningslyder. Varianten velges tilfeldig (aldri den samme to ganger på rad) med litt ulik tonehøyde, og noe av synthlyden ligger under der den gir trykk. Høyst fem like lyder på 80 ms.
+- Fottrinn etter gulvet (tre, stein, fliser, gress, grus, myr, is, teppe) og i pytter. Stemningssløyfer per etasje (natt og vind i parken, summing, drypp, tikkende klokke, havet og dronen i Dypet), per rom (drypp på badet, summing i elektro- og røntgenrommet, knitring i fyrrommet), regn og vind, knitring fra bål og ovner etter avstand, og havet under huset i drømmene. Fiender som kommer mot deg, stønner, hvisker eller piper, fra riktig side.
+- Sløyfene har litt ekstra lyd på hver side (tools/lag_lyd.py), så de går rundt uten klikk selv om nettleserne legger ulikt mye stillhet foran en MP3. Holdetonene i instrumentene har løkkepunkter med seks desimaler.
+- Dronen fra synthen kan nå dempes og stemmes (Sound.stemDrone), til musikken i neste steg.
+- Ny innstilling under Lyd: «Innspilte lyder». Av betyr bare synth, og da pakkes ingenting ut.
+- Røyktest i testnettleseren: alle 165 lydene pakket ut på 6,9 sekunder uten feil, alle kan spilles, kartet, fottrinn, stemningen, regnet og stemmene virker, ingen konsollfeil.
+
+## 2026-09-26 06:12 Musikken skrevet om som et lite iMUSE (del 3 av lydrunden)
+- src/06_musikk.js er skrevet om med samme grensesnitt som før. Stykkene er de samme, men nå glir alt over i hverandre i takt, slik iMUSE gjorde hos LucasArts:
+- Et nytt stykke begynner på neste taktstrek. Det siste slaget før byttet er en bro: harpa løper opp dominanten i den nye tonearten, et bekken svulmer inn mot første slag, og paukene slår den nye grunntonen. Tittelmusikken går over i parkvalsen på under ett sekund i testen.
+- Besetningen følger rommet: samme stykke på orgel med mye klang i kapellet, piano og grammofon i spisesalen, vibrafon og stemte drypp på badet, cembalo og skrivemaskin i arkivet, psalter i kjelleren, saksofon, vibrafon og visper i Venterommet, harpe i hagen, glockenspiel i skogen og vinglass i drømmene. Byttet skjer på taktstreken.
+- Kamplaget og sjefslaget kommer inn på neste slag med bekken og pauke, og går ut på neste taktstrek. Tempoet øker i kamp som før.
+- Innslag i samme toneart på neste slag i stedet for de gamle synthlydene: rommet er ryddet (harpe og klokke), nytt nivå (harpeløp og glockenspiel) og helse (vibrafon). Plingene for tenner, gjenstander og høyttaleren stemmes etter akkorden som spilles. Klokka som slår i det fjerne, legges på neste taktstrek og slår grunntonen, dryppene og skrivemaskinen legges på slaget. Store smell (slam, torden, sjefen) får musikken til å dukke unna et øyeblikk.
+- Når det har vært rolig en stund (tjue sekunder uten kamp, fiender i nærheten eller nytt rom), trekker musikken seg tilbake og stemningssløyfene kommer fram. Når noe skjer, er den der igjen.
+- Dronen i veggene stemmes etter grunntonen i stykket.
+- Instrumentene er opptakene fra lydbanken (orgel, piano, harpe, glockenspiel, vibrafon, klokker, cembalo, vinglass, psalter, saksofon, pauker, bekken, trommer og gong), med synthstemmene som reserve. Styrken er målt fra lydnivået i opptakene.
+- Rettet gammel feil: i drømmene ble drømmemusikken byttet ut med etasjemusikken allerede etter første bilde. Nå bestemmer én dirigent (Musikk.velg) stykket, og drømmen beholder sin musikk og får havet under huset som stemning.
+- Røyktest: overgang med bro, besetning i journalrommet, kamplaget på neste slag, innslag, drømmen og døden, ingen konsollfeil. Testdel 12 (musikken) går gjennom.
+
+## 2026-09-26 06:24 Blod og vann som renner nedover skjermen (del 4 av lydrunden)
+- Ny modul src/43_vaatt.js: en liten simulering av dråper på glasset foran kameraet. Dråpene klistrer seg fast til de blir tunge nok, sklir så nedover og vingler litt, legger igjen spor og små perler bak seg, og tar med seg dråpene de møter. Blodet er seigt, sklir sakte og legger igjen tykke, mørke spor. Vannet renner fort og tørker på noen sekunder. Blodet forsvinner etter 10 til 15 sekunder, så skjermen ikke blir dekket i lange kamper.
+- Dråpene tegnes som små kupler i et høydekart (384 punkter bredt, rødt for vann og grønt for blod). Etterbehandlingen i 04_render.js bryter bildet gjennom kuplene, farger gjennom blodet (tynt blod klart rødt, tykt nesten svart), legger et skarpt lyspunkt fra øvre venstre hjørne og litt lys i bunnen av dråpen, og gjør kanten mørk. Ingenting regnes når skjermen er tørr.
+- Blod kommer fra siden slaget kom fra når pasienten blir truffet, og store treff gir tunge dråper som renner med en gang. Drap tett ved gir sprut, og sjefer som dør gir mye. Vann kommer fra regnet ute (også i gårdsrommene), fra plask og fra pytter pasienten går i. Det gamle, ferdigmalte blodet i kanten brukes bare når det nye er slått av.
+- Ny innstilling under Bilde: «Blod og vann på skjermen». Blodet følger også «Blod og skrekkeffekter». Enkel grafikk har ingen etterbehandling og dermed ikke noe vått. Blodpartiklene, sprutene på vegger og gulv og kjøttbitene er som før.
+- Sjekket med skjermbilder i testnettleseren, både 2D og 3D: første versjon så ut som røde klistremerker og kornete flekker. Rettet med høyere oppløsning, skarpere kant, mørkere tykt blod, skarpere lyspunkt, en øvre grense for dråpestørrelsen (store dråper slo seg sammen til én kjempeklatt) og smalere spor. Ingen konsollfeil.
+
+## 2026-09-26 06:35 Tester og dokumentasjon for lydrunden (del 5)
+- Nye testdeler i tools/test_ekstra.py: 32 (lydbanken: alle lydene pakkes ut uten feil, kartet og sløyfepunktene, fottrinn etter gulvet, havet og dronen i Dypet, regnet, en fiende som stønner, og innstillingen «Innspilte lyder»), 33 (iMUSE: nytt stykke på taktstreken etter broen, besetning etter rommet, kamplaget på neste slag, innslag og stemte plinger, roen som glir over i stemning, og drømmemusikken som blir værende) og 34 (blod og vann på skjermen: treff fra riktig side, dråper som renner og slår seg sammen, drap tett ved, tørking, regn, plask og begge innstillingene).
+- Del 12 (musikken) venter nå på at det nye stykket kommer inn på taktstreken, i stedet for en fast tid.
+- Testene fant at kamprommet ikke startet kamp når testen bare satte rommet til uryddet i generatorens liste; tilstanden ligger i G.rooms. Rettet i testen. SKALA, midiHz og hzMidi er lagt til i eksporten til testene.
+- To små rettelser i 42_lyd.js: dronen i en ny etasje stemmes med en gang etter musikken (før skjedde det bare når stykket byttet), og base64-teksten til hver lyd slippes når lyden er pakket ut, så den ikke ligger i minnet to ganger.
+- Delene 12, 32, 33 og 34 går gjennom hver for seg. Generatoren ga 1800 av 1800, og gjennomspillingen gikk uten feil. Full kjøring av test_ekstra pågår.
+- README.md (nye avsnitt om lyd, musikk og vått på skjermen, og takk til Freesound, VCSL og iMUSE som forbilde), AGENTS.md (regel for frie lyder, nye filer), memory.md (tre nye deler) og todo.md (ny runde med spørsmål til Tom) er oppdatert.
+
+## 2026-09-26 07:08 Full testkjøring: fem feil, fire tidsfølsomme tester gjort robuste
+- Full kjøring på grenen: generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 186 av 191.
+- Én feil var ventet: blodtesten i del 18 så etter det gamle, ferdigmalte blodet i kanten, som nå er byttet ut med dråpene. Testen godtar nå dråper på glasset som blod på skjermen. Samtidig forsvinner blodet på glasset med en gang når «Blod og skrekkeffekter» slås av (Blod.sett), som resten av blodet.
+- De fire andre ventet en fast tid i sanntid på noe som skjer i spilltid: det tunge slaget mot den sprukne veggen og bølgene i bakholdet (del 6), og Kasteren som kaster (del 19). Del 9 (liket kan undersøkes) feilet fordi en gravstein på kirkegården sto nærmere enn liket. Samme testdeler kjørt mot main på denne maskinen: bakholdet og liket feiler der også, så de fantes fra før. Maskinen er mye tregere enn i forrige økt (main gir rundt 5 bilder i sekundet i testnettleseren, mot 9 da).
+- Målt: grenen går rundt 5 til 10 prosent tregere enn main i testnettleseren, men målingene spriker like mye (4,4 til 5,0 mot 4,9 til 5,6), og verken opptakene, musikkens klang eller dråpene står ut hver for seg.
+- Rettet: del 6 og 19 venter nå på spilltid, og del 9 prøver flere sider av liket til det er det nærmeste som kan undersøkes. Del 6, 9, 17, 18, 19 og 20 går gjennom. En ny full kjøring går nå.
+
+## 2026-09-26 07:32 Andre fulle testkjøring og klar for PR
+- Generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 190 av 191 på det endelige bygget. Del 6, 9, 18 og 19 går nå gjennom også her.
+- Den ene feilen var i del 25 (hendelsene): Tannfeen fikk ikke plass i etasje 2. Etasjen lages av løpets frø, så de seks forsøkene i testen fikk samme etasje hver gang, og i dette løpet manglet etasjen rommene Tannfeen kan bo i. Testen bytter nå frø mellom forsøkene for graven, Tannfeen og dansen. Del 25 er kjørt tre ganger på rad uten feil. Feilen hadde ingenting med lydrunden å gjøre.
+- Neste: PR til main og fletting.

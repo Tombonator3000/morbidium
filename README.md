@@ -18,10 +18,11 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og He
 - Hver pasient settes sammen på nytt: kjønn, hår, hud, klær og pynt. Liket blir liggende der pasienten døde.
 - Kuriositeter som stables og kombineres, piller med ukjent virkning, apparater og lommerusk, evnekort i et frenologisk hode, diagnoser som følger av måten du spiller på.
 - Tjenesterom, hemmelige rom bak sprukne vegger, forbannede rom og blodoffer. Fiender settes sammen av deler, og noen er navngitte mestere. Pasienthåndboka har en fiendeindeks med bilde av alt som bor i bygget.
-- Blod som spruter på vegger og gulv, kjøttbiter ved tunge slag, og øyne som åpner seg i veggene når Morbidium stiger.
+- Blod som spruter på vegger og gulv, kjøttbiter ved tunge slag, og øyne som åpner seg i veggene når Morbidium stiger. Blir du truffet, spruter blodet på glasset fra siden slaget kom fra, og tunge dråper renner sakte nedover og legger igjen spor. Ute i regnet samler vanndråpene seg på skjermen og renner fort.
+- Innspilte lyder: slag, knas, dører, kjettinger, fottrinn som høres forskjellig på tre, stein, gress og myr, regn og vind, knitring fra bålet, summing i rørene, havet i Dypet og fiender som stønner og hvisker fra siden de kommer fra.
 - Kombo langt over toppen: treffkjeden får nye navn fra «Lett irritert» til «Utenfor journalen», skjermkanten brenner i blodrus, og dobbeltdrap, trippeldrap, firlinger og massakre kommer med orgel, kor, gong, torden, applaus og en dyp kunngjørerstemme. Overkill, miljødrap, perfekte unnvikelser, tre kort på rad, sjefdrap og synergier har sine egne fanfarer. Brister kjeden, spiller en trist trombone.
 - Effekter som regnes ut på skjermkortet: gnister og røyk fra bålet, damp fra kjelene, sporer fra kjempeplanten, Morbidium som stiger fra lilla pytter og møll rundt lyktene. Lynet slår ned i regnværet (med varsel på bakken), teslaspolen slår buer mot fiender som kommer for nær, regnet lager ringer på bakken, og store øyeblikk får sjokkbølger, zoomslag og et bilde i vrengt blekk.
-- Musikk laget i nettleseren som følger kampen, pasienthåndbok, arkiv med pasientmapper, merknader som låser opp nytt innhold, og gjeninnleggelse etter første utskrivning.
+- Musikk som glir over i hverandre slik iMUSE gjorde i Monkey Island 2: et nytt stykke begynner på taktstreken etter en liten bro, samme stykke spilles på orgel i kapellet, piano i spisesalen, vibrafon med drypp på badet og saksofon i Venterommet, kamplaget kommer inn på slaget, og når det er rolig lenge, trekker musikken seg tilbake og lar stemningen ta over. Klokkene som slår i det fjerne og dryppene fra taket faller på slaget og i tonearten. Pasienthåndbok, arkiv med pasientmapper, merknader som låser opp nytt innhold, og gjeninnleggelse etter første utskrivning.
 
 ## Bygg
 ```
@@ -34,7 +35,7 @@ python3 tools/test_ekstra.py  # enkeltfunksjoner i nettleseren (Playwright)
 ## Mapper
 - `src/` kildekode, satt sammen av `build.py`
 - `gpt-grafikk/` bilder fra ChatGPT legges her (se `gpt-grafikk/LESMEG.md`)
-- `assets/` behandlede bilder: `ferdig/` (klare for spillet), `deler/` (byggeklosser til figurer), `manifest.json`
+- `assets/` behandlede bilder: `ferdig/` (klare for spillet), `deler/` (byggeklosser til figurer), `manifest.json`, og `lyd/` med lydene (laget av `tools/lag_lyd.py`, kildeliste i `assets/lyd/KILDER.md`)
 - `maler/` maler som lastes opp til ChatGPT
 - `tegnelister/` alt som mangler bilde, samlet i ferdige ark med filnavn, mal, prompt og referansebilde (lages av `tools/lag_tegnelister.py`)
 - `tools/` verktøy for bilder, tester og manifest
@@ -45,4 +46,7 @@ python3 tools/test_ekstra.py  # enkeltfunksjoner i nettleseren (Playwright)
 - Partikkelpool etter scottstts/Threejs-Awesome-Graphics-Agent-Skills (MIT).
 - Brun støy fra Tombonator3000/the-deep-ones (tonerekka derfra er erstattet av egen musikk), lydsynth og tidsfall fra Tombonator3000/3044.
 - Brogue CE og Shattered Pixel Dungeon som idékilder (ingen kode kopiert).
+- Lydeffekter og stemningslyder fra Freesound (freesound.org), bare lyder merket Creative Commons 0. Takk til alle som har spilt dem inn; navnene står i `assets/lyd/KILDER.md`.
+- Instrumentene i musikken fra Versilian Community Sample Library (VCSL, Versilian Studios, CC0): orgel, piano, harpe, glockenspiel, vibrafon, rørklokker, cembalo, vinglass, psalter, saksofon, pauker, bekken, trommer, gong, håndbjeller, triangel og treblokk.
+- Musikksystemet er inspirert av iMUSE (LucasArts, Michael Land og Peter McConnell). Ingen kode eller musikk derfra.
 - Lisens for Morbidium er ikke valgt ennå.

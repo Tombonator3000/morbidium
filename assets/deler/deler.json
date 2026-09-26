@@ -1,0 +1,434 @@
+{
+ "hatt_personale_1_f": {
+  "fil": "hatt/hatt_personale_1_f.png",
+  "kategori": "hatt",
+  "serie": "personale",
+  "del": 1,
+  "visning": "f",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hatt_personale_1_b": {
+  "fil": "hatt/hatt_personale_1_b.png",
+  "kategori": "hatt",
+  "serie": "personale",
+  "del": 1,
+  "visning": "b",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hatt_personale_1_s": {
+  "fil": "hatt/hatt_personale_1_s.png",
+  "kategori": "hatt",
+  "serie": "personale",
+  "del": 1,
+  "visning": "s",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hatt_personale_2_f": {
+  "fil": "hatt/hatt_personale_2_f.png",
+  "kategori": "hatt",
+  "serie": "personale",
+  "del": 2,
+  "visning": "f",
+  "feste": [
+   206.0,
+   371.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   395
+  ]
+ },
+ "hatt_personale_2_b": {
+  "fil": "hatt/hatt_personale_2_b.png",
+  "kategori": "hatt",
+  "serie": "personale",
+  "del": 2,
+  "visning": "b",
+  "feste": [
+   206.0,
+   371.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   395
+  ]
+ },
+ "hatt_personale_2_s": {
+  "fil": "hatt/hatt_personale_2_s.png",
+  "kategori": "hatt",
+  "serie": "personale",
+  "del": 2,
+  "visning": "s",
+  "feste": [
+   206.0,
+   371.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   395
+  ]
+ },
+ "hatt_personale_3_f": {
+  "fil": "hatt/hatt_personale_3_f.png",
+  "kategori": "hatt",
+  "serie": "personale",
+  "del": 3,
+  "visning": "f",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hatt_personale_3_b": {
+  "fil": "hatt/hatt_personale_3_b.png",
+  "kategori": "hatt",
+  "serie": "personale",
+  "del": 3,
+  "visning": "b",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hatt_personale_3_s": {
+  "fil": "hatt/hatt_personale_3_s.png",
+  "kategori": "hatt",
+  "serie": "personale",
+  "del": 3,
+  "visning": "s",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hode_personale_1_f": {
+  "fil": "hode/hode_personale_1_f.png",
+  "kategori": "hode",
+  "serie": "personale",
+  "del": 1,
+  "visning": "f",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hode_personale_1_b": {
+  "fil": "hode/hode_personale_1_b.png",
+  "kategori": "hode",
+  "serie": "personale",
+  "del": 1,
+  "visning": "b",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hode_personale_1_s": {
+  "fil": "hode/hode_personale_1_s.png",
+  "kategori": "hode",
+  "serie": "personale",
+  "del": 1,
+  "visning": "s",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hode_personale_2_f": {
+  "fil": "hode/hode_personale_2_f.png",
+  "kategori": "hode",
+  "serie": "personale",
+  "del": 2,
+  "visning": "f",
+  "feste": [
+   206.0,
+   371.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   395
+  ]
+ },
+ "hode_personale_2_b": {
+  "fil": "hode/hode_personale_2_b.png",
+  "kategori": "hode",
+  "serie": "personale",
+  "del": 2,
+  "visning": "b",
+  "feste": [
+   206.0,
+   371.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   395
+  ]
+ },
+ "hode_personale_2_s": {
+  "fil": "hode/hode_personale_2_s.png",
+  "kategori": "hode",
+  "serie": "personale",
+  "del": 2,
+  "visning": "s",
+  "feste": [
+   206.0,
+   371.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   395
+  ]
+ },
+ "hode_personale_3_f": {
+  "fil": "hode/hode_personale_3_f.png",
+  "kategori": "hode",
+  "serie": "personale",
+  "del": 3,
+  "visning": "f",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hode_personale_3_b": {
+  "fil": "hode/hode_personale_3_b.png",
+  "kategori": "hode",
+  "serie": "personale",
+  "del": 3,
+  "visning": "b",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "hode_personale_3_s": {
+  "fil": "hode/hode_personale_3_s.png",
+  "kategori": "hode",
+  "serie": "personale",
+  "del": 3,
+  "visning": "s",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "kropp_uniformer_1_f": {
+  "fil": "kropp/kropp_uniformer_1_f.png",
+  "kategori": "kropp",
+  "serie": "uniformer",
+  "del": 1,
+  "visning": "f",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "kropp_uniformer_1_b": {
+  "fil": "kropp/kropp_uniformer_1_b.png",
+  "kategori": "kropp",
+  "serie": "uniformer",
+  "del": 1,
+  "visning": "b",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "kropp_uniformer_1_s": {
+  "fil": "kropp/kropp_uniformer_1_s.png",
+  "kategori": "kropp",
+  "serie": "uniformer",
+  "del": 1,
+  "visning": "s",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "kropp_uniformer_2_f": {
+  "fil": "kropp/kropp_uniformer_2_f.png",
+  "kategori": "kropp",
+  "serie": "uniformer",
+  "del": 2,
+  "visning": "f",
+  "feste": [
+   206.0,
+   371.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   395
+  ]
+ },
+ "kropp_uniformer_2_b": {
+  "fil": "kropp/kropp_uniformer_2_b.png",
+  "kategori": "kropp",
+  "serie": "uniformer",
+  "del": 2,
+  "visning": "b",
+  "feste": [
+   206.0,
+   371.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   395
+  ]
+ },
+ "kropp_uniformer_2_s": {
+  "fil": "kropp/kropp_uniformer_2_s.png",
+  "kategori": "kropp",
+  "serie": "uniformer",
+  "del": 2,
+  "visning": "s",
+  "feste": [
+   206.0,
+   371.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   395
+  ]
+ },
+ "kropp_uniformer_3_f": {
+  "fil": "kropp/kropp_uniformer_3_f.png",
+  "kategori": "kropp",
+  "serie": "uniformer",
+  "del": 3,
+  "visning": "f",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "kropp_uniformer_3_b": {
+  "fil": "kropp/kropp_uniformer_3_b.png",
+  "kategori": "kropp",
+  "serie": "uniformer",
+  "del": 3,
+  "visning": "b",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ },
+ "kropp_uniformer_3_s": {
+  "fil": "kropp/kropp_uniformer_3_s.png",
+  "kategori": "kropp",
+  "serie": "uniformer",
+  "del": 3,
+  "visning": "s",
+  "feste": [
+   206.0,
+   372.05859375
+  ],
+  "px_per_enhet": 238.798828125,
+  "storrelse": [
+   412,
+   396
+  ]
+ }
+}
