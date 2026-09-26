@@ -722,8 +722,8 @@ function loop(now) {
   } else if (G.state === 'journal') {
     if (A.pauseP || A.journalP) closeJournal();
   }
-  // lysene, månen og lykteskyggene etter at alt har flyttet seg, så de følger figurene og lykta i samme bilde og ikke ett bilde etter
-  D3.tick(dt); Dybde.tick(dt);
+  // lysene, månen, lykteskyggene og gloriene etter at alt har flyttet seg, så de følger figurene og lykta i samme bilde og ikke ett bilde etter
+  D3.tick(dt); Dybde.tick(dt); Glorie.tick(dt);
   R.render(dt);
   Input.endFrame();
   if (G.okFrames !== null && ++G.okFrames === 90) { if (window.bootStep) bootStep('ok'); const b = $('boot'); if (b) b.remove(); G.okFrames = null; }

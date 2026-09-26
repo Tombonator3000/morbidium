@@ -1496,6 +1496,90 @@ async def main():
         sjekk('ingen konsollfeil (lyspuljen)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 39) Diorama
+        # Glorier rundt lampene og flammene, tilt-shift også på middels med det skarpe båndet der pasienten står, og etterbehandlingen med
+        # hjelpemål uten dybdebuffer som kastes når de slås av, og ingen lysbuffer i 3D. Gloriene kjøres for hånd i faste steg, og bildet
+        # tegnes med R.render(0) to ganger i samme evaluate (uten og med glorier), så maskinens fart ikke betyr noe
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        di = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {}, s = G.meta.settings, u = R.post.uniforms;
+            G.run.seed = 4242; startFloor(3, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999;
+            const tikk = n => { for (let i = 0; i < n; i++) Glorie.tick(1 / 60); }, antall = () => Glorie.pts && Glorie.pts.visible ? Glorie.pts.geometry.drawRange.count : 0, lyser = () => Glorie.K.filter(k => k.lys > .01).length;
+            const mal = () => ({ tilt: +u.uTilt.value.toFixed(3), bl: R.bl ? [R.bl.a.depthBuffer, R.bl.b.depthBuffer] : null, us: R.us ? [R.us.a.depthBuffer, R.us.b.depthBuffer] : null, lrt: R.lrt ? R.lrt.depthBuffer : null, rt: R.rt.depthBuffer, lys: u.uLights.value });
+            // etterbehandlingen per nivå: tilt-shift på høy og middels, glød og tilt i mål uten dybdebuffer som kastes når de slås av, ingen lysbuffer i 3D.
+            // Antallet glorier følger taket, også mens kameraet glir over hele etasjen
+            ut.niva = {};
+            for (const [k, n] of [[3, 'hoy'], [2, 'middels'], [1, 'lav']]) {
+              s.kvalitet = k; applySettings(); await bilder(3); tikk(30); const m = mal(); m.kval = D3.kval(); m.tak = Glorie.tak(); m.n = antall(); m.lyser = lyser();
+              let maks = 0; const W = G.F.W, H = G.F.H; for (let i = 0; i <= 90; i++) { const t = i / 90; R.camT.x = W * (.1 + .8 * t); R.camT.z = H * (.2 + .6 * Math.abs(Math.sin(t * 5))); tikk(1); maks = Math.max(maks, antall()); }
+              m.maks = maks; ut.niva[n] = m;
+            }
+            s.kvalitet = 3; applySettings(); await bilder(3);
+            // uten 3D: lysbufferen uten dybdebuffer, ingen glød eller tilt, og høyst ti glorier
+            s.d3 = false; applySettings(); await bilder(3); tikk(30); ut.uten3d = Object.assign(mal(), { d3: D3.on, tak: Glorie.tak(), n: antall() }); s.d3 = true; applySettings(); await bilder(3); tikk(30);
+            // enkel grafikk, lette teksturer og uten lys og skygge: ingen glorier
+            const av = () => [Glorie.tak(), Glorie.pts.visible, antall()];
+            R.safe = true; tikk(1); ut.safe = av(); R.safe = false; R.lowTex = true; tikk(1); ut.lowTex = av(); R.lowTex = false;
+            s.lights = false; applySettings(); await bilder(2); tikk(1); ut.lysAv = av(); s.lights = true; applySettings(); await bilder(3); tikk(30); ut.igjen = av();
+            // lyset i gloria ved et stearinlys nær pasienten. Bildet tegnes to ganger i samme øyeblikk, med og uten glorier, og blekkstrekene
+            // (under 30 uten glorier) skal holde seg mørke
+            const kand = Glorie.K.filter(k => k.t === 'ting' && k.eier.kind === 'candles' && k.lys > .5);
+            ut.kand = kand.length; if (!kand.length) return ut;
+            const L = kand[0], o = L.eier, fs = freeSpot(o.x + 1.6, o.z + 1.2, 3); P.x = fs.x; P.z = fs.z; P.vx = P.vz = 0; R.snapCamera(P.x, P.z); D3.tick(1 / 60); tikk(40);
+            const gl = R.renderer.getContext(), Wb = gl.drawingBufferWidth, Hb = gl.drawingBufferHeight, v = new THREE.Vector3(L.x, L.y, L.z).project(R.camera);
+            const cx = Math.round((v.x + 1) / 2 * Wb), cy = Math.round((v.y + 1) / 2 * Hb), B = 48, px = new Uint8Array(B * B * 4), les = () => { gl.readPixels(cx - B / 2, cy - B / 2, B, B, gl.RGBA, gl.UNSIGNED_BYTE, px); return Array.from({ length: B * B }, (_, i) => .299 * px[i * 4] + .587 * px[i * 4 + 1] + .114 * px[i * 4 + 2]); };
+            const info = R.renderer.info; info.autoReset = false;
+            Glorie.pts.visible = false; info.reset(); R.render(0); const kall0 = info.render.calls, uten = les();
+            Glorie.pts.visible = true; info.reset(); R.render(0); const kall1 = info.render.calls, med = les(); info.autoReset = true;
+            const boks = a => { let sum = 0, n = 0; for (let y = 12; y < 36; y++) for (let x = 12; x < 36; x++) { sum += a[y * B + x]; n++; } return sum / n; };
+            const blekk = []; for (let i = 0; i < B * B; i++) if (uten[i] < 30) blekk.push(i);
+            ut.lys = { kind: o.kind, skjerm: [cx, cy, Wb, Hb], uten: +boks(uten).toFixed(1), med: +boks(med).toFixed(1), blekk: blekk.length, blekkMaks: +Math.max(0, ...blekk.map(i => med[i])).toFixed(1), blekkUten: +Math.max(0, ...blekk.map(i => uten[i])).toFixed(1), kall: [kall0, kall1] };
+            // det skarpe båndet står der pasienten står
+            ut.fokus = { x: +u.uFokus.value.x.toFixed(4), P: +R.uvAv(P.x, .9, P.z).y.toFixed(4), y: u.uFokus.value.y, z: u.uFokus.value.z };
+            // gloriene følger lyset: mørket etter en sjef slukker dem, og et stearinlys som mister lyset (knust), blekner bort
+            const sum = () => Glorie.K.filter(k => k.t === 'ting' && k.w > 0).reduce((a, k) => a + k.lys, 0), s0 = sum(); D3.morke(1.2, .08); D3.tick(1 / 60); tikk(1); const s1 = sum(); D3.morkeT = 0; D3.tick(1 / 60); tikk(1);
+            ut.morke = { for: +s0.toFixed(3), under: +s1.toFixed(3), etter: +sum().toFixed(3) };
+            const ly = Glorie.K.find(k => k.t === 'ting' && k.eier.kind === 'candles' && k.w === 1);
+            if (ly) { R.remove(ly.eier.light); tikk(6); const w1 = ly.w; tikk(20); ut.knust = { w1: +w1.toFixed(3), w2: ly.w, lys: ly.lys }; }
+            // ny etasje: den gamle gloria frigjøres og en ny lages
+            const g = Glorie.pts.geometry; let kastet = false; g.addEventListener('dispose', () => { kastet = true; });
+            startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await bilder(2);
+            ut.nyEtasje = { kastet, ny: !!Glorie.pts && Glorie.pts.geometry !== g, iScenen: !!Glorie.pts && Glorie.pts.parent === R.scene, gammel: R.scene.children.some(c => c.geometry === g) };
+            return ut; }""")
+        nv = di['niva']; h, m, l = nv['hoy'], nv['middels'], nv['lav']
+        sjekk('tilt-shift på høy (0,7) og middels (0,45), ikke på lav, og glød og tilt har mål uten dybdebuffer som kastes når de slås av', h['tilt'] == .7 and m['tilt'] == .45 and l['tilt'] == 0 and h['bl'] == [False, False] and h['us'] == [False, False] and m['us'] == [False, False] and l['bl'] is None and l['us'] is None and all(x['rt'] and x['lrt'] is None for x in (h, m, l)), nv)
+        u3 = di['uten3d']
+        sjekk('uten 3D: lysbufferen uten dybdebuffer, ingen glød eller tilt, og høyst ti glorier', not u3['d3'] and u3['lrt'] is False and u3['bl'] is None and u3['us'] is None and u3['tilt'] == 0 and u3['lys'] == 1 and 0 < u3['n'] <= 10 and u3['tak'] == 10, u3)
+        sjekk('gloriene holder seg under taket (32, 20 og 10) også mens kameraet glir over etasjen, og taket fylles når det er kilder nok', all(x['n'] == min(x['tak'], x['lyser']) and x['maks'] <= x['tak'] for x in (h, m, l)) and [h['tak'], m['tak'], l['tak']] == [32, 20, 10], nv)
+        sjekk('ingen glorier med enkel grafikk, lette teksturer eller uten lys og skygge, og de kommer tilbake', di['safe'] == [0, False, 0] and di['lowTex'] == [0, False, 0] and di['lysAv'] == [0, False, 0] and di['igjen'][1] and di['igjen'][2] > 0, [di['safe'], di['lowTex'], di['lysAv'], di['igjen']])
+        ly = di.get('lys', {})
+        sjekk('gloria lyser opp rundt stearinlyset, blekkstrekene holder seg mørke, og den koster ett tegnekall', di.get('kand', 0) > 0 and ly.get('med', 0) - ly.get('uten', 0) >= 8 and ly.get('blekk', 0) >= 5 and ly.get('blekkMaks', 99) < 60 and ly['kall'][1] - ly['kall'][0] == 1, ly)
+        fo = di.get('fokus', {})
+        sjekk('det skarpe båndet i tilt-shift står der pasienten står, bredere på liggende skjerm', abs(fo.get('x', 0) - fo.get('P', 1)) < 1e-3 and fo.get('y') == .2 and fo.get('z') == .42, fo)
+        mo, kn = di.get('morke', {}), di.get('knust', {})
+        sjekk('gloriene slukner i mørket etter sjefene og kommer tilbake, og et lys som blir borte, blekner bort', mo.get('under', 99) < mo.get('for', 0) * .2 and abs(mo.get('etter', 0) - mo.get('for', 0)) < .05 * mo.get('for', 1) and 0 < kn.get('w1', 0) < 1 and kn.get('w2') == 0, [mo, kn])
+        ne = di.get('nyEtasje', {})
+        sjekk('gloriene frigjøres når etasjen rives, og den nye etasjen får sine egne', ne == {'kastet': True, 'ny': True, 'iScenen': True, 'gammel': False}, ne)
+        await pg.screenshot(path='/tmp/e_diorama_pc.png')
+        sjekk('ingen konsollfeil (diorama)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # telefon: middels som standard, med tilt-shift og et smalere skarpt bånd stående, og bredere liggende
+        pg = await ny_side(b, viewport={'width': 390, 'height': 844}, has_touch=True, is_mobile=True, device_scale_factor=2)
+        await pg.goto(URL3D); await pg.wait_for_timeout(2500)
+        await pg.tap('#tNew'); await pg.wait_for_timeout(500); await pg.tap('[data-awk]'); await pg.wait_for_timeout(1500)
+        TLF = """async () => { const G = MORBIDIUM, P = G.player, u = R.post.uniforms, bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });
+          if (G.state === 'play') { rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; } await bilder(4); R.render(0);
+          return { kval: D3.on && D3.kval(), tilt: u.uTilt.value, us: R.us ? [R.us.a.depthBuffer, R.us.b.depthBuffer] : null, fokus: [+u.uFokus.value.x.toFixed(4), +R.uvAv(P.x, .9, P.z).y.toFixed(4), u.uFokus.value.y], n: Glorie.pts.geometry.drawRange.count, tak: Glorie.tak(), coarse: R.coarse }; }"""
+        st = await pg.evaluate(TLF)
+        await pg.screenshot(path='/tmp/e_diorama_mobil.png')
+        await pg.set_viewport_size({'width': 844, 'height': 390}); await pg.wait_for_timeout(600)
+        lg = await pg.evaluate(TLF)
+        sjekk('telefon: middels med tilt-shift (0,45) i mål uten dybdebuffer, og høyst 20 glorier', st['coarse'] and st['kval'] == 'middels' and st['tilt'] == .45 and st['us'] == [False, False] and 0 < st['n'] <= 20 and st['tak'] == 20, st)
+        sjekk('telefon: det skarpe båndet følger pasienten, smalere stående (0,14) enn liggende (0,2)', abs(st['fokus'][0] - st['fokus'][1]) < 1e-3 and st['fokus'][2] == .14 and abs(lg['fokus'][0] - lg['fokus'][1]) < 1e-3 and lg['fokus'][2] == .2, [st['fokus'], lg['fokus']])
+        sjekk('ingen konsollfeil (diorama på telefon)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
