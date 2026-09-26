@@ -694,3 +694,8 @@ Alle tidspunkt er UTC.
 
 ## 2026-09-26 10:29 Lekkasjetest for grafikkminnet i testdel 36 (ikke kalibrert ennå)
 - Testdel 36 bygger fire etasjer med seks fiender som dør i hver, to ganger, og sammenligner renderer.info.memory (teksturer og geometrier) etter første og andre runde. Den andre runden skal ikke legge igjen noe. Grensene (høyst 4 teksturer og 12 geometrier) er satt før testen er kjørt, og justeres når den store testkjøringen er ferdig og testen er prøvd mot versjonen fra før rettingen.
+
+## 2026-09-26 10:53 Full testkjøring grønn, og minnesjekken er kalibrert
+- Full testkjøring på det endelige bygget (ab64245, i egen arbeidskopi, uten andre nettlesere i gang samtidig): generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 210 av 210. De fire sjekkene som feilet i forrige runde (del 28, 29, 30 og 33), gikk gjennom. De feilet fordi maskinen var belastet av skjermbilderundene mine samtidig, og spilltiden rakk ikke fram innenfor taket på 20 sekunder.
+- Minnesjekken i del 36 kjørt mot bygget fra før lekkasjerettingene (1f410e9): +16 teksturer og +67 geometrier per runde med fire etasjer. Mot det rettede bygget: +2 til +3 teksturer og -1 til -2 geometrier. Grensene er satt til 6 teksturer og 12 geometrier, så sjekken fanger lekkasjen med god margin.
+- «2D» i den stående telefonen i del 36 var ikke en feil: test_ekstra åpner spillet med ?2d. Minnesjekken slår 3D på selv.

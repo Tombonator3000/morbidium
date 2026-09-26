@@ -1169,14 +1169,15 @@ async def main():
         await pg.tap('#dNew'); await pg.wait_for_timeout(800); await pg.tap('[data-awk]'); await pg.wait_for_timeout(2500)
         # grafikkminnet: en runde gjennom fire etasjer med fiender som dør, to ganger. Den første fyller bufrene (bilder av møbler
         # og fiender), den andre skal ikke legge igjen noe. Før rettingen ble det liggende et skyggekart, teksturene til flekker,
-        # plakater og dører, og strekbåndene til hver dukke for hver etasje.
+        # plakater og dører, og strekbåndene til hver dukke for hver etasje: målt til +16 teksturer og +67 geometrier per runde,
+        # mot høyst +3 og rundt 0 etter rettingen.
         mem = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), info = R.renderer.info.memory;
           R.safe = false; G.meta.settings.simple = false; G.meta.settings.d3 = true; applySettings();
           const runde = async () => { for (let d = 1; d <= 4; d++) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
             await vent(150); const P = G.player; for (let i = 0; i < 6; i++) { const s = freeSpot(P.x + 2 + i * .3, P.z, 4), e = spawnEnemy('pleier', s.x, s.z, false, d); killEntity(e, {}); } await vent(250); } };
           await runde(); const m1 = { t: info.textures, g: info.geometries }; await runde(); const m2 = { t: info.textures, g: info.geometries };
           return { m1, m2, d3: D3.on, kval: D3.kval() }; }""")
-        sjekk('grafikkminnet vokser ikke når de samme etasjene bygges på nytt (skyggekart, flekker, plakater, dører og dukker frigjøres)', mem['d3'] and mem['m2']['t'] - mem['m1']['t'] <= 4 and mem['m2']['g'] - mem['m1']['g'] <= 12, mem)
+        sjekk('grafikkminnet vokser ikke når de samme etasjene bygges på nytt (skyggekart, flekker, plakater, dører og dukker frigjøres)', mem['d3'] and mem['m2']['t'] - mem['m1']['t'] <= 6 and mem['m2']['g'] - mem['m1']['g'] <= 12, mem)
         tap = await pg.evaluate("""async () => { const vent = t => new Promise(r => setTimeout(r, t)), gl = R.renderer.getContext(), x = gl.getExtension('WEBGL_lose_context'), ut = {};
           const kv = () => [R.dprMax, D3.on ? D3.kval() : '2D'];
           let skjult = false; Object.defineProperty(document, 'hidden', { configurable: true, get: () => skjult });
