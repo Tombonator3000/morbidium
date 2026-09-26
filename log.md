@@ -908,3 +908,9 @@ Alle tidspunkt er UTC.
 - Målt i mobilprofil over seks etasjer: grafikkminnet er det samme som før (48 MB), mens JS-minnet er høyere (rundt 110 MB mot 68 MB), fordi de nye bildene ligger som tekst i fila. Bildene pakkes bare ut når en del brukes.
 - Den publiserte siden har hatt de nye bildene siden 15:40 UTC, så Toms skjermbilder med hårrullene er trolig tatt med dem. Kontrollene som GRAFIKKLEVERANSE.md ber om (hjorten, trillepasienten, speilpasienten, hatter, hår og tilbehør i alle tre retninger), tas i neste runde sammen med Toms liste.
 - Full testkjøring med alle 544 bildene går nå.
+
+## 2026-09-26 22:27 Full testkjøring med alle 544 bildene, og to tester rettet
+- Full kjøring på det flettede bygget med alle 544 bildene (6d5c45e, i egen arbeidskopi): generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 279 OK og 1 feil før skriptet stoppet på 3D-siden i del 40.
+- Feilen var i del 22 (UI-settet): testen gikk ut fra at UI-bildene mangler ved start, og slik er det ikke etter leveransen. Nå tas ui_*-bildene ut av SPRITES mens sjekken går, begge tilstandene prøves, og de leverte bildene legges tilbake.
+- Stoppen i del 40: på den tunge 3D-siden bruker hvert klikk 6 til 7 sekunder, og i den lange kjøringen enda mer. Klikket på oppvåkningen gikk trolig gjennom selv om svaret kom for sent, så innleggelsen var borte da reserven ventet på at knappen skulle synes. Reserveklikket i hjelperen klikk trykker nå bare når knappen fortsatt synes, og venter ikke på at den skal bli synlig.
+- Del 21, 22 og 40 til 43 kjøres nå på nytt med alle bildene.

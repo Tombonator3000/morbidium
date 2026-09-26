@@ -29,10 +29,13 @@ async def ny_side(b, **kw):
     return pg
 
 # et vanlig klikk først; svarer ikke siden (en 3D-side i programvaregrafikk på en travel maskin kan bruke sekunder per bilde),
-# trykkes knappen fra siden selv, så testen prøver spillet og ikke hvor rask maskinen er
+# trykkes knappen fra siden selv, så testen prøver spillet og ikke hvor rask maskinen er. Klikket kan ha gått gjennom selv om svaret
+# kom for sent: da er knappen skjult (tittelen eller innleggelsen er borte), og den trykkes ikke en gang til
 async def klikk(pg, sel):
-    try: await pg.click(sel, timeout=15000)
-    except Exception: await pg.wait_for_selector(sel, timeout=30000); await pg.evaluate("s => document.querySelector(s).click()", sel)
+    try: await pg.click(sel, timeout=15000); return
+    except Exception: pass
+    await pg.wait_for_selector(sel, state='attached', timeout=30000)
+    await pg.evaluate("s => { const e = document.querySelector(s), r = e.getBoundingClientRect(); if (r.width && r.height && !e.closest('.hidden')) e.click(); }", sel)
 
 async def start_lop(pg, awk=None, url=None):
     await pg.goto(url or URL); await pg.wait_for_timeout(2500)
@@ -541,17 +544,20 @@ async def main():
         lagret = await pg.evaluate("() => { Merknad.onBoss({ type: 'klumpen' }); return (JSON.parse(localStorage.getItem('morbidium_meta_v2')).sjefDrap || {}).klumpen; }")
         sjekk('en slått sjef lagres med en gang (til fiendeindeksen)', lagret == 1, lagret)
 
-        # 22) UI-settet fra ChatGPT: uten bilder tegner CSS-en som før, med bilder byttes rammer, ringer, hjerter og ikoner inn uten at boksene endrer størrelse
+        # 22) UI-settet fra ChatGPT: uten bilder tegner CSS-en som før, med bilder byttes rammer, ringer, hjerter og ikoner inn uten at boksene endrer størrelse.
+        #     Alle UI-bildene er levert nå, så de tas ut av SPRITES mens sjekken går, og legges tilbake etterpå
         await start_lop(pg)
         ui = await pg.evaluate("""async () => { rolig(); const a = {}, px = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
           const P = MORBIDIUM.player; P.cds[1] = 4.6; (P.cdMax || (P.cdMax = [1, 1, 1, 1]))[1] = 8; await new Promise(r => setTimeout(r, 500));
           const cd = document.querySelector('#ac1 .cd'); a.nedtelling = cd && !cd.classList.contains('hidden') ? cd.textContent : null; a.sektor = cd ? +cd.style.getPropertyValue('--p') : -1;
+          const ekte = {}; for (const k of Object.keys(SPRITES)) if (k.startsWith('ui_')) { ekte[k] = SPRITES[k]; delete SPRITES[k]; }
           a.uten = brukUIsett().length === 0 && !document.body.classList.contains('ui-sett'); a.kodehjerte = !hjerteHtml(1, c => '<i style="color:' + c + '"></i>').includes('uihjerte');
           const boks = () => { const r = document.getElementById('plate').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }, f0 = boks();
           for (const k of ['ui_panel', 'ui_kort', 'ui_ring_kart', 'ui_hjerte_full', 'ui_hjerte_halv', 'ui_ikon_pause']) SPRITES[k] = px;
           a.halvtSett = hjerteHtml(1, c => '').includes('uihjerte'); SPRITES.ui_hjerte_tom = px;
           a.brukt = brukUIsett(); a.css = (document.getElementById('uiSett') || { textContent: '' }).textContent.includes('border-image'); a.ikon = !!document.querySelector('#bPause img');
           a.hjerte = hjerteHtml(.5, c => '').includes('uihjerte'); const f1 = boks(); a.boks = Math.abs(f1[0] - f0[0]) <= 2 && Math.abs(f1[1] - f0[1]) <= 2;
+          for (const k of Object.keys(SPRITES)) if (k.startsWith('ui_')) delete SPRITES[k]; Object.assign(SPRITES, ekte); brukUIsett(); // de leverte bildene tilbake
           return a; }""")
         sjekk('kortet viser nedtellingen i sekunder og en sektor som krymper', ui['nedtelling'] in ('4s', '5s') and 0.3 < ui['sektor'] < 0.65, ui)
         sjekk('UI-settet: CSS-en tegner når bildene mangler, og ChatGPTs bilder tas i bruk uten å endre størrelsen på boksene',
