@@ -45,6 +45,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Testing i Claude Code-skyen: Chromium når ikke nettet via proxyen. Hent three.min.js med curl og kjør testene med --three STI eller MORBIDIUM_THREE=STI. Python-pakkene playwright (1.56.0 passer med den ferdiginstallerte Chromium) og pillow må installeres.
 
 ## Arbeidsdeling med ChatGPT
+- 2026-09-26: alle 74 bestillinger i Claude-artifacten «Tegnelister» er dekket med 268 nye PNG-kilder: 257 manifestbilder og 11 delark med 97 synlige deler. Hele manifestet har nå 544 av 544 bilder. Lokal behandling: 544 bilder, 0 feil; bygg: 544 bilder, 124 deler, 165 lyder. Kasterens åtte bilder er gjenbrukt fra prøven. Se GRAFIKKLEVERANSE.md og grafikkleveranse.csv før noen nye bilder bestilles. Den hvite hjortens kropp og bein trenger fortsatt visuell kontroll i spillet.
 - Claude koder, lager lyd og musikk og setter sammen bildene. ChatGPT lager bare bilder etter DESIGN_BRIEF.md. Tom laster opp til gpt-grafikk/ (erstattet assets/innboks/ 2026-09-24). Pages-bygget klipper og behandler bildene selv.
 - Figurer bygges som oppskrifter av deler (hode, hatt/hår, tilbehør, kropp, farging). Armer og bein tegnes alltid av koden.
 - Repoet ligger på GitHub som Tombonator3000/morbidium (opprettet 2026-09-24, innholdet kom som zip og ble pakket ut av Claude Code). GitHub-koblingen i Claude.ai virker ikke (peker på github.com); Claude Code er veien inn.
