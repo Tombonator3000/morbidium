@@ -585,7 +585,7 @@ Alle tidspunkt er UTC.
 - 63 instrumenttoner fra Versilian Community Sample Library (VCSL, CC0): orgel, orgelbass, piano, glockenspiel, vibrafon, rørklokker, harpe, cembalo, vinglass, psalter, saksofon, pauker, bekken, skarptromme, stortromme, gong, håndbjeller, triangel og treblokk. Grunntonene er sjekket med frekvensanalyse, og holdetoner har løkkepunkter på hele perioder.
 - Alt er 1,55 MB (instrumenter 0,83, effekter 0,49, stemning 0,23). Nedlastingene ligger i .lydcache/, som git ignorerer.
 
-## 2026-09-26 06:08 Lydbanken: de innspilte lydene er koblet inn i spillet (del 2 av lydrunden)
+## 2026-09-26 06:02 Lydbanken: de innspilte lydene er koblet inn i spillet (del 2 av lydrunden)
 - build.py bygger inn lydene i assets/lyd/ som base64 (LYDFILER) med metadata (LYD_META) rett etter 01_core.js. Fila blir 6,4 MB, 2,1 MB av det er lyd.
 - Ny modul src/42_lyd.js. Lydbanken pakker ut lydene i bakgrunnen etter første trykk, fire om gangen og effektene først, i lydenes egen samplingsfrekvens (30 MB i minnet i stedet for rundt 48). Til en lyd er klar, spilles synthlyden som før.
 - LYD_KART oversetter spillets lydnavn til opptak: slag, treff, blod, dører, papir, glass, kjettinger, torden, bjella, sjefens gong og pauker, dyr og stemningslyder. Varianten velges tilfeldig (aldri den samme to ganger på rad) med litt ulik tonehøyde, og noe av synthlyden ligger under der den gir trykk. Høyst fem like lyder på 80 ms.
@@ -594,3 +594,15 @@ Alle tidspunkt er UTC.
 - Dronen fra synthen kan nå dempes og stemmes (Sound.stemDrone), til musikken i neste steg.
 - Ny innstilling under Lyd: «Innspilte lyder». Av betyr bare synth, og da pakkes ingenting ut.
 - Røyktest i testnettleseren: alle 165 lydene pakket ut på 6,9 sekunder uten feil, alle kan spilles, kartet, fottrinn, stemningen, regnet og stemmene virker, ingen konsollfeil.
+
+## 2026-09-26 06:12 Musikken skrevet om som et lite iMUSE (del 3 av lydrunden)
+- src/06_musikk.js er skrevet om med samme grensesnitt som før. Stykkene er de samme, men nå glir alt over i hverandre i takt, slik iMUSE gjorde hos LucasArts:
+- Et nytt stykke begynner på neste taktstrek. Det siste slaget før byttet er en bro: harpa løper opp dominanten i den nye tonearten, et bekken svulmer inn mot første slag, og paukene slår den nye grunntonen. Tittelmusikken går over i parkvalsen på under ett sekund i testen.
+- Besetningen følger rommet: samme stykke på orgel med mye klang i kapellet, piano og grammofon i spisesalen, vibrafon og stemte drypp på badet, cembalo og skrivemaskin i arkivet, psalter i kjelleren, saksofon, vibrafon og visper i Venterommet, harpe i hagen, glockenspiel i skogen og vinglass i drømmene. Byttet skjer på taktstreken.
+- Kamplaget og sjefslaget kommer inn på neste slag med bekken og pauke, og går ut på neste taktstrek. Tempoet øker i kamp som før.
+- Innslag i samme toneart på neste slag i stedet for de gamle synthlydene: rommet er ryddet (harpe og klokke), nytt nivå (harpeløp og glockenspiel) og helse (vibrafon). Plingene for tenner, gjenstander og høyttaleren stemmes etter akkorden som spilles. Klokka som slår i det fjerne, legges på neste taktstrek og slår grunntonen, dryppene og skrivemaskinen legges på slaget. Store smell (slam, torden, sjefen) får musikken til å dukke unna et øyeblikk.
+- Når det har vært rolig en stund (tjue sekunder uten kamp, fiender i nærheten eller nytt rom), trekker musikken seg tilbake og stemningssløyfene kommer fram. Når noe skjer, er den der igjen.
+- Dronen i veggene stemmes etter grunntonen i stykket.
+- Instrumentene er opptakene fra lydbanken (orgel, piano, harpe, glockenspiel, vibrafon, klokker, cembalo, vinglass, psalter, saksofon, pauker, bekken, trommer og gong), med synthstemmene som reserve. Styrken er målt fra lydnivået i opptakene.
+- Rettet gammel feil: i drømmene ble drømmemusikken byttet ut med etasjemusikken allerede etter første bilde. Nå bestemmer én dirigent (Musikk.velg) stykket, og drømmen beholder sin musikk og får havet under huset som stemning.
+- Røyktest: overgang med bro, besetning i journalrommet, kamplaget på neste slag, innslag, drømmen og døden, ingen konsollfeil. Testdel 12 (musikken) går gjennom.
