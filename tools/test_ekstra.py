@@ -1186,7 +1186,8 @@ async def main():
           R.safe = false; G.meta.settings.simple = false; G.meta.settings.d3 = true; applySettings();
           const runde = async () => { for (let d = 1; d <= 4; d++) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
             await vent(150); const P = G.player; for (let i = 0; i < 6; i++) { const s = freeSpot(P.x + 2 + i * .3, P.z, 4), e = spawnEnemy('pleier', s.x, s.z, false, d); killEntity(e, {}); } await vent(250); } };
-          await runde(); const m1 = { t: info.textures, g: info.geometries }; await runde(); const m2 = { t: info.textures, g: info.geometries };
+          // tre runder: de to første fyller bufrene (bilder som lages første gang noe dukker opp, og det varierer litt), den tredje skal ikke legge igjen noe
+          await runde(); await runde(); const m1 = { t: info.textures, g: info.geometries }; await runde(); const m2 = { t: info.textures, g: info.geometries };
           // skyggekartet direkte: kartet til månen i denne etasjen skal kastes når neste etasje bygges
           const kart = D3.mane && D3.mane.shadow && D3.mane.shadow.map; let kastet = false; if (kart) kart.addEventListener('dispose', () => { kastet = true; });
           startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200);
@@ -1954,8 +1955,9 @@ async def main():
         sjekk('lista over lyskilder vokser ikke når etasjene bygges på nytt, og alle i den henger i scenen', abs(kl['n'][6] - kl['n'][0]) <= 12 and max(kl['n']) < 300 and kl['festet'], kl)
         bv = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; rolig(); await __ramme(3);
           // B som rull i spillet, og et panel som dukker opp rett etterpå
-          await __trykk(1, 2, 1); openPanel('<div class="paper" style="padding:20px"><button data-close>Lukk</button></div>'); await __ramme(2);
-          await __trykk(1); await __ramme(2); ut.bliver = G.state === 'panel';
+          // B holdes inne idet panelet åpnes (som når den hamres på i kampen), så testen ikke avhenger av hvor fort nettleseren tegner
+          const k = __pad.buttons[1]; k.pressed = true; k.value = 1; await __ramme(2); openPanel('<div class="paper" style="padding:20px"><button data-close>Lukk</button></div>'); await __ramme(1);
+          k.pressed = false; k.value = 0; await __ramme(1); await __trykk(1, 1, 1); ut.bliver = G.state === 'panel';
           for (let i = 0; i < 120 && MenyNav.roB > 0; i++) await __ramme(1);
           await __trykk(1); await __ramme(2); ut.lukker = G.state === 'play';
           return ut; }""")

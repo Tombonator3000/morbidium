@@ -864,3 +864,10 @@ Alle tidspunkt er UTC.
 - AGENTS.md: 45_kart.js i fillista, og en regel om håndkontroll og TV for nye paneler.
 - Ny fil TV.md: veiledningen for å spille på Samsung-TV (PC med HDMI, rett i TV-en med kontroller paret til TV-en og ?testmodus for å sjekke, trådløst fra PC eller mobil, menyene med håndkontroll).
 - Den fulle testkjøringen på det flettede bygget (6a97b44) og en gjennomgang med skeptikere går fortsatt.
+
+## 2026-09-26 20:39 Full testkjøring på det flettede bygget, og to tester gjort robuste
+- Full kjøring på 6a97b44 (i egen arbeidskopi): generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 312 av 314. De tre skyggefeilene fra den første kjøringen etter flettingen kom ikke igjen (del 37 gikk også gjennom alene og sammen med del 36).
+- De to som feilet, var testene, ikke spillet:
+  1. Minnesjekken i del 36 målte +7 teksturer mellom første og andre runde. Med fire runder på rad ble tallene 122, 122, 126 og 126, altså bilder som bufres første gang noe dukker opp (det varierer litt fra runde til runde), ikke en lekkasje. Sjekken sammenligner nå andre og tredje runde. Lekkasjen fra før rettingen ga +16 i hver runde, så den fanges fortsatt. Nå: +1 tekstur og 0 geometrier.
+  2. B-testen i del 43 regnet med at fem bilder tar under 450 ms. I testnettleseren tar de mer. Nå holdes B inne idet panelet åpnes, slik det skjer når den hamres på i kampen, og da virker vakta uansett fart.
+- Del 36 og 43 går gjennom.
