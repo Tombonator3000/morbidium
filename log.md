@@ -921,3 +921,16 @@ Alle tidspunkt er UTC.
 - Den publiserte siden er testet på PC og telefon, stående og liggende: versjon 799f983, tittelen midt på skjermen på PC og stående, kartet åpnes, TV-modus er av på PC og telefon, gloriene og menynavigasjonen finnes, mistet grafikk gir pause og kommer tilbake, ingen konsollfeil.
 - Grenen claude/practical-babbage-nc80bu er satt lik main. Arbeidskopiene og grenene til sporene (spor-a, spor-b) er fjernet.
 - Neste: Toms nye liste (angrepseffekter, snø, hårruller, skjulte rom, vegger og gulv fra ChatGPT, nye fiender), stemplene som legger seg oppå hverandre, blodet på skjermen, og kontrollene som GRAFIKKLEVERANSE.md ber om. Undersøkelsen går.
+
+## 2026-09-26 23:34 Runde 5: planen for Toms liste, og grunnlaget før sporene
+- Undersøkelsen med seks agenter (bare lesing) er ferdig, med én rapport per punkt og en plan. De viktigste funnene:
+  1. Angrepsvarslene er flate røde strimler og små sirkler med rundt 30 tilfeldige farger, og de forsvinner brått. Hvert varsel og hvert slag lager ny geometri som aldri frigjøres (samme slags lekkasje som ga «Noe gikk galt» på mobil). Fem angrep treffer der fienden står nå, mens varselet står igjen der det ble laget.
+  2. «IKKBONKG»: «IKKE I DAG» (perfekt unnvikelse), «bom» og «BONK» (rullestolen i veggen) havner på samme sted samtidig. Stemplene på skjermen dekker hverandre, og et nytt stort stempel skriver over det som vises.
+  3. Blodet på skjermen blir rette streker fordi hvert spor har samme bredde og styrke hele veien, dråpene mister nesten ingen masse og alderen på sporet nullstilles for hvert nytt punkt.
+  4. Snøen er 220 harde firkanter i en fast boks som ikke følger kameraet, og snøen på bakken er bleke ellipser klippet langs rutene.
+  5. Hårrullene svever fordi tallene i PAS_PYNT var laget for hodet som koden tegner. ChatGPT-hodene er lavere og smalere, så bare 0 til 2 prosent av hårrullene rører hodet. Horn, sløyfe, svulst og hårnett svever også litt.
+  6. Det hemmelige rommet er malt, opplyst og vist på kartet. Bare sprekken stenger. Gangen fram til det synes på skjermbilde 10.
+  7. ChatGPT-vegger og bakken ute kan brukes nå (veggene tegnes i omtrent skjermens oppløsning). Gulv først når gulvet tegnes med egne fliser, ellers presses bildene ned til 24 til 32 punkter per rute.
+  8. Nye fiender: «Havet under huset» (Avløpsarmen, Kapellanen, Draugpleieren, Kraken) og «Skinnlauget av 1887» (Lærlingen, Klokkeren, Holdningssøsteren, Oldermann Nålepute). Skinnlauget er en parodi på cenobittene: høflige lærhåndverkere med reimer, spenner, kroker og dagsorden. Ikke noe seksuelt, og ingen navn eller sitater fra filmene.
+- Arbeidet deles i fire spor som går samtidig i hver sin arbeidskopi, med en egen skeptiker som sjekker og retter hvert punkt: A (varsler, lekkasjen, partikler og nedslag), D (tekster og stempler, blodet på skjermen, hårrullene med kontrollene fra GRAFIKKLEVERANSE.md, og snøfallet), B (vegger og bakke fra ChatGPT med tegnelister 11 og 12, det skjulte rommet og vinter i teksturene) og C (de nye fiendene).
+- Grunnlaget før sporene: fem nye filer i bygget (46_blekk.js, 47_sno.js, 48_skjult.js, 49_havet.js og 50_skinnlauget.js, etter 43_vaatt.js og før 44_testmodus.js), fillista i AGENTS.md, kontrakten mellom sporene i memory.md, og test 28 teller typene glød i stedet for å vente åtte (to spor legger til nye typer).
