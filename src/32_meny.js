@@ -56,15 +56,15 @@ function portraitOf(look, w = 110, h = 140) { const c = document.createElement('
 function place(sel, node) { const el = document.querySelector(sel); if (el && node) el.replaceWith(node); }
 const depthName = d => (THEMES[d] || THEMES[1]).name.split(':')[0];
 
-/* ---------- fullskjerm: en knapp på tittelen og i pausen der nettleseren kan det (ikke iPhone). Et trykk med A eller Enter på
-   fjernkontrollen regnes som et klikk, så det virker med bare kontroll også ---------- */
+/* ---------- fullskjerm: en knapp på tittelen og i pausen der nettleseren kan det (ikke iPhone). OK på fjernkontrollen, en tast eller
+   et klikk regnes som et ekte trykk. A på en håndkontroll gjør ikke alltid det (nettleseren bestemmer), og da sier meldingen hva som virker ---------- */
 const Fullskjerm = {
   kan() { return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled); },
   paa() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
   tekst() { return this.paa() ? 'Avslutt fullskjerm' : 'Fullskjerm'; },
   bytt() {
     const d = document, el = d.documentElement;
-    try { const r = this.paa() ? (d.exitFullscreen || d.webkitExitFullscreen).call(d) : (el.requestFullscreen || el.webkitRequestFullscreen).call(el); if (r && r.catch) r.catch(() => toast('Fikk ikke fullskjerm', 'Nettleseren sa nei. Prøv F11 eller menyen i nettleseren.')); } catch (e) { }
+    try { const r = this.paa() ? (d.exitFullscreen || d.webkitExitFullscreen).call(d) : (el.requestFullscreen || el.webkitRequestFullscreen).call(el); if (r && r.catch) r.catch(() => toast('Fikk ikke fullskjerm', R.tv ? 'Trykk OK på fjernkontrollen på knappen, eller klikk med musa.' : 'Nettleseren vil ha et klikk eller en tast. Prøv F11 eller menyen i nettleseren.')); } catch (e) { }
   },
   // knappene i menyene: data-fs, og teksten følger når fullskjerm slås av og på (også med Esc eller F11)
   knapp(kl) { return this.kan() ? `<button class="${kl}" data-fs><b>${this.tekst()}</b></button>` : ''; },
@@ -348,7 +348,11 @@ const MenyNav = {
   },
   igjen(k) {
     const rot = this.rot(); if (!rot || !k || this.inne(rot)) return;
-    const el = rot.querySelector(k), m = el && (el.matches(MENY_SEL) ? el : el.querySelector(MENY_SEL)); if (m && this.synlig(m)) m.focus({ preventScroll: true });
+    const el = rot.querySelector(k), m = el && (el.matches(MENY_SEL) ? el : el.querySelector(MENY_SEL)); if (m && this.synlig(m)) { m.focus({ preventScroll: true }); return; }
+    // knappen kom tilbake avslått (Neste på siste side, Slett løpet etter at det er slettet): den nærmeste knappen, ikke den første i menyen
+    if (!el || !this.synlig(el)) return; const a = el.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2; let best = null, bd = 1e9;
+    for (const b of this.valg(rot)) { const r = b.getBoundingClientRect(), d = Math.hypot(r.left + r.width / 2 - ax, r.top + r.height / 2 - ay); if (d < bd) { bd = d; best = b; } }
+    if (best) best.focus({ preventScroll: true });
   },
   retning() {
     const g = Input.gp; if (!g.connected) return '';
@@ -381,6 +385,8 @@ const MenyNav = {
   trykk(rot) {
     if (!this.inne(rot)) { this.forste(rot); return; }
     const el = document.activeElement, k = this.nokkel(el); Sound.init();
+    // lyden får bare starte etter et ekte trykk, og A på håndkontrollen teller ikke alltid som det: si fra én gang hva som virker
+    if (!this.lydHint && Sound.ctx && Sound.ctx.state === 'suspended') { this.lydHint = true; setTimeout(() => { if (Sound.ctx && Sound.ctx.state === 'suspended') toast('Lyden venter', 'Trykk OK på fjernkontrollen, en tast eller klikk én gang, så kommer lyden'); }, 500); }
     if (el.matches('input[type=range]')) return;
     // journalkortene velges med Enter (bindCards). Hendelsen bobler ikke, så Input tror ikke at det var tastaturet
     if (el.matches('.jcard[data-ref]')) el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', cancelable: true }));
@@ -402,14 +408,14 @@ const MenyNav = {
     // og en retning som holdes inne, må slippes først (G.time går bare i spillet)
     if (G.time !== this.gt) { this.gt = G.time; this.ro = P.gpDown(0) || performance.now() - g.aT < 450 ? .5 : 0; this.roB = P.gpDown(1) || performance.now() - g.bT < 450 ? .5 : 0; this.stum = true; }
     this.ro -= dt; this.roB = (this.roB || 0) - dt;
-    if (P.lastDevice === 'pad' && !this.inne(rot)) this.forste(rot);
+    const foer = this.inne(rot); if (P.lastDevice === 'pad' && !foer) this.forste(rot); // den første A etter mus eller tastatur viser bare hvor fokuset er
     if (!pad) return test;
     const r = this.retning(); if (!r) this.stum = false;
     if (r !== this.r) { this.r = r; this.rT = 0; if (r && !this.stum) this.flytt(rot, r, true); }
     else if (r && !this.stum) { this.rT += dt; if (this.rT >= .35) { this.rT -= .12; this.flytt(rot, r, true); } }
     if (Math.abs(g.ry) > .25 && rot.scrollHeight > rot.clientHeight) rot.scrollTop += g.ry * 900 * dt;
     if (P.gpPressed(4) || P.gpPressed(5)) this.fane(rot, P.gpPressed(5) ? 1 : -1);
-    if (P.gpPressed(0)) { if (this.ro <= 0) this.trykk(rot); return true; }
+    if (P.gpPressed(0)) { if (this.ro <= 0 && foer) this.trykk(rot); return true; }
     if (P.gpPressed(1) && this.roB > 0) return true; // B er også rull: den som hamret på den i kampen, skal ikke lukke brevet eller drømmen som dukket opp
     if (test && (P.gpPressed(1) || P.gpPressed(9))) { Testmodus.lukk(); return true; }
     if (G.state === 'journal' && P.gpPressed(1)) { if (G.jsel) { G.jsel = null; document.querySelectorAll('#journal .jcard.sel').forEach(c => c.classList.remove('sel')); } else closeJournal(); return true; }

@@ -317,6 +317,7 @@ const D3 = {
     if (!ny && d.d3m === d.meshes && d.d3n === n) return;
     d.d3m = d.meshes; d.d3n = n; d.d3vis = null; const K = d.d3k = [], baand = [d.back && d.back.mesh, d.front && d.front.mesh]; if (!sk) return;
     d.plane.traverse(o => { if (!o.isMesh) return; this.skyggePlate(o); if (o.customDepthMaterial || baand.includes(o)) K.push(o); });
+    R.renderer.shadowMap.needsUpdate = true; // også i et panel (et våpen kjøpt i butikken), der skyggekartet ellers står stille
   },
   /* halvt oppløste og gjennomsiktige figurer kaster ikke måneskygge (dybdematerialet vet ikke om oppløsningen), så de døde ikke har full skygge
      til de blir borte. Grensen .6 holder den gjennomsiktige mesteren (.08 til .52) ute hele tiden i stedet for at skyggen blinker */
@@ -344,7 +345,12 @@ const D3 = {
     let verst = null;
     for (let i = f0; i < pool.length; i++) { const s = S[i], m = s.kilde; if (!m) continue; if (K[m.userData.rang] !== m) { s.kilde = null; s.w = 0; continue; } s.vil = m.userData.rang < N + 2; if (s.vil && !blink(m) && (!verst || m.userData.d2 > verst.kilde.userData.d2)) verst = s; }
     const venter = K.filter((m, i) => i < N && !eie.has(m)), vl = venter.find(m => !blink(m)), vb = venter.find(blink);
-    if (verst && vl && Math.sqrt(vl.userData.d2) + 1.5 < Math.sqrt(verst.kilde.userData.d2)) verst.vil = false;
+    // bytte bare når de som venter, er flere enn plassene som er ledige eller på vei ut (ellers mister en lampe blant de nærmeste lyset for ingenting),
+    // og med ekte avstand når begge er romlys eller ingen av dem er det (straffen for FYLL_SIST ville ellers gjort slingringsmonnet meningsløst)
+    const ekte = m => Math.sqrt((m.position.x - cx) ** 2 + (m.position.z - cz) ** 2), fy = m => this.FYLL_SIST && !!m.userData.fyll;
+    let ledige = 0; for (let i = f0; i < pool.length; i++) if (!S[i].kilde || !S[i].vil) ledige++;
+    const trengs = venter.filter(m => !blink(m)).length + (vb ? 1 : 0);
+    if (verst && vl && trengs > ledige && (fy(vl) === fy(verst.kilde) ? ekte(vl) + 1.5 < ekte(verst.kilde) : vl.userData.d2 < verst.kilde.userData.d2)) verst.vil = false;
     // lysglimtet tar en ledig plass, ellers den som er på vei ut, ellers den lengst unna, og tennes med en gang
     if (vb) { let s = null, sd = -1; for (let i = f0; i < pool.length; i++) { const t = S[i], d = !t.kilde ? 1e9 : (t.vil ? 0 : 1e8) + t.kilde.userData.d2; if (!(t.kilde && blink(t.kilde)) && d > sd) { sd = d; s = t; } }
       if (s) { Object.assign(s, { kilde: vb, w: 1, vil: true, svart: 0 }); venter.splice(venter.indexOf(vb), 1); } }

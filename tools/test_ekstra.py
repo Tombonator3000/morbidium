@@ -1966,6 +1966,23 @@ async def main():
         await pg.keyboard.press('KeyW'); await pg.wait_for_timeout(400)
         mk.update(await pg.evaluate("() => ({ kb: document.getElementById('consk').textContent, apparatKb: document.querySelector('#akt .n').textContent })"))
         sjekk('merkene for flaska og apparatet viser Ned og Opp med håndkontroll og F og V med tastatur', mk == {'pad': 'Ned', 'apparat': 'Opp', 'kb': 'F', 'apparatKb': 'V'}, mk)
+        # funnene fra gjennomgangen: gloria til en ting som dør mens den blekner, krasjer ikke; et panel som er åpent når etasjen byttes,
+        # lukkes; og lappen for å snakke ligger over kortene også med TV-modus og stor skjermtekst
+        gj = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          let o = null; for (const d of [1, 2, 3, 4, 5, 6]) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(150); o = G.props.find(p => GLORIE_KILDER[p.kind] && p.g); if (o) break; }
+          ut.ting = !!o; if (o) { Glorie.tick(1 / 60); o.alive = false; for (const k of Glorie.K) if (k.eier === o) { k.w = 1; delete k.c; }
+            try { for (let i = 0; i < 4; i++) Glorie.tick(1 / 60); ut.glorie = 'ok'; } catch (e) { ut.glorie = String(e); } }
+          // kartet åpent idet etasjen byttes (som når drømmen blekner): panelet lukkes og lerretet frigjøres
+          rolig(); Kart.apne(); await vent(200); ut.kart = Kart.aapen(); startFloor(G.depth, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(150);
+          const c = document.getElementById('kCan'); ut.lukket = G.state === 'play' && document.getElementById('panel').classList.contains('hidden') && (!c || c.width === 0);
+          // TV-modus: lappen over kortene
+          const s = G.meta.settings, tv0 = s.tv; s.tv = 1; applySettings(); await vent(300); const pr = document.getElementById('prompt'); pr.innerHTML = '<kbd>Y</kbd> Snakk'; pr.classList.remove('hidden');
+          // målt med en gang: spillet skjuler lappen i neste bilde når det ikke er noe å snakke med
+          const a = pr.getBoundingClientRect(), b = document.getElementById('cards').getBoundingClientRect(); ut.lapp = { over: a.height > 10 && a.bottom <= b.top + 1, a: [Math.round(a.top), Math.round(a.bottom)], kort: Math.round(b.top) };
+          pr.classList.add('hidden'); s.tv = tv0; applySettings(); return ut; }""")
+        sjekk('gloria til en ting som dør mens den blekner, krasjer ikke spillet', gj['ting'] and gj['glorie'] == 'ok', gj)
+        sjekk('et panel som er åpent når etasjen byttes, lukkes, og kartets lerret frigjøres', gj['kart'] and gj['lukket'], gj)
+        sjekk('lappen for å snakke ligger over kortene i TV-modus', gj['lapp']['over'], gj['lapp'])
         sjekk('ingen konsollfeil (etter flettingen)', not pg.errs, pg.errs[:6])
         await pg.close()
 

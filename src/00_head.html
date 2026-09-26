@@ -317,6 +317,7 @@ body.touch #kombo{ top:calc(150px + env(safe-area-inset-top,0px)); }
 #badge{ scale:var(--ui,1); transform-origin:top left; } #roomsign,#bossBar{ scale:var(--ui,1); transform-origin:top left; } #tools{ scale:var(--ui,1); transform-origin:top right; }
 #cards,#prompt{ scale:var(--ui,1); transform-origin:bottom left; } #weapon,#cons,#akt{ scale:var(--ui,1); transform-origin:bottom left; } #mapring{ scale:var(--ui,1); transform-origin:bottom right; }
 #cons{ left:calc(196px * var(--ui,1) + env(safe-area-inset-left,0px)); } #akt{ left:calc(272px * var(--ui,1) + env(safe-area-inset-left,0px)); } body.touch #mapring{ transform-origin:top right; }
+#prompt{ bottom:calc(14px + 112px * var(--ui,1) + env(safe-area-inset-bottom,0px)); } /* over kortene også når de er større (TV og stor skjermtekst): 126 px på 100 prosent, som før */
 body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bubble{ display:none; } body.uten-skilt .mester{ display:none; }
 .fit{ position:relative; flex:none; }
 #tips{ position:absolute; left:50%; top:calc(64px * var(--ui,1) + env(safe-area-inset-top,0px)); max-width:min(480px,86vw); padding:10px 16px 10px 18px; background:#f6efd8; border:3px solid var(--ink); border-radius:3px; box-shadow:4px 5px 0 rgba(20,12,8,.45); font-weight:800; font-size:16px; line-height:1.3; opacity:0; transform:translate(-50%,-12px) rotate(-1deg); transition:opacity .35s, transform .35s; scale:var(--ui,1); transform-origin:top left; }
