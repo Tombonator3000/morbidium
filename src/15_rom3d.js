@@ -99,7 +99,8 @@ const D3 = {
     for (const s of this.gjemt) s.visible = true; this.gjemt = []; this.stovP = null;
     for (const o of this.egne) o.dispose(); this.egne = [];
     const utenKant = U => { if (U && U.uRimCol) U.uRimCol.value.setRGB(0, 0, 0); };
-    for (const d of this.dukker) { if (d.U && d.U.tint0) d.U.uTint.value.copy(d.U.tint0); utenKant(d.U); } this.dukker.clear();
+    // skyggeflekkene får full styrke igjen i 2D, der de er den eneste skyggen figurene har
+    for (const d of this.dukker) { if (d.U && d.U.tint0) d.U.uTint.value.copy(d.U.tint0); utenKant(d.U); if (d.shadow) { d.shadowA = 1; Doll.bakke(d); } } this.dukker.clear();
     if (G.props) for (const o of G.props) { o.d3 = false; if (o.U && o.U.tint0) o.U.uTint.value.copy(o.U.tint0); utenKant(o.U); }
     this.lamper = []; this.morkeT = 0; this.taakeLys = null;
     if (R.post) R.post.uniforms.uLights.value = R.lightsOn ? 1 : 0;
@@ -109,7 +110,8 @@ const D3 = {
   /* veggstiler: lamper henger bare på innevegger, og lister og pilastre bare på pussede vegger */
   inneVegg(i) { const st = Paint.wallS && Paint.wallS[i]; return !st || !{ hekk: 1, gjerde: 1, steinmur: 1, skog: 1, ruin: 1, glass: 1 }[st]; },
   listeVegg(i) { const st = Paint.wallS && Paint.wallS[i]; return !st || !!{ panel: 1, tapet: 1, paviljong: 1 }[st]; },
-  /* vanlige materialer i nivået (dekaler, plakater, dører) blir lyssatt, ellers lyser de i mørket */
+  /* vanlige materialer i nivået (dekaler, plakater, dører) blir lyssatt, ellers lyser de i mørket. Toon som gulvet, ikke Lambert:
+     Lambert ganger alt lyset med måneskyggen, så en flekk i skyggen av en vegg mistet lykta og lampene også og ble en mørk flekk */
   lysLag() {
     if (!R.level) return;
     for (const c of R.level.children) {
@@ -117,7 +119,7 @@ const D3 = {
       const b = c.material; c.userData.d3 = true;
       // blod og andre våte flekker blir blanke og fanger lampene
       const ny = c.userData.vaat ? new THREE.MeshPhongMaterial({ map: b.map, color: b.color.clone().multiplyScalar(1.45), emissive: new THREE.Color('#1a0808'), transparent: b.transparent, opacity: b.opacity, depthWrite: b.depthWrite, side: b.side, shininess: 70, specular: new THREE.Color('#8a6060') })
-        : new THREE.MeshLambertMaterial({ map: b.map, color: b.color, transparent: b.transparent, opacity: b.opacity, depthWrite: b.depthWrite, side: b.side, vertexColors: b.vertexColors });
+        : this.toon({ map: b.map, color: b.color, transparent: b.transparent, opacity: b.opacity, depthWrite: b.depthWrite, side: b.side, vertexColors: b.vertexColors });
       // blodet lyser litt av seg selv, som gulvets laveste tegneserietrinn, ellers blir det svart i mørke hjørner
       if (c.userData.vaat) ny.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n\ttotalEmissiveRadiance += diffuseColor.rgb * 0.34;'); };
       this.byttet.push([c, b]); c.material = ny; c.receiveShadow = true;
@@ -298,21 +300,27 @@ const D3 = {
   },
   /* tingene i rommet er de samme tegningene som ellers: de lyses av lampene og kaster skygge etter tegningen */
   moble(o) {
-    if (!o.g || !o.p || o.g.userData.flat || !o.g.userData.m) return;
+    if (!this.q || !this.q.skygge || !o.g || !o.p || o.g.userData.flat || !o.g.userData.m) return; // uten skyggekart (lys og skygge av) beholder tingene den bakte skyggen
     this.skyggePlate(o.g.userData.m); if (o.g.userData.shadow) { o.g.userData.shadow.visible = false; this.gjemt.push(o.g.userData.shadow); }
   },
   /* tegnede plater kaster skygge etter tegningen (alfa), ikke som firkanter */
   skyggePlate(m) {
-    if (!m || !m.material || !m.material.uniforms || m.customDepthMaterial) return;
+    if (!m || !m.material || !m.material.uniforms || !m.material.uniforms.map || m.customDepthMaterial) return;
     m.castShadow = true; m.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: m.material.uniforms.map.value, alphaTest: .5, side: THREE.DoubleSide });
   },
+  /* dukkene kaster skygge etter tegningen: alle tegnede deler og strekbåndene. Et våpen som plukkes opp, tillegg og pynt som kommer til
+     senere, får skyggeplate når delene endrer seg (ny liste i d.meshes, eller flere eller færre deler). Skyggeflekken under blir svakere
+     når månen kaster skygge også (shadowA, se Doll.bakke). Uten skyggekart (lys og skygge av) er flekken den eneste skyggen og beholder full styrke */
   dukke(d) {
-    if (!d || this.dukker.has(d)) return; this.dukker.add(d);
-    if (d.U && !d.U.tint0) d.U.tint0 = d.U.uTint.value.clone();
-    for (const m of d.meshes || []) this.skyggePlate(m);
-    for (const r of [d.back, d.front]) if (r && r.mesh) r.mesh.castShadow = true;
-    if (d.shadow) d.shadow.material.opacity = .45;
+    if (!d || !d.plane) return; const ny = !this.dukker.has(d), sk = !!(this.q && this.q.skygge), n = (d.meshes ? d.meshes.length : 0) * 256 + d.plane.children.length;
+    if (ny) { this.dukker.add(d); if (d.U && !d.U.tint0) d.U.tint0 = d.U.uTint.value.clone(); if (d.shadow) { d.shadowA = sk ? .45 : 1; Doll.bakke(d); } }
+    if (!ny && d.d3m === d.meshes && d.d3n === n) return;
+    d.d3m = d.meshes; d.d3n = n; d.d3vis = null; const K = d.d3k = [], baand = [d.back && d.back.mesh, d.front && d.front.mesh]; if (!sk) return;
+    d.plane.traverse(o => { if (!o.isMesh) return; this.skyggePlate(o); if (o.customDepthMaterial || baand.includes(o)) K.push(o); });
   },
+  /* halvt oppløste og gjennomsiktige figurer kaster ikke måneskygge (dybdematerialet vet ikke om oppløsningen), så de døde ikke har full skygge
+     til de blir borte. Grensen .6 holder den gjennomsiktige mesteren (.08 til .52) ute hele tiden i stedet for at skyggen blinker */
+  dukkeVis(d) { const vis = d.U.uDissolve.value < .5 && d.U.uAlpha.value > .6; if (vis === d.d3vis) return; d.d3vis = vis; for (const m of d.d3k) m.castShadow = vis; },
   /* ---------- hvert bilde ---------- */
   kilder() { return (R.kilder || []).filter(m => m.parent && (m.parent === R.lscene || m.parent === R.levelL) && (m.parent !== R.levelL || R.levelL.parent)); },
   /* lyset ved et punkt: en farge å gange tegningen med, og (valgfritt i K) den sterkeste lampen, som gir kantlys */
@@ -367,7 +375,7 @@ const D3 = {
     const alle = []; if (P && P.doll) alle.push(P.doll); for (const e of G.enemies || []) if (e.doll) alle.push(e.doll);
     if (G.boss && G.boss.doll) alle.push(G.boss.doll); for (const n of G.npcs || []) if (n.doll) alle.push(n.doll); for (const d of G.titleDolls || []) alle.push(d); for (const d of G.ekstraDukker || []) if (d.root.parent) alle.push(d); // figurer i hendelser og drømmer
     const KL = this._kl || (this._kl = {});
-    for (const d of alle) { this.dukke(d); const p = d.root.position, c = this.lysVed(p.x, p.z, .9, KL); d.U.uTint.value.copy(d.U.tint0).multiply(c); this.settKant(d.U, KL, p.x, .9 + p.y, p.z, d.flip || 1); }
+    for (const d of alle) { this.dukke(d); this.dukkeVis(d); const p = d.root.position, hy = .9 + p.y + d.plane.position.y, c = this.lysVed(p.x, p.z, hy, KL); d.U.uTint.value.copy(d.U.tint0).multiply(c); this.settKant(d.U, KL, p.x, hy, p.z, d.flip || 1); } // hy: midt på tegningen, også når den svever
     if ((this.nyT = (this.nyT || 0) - dt) <= 0) { this.nyT = .5; this.lysLag(); for (const o of G.props) if (o.g && !o.d3) { o.d3 = true; this.moble(o); } }
     this.stovTick(dt);
     for (const o of G.props) { if (!o.U || !o.g || !o.g.visible) continue; if (!o.U.tint0) o.U.tint0 = o.U.uTint.value.clone(); const c = this.lysVed(o.x, o.z, 1, KL); o.U.uTint.value.copy(o.U.tint0).multiply(c); this.settKant(o.U, KL, o.x, .8, o.z, o.g.userData.m && o.g.userData.m.scale.x < 0 ? -1 : 1); }

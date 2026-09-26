@@ -1341,6 +1341,92 @@ async def main():
         sjekk('ingen konsollfeil (måneskygger)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # skyggeflekkene i 2D: kråka og koret svever og et hopp løfter tegningen, men flekken blir liggende på gulvet, mindre og lysere.
+        # Fiendene settes på plass etter update (roten til y 0), så det sjekkes når bildet tegnes. Full styrke i 2D, og den blekner med figuren
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        fl = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, ut = {};
+          startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999;
+          const fiende = (t, dx, dz) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy(t, s.x, s.z, false, 2); e.stun = 99; e.hp = e.max = 1e6; return e; };
+          const v = new THREE.Vector3(), y = o => o.getWorldPosition(v).y, r0 = R.render;
+          const kr = fiende('kraake', 2, 0), ko = fiende('koret', -2, 0), pl = fiende('pleier', 0, 2);
+          // pleieren hopper (som rottene og yngelen gjør når de løper): update får hopp, og updateEnemy setter roten på plass etterpå som ellers
+          const u0 = pl.doll.update; pl.doll.update = function (dt, st) { return u0.call(this, dt, Object.assign({}, st, { hop: .5 })); };
+          await spill(1.2);
+          const M = { n: 0, kraake: 9, koret: 9, hopp: 9, flekk: 0 };
+          R.render = function (dt) { M.n++; M.kraake = Math.min(M.kraake, y(kr.doll.plane)); M.koret = Math.min(M.koret, y(ko.doll.plane)); M.hopp = Math.min(M.hopp, y(pl.doll.plane)); for (const e of [kr, ko, pl]) M.flekk = Math.max(M.flekk, Math.abs(y(e.doll.shadow) - .012));
+            const s = pl.doll.shadow; M.str = +(s.scale.x / s.userData.sx).toFixed(4); M.a = +s.material.opacity.toFixed(4); return r0.call(this, dt); };
+          await spill(.5); R.render = r0; pl.doll.update = u0; ut.hoyde = M; await spill(.2); ut.full = pl.doll.shadow.material.opacity;
+          // et drap: flekken følger oppløsningen (og høyden) og går aldri over full styrke, og kråka daler ned mens den løses opp
+          const L = { n: 0, avvik: 0, maks: 0, kraake: 9 };
+          R.render = function (dt) { for (const e of [pl, kr]) if (!e.gone) { const d = e.doll, h = Math.max(0, d.plane.position.y); L.n++; L.avvik = Math.max(L.avvik, Math.abs(d.shadow.material.opacity - (1 - d.U.uDissolve.value) * (1 - Math.min(.5, h * .4)))); L.maks = Math.max(L.maks, d.shadow.material.opacity); } if (!kr.gone) L.kraake = kr.doll.plane.position.y; return r0.call(this, dt); };
+          killEntity(pl, {}); killEntity(kr, {}); await spill(.7); R.render = r0; L.borte = pl.gone && kr.gone; ut.drap = L;
+          return ut; }""")
+        h = fl['hoyde']
+        sjekk('kråka og koret svever i spillet, men skyggeflekken ligger på gulvet', h['n'] >= 3 and h['kraake'] > .5 and h['koret'] > .2 and h['flekk'] < 1e-3, h)
+        sjekk('et hopp løfter tegningen og ikke skyggeflekken, som blir mindre og lysere', h['hopp'] > .45 and abs(h['str'] - .8) < .01 and abs(h['a'] - .8) < .01, h)
+        d = fl['drap']
+        sjekk('i 2D har skyggeflekken full styrke, den blekner med figuren når den dør, og kråka daler ned', abs(fl['full'] - 1) < 1e-6 and d['n'] >= 4 and d['avvik'] < 1e-6 and d['maks'] <= 1 and d['kraake'] < .15 and d['borte'], fl)
+        sjekk('ingen konsollfeil (skyggeflekker)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 3D: figurene kaster måneskygge etter hele tegningen, også våpen og tillegg som kommer senere. Skyggeflekken er .45 og blir der,
+        # også gjennom et drap og når hjorten skjuler seg. Halvt oppløste og gjennomsiktige kaster ikke. Den åpne kista, dekalene, lys av og 3D av
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        s3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
+          const bygg = async d => { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; await spill(.3); };
+          const fiende = (t, dx, dz) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy(t, s.x, s.z, false, 2); e.stun = 99; e.hp = e.max = 1e6; return e; };
+          const plate = d => d.meshes.length > 0 && d.meshes.every(m => !!m.customDepthMaterial && m.castShadow), K = d => d.d3k || [], v = new THREE.Vector3(), y = o => o.getWorldPosition(v).y, r0 = R.render;
+          await bygg(2); ut.d3 = D3.on && D3.bygd;
+          const pd = P.doll; ut.spiller = { deler: pd.meshes.length, plate: plate(pd), baand: [pd.back.mesh, pd.front.mesh].every(m => K(pd).includes(m) && m.castShadow), flekk: +pd.shadow.material.opacity.toFixed(4) };
+          // et våpen som plukkes opp midt i etasjen får skyggeplate, og det gamle våpenet frigjøres
+          { let kastet = false; const gml = pd.wpMesh; if (gml) gml.material.addEventListener('dispose', () => { kastet = true; }); const w = Object.keys(WEAPONS).find(w => w !== P.weapon); P.weapon = w; pd.setWeapon(w); await bilder(3);
+            ut.vaapen = { ny: pd.wpMesh !== gml, plate: !!pd.wpMesh.customDepthMaterial && pd.wpMesh.castShadow && plate(pd), kastet: !gml || kastet }; }
+          // en ny fiende og en kråke: flekken er .45 i 3D (lysere når kråka svever), og et tillegg som kommer senere får skyggeplate
+          const e = fiende('pleier', 2, 0), kr = fiende('kraake', -2, 0); await spill(1.2);
+          ut.fiende = { flekk: +e.doll.shadow.material.opacity.toFixed(4), a: e.doll.shadowA, plate: plate(e.doll) };
+          { const M = { n: 0, kraake: 9, flekk: 0 }; R.render = function (dt) { M.n++; M.kraake = Math.min(M.kraake, y(kr.doll.plane)); M.flekk = Math.max(M.flekk, Math.abs(y(kr.doll.shadow) - .012)); return r0.call(this, dt); }; await spill(.3); R.render = r0; M.a = +kr.doll.shadow.material.opacity.toFixed(4); ut.kraake = M; }
+          { const m = e.doll.addAddon(weaponPart('mopp'), { at: 'head', off: { f: [0, .2] } }); await bilder(3); ut.tillegg = !!m.customDepthMaterial && m.castShadow; }
+          // den gjennomsiktige mesteren kaster ikke måneskygge, og skyggen kommer tilbake når figuren er synlig igjen
+          e.doll.U.uAlpha.value = .3; await bilder(3); const gj = K(e.doll).length > 3 && K(e.doll).every(m => !m.castShadow); e.doll.U.uAlpha.value = 1; await bilder(3); ut.gjennomsiktig = gj && K(e.doll).every(m => m.castShadow);
+          // den skjulte hjorten (oppløst .55 og så 0 igjen): ingen måneskygge mens den er skjult, og flekken går tilbake til .45, ikke til 1
+          e.doll.dissolve(.55); await bilder(3); const skjult = K(e.doll).length > 3 && K(e.doll).every(m => !m.castShadow); e.doll.dissolve(0); await bilder(3); ut.skjult = { skygge: skjult && K(e.doll).every(m => m.castShadow), flekk: +e.doll.shadow.material.opacity.toFixed(4) };
+          // et drap: flekken går aldri over .45 mens figuren løses opp, måneskyggen er borte før halvveis, og skyggeplatene frigjøres med dukken
+          { let kastet = false; const m0 = e.doll.meshes[0]; if (m0 && m0.customDepthMaterial) m0.customDepthMaterial.addEventListener('dispose', () => { kastet = true; });
+            const M = { n: 0, maks: 0 }; R.render = function (dt) { if (!e.gone) { M.n++; M.maks = Math.max(M.maks, e.doll.shadow.material.opacity); } return r0.call(this, dt); };
+            killEntity(e, {}); const g0 = G.time; await spill(.3); M.tid = +(G.time - g0).toFixed(2); M.skygge = K(e.doll).length === 0 || K(e.doll).some(m => m.castShadow); await spill(.5); R.render = r0; M.borte = e.gone; M.kastet = kastet; M.maks = +M.maks.toFixed(4); ut.drap = M; }
+          // dekaler, plakater og dører er toon som gulvet (Lambert tok lykta og lampene bort i måneskyggen)
+          { const lag = D3.byttet.filter(([m]) => m.userData.d3 && !m.userData.vaat).map(([m]) => m.material.type); ut.dekaler = { n: lag.length, toon: lag.every(t => t === 'MeshToonMaterial'), lambert: R.level.children.filter(c => c.material && c.material.isMeshLambertMaterial).length }; }
+          // den åpne kista: ny tegning i U og m, lyses av lampene, kaster måneskygge og har ikke lenger den bakte skyggen
+          { let K = null; for (const d of [2, 3, 4, 1, 6, 5]) { if (d !== G.depth) await bygg(d); K = G.props.find(o => o.kind === 'chest' && !o.opened && o.g); if (K) break; }
+            if (K) { openChest(K); const t0 = D3.t; for (let i = 0; i < 300 && D3.t - t0 < .7; i++) await vent(50); const c = K.U.uTint.value; ut.kiste = { U: K.U === K.g.userData.U, m: K.m === K.g.userData.m, bakt: K.g.userData.shadow.visible, plate: !!K.m.customDepthMaterial && K.m.castShadow, r: +c.r.toFixed(3), panel: G.state }; closePanel(); await bilder(2); } }
+          // lys og skygge av: tingene beholder den bakte skyggen, og flekken under figurene har full styrke. Så på igjen
+          { const s = G.meta.settings; s.lights = false; applySettings(); await bilder(3); const tegnet = G.props.filter(o => o.g && o.g.userData.shadow && !o.g.userData.flat && o.g.userData.m);
+            ut.lysAv = { d3: D3.on && D3.bygd, ting: tegnet.length, bakt: tegnet.every(o => o.g.userData.shadow.visible), flekk: +P.doll.shadow.material.opacity.toFixed(4) };
+            s.lights = true; applySettings(); await bilder(3); ut.lysPaa = { flekk: +P.doll.shadow.material.opacity.toFixed(4), gjemt: tegnet.filter(o => !o.g.userData.shadow.visible).length, plate: plate(P.doll) }; }
+          // 3D av: skyggeflekkene får full styrke igjen, og tilbake på .45 når 3D slås på
+          { const s = G.meta.settings; s.d3 = false; applySettings(); await bilder(3); ut.av = { d3: D3.on, flekk: +P.doll.shadow.material.opacity.toFixed(4), a: P.doll.shadowA };
+            s.d3 = true; applySettings(); await bilder(3); ut.paaIgjen = { d3: D3.on && D3.bygd, flekk: +P.doll.shadow.material.opacity.toFixed(4), plate: plate(P.doll) }; }
+          return ut; }""")
+        sp = s3['spiller']
+        sjekk('i 3D kaster alle tegnede deler og strekbåndene måneskygge, og skyggeflekken er .45', s3['d3'] and sp['deler'] >= 4 and sp['plate'] and sp['baand'] and abs(sp['flekk'] - .45) < 1e-3, s3)
+        sjekk('et våpen som plukkes opp og et tillegg som kommer senere, kaster måneskygge, og det gamle våpenet frigjøres', s3['vaapen'] == {'ny': True, 'plate': True, 'kastet': True} and s3['tillegg'], s3)
+        fi, kr = s3['fiende'], s3['kraake']
+        sjekk('en ny fiende har flekken på .45, og kråka svever i 3D med flekken på gulvet', abs(fi['flekk'] - .45) < 1e-3 and fi['a'] == .45 and fi['plate'] and kr['n'] >= 3 and kr['kraake'] > .5 and kr['flekk'] < 1e-3 and .22 < kr['a'] < .45, s3)
+        sjekk('gjennomsiktige og halvt oppløste figurer kaster ikke måneskygge, og hjorten som har skjult seg får flekken tilbake på .45', s3['gjennomsiktig'] and s3['skjult']['skygge'] and abs(s3['skjult']['flekk'] - .45) < 1e-3, s3)
+        dr = s3['drap']
+        sjekk('under et drap går flekken aldri over .45, måneskyggen er borte etter 0,3 sekunder, og skyggeplatene frigjøres', dr['n'] >= 3 and dr['maks'] <= .46 and dr['tid'] >= .3 and not dr['skygge'] and dr['borte'] and dr['kastet'], dr)
+        dk = s3['dekaler']
+        sjekk('dekaler, plakater og dører er toon som gulvet, ikke Lambert', dk['n'] > 0 and dk['toon'] and dk['lambert'] == 0, dk)
+        ki = s3.get('kiste')
+        sjekk('den åpne kista lyses av lampene, kaster måneskygge og har ikke lenger den bakte skyggen', ki is not None and ki['U'] and ki['m'] and not ki['bakt'] and ki['plate'] and ki['r'] < .95 and ki['panel'] == 'panel', ki)
+        la, lp = s3['lysAv'], s3['lysPaa']
+        sjekk('uten lys og skygge beholder tingene den bakte skyggen og flekken har full styrke, og med lys igjen er alt som før', la['d3'] and la['ting'] > 5 and la['bakt'] and abs(la['flekk'] - 1) < 1e-3 and abs(lp['flekk'] - .45) < 1e-3 and lp['gjemt'] > 5 and lp['plate'], s3)
+        sjekk('når 3D slås av, får skyggeflekken full styrke igjen, og .45 når det slås på', s3['av'] == {'d3': False, 'flekk': 1, 'a': 1} and s3['paaIgjen']['d3'] and abs(s3['paaIgjen']['flekk'] - .45) < 1e-3 and s3['paaIgjen']['plate'], s3)
+        sjekk('ingen konsollfeil (skygger i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

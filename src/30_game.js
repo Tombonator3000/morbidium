@@ -310,7 +310,8 @@ function interactLogic(A) {
   else show('prompt', false);
 }
 function openChest(o) {
-  o.opened = true; o.p.opened = true; R.remove(o.g); o.g = propSprite('chest', o.x, o.z + .3, { P: propArt(o.p) }); R.level.add(o.g);
+  // den åpne kista er en ny tegning: U og m må følge med, og 3D må ta den på nytt (lys fra lampene, måneskygge i stedet for den bakte)
+  o.opened = true; o.p.opened = true; R.remove(o.g); o.g = propSprite('chest', o.x, o.z + .3, { P: propArt(o.p) }); R.level.add(o.g); o.U = o.g.userData.U; o.m = o.g.userData.m; o.d3 = false;
   Sound.play('door', .8, 1.4); puff(o.x, o.z, 3, .8); dropTeeth(o.x, o.z, 8);
   const P = G.player, notOwned = CARD_POOL.filter(id => ABILITIES[id] && !owned(id));
   const opts = shuf([
