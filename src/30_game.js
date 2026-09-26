@@ -105,7 +105,7 @@ function showIntake() {
     if (G.intakeValgt) return; G.intakeValgt = true; b.querySelector('.boks').textContent = 'X'; document.querySelector('.skjema').classList.add('stemplet'); Sound.play('stamp');
     setTimeout(() => { G.intakeValgt = false; G.panelO = null; show('panel', false); G.patient.gjen = !!(gj && gj.checked); newRun(b.dataset.awk); }, 650);
   });
-  const f = document.querySelector('[data-awk]'); f && f.focus(); fitPanel();
+  fitPanel(); const f = document.querySelector('[data-awk]'); f && f.focus({ preventScroll: true });
 }
 const CARD_POOL = ['due', 'lys', 'skyggehand', 'stempel', 'brekning', 'monolog', 'hydro', 'kappe', 'skjema', 'nokler', 'resept', 'benektelse'];
 function owned(id) { return G.run.slots.some(c => c && c.id === id) || G.run.reserve.some(c => c.id === id); }
@@ -326,7 +326,7 @@ function openChest(o) {
 function choicePanel(title, sub, opts) {
   openPanel(`<div class="hdr">${esc(title)}</div><div class="list paper" style="width:min(640px,94vw);padding:14px 16px 16px"><div class="hint">${esc(sub)}</div><div class="offers" style="margin-top:10px">${opts.map((o, i) => `<button class="offer" data-ch="${i}"><span data-art="${i}"></span><b>${esc(o.name)}</b>${esc(o.desc)}</button>`).join('')}</div></div>`);
   opts.forEach((o, i) => { document.querySelector(`[data-art="${i}"]`).replaceWith(artFor(o.art[0], o.art[1])); document.querySelector(`[data-ch="${i}"]`).onclick = () => { closePanel(); o.fn(); Sound.play('pickup'); }; });
-  document.querySelector('[data-ch="0"]').focus();
+  document.querySelector('[data-ch="0"]').focus({ preventScroll: true });
 }
 function readLore(o) {
   o.read = true; const m = G.meta, idx = LORE.findIndex((_, i) => !m.fragments.includes(i)), i = idx >= 0 ? idx : rndi(0, LORE.length - 1);
@@ -391,14 +391,18 @@ function openService(svc, npc) {
       if (!o.again) o.sold = true; if (o.group) offers.forEach(x => { if (x.group === o.group) x.sold = true; });
       if (G.state === 'panel') render();
     }; });
-    const f = document.querySelector('.offer:not(.sold)'); f && f.focus();
+    const f = document.querySelector('.offer:not(.sold)'); f && f.focus({ preventScroll: true });
   };
   render();
 }
 
 /* ---------- paneler ---------- */
 function openPanel(html, o = {}) {
-  const el = $('panel'); el.innerHTML = html; show('panel', true); G.prevState = G.state === 'panel' ? G.prevState : G.state; G.state = 'panel'; G.panelO = o;
+  // et nytt panel begynner øverst, også når det åpnes fra et annet panel (brevet etter epilogen, pausen etter innstillingene).
+  // Det samme panelet tegnet på nytt (butikken etter et kjøp, innstillingene etter et valg) beholder rullingen.
+  // Rullingen nullstilles etter at panelet vises: mens det er skjult, husker nettleseren den gamle og legger den tilbake
+  const el = $('panel'), hvem = f => f ? f.className + '#' + f.id : '', for0 = G.state === 'panel' && !el.classList.contains('hidden') ? hvem(el.firstElementChild) : '';
+  el.innerHTML = html; show('panel', true); if (!for0 || for0 !== hvem(el.firstElementChild)) el.scrollTop = 0; G.prevState = G.state === 'panel' ? G.prevState : G.state; G.state = 'panel'; G.panelO = o;
   el.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closePanel());
 }
 function closePanel() {
@@ -586,7 +590,8 @@ function drawWeaponCard() {
 function hudUpdate() {
   const P = G.player; if (!P) return;
   const nh = Math.ceil(P.maxHp / 10), h = [];
-  for (let i = 0; i < nh; i++) { const v = clamp((P.hp - i * 10) / 10, 0, 1); h.push(hjerteHtml(v, HEART)); }
+  for (let i = 0; i < Math.min(nh, 20); i++) { const v = clamp((P.hp - i * 10) / 10, 0, 1); h.push(hjerteHtml(v, HEART)); }
+  if (nh > 20) h.push(`<span class="hplus">+${clamp(Math.ceil((P.hp - 200) / 10), 0, nh - 20)}/${nh - 20}</span>`); // flere enn to rader tar hele skjermen på mobil; tallet viser de fulle av de skjulte
   const need = 40 + (P.level - 1) * 55;
   const key = h.join('') + P.teeth + Math.round(P.morb) + P.level + Math.round(P.xp) + P.dodge + P.dodgeMax + G.run.patient.name;
   if (key !== hudKey) {
@@ -642,12 +647,12 @@ function showDeath() {
   m.historie = (m.historie || []).concat([{ name: G.run.patient.name, nr: G.run.patient.nr, age: G.run.patient.age, depth: G.depth, cause, kills: G.run.kills, rooms: G.run.rooms, awk: G.run.awk, look: G.run.look || null, utskrevet: false, drom: Drom.mappe(false) }]).slice(-40);
   saveMeta(); clearRun();
   G.state = 'dead'; show('hud', false); Sound.stopAmbience(); Musikk.stopp(.3); Musikk.stikk('dod');
-  $('panel').innerHTML = `<div class="hdr" style="font-size:clamp(44px,9vw,76px)">DU ER DØD.</div><div class="dcard"><div class="slab"><canvas id="deadc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Dødsårsak</dt><dd class="cause">${esc(cause)}</dd></dl>${Merknad.kortHtml()}<div class="stamp">AVDØD</div></div>
-    <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div>`;
-  show('panel', true);
+  $('panel').innerHTML = `<div class="fit dodskjerm"><div class="hdr" style="font-size:clamp(44px,9vw,76px)">DU ER DØD.</div><div class="dcard"><div class="slab"><canvas id="deadc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Dødsårsak</dt><dd class="cause">${esc(cause)}</dd></dl>${Merknad.kortHtml()}<div class="stamp">AVDØD</div></div>
+    <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div></div>`;
+  show('panel', true); $('panel').scrollTop = 0; fitPanel();
   const g = $('deadc').getContext('2d'); g.save(); g.translate(150, 58); g.rotate(-Math.PI / 2 + .06); drawDollPortrait(g, 'pasient', 0, 110, 92, G.run.look); g.restore();
   $('dNew').onclick = () => { show('panel', false); resetRun(); showIntake(); }; $('dTitle').onclick = () => { show('panel', false); resetRun(); showTitle(); };
-  $('dNew').focus();
+  $('dNew').focus({ preventScroll: true });
 }
 function resetRun() { Items.clearLook(); if (G.player) { G.player.doll.dispose(); R.remove(G.player.lantern); G.player = null; } }
 /* utskrivning: først brevet, så kortet */
@@ -657,9 +662,9 @@ function showWin() {
 }
 function visUtskrevet() {
   const P = G.player; Merknad.onWin(G.run); G.meta.wins++; G.meta.historie = (G.meta.historie || []).concat([{ name: G.run.patient.name, nr: G.run.patient.nr, age: G.run.patient.age, depth: G.depth, cause: 'Utskrevet. Frisk nok.', kills: G.run.kills, rooms: G.run.rooms, awk: G.run.awk, look: G.run.look || null, utskrevet: true, drom: Drom.mappe(true) }]).slice(-40); saveMeta(); clearRun(); G.state = 'dead'; show('hud', false); Sound.play('level'); Sound.stopAmbience();
-  $('panel').innerHTML = `<div class="hdr">UTSKREVET</div><div class="dcard"><div class="slab" style="background:linear-gradient(#b8c8a8,#8aa07a)"><canvas id="winc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Legens konklusjon</dt><dd class="cause">${esc(Historie.konklusjon())}</dd></dl>${Merknad.kortHtml()}<div class="stamp">${Historie.brev().sl === 'gjentakelse' ? 'INNKALT' : 'FRISK NOK'}</div></div>
-    <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div>`;
-  show('panel', true); G.state = 'dead'; drawDollPortrait($('winc').getContext('2d'), 'pasient', 150, 112, 58, G.run.look);
+  $('panel').innerHTML = `<div class="fit dodskjerm"><div class="hdr">UTSKREVET</div><div class="dcard"><div class="slab" style="background:linear-gradient(#b8c8a8,#8aa07a)"><canvas id="winc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Legens konklusjon</dt><dd class="cause">${esc(Historie.konklusjon())}</dd></dl>${Merknad.kortHtml()}<div class="stamp">${Historie.brev().sl === 'gjentakelse' ? 'INNKALT' : 'FRISK NOK'}</div></div>
+    <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div></div>`;
+  show('panel', true); $('panel').scrollTop = 0; G.state = 'dead'; fitPanel(); drawDollPortrait($('winc').getContext('2d'), 'pasient', 150, 112, 58, G.run.look);
   $('dNew').onclick = () => { show('panel', false); resetRun(); showIntake(); }; $('dTitle').onclick = () => { show('panel', false); resetRun(); showTitle(); };
 }
 
@@ -673,7 +678,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   let dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
   Input.pollGamepad(); const A = Input.actions();
-  Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); D3.tick(dt); Effekter.tick(dt); Dybde.tick(dt); Vaatt.tick(dt);
+  Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); D3.tick(dt); Effekter.tick(dt); Dybde.tick(dt); Vaatt.tick(dt); Testmodus.tick();
   if (G.state === 'play') {
     const P = G.player;
     if (A.pauseP) openPause(); else if (A.journalP) openJournal();
@@ -742,7 +747,7 @@ function boot() {
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };
-  Object.assign(window, { Vaatt, SKALA, midiHz, hzMidi, Lydbank, Stemning, LYD_KART, LYD_INNSLAG, LYD_STEMT, LYD_DUKK, BESETNING, ROM_BESETNING, MUS_INS, FOTGULV, STEMNING_ETASJE, STEMNING_ROM, FIENDESTEMME, LYD_META, Historie, HISTORIE_ART, Kjeder, HENDELSER_HISTORIE, JOURNALSIDER, SJEF_EPITAF, SISTE_SIDE, NPC_DYP, OYE_SER, PA, LINES, NPC_LINES, LORE, bossOnHurt, Dybde, Kombo, KOMBO_NIVA, FLERDRAP, Glod, GLOD_TYPER, Lyn, Uvaer, Regnringer, Effekter, meleeHit, stampBig, runStats, FIENDE_INFO, FIENDE_REKKE, SJEF_REKKE, Drom, DROM_KAP, DROM_HJEM, DROM_SLUTT, DROM_ART, DROM_TEGN, DROM_SKYLD, Samtale, Hendelse, HENDELSER, Folge, HEND_ART, hendBilde, innhold, rolig, SPRITES, hbSider, saveMeta, MAX_DEPTH, THEMES, UTGANGER, gulvUnder, Vaer, Landskap, GULV, VEGG, ROMSTIL, ROMTYPER, openTrapdoor, findInteract, stykkeFor, brukUIsett, UI_SETT, hjerteHtml, portierHode, skarPart, speilbilde, ordPart, WEAPON_ART, kastKlump, sendOrd, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { Testmodus, MENING, MENING_FANER, Vaatt, SKALA, midiHz, hzMidi, Lydbank, Stemning, LYD_KART, LYD_INNSLAG, LYD_STEMT, LYD_DUKK, BESETNING, ROM_BESETNING, MUS_INS, FOTGULV, STEMNING_ETASJE, STEMNING_ROM, FIENDESTEMME, LYD_META, Historie, HISTORIE_ART, Kjeder, HENDELSER_HISTORIE, JOURNALSIDER, SJEF_EPITAF, SISTE_SIDE, NPC_DYP, OYE_SER, PA, LINES, NPC_LINES, LORE, bossOnHurt, Dybde, Kombo, KOMBO_NIVA, FLERDRAP, Glod, GLOD_TYPER, Lyn, Uvaer, Regnringer, Effekter, meleeHit, stampBig, runStats, FIENDE_INFO, FIENDE_REKKE, SJEF_REKKE, Drom, DROM_KAP, DROM_HJEM, DROM_SLUTT, DROM_ART, DROM_TEGN, DROM_SKYLD, Samtale, Hendelse, HENDELSER, Folge, HEND_ART, hendBilde, innhold, rolig, SPRITES, hbSider, saveMeta, MAX_DEPTH, THEMES, UTGANGER, gulvUnder, Vaer, Landskap, GULV, VEGG, ROMSTIL, ROMTYPER, openTrapdoor, findInteract, stykkeFor, brukUIsett, UI_SETT, hjerteHtml, portierHode, skarPart, speilbilde, ordPart, WEAPON_ART, kastKlump, sendOrd, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
   step('Pakker ut bilder');
   Art.preload().then(() => { try { brukUIsett(); } catch (e) { } step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }

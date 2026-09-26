@@ -88,7 +88,9 @@ const D3 = {
     this.bygd = true; this.t = 0;
   },
   riv() {
-    for (const o of this.ting) R.remove(o); this.ting = []; this.pool = [];
+    // lysene må også kastes: R.remove kobler bare løs, og skyggekartet til månen (1024 x 1024 på mobil, med dybdebuffer)
+    // ble liggende i grafikkminnet for hver etasje. Det var nok til at mobilene mistet WebGL etter noen etasjer.
+    for (const o of this.ting) { R.remove(o); if (o.isLight && o.dispose) o.dispose(); } this.ting = []; this.pool = [];
     for (const [m, mat] of this.byttet) { if (m.material !== mat) m.material.dispose(); m.material = mat; m.castShadow = m.receiveShadow = false; } this.byttet = [];
     for (const s of this.gjemt) s.visible = true; this.gjemt = []; this.stovP = null;
     for (const o of this.egne) o.dispose(); this.egne = [];

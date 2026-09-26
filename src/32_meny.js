@@ -26,9 +26,16 @@ function applySettings() {
 const narrow = () => innerWidth < 700 || innerWidth / innerHeight < .9;
 /* papirflatene har fast størrelse og skaleres til skjermen med zoom, som også flytter layouten */
 function fitPanel() {
-  const el = document.querySelector('#panel .fit'); if (!el || G.state !== 'panel') return;
+  const el = document.querySelector('#panel .fit'); if (!el || (G.state !== 'panel' && G.state !== 'dead')) return;
+  passInn(el);
+}
+/* skalerer en papirflate til plassen innenfor margene på panelet den ligger i. På telefon går den ikke under 75 prosent,
+   så teksten kan leses og knappene treffes; blir den da høyere enn skjermen, kan panelet rulles (.screen sentrerer med auto-marger) */
+function passInn(el, min = R.coarse ? .75 : 0) {
+  const p = el.parentElement || document.body, cs = getComputedStyle(p), px = k => parseFloat(cs[k]) || 0;
+  const aw = (p.clientWidth || innerWidth) - px('paddingLeft') - px('paddingRight') - 4, ah = (p.clientHeight || innerHeight) - px('paddingTop') - px('paddingBottom') - 4;
   el.style.zoom = 1; const W = el.offsetWidth, H = el.offsetHeight;
-  el.style.zoom = Math.min(1.15, (innerWidth - 20) / W, (innerHeight - 20) / H).toFixed(4);
+  el.style.zoom = Math.max(Math.min(min, aw / W), Math.min(1.15, aw / W, ah / H)).toFixed(4);
 }
 addEventListener('resize', () => { if (G.state === 'panel' && G.panelO && G.panelO.refit) G.panelO.refit(); else fitPanel(); });
 function canvasOf(P, w, h, pad = .06) {
