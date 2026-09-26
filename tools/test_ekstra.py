@@ -1216,6 +1216,122 @@ async def main():
         sjekk('ingen konsollfeil (mobil stående)', not [e for e in pg.errs if 'CONTEXT_LOST' not in e], pg.errs[:6])
         await ctx.close()
 
+        # 40) Stort kart: ringen, M, pausen og håndkontrollen åpner det, M, Esc, B og Lukk lukker det, i kamp slår et klikk på ringen,
+        #     tegnforklaringen viser det du har sett, lerretene frigjøres, og det får plass stående og liggende på telefon, i 3D og i alle slags etasjer
+        ramme = "const ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });"
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg)
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        ring = await pg.evaluate("() => { const r = document.getElementById('mapring'); return { rolle: r.getAttribute('role'), pe: getComputedStyle(r).pointerEvents, navn: r.getAttribute('aria-label'), rad: KONTROLLER.some(k => k[0] === 'Kartet'), tips: !!TIPS.kart }; }")
+        sjekk('kartringen er en knapp (rolle, navn og pekerhendelser), og kartet står i kontrollene og tipsene', ring == {'rolle': 'button', 'pe': 'auto', 'navn': 'Kartet (M)', 'rad': True, 'tips': True}, ring)
+        await pg.evaluate("() => rolig()")  # noen oppvåkninger begynner i kamp, og da er et klikk på ringen et slag
+        await pg.click('#mapring')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=10000)
+        k1 = await pg.evaluate("""() => { const c = document.getElementById('kCan'), p = document.getElementById('kPil'), l = parseFloat(p.style.left), t = parseFloat(p.style.top);
+          return { w: c.width, h: c.height, pil: l >= 3 && t >= 3 && l <= parseFloat(c.style.width) + 3 && t <= parseFloat(c.style.height) + 3, fokus: document.activeElement.id, forste: Math.round(Kart.ms), gulv: !!Kart.gulvBilde() }; }""")
+        await pg.screenshot(path='/tmp/e_kart_pc.png')
+        await pg.keyboard.press('m')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        k1['frigjort'] = await pg.evaluate("() => { const c = document.getElementById('kCan'); return !!c && c.width === 0 && c.height === 0; }")
+        sjekk('et klikk på ringen åpner kartet over det malte gulvet, med pila på pasienten, og M lukker det og frigjør lerretet', k1['w'] >= 360 and k1['h'] > 300 and k1['pil'] and k1['fokus'] == 'kLukk' and k1['gulv'] and k1['frigjort'], k1)
+        await pg.keyboard.press('m')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=20000)
+        await pg.keyboard.press('Escape')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        # tegnetiden: det beste av tre nye tegninger, så en annen nettleser som går samtidig ikke gir falsk feil
+        tid = await pg.evaluate("() => { Kart.apne(); const ms = []; for (let i = 0; i < 3; i++) { Kart.tegn(); ms.push(Kart.ms); } closePanel(); return { beste: Math.round(Math.min(...ms)), forste: " + str(k1['forste']) + " }; }")
+        sjekk('M åpner kartet, Esc lukker det, og kartet tegnes på under 60 ms', tid['beste'] < 60, tid)
+        # i kamp: et klikk på ringen er et slag, og musa sikter gjennom den
+        kamp = await pg.evaluate("() => { const G = MORBIDIUM; window.__md = 0; document.getElementById('game').addEventListener('mousedown', () => window.__md++); G.combat = { r: G.F.rooms[G.F.startId], wave: 0, t: 999 }; const r = document.getElementById('mapring').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }")
+        await pg.click('#mapring'); await pg.wait_for_timeout(300)
+        kamp.update(await pg.evaluate("() => { const G = MORBIDIUM, ut = { state: G.state, md: window.__md, mx: Input.mouse.x, my: Input.mouse.y }; G.combat = null; return ut; }"))
+        sjekk('i kamp på PC åpner ikke et klikk på ringen kartet: det blir et slag, og musa sikter videre', kamp['state'] == 'play' and kamp['md'] == 1 and abs(kamp['mx'] - kamp['x']) < 3 and abs(kamp['my'] - kamp['y']) < 3, kamp)
+        # fra pausen og tilbake
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.getElementById('pK')", timeout=20000)
+        await pg.click('#pK'); await pg.wait_for_timeout(200)
+        pa = await pg.evaluate("() => !!document.querySelector('#panel .kartark')")
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => !!document.querySelector('#panel .clip')", timeout=20000)
+        await pg.click('#panel [data-close]'); await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        sjekk('Kartet i pausen åpner kartet, og Esc går tilbake til pausen', pa, pa)
+        # håndkontroll: pil høyre (15) åpner, pil høyre igjen lukker ikke (den skal bla i menyene), B (1) lukker
+        pad = await pg.evaluate("""async () => { """ + ramme + """ const G = MORBIDIUM, ut = {};
+          const p = { id: 'testpad', index: 0, connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [p] });
+          const trykk = async i => { p.buttons[i].pressed = true; p.buttons[i].value = 1; await ramme(4); p.buttons[i].pressed = false; p.buttons[i].value = 0; await ramme(4); };
+          await ramme(3); await trykk(15); ut.apnet = G.state === 'panel' && Kart.aapen(); ut.hint = (document.querySelector('.khint') || {}).textContent;
+          await trykk(15); ut.blir = Kart.aapen(); await trykk(1); ut.lukket = G.state === 'play';
+          await trykk(9); ut.pause = G.state === 'panel' && !!document.querySelector('#panel .clip'); await trykk(1); ut.pauseB = G.state === 'play';
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [] }); await ramme(3); return ut; }""")
+        sjekk('håndkontrollen: pil høyre åpner kartet, B lukker det (og pausen), og pil høyre lukker det ikke', pad == {'apnet': True, 'hint': 'B eller Start lukker kartet', 'blir': True, 'lukket': True, 'pause': True, 'pauseB': True}, pad)
+        # journalen bytter ut alt med data-kart med bilder av kuriositeter; ringen og minikartet skal overleve den
+        jr = await pg.evaluate("() => { openJournal('kuriositeter'); closeJournal(); openJournal(); closeJournal(); const m = document.getElementById('map'); return !!m && m.parentElement.id === 'mapring' && document.getElementById('mapring').parentElement.id === 'hud'; }")
+        sjekk('minikartet og ringen står igjen etter journalen', jr, jr)
+        # tegnforklaringen viser det du har sett: tjenestene med navn, overlegen uten navn før du har vært der
+        leg = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F; Folge.kart('alt'); Kart.apne(); const L = [...document.querySelectorAll('.kleg li')].map(l => l.textContent), tj = F.rooms.filter(r => r.role === 'service');
+          const ut = { tjenester: tj.every(r => L.some(t => t.startsWith(SERVICES[r.service].name))), sjef: L.some(t => t.startsWith('Overlegen')), du: L[0] === 'Du er her', ikoner: document.querySelectorAll('.kleg canvas').length === L.length, tall: document.querySelector('.ktall').textContent };
+          closePanel(); return ut; }""")
+        sjekk('tegnforklaringen: tjenestene med navn, overlegen uten navn før du har vært der, og hvor mye som er utforsket', leg['tjenester'] and leg['sjef'] and leg['du'] and leg['ikoner'] and 'utforsket' in leg['tall'], leg)
+        # alle slags etasjer: Parken, Nattskogen, en drøm, «Enkel grafikk» og uten det malte gulvet
+        et = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const prov = navn => { Kart.apne(); ut[navn] = !!document.querySelector('#panel .kartark') && Kart.merker().L.length >= 1 && document.getElementById('kCan').width >= 360; closePanel(); };
+          for (const d of [1, 5]) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); prov('etasje' + d); }
+          G.run.dromVent = 3; startFloor(3, false); await vent(300); ut.drom = !!G.drom; G.seen.fill(1); Kart.apne(); ut.dor = [...document.querySelectorAll('.kleg li')].some(l => l.textContent.startsWith('Døra')) && document.querySelector('.kund').textContent.startsWith('Drømmen'); closePanel();
+          for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
+          G.meta.settings.simple = true; applySettings(); startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); ut.safe = R.safe; prov('enkel');
+          G.meta.settings.simple = false; applySettings();
+          const gb = Kart.gulvBilde; Kart.gulvBilde = () => null; prov('flatt'); Kart.gulvBilde = gb;
+          return ut; }""")
+        sjekk('kartet virker i Parken, Nattskogen, drømmen (med døra), med «Enkel grafikk» og uten det malte gulvet', et == {'etasje1': True, 'etasje5': True, 'drom': True, 'dor': True, 'safe': True, 'enkel': True, 'flatt': True}, et)
+        sjekk('ingen konsollfeil (stort kart på PC)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: det malte gulvet ligger under et annet materiale, men kartet finner det
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL3D); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg, url=URL3D)
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=60000)
+        d3 = await pg.evaluate("() => { Folge.kart('alt'); Kart.apne(); const ut = { d3: D3.on && D3.bygd, kart: !!document.querySelector('#panel .kartark'), gulv: !!Kart.gulvBilde() }; return ut; }")
+        await pg.wait_for_timeout(300); await pg.screenshot(path='/tmp/e_kart_3d.png')
+        await pg.evaluate("() => closePanel()")
+        sjekk('kartet i 3D bruker det malte gulvet', d3 == {'d3': True, 'kart': True, 'gulv': True}, d3)
+        sjekk('ingen konsollfeil (stort kart i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # telefon: trykk på ringen stående og liggende, snu telefonen med kartet oppe, og ingenting ruller
+        UA_K = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        ctx = await b.new_context(viewport={'width': 390, 'height': 844}, has_touch=True, is_mobile=True, device_scale_factor=2, user_agent=UA_K)
+        pg = await ctx.new_page()
+        if THREE:
+            await pg.route('**/three.min.js', lambda r: r.fulfill(path=THREE, content_type='application/javascript'))
+            await pg.route('https://fonts.googleapis.com/**', lambda r: r.fulfill(body='', content_type='text/css'))
+        pg.errs = []
+        pg.on('pageerror', lambda e: pg.errs.append('PAGEERROR: ' + str(e)))
+        pg.on('console', lambda m: pg.errs.append(m.type + ': ' + m.text) if m.type == 'error' else None)
+        await pg.goto(URL); await pg.wait_for_timeout(2500); await pg.evaluate("() => localStorage.clear()")
+        await pg.goto(URL); await pg.wait_for_timeout(2500)
+        await pg.tap('#tNew'); await pg.wait_for_timeout(600); await pg.tap('[data-awk]')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        await pg.evaluate("() => { rolig(); Folge.kart('alt'); }")
+        plass = """() => { const p = document.getElementById('panel'), a = document.getElementById('kartark'), r = a.getBoundingClientRect(), l = document.getElementById('kLukk').getBoundingClientRect();
+          return { lag: a.className.replace('fit kartark paper', '').trim() || 'bred', rull: p.scrollHeight > p.clientHeight + 2 || p.scrollWidth > p.clientWidth + 2, inne: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1, lukk: l.bottom <= innerHeight && l.width > 30, zoom: +a.style.zoom, lup: getComputedStyle(document.querySelector('#mapring .kluppe')).display, hint: !!document.querySelector('.khint') }; }"""
+        await pg.tap('#mapring')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=10000); await pg.wait_for_timeout(300)
+        st = await pg.evaluate(plass)
+        await pg.screenshot(path='/tmp/e_kart_staende.png')
+        sjekk('stående telefon: et trykk på ringen åpner kartet i smalt oppsett, alt får plass uten rulling, og uten tastehint', st['lag'] == 'smal' and not st['rull'] and st['inne'] and st['lukk'] and st['zoom'] >= .75 and st['lup'] == 'block' and not st['hint'], st)
+        await pg.set_viewport_size({'width': 844, 'height': 390}); await pg.wait_for_timeout(800)
+        lg = await pg.evaluate(plass)
+        await pg.screenshot(path='/tmp/e_kart_liggende.png')
+        await pg.tap('#kLukk')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        lg['frigjort'] = await pg.evaluate("() => document.getElementById('kCan').width === 0")
+        await pg.tap('#mapring')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=10000); await pg.wait_for_timeout(300)
+        lg['igjen'] = await pg.evaluate(plass)
+        await pg.tap('#kLukk'); await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        sjekk('telefonen snus med kartet oppe: liggende oppsett uten rulling, Lukk frigjør lerretet, og ringen kan trykkes på liggende også', lg['lag'] == 'lig' and not lg['rull'] and lg['inne'] and lg['lukk'] and not lg['hint'] and lg['frigjort'] and lg['igjen']['lag'] == 'lig' and not lg['igjen']['rull'], lg)
+        sjekk('ingen konsollfeil (stort kart på telefon)', not pg.errs, pg.errs[:6])
+        await ctx.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
