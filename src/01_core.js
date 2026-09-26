@@ -53,14 +53,15 @@ const Input = {
   parentes(h) { const t = this.tast(h); return t ? ' (' + t + ')' : ''; },
   /* tilbaketasten på fjernkontrollen er Esc: Samsung (10009), LG (461), Android TV og Fire TV (GoBack, BrowserBack).
      Fjernkontroller sender ikke alltid code, så key brukes når code mangler (pilene og Enter heter det samme) */
-  tilbakeT: -1e9,
+  tilbakeT: -1e9, tilbakeS: '', // når tilbaketasten sist kom, og hva spillet holdt på med da (TvTilbake i 32_meny.js)
   kode(e) { return e.keyCode === 10009 || e.keyCode === 461 || e.key === 'GoBack' || e.key === 'BrowserBack' || e.key === 'XF86Back' || e.code === 'BrowserBack' ? 'Escape' : e.code || e.key || ''; },
   init(canvas) {
     const block = ['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    // tilbake på fjernkontrollen: nettleseren skal ikke gå en side tilbake midt i spillet, men på tittelen går den ut som vanlig.
+    // Tasten huskes i fangfasen, før testpanelet stopper tastene, ellers gjør steget i historikken for samme trykk jobben en gang til
+    addEventListener('keydown', e => { if (this.kode(e) !== 'Escape' || e.code === 'Escape') return; this.tilbakeT = performance.now(); this.tilbakeS = window.MORBIDIUM ? MORBIDIUM.state : ''; if (window.MORBIDIUM && MORBIDIUM.state !== 'title') e.preventDefault(); }, true);
     addEventListener('keydown', e => {
       const k = this.kode(e);
-      // tilbake på fjernkontrollen: nettleseren skal ikke gå en side tilbake midt i spillet, men på tittelen går den ut som vanlig
-      if (k === 'Escape' && e.code !== 'Escape') { this.tilbakeT = performance.now(); if (window.MORBIDIUM && MORBIDIUM.state !== 'title') e.preventDefault(); }
       if (block.includes(k) && !(e.target && e.target.tagName === 'INPUT')) e.preventDefault();
       if (!this.keys[k]) this.pressed[k] = true;
       this.keys[k] = true; this.enhet('kb');
