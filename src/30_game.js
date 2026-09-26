@@ -157,9 +157,11 @@ function decorateLevel() {
   const isF = (x, z) => x >= 0 && z >= 0 && x < F.W && z < F.H && F.tiles[z * F.W + x] > 0;
   for (const r of F.rooms) {
     const cx = r.x + r.w / 2, cz = r.z + r.h / 2;
-    // uterom har ingen taklampe: månen og gasslyktene får jobben
-    if (r.ute) R.light(cx, cz + .3, Math.max(r.w, r.h) * .7, '#8aa0d8', .22, R.levelL);
-    else R.light(cx, cz + .3, Math.max(r.w, r.h) * .62, r.role === 'boss' ? '#ff9a6a' : G.th.pool || '#ffe6a0', r.role === 'boss' ? .55 : .5, R.levelL);
+    // romlyset midt i rommet (fyll, som D3.FYLL_SIST kan sette sist i køen til punktlysene i 3D).
+    // Uterom har ingen taklampe, bare et svakt blått skjær: månen og gasslyktene får jobben
+    const fyll = r.ute ? R.light(cx, cz + .3, Math.max(r.w, r.h) * .7, '#8aa0d8', .22, R.levelL)
+      : R.light(cx, cz + .3, Math.max(r.w, r.h) * .62, r.role === 'boss' ? '#ff9a6a' : G.th.pool || '#ffe6a0', r.role === 'boss' ? .55 : .5, R.levelL);
+    fyll.userData.fyll = true;
     const wallOK = x => !isF(x, r.z - 1) && !isF(x + 1, r.z - 1) && !isF(x - 1, r.z - 1);
     if (r.role === 'service') { for (let x = r.x + 1; x < r.x + r.w - 2; x++) if (wallOK(x) && wallOK(x + 1)) { Paint.door(x + 1, r.z, SERVICES[r.service].name.replace(/^(Den|Det) /, '').toUpperCase().slice(0, 12)); break; } }
     else if (!r.ute && !G.drom && rng() < .7) { const x = r.x + 2 + Math.floor(rng() * Math.max(1, r.w - 4)); if (wallOK(x)) Paint.poster(POSTERS[Math.floor(rng() * POSTERS.length)], x + .5, r.z); }
@@ -310,7 +312,8 @@ function interactLogic(A) {
   else show('prompt', false);
 }
 function openChest(o) {
-  o.opened = true; o.p.opened = true; R.remove(o.g); o.g = propSprite('chest', o.x, o.z + .3, { P: propArt(o.p) }); R.level.add(o.g);
+  // den åpne kista er en ny tegning: U og m må følge med, og 3D må ta den på nytt (lys fra lampene, måneskygge i stedet for den bakte)
+  o.opened = true; o.p.opened = true; R.remove(o.g); o.g = propSprite('chest', o.x, o.z + .3, { P: propArt(o.p) }); R.level.add(o.g); o.U = o.g.userData.U; o.m = o.g.userData.m; o.d3 = false;
   Sound.play('door', .8, 1.4); puff(o.x, o.z, 3, .8); dropTeeth(o.x, o.z, 8);
   const P = G.player, notOwned = CARD_POOL.filter(id => ABILITIES[id] && !owned(id));
   const opts = shuf([
@@ -678,7 +681,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   let dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
   Input.pollGamepad(); const A = Input.actions();
-  Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); D3.tick(dt); Effekter.tick(dt); Dybde.tick(dt); Vaatt.tick(dt); Testmodus.tick();
+  Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); Effekter.tick(dt); Vaatt.tick(dt); Testmodus.tick();
   if (G.state === 'play') {
     const P = G.player;
     if (A.pauseP) openPause(); else if (A.journalP) openJournal();
@@ -719,6 +722,8 @@ function loop(now) {
   } else if (G.state === 'journal') {
     if (A.pauseP || A.journalP) closeJournal();
   }
+  // lysene, månen, lykteskyggene og gloriene etter at alt har flyttet seg, så de følger figurene og lykta i samme bilde og ikke ett bilde etter
+  D3.tick(dt); Dybde.tick(dt); Glorie.tick(dt);
   R.render(dt);
   Input.endFrame();
   if (G.okFrames !== null && ++G.okFrames === 90) { if (window.bootStep) bootStep('ok'); const b = $('boot'); if (b) b.remove(); G.okFrames = null; }
@@ -747,7 +752,7 @@ function boot() {
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };
-  Object.assign(window, { Testmodus, MENING, MENING_FANER, Vaatt, SKALA, midiHz, hzMidi, Lydbank, Stemning, LYD_KART, LYD_INNSLAG, LYD_STEMT, LYD_DUKK, BESETNING, ROM_BESETNING, MUS_INS, FOTGULV, STEMNING_ETASJE, STEMNING_ROM, FIENDESTEMME, LYD_META, Historie, HISTORIE_ART, Kjeder, HENDELSER_HISTORIE, JOURNALSIDER, SJEF_EPITAF, SISTE_SIDE, NPC_DYP, OYE_SER, PA, LINES, NPC_LINES, LORE, bossOnHurt, Dybde, Kombo, KOMBO_NIVA, FLERDRAP, Glod, GLOD_TYPER, Lyn, Uvaer, Regnringer, Effekter, meleeHit, stampBig, runStats, FIENDE_INFO, FIENDE_REKKE, SJEF_REKKE, Drom, DROM_KAP, DROM_HJEM, DROM_SLUTT, DROM_ART, DROM_TEGN, DROM_SKYLD, Samtale, Hendelse, HENDELSER, Folge, HEND_ART, hendBilde, innhold, rolig, SPRITES, hbSider, saveMeta, MAX_DEPTH, THEMES, UTGANGER, gulvUnder, Vaer, Landskap, GULV, VEGG, ROMSTIL, ROMTYPER, openTrapdoor, findInteract, stykkeFor, brukUIsett, UI_SETT, hjerteHtml, portierHode, skarPart, speilbilde, ordPart, WEAPON_ART, kastKlump, sendOrd, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel });
+  Object.assign(window, { Testmodus, MENING, MENING_FANER, Vaatt, SKALA, midiHz, hzMidi, Lydbank, Stemning, LYD_KART, LYD_INNSLAG, LYD_STEMT, LYD_DUKK, BESETNING, ROM_BESETNING, MUS_INS, FOTGULV, STEMNING_ETASJE, STEMNING_ROM, FIENDESTEMME, LYD_META, Historie, HISTORIE_ART, Kjeder, HENDELSER_HISTORIE, JOURNALSIDER, SJEF_EPITAF, SISTE_SIDE, NPC_DYP, OYE_SER, PA, LINES, NPC_LINES, LORE, bossOnHurt, Dybde, Kombo, KOMBO_NIVA, FLERDRAP, Glod, GLOD_TYPER, Lyn, Uvaer, Regnringer, Effekter, meleeHit, stampBig, runStats, FIENDE_INFO, FIENDE_REKKE, SJEF_REKKE, Drom, DROM_KAP, DROM_HJEM, DROM_SLUTT, DROM_ART, DROM_TEGN, DROM_SKYLD, Samtale, Hendelse, HENDELSER, Folge, HEND_ART, hendBilde, innhold, rolig, SPRITES, hbSider, saveMeta, MAX_DEPTH, THEMES, UTGANGER, gulvUnder, Vaer, Landskap, GULV, VEGG, ROMSTIL, ROMTYPER, openTrapdoor, findInteract, stykkeFor, brukUIsett, UI_SETT, hjerteHtml, portierHode, skarPart, speilbilde, ordPart, WEAPON_ART, kastKlump, sendOrd, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel, flashLight, updateFx });
   step('Pakker ut bilder');
   Art.preload().then(() => { try { brukUIsett(); } catch (e) { } step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }
