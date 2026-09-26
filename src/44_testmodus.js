@@ -203,7 +203,7 @@ const Testmodus = {
     $('tLukk').onclick = () => { Sound.play('paper'); this.lukk(); };
     this.tilpass();
   },
-  tilpass() { const f = $('tkort'); if (!f) return; f.style.zoom = 1; const W = f.offsetWidth, H = f.offsetHeight; f.style.zoom = Math.min(1.15, (innerWidth - 20) / W, (innerHeight - 20) / H).toFixed(4); },
+  tilpass() { const f = $('tkort'); if (f) passInn(f); },
   /* til utklippstavla; faller tilbake på å merke teksten og kopiere den gamle måten */
   kopier(tekst, felt, status = 'tStatus') {
     const melding = (ok) => { const s = $(status); if (s) s.textContent = ok ? 'Kopiert. Lim den inn i samtalen med Claude.' : 'Fikk ikke kopiert. Merk teksten i feltet og kopier den selv.'; Sound.play(ok ? 'pickup' : 'deny'); this.kopiert = ok; };

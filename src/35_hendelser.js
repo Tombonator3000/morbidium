@@ -17,10 +17,11 @@ const Samtale = {
     const valg = o.valg && o.valg.length ? o.valg : [{ tekst: 'Gå videre' }];
     openPanel(`<div class="paper samtale"><div class="sbilde"></div><div class="sinnhold"><div class="stittel">${esc(o.tittel || '')}</div><div class="stekst">${bak}${avsnitt}</div>
       <div class="svalg">${valg.map((v, i) => `<button data-sv="${i}" ${v.kan && !v.kan() ? 'disabled' : ''}><b>${i + 1}</b> ${esc(v.tekst)}${v.hint ? `<small>${esc(v.hint)}</small>` : ''}</button>`).join('')}</div></div></div>`, { samtale: true });
+    $('panel').scrollTop = 0; // hvert steg i samtalen begynner øverst
     try { const b = typeof o.bilde === 'function' ? o.bilde() : o.bilde; if (b) document.querySelector('.samtale .sbilde').appendChild(b); } catch (e) { }
     this.aktiv = { o, valg };
     document.querySelectorAll('[data-sv]').forEach(b => b.onclick = () => this.velg(+b.dataset.sv));
-    const f = document.querySelector('[data-sv]:not([disabled])'); if (f) f.focus();
+    const f = document.querySelector('[data-sv]:not([disabled])'); if (f) f.focus({ preventScroll: true });
   },
   velg(i) {
     const A0 = this.aktiv; if (!A0) return; const v = A0.valg[i]; if (!v || (v.kan && !v.kan())) return;

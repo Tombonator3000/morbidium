@@ -26,9 +26,14 @@ function applySettings() {
 const narrow = () => innerWidth < 700 || innerWidth / innerHeight < .9;
 /* papirflatene har fast størrelse og skaleres til skjermen med zoom, som også flytter layouten */
 function fitPanel() {
-  const el = document.querySelector('#panel .fit'); if (!el || G.state !== 'panel') return;
+  const el = document.querySelector('#panel .fit'); if (!el || (G.state !== 'panel' && G.state !== 'dead')) return;
+  passInn(el);
+}
+/* skalerer en papirflate til skjermen. På telefon går den ikke under 75 prosent, så teksten kan leses og knappene treffes;
+   blir den da høyere enn skjermen, kan panelet rulles (.screen sentrerer med auto-marger) */
+function passInn(el, min = R.coarse ? .75 : 0) {
   el.style.zoom = 1; const W = el.offsetWidth, H = el.offsetHeight;
-  el.style.zoom = Math.min(1.15, (innerWidth - 20) / W, (innerHeight - 20) / H).toFixed(4);
+  el.style.zoom = Math.max(Math.min(min, (innerWidth - 16) / W), Math.min(1.15, (innerWidth - 20) / W, (innerHeight - 20) / H)).toFixed(4);
 }
 addEventListener('resize', () => { if (G.state === 'panel' && G.panelO && G.panelO.refit) G.panelO.refit(); else fitPanel(); });
 function canvasOf(P, w, h, pad = .06) {

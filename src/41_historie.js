@@ -498,7 +498,7 @@ Object.assign(HENDELSER, HENDELSER_HISTORIE);
   if (!S0 || !S0.tekst) return etterord();
   openPanel(`<div class="paper samtale"><div class="sbilde"></div><div class="sinnhold"><div class="stittel">Siste side</div><div class="stekst">${S0.tekst.split('\n').map(t => `<p>${esc(t)}</p>`).join('')}</div><div class="svalg"><button id="sisteOk"><b>1</b> Les videre</button></div></div></div>`, { onBack: etterord });
   try { document.querySelector('.samtale .sbilde').appendChild(hendBilde(S0.bilde(), '#140e14')); } catch (e) { }
-  $('sisteOk').onclick = etterord; $('sisteOk').focus(); Sound.play('paper');
+  $('sisteOk').onclick = etterord; $('sisteOk').focus({ preventScroll: true }); Sound.play('paper');
 }; }
 // kapitlene følger hvor langt nede pasienten våknet, så skylda (kapittel 4) alltid kommer før sannheten (kapittel 5)
 { const _l = Drom.lag; Drom.lag = function (depth) {
