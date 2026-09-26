@@ -712,3 +712,8 @@ Alle tidspunkt er UTC.
   8. Minnesjekken kunne ikke skille en lekkasje i skyggekartet alene (4 teksturer per runde) fra støyen. Testen sjekker nå direkte at skyggekartet til månen frigjøres når neste etasje bygges, og at 3D faktisk er bygd. Butikksjekken kunne passere uten at noe ble rullet, så testen åpner nå håndboka (som er høyere enn skjermen) fra de rullede innstillingene.
 - Avkreftet: at listene i arkitekturen (InstancedMesh) lekker, og at rommets skilt skjules på PC-vinduer som er lave (det gjelder bare liggende vinduer under 500 piksler).
 - Testdel 36 går gjennom med alle de nye sjekkene. Skjermbilder av tittelen på PC, stående og liggende ser riktige ut.
+
+## 2026-09-26 11:37 memory og todo etter gjennomgangen
+- memory.md: regelen for rulling i openPanel (samme panel beholder, alt annet begynner øverst), fast kvalitet ved mistet grafikk, tipslappen liggende, hjertene som +fulle/skjulte, !important på auto-margene, tastene i testpanelet, og minnesjekken i testdel 36.
+- todo.md: minnetesten og gjennomgangen er gjort.
+- Full testkjøring på 8777830 går i egen arbeidskopi.
