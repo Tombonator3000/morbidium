@@ -1937,6 +1937,36 @@ async def main():
         sjekk('TV-modus: tilbake uten tastetrykk på tittelen går ut av spillet, også når steget fra spillet er igjen', pg.url == 'about:blank', pg.url)
         await pg.close()
 
+        # 43) Etter flettingen av sporene: lista over lyskilder vokser ikke med etasjene, B (rull) i kampen lukker ikke et panel som
+        #     akkurat åpnet seg, og merkene for flaska og apparatet viser knappen for det du spiller med
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.add_init_script("""(() => {
+          window.__pad = { id: 'Testkontroll (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [window.__pad] });
+          window.__ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });
+          window.__trykk = async (i, ned = 3, opp = 3) => { const k = window.__pad.buttons[i]; k.pressed = true; k.value = 1; await window.__ramme(ned); k.pressed = false; k.value = 0; await window.__ramme(opp); };
+        })()""")
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg)
+        kl = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), n = [];
+          for (const d of [1, 2, 3, 4, 5, 6, 1, 2, 3]) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(80); n.push(R.kilder.length); }
+          return { n, festet: R.kilder.every(k => k.parent && (k.parent === R.lscene || !!k.parent.parent)) }; }""")
+        sjekk('lista over lyskilder vokser ikke når etasjene bygges på nytt, og alle i den henger i scenen', abs(kl['n'][6] - kl['n'][0]) <= 12 and max(kl['n']) < 300 and kl['festet'], kl)
+        bv = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; rolig(); await __ramme(3);
+          // B som rull i spillet, og et panel som dukker opp rett etterpå
+          await __trykk(1, 2, 1); openPanel('<div class="paper" style="padding:20px"><button data-close>Lukk</button></div>'); await __ramme(2);
+          await __trykk(1); await __ramme(2); ut.bliver = G.state === 'panel';
+          for (let i = 0; i < 120 && MenyNav.roB > 0; i++) await __ramme(1);
+          await __trykk(1); await __ramme(2); ut.lukker = G.state === 'play';
+          return ut; }""")
+        sjekk('B som ble trykket for å rulle, lukker ikke et panel som akkurat åpnet seg, men gjør det etter et halvt sekund', bv == {'bliver': True, 'lukker': True}, bv)
+        mk = await pg.evaluate("""async () => { await __trykk(3); await __ramme(3); return { pad: document.getElementById('consk').textContent, apparat: document.querySelector('#akt .n').textContent }; }""")
+        await pg.keyboard.press('KeyW'); await pg.wait_for_timeout(400)
+        mk.update(await pg.evaluate("() => ({ kb: document.getElementById('consk').textContent, apparatKb: document.querySelector('#akt .n').textContent })"))
+        sjekk('merkene for flaska og apparatet viser Ned og Opp med håndkontroll og F og V med tastatur', mk == {'pad': 'Ned', 'apparat': 'Opp', 'kb': 'F', 'apparatKb': 'V'}, mk)
+        sjekk('ingen konsollfeil (etter flettingen)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

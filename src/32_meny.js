@@ -400,8 +400,8 @@ const MenyNav = {
     const P = Input, g = P.gp, pad = g.connected, test = rot.id === 'testpanel';
     // rett fra spillet: en A som ble holdt eller hamret på i kampen, trykker ikke på noe før det har gått et halvt sekund,
     // og en retning som holdes inne, må slippes først (G.time går bare i spillet)
-    if (G.time !== this.gt) { this.gt = G.time; this.ro = P.gpDown(0) || performance.now() - g.aT < 450 ? .5 : 0; this.stum = true; }
-    this.ro -= dt;
+    if (G.time !== this.gt) { this.gt = G.time; this.ro = P.gpDown(0) || performance.now() - g.aT < 450 ? .5 : 0; this.roB = P.gpDown(1) || performance.now() - g.bT < 450 ? .5 : 0; this.stum = true; }
+    this.ro -= dt; this.roB = (this.roB || 0) - dt;
     if (P.lastDevice === 'pad' && !this.inne(rot)) this.forste(rot);
     if (!pad) return test;
     const r = this.retning(); if (!r) this.stum = false;
@@ -410,6 +410,7 @@ const MenyNav = {
     if (Math.abs(g.ry) > .25 && rot.scrollHeight > rot.clientHeight) rot.scrollTop += g.ry * 900 * dt;
     if (P.gpPressed(4) || P.gpPressed(5)) this.fane(rot, P.gpPressed(5) ? 1 : -1);
     if (P.gpPressed(0)) { if (this.ro <= 0) this.trykk(rot); return true; }
+    if (P.gpPressed(1) && this.roB > 0) return true; // B er også rull: den som hamret på den i kampen, skal ikke lukke brevet eller drømmen som dukket opp
     if (test && (P.gpPressed(1) || P.gpPressed(9))) { Testmodus.lukk(); return true; }
     if (G.state === 'journal' && P.gpPressed(1)) { if (G.jsel) { G.jsel = null; document.querySelectorAll('#journal .jcard.sel').forEach(c => c.classList.remove('sel')); } else closeJournal(); return true; }
     return test;

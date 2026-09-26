@@ -40,7 +40,7 @@ const Store = {
 const Input = {
   keys: {}, pressed: {}, released: {},
   mouse: { x: 0, y: 0, l: false, r: false, lp: false, rp: false, lr: false, rr: false, moved: false, movedT: -1e9 },
-  gp: { connected: false, prev: [], cur: [], lx: 0, ly: 0, rx: 0, ry: 0, id: '', mapping: '', index: -1, aT: -1e9 },
+  gp: { connected: false, prev: [], cur: [], lx: 0, ly: 0, rx: 0, ry: 0, id: '', mapping: '', index: -1, aT: -1e9, bT: -1e9 },
   touch: { active: false, mx: 0, mz: 0, btn: {}, pressed: {}, released: {} },
   lastDevice: 'kb',
   /* siste enhet styrer tekstene (Esc eller B) og fokusringen i menyene (body.pad) */
@@ -48,7 +48,7 @@ const Input = {
   // tastatur eller håndkontroll: berøringsknappene skjules til neste berøring
   skjulTouch() { if (this.touch.active) { this.touch.active = false; $('touch').classList.add('hidden'); document.body.classList.remove('touch'); } },
   /* tastene som står i tekstene, etter enheten: tastatur, håndkontroll og berøring (tom: ingen tast å vise) */
-  TAST: { pause: ['Esc', 'Start', ''], journal: ['Tab', 'Select', ''], lukkJ: ['Tab', 'B', ''], tilbake: ['Esc', 'B', ''], kort: ['1 2 3 4', 'LB RB LT RT', '1 2 3 4'] },
+  TAST: { pause: ['Esc', 'Start', ''], journal: ['Tab', 'Select', ''], lukkJ: ['Tab', 'B', ''], tilbake: ['Esc', 'B', ''], kort: ['1 2 3 4', 'LB RB LT RT', '1 2 3 4'], drikk: ['F', 'Ned', 'Bruk'], apparat: ['V', 'Opp', 'V'] },
   tast(h, i) { const d = this.lastDevice === 'pad' ? 1 : this.lastDevice === 'touch' ? 2 : 0, t = (this.TAST[h] || [])[d] || ''; return i === undefined ? t : t.split(' ')[i] || ''; },
   parentes(h) { const t = this.tast(h); return t ? ' (' + t + ')' : ''; },
   /* tilbaketasten på fjernkontrollen er Esc: Samsung (10009), LG (461), Android TV og Fire TV (GoBack, BrowserBack).
@@ -133,6 +133,7 @@ const Input = {
     g.lx = dz(p.axes[0] || 0); g.ly = dz(p.axes[1] || 0);
     g.rx = dz(p.axes[2] || 0); g.ry = dz(p.axes[3] || 0);
     if (g.cur[0] && !g.prev[0]) g.aT = performance.now(); // menyene trykker ikke på noe med en A som ble hamret på i kampen
+    if (g.cur[1] && !g.prev[1] && G.state === 'play') g.bT = performance.now(); // og B som rull i spillet lukker ikke et panel som akkurat åpnet seg (B i menyene teller ikke)
     if (g.cur.some(Boolean) || g.lx || g.ly || g.rx || g.ry) { this.enhet('pad'); this.skjulTouch(); }
   },
   gpDown(i) { return !!this.gp.cur[i]; },

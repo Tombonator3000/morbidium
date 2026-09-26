@@ -141,7 +141,9 @@ const Paint = {
     }, true);
   },
   level(F, th) {
-    if (R.level) { R.scene.remove(R.level); } if (R.levelL) R.lscene.remove(R.levelL);
+    if (R.level) { R.scene.remove(R.level); }
+    // lysplatene fra forrige etasje: ut av lista over lyskilder (den vokste ellers for hver etasje) og materialene kastes (teksturen deles)
+    if (R.levelL) { R.lscene.remove(R.levelL); const gml = R.levelL; gml.traverse(o => { if (o !== gml && o.material) o.material.dispose(); }); if (R.kilder) R.kilder = R.kilder.filter(k => k.parent && k.parent !== gml); }
     if (this.owned) for (const o of this.owned) try { o.dispose(); } catch (e) { }
     this.owned = []; this.opptatt = new Map(); // veggfelt med dør eller plakat, så 3D-listene holder seg unna
     const L = R.level = new THREE.Group(); R.scene.add(L); R.levelL = new THREE.Group(); R.lscene.add(R.levelL);
