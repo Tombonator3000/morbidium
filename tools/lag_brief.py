@@ -217,12 +217,24 @@ UTV = {
   'drom_mappe': 'a patient file folder on a small table', 'drom_dorlaast': 'a closed wooden door with a key in the lock', 'drom_dor': 'a closed door in a dark frame', 'drom_dor_aapen': 'the same door wide open with warm white light pouring out',
   'kraake_kropp': 'a black crow seen from the side facing right, one pale eye, the body only (the wing is a separate image)', 'kraake_vinge': 'one black crow wing, spread',
   'hjort_kropp': 'BOSS: the body of an enormous white stag seen from the side facing right, no head and no legs (the game draws the legs)', 'hjort_hode': 'BOSS: the neck and head of the white stag with huge antlers, but the face is a sad human face with tears',
-  'flis': 'a sharp splinter of wood', 'vaapen_hagesaks': 'garden hedge shears with wooden handles', 'vaapen_storsaks': 'enormous garden hedge shears with long wooden handles'
+  'flis': 'a sharp splinter of wood', 'vaapen_hagesaks': 'garden hedge shears with wooden handles', 'vaapen_storsaks': 'enormous garden hedge shears with long wooden handles',
+  'historie_1': 'a hospital admission form from 1923: a sheet of yellowed paper with rows of handwritten lines, a red rectangular rubber-stamp mark at an angle, and a black fountain pen lying across it, seen slightly from above',
+  'historie_2': 'a thick journal bound in cracked black leather, closed, with a dark red ribbon bookmark hanging out, and an old dip pen with one drop of purple ink beside it (the only text allowed: a faded gold 1887 and the initial M. on the cover)',
+  'historie_3': 'an old glass inkwell full of glowing purple ink, the ink creeping out over the rim as if it were alive, with a few purple drops and small pale violet sparks around it',
+  'historie_4': 'a cutaway of the sanatorium: a small roof on top and five floors stacked downwards, each floor darker than the one above, warm lit windows at the top and dark windows further down, and under the foundation a black pine forest growing into the earth',
+  'historie_5': 'an open journal lying flat, the left page full of handwritten lines, the right page only half written with the last line trailing off in purple ink, and a burning candle stub beside it',
+  'historie_slutt_tilgivelse': 'an open iron gate seen from the front with warm white light behind it, and a small dark figure walking out through it',
+  'historie_slutt_sannheten': 'a lone figure standing still in the rain on a stone quay, seen small from behind, a puddle reflecting pale grey light',
+  'historie_slutt_gjentakelse': 'a freshly made iron hospital bed with a blue blanket, a new admission form lying on the pillow, and a red curved arrow looping back to where it started',
+  'historie_slutt_fornektelse': 'a blank sheet of paper with nothing written on it, with a red ribbon bookmark lying across it',
+  'prop_forstander': "an old man with a white beard in a long dark frock coat sitting behind an oversized wooden desk, reading a thick black leather journal that lies open in front of him, a green glass banker's lamp on the desk and dust on his shoulders, seen from the front"
 }
 MISC.update(UTV)
 UTV_FIG = {'gartner', 'huldra', 'vedkubbe', 'nokken', 'baklengs', 'blank_m', 'blank_k', 'ansikt_m', 'ansikt_k', 'hekk', 'kaalhode'}
 er_fig = lambda k, typer: any(k.startswith(p + '_' + t + '_') for t in typer for p in ('hode', 'kropp', 'blob'))
 RUNDER = [
+  ('Runde 14: historien', lambda k: k.startswith('historie_') or k == 'prop_forstander',
+   'Journalsidene før drømmene, de fire sluttbildene og forstanderen i Dypet. De vises stort i samtalepanelet, som bildene til hendelsene. Journalsidene er stilleben (ting, ikke folk), litt mørkere og mer høytidelige enn resten. Forstanderen står også i etasjen, så han tegnes forfra som møblene.'),
   ('Runde 10: uterom og de nye rommene', lambda k: k in UTV and k.startswith('prop_') and not k.startswith(('prop_telefon', 'prop_kaffebord', 'prop_ku', 'prop_brennevin', 'prop_badekarmann', 'prop_heis', 'prop_rotter', 'prop_radiobord', 'prop_damer', 'prop_utedo', 'prop_kubbekona', 'prop_kjempe', 'prop_tannfe', 'prop_lampemann')),
    'Møblene til de nye romtypene, parken og Nattskogen, og utgangene fra hver etasje. Forfra, som de andre møblene. Det som ligger flatt på gulvet (grav, vak, kloakk, kullsjakt, blomsterbed), tegnes rett ovenfra.'),
   ('Runde 11: hendelsene', lambda k: k in UTV and k.startswith(('prop_telefon', 'prop_kaffebord', 'prop_ku', 'prop_brennevin', 'prop_badekarmann', 'prop_heis', 'prop_rotter', 'prop_radiobord', 'prop_damer', 'prop_utedo', 'prop_kubbekona', 'prop_kjempe', 'prop_tannfe', 'prop_lampemann')) or er_fig(k, {'baklengs'}),

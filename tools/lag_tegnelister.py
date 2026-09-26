@@ -137,6 +137,11 @@ LISTER = [
            delark('hatter_pasienter', 'hats for patients', ['a folded newspaper hat', 'an enamel bedpan worn as a helmet', 'a striped nightcap with a pompom'], farg=True),
            delark('har_pasienter', 'hairstyles for patients', ['wild uncombed hair sticking out in all directions', 'a patchy shaved head with stubble', 'long, greasy hair']),
            delark('har_kultister', 'hairstyles for gloomy teenage cultists', ['a long black fringe covering one eye', 'teased black hair with a white stripe', 'a greasy black ponytail'])]},
+  {'nr': 10, 'fil': '10_historien.md', 'tittel': 'Historien',
+   'merk': 'Bildene til historien (src/41_historie.js): journalsidene før drømmene, de fire sluttene og forstanderen som sitter i Dypet og leser. Alt vises stort i samtalepanelet. Journalsidene er stilleben, ting og ikke folk, litt mørkere og mer høytidelige enn resten. Forstanderen står også i etasjen, så han tegnes forfra som møblene og som eget bilde.',
+   'ark': [ark('historien', 'Journalsidene og sluttene', ['historie_1', 'historie_2', 'historie_3', 'historie_4', 'historie_5', 'historie_slutt_tilgivelse', 'historie_slutt_sannheten', 'historie_slutt_gjentakelse', 'historie_slutt_fornektelse'],
+               ekstra='Cells 1 to 5 are still lifes of objects, no people, lit by warm candlelight from the upper left. Cells 6 to 9 are the four endings: small, quiet scenes with at most one tiny figure seen from far away.'),
+           enkelt('prop_forstander', ekstra='He is a quiet, tired old man, not a villain. The desk is far too big for him.')]},
 ]
 
 # ---------- hva som mangler ----------
@@ -331,6 +336,7 @@ def skriv(lister):
           '| Liste | Innhold | Ark | Bilder |', '|---|---|---|---|']
     ut += [f"| [{L['nr']}. {L['tittel']}]({L['fil']}) | {', '.join(dict.fromkeys(tittel(a) for a in L['ark'][:6]))}{', ...' if len(L['ark']) > 6 else ''} | {len(L['ark'])} | {sum(antall(a) for a in L['ark']) or 'delark'} |" for L in lister]
     ut += ['', 'Rekkefølgen følger «Neste bestilling» i `DESIGN_BRIEF.md`: fiendene som synes mest først, møblene sist. '
+           'Historien (liste 10) er ny og kort, bare to bestillinger, og kan tas når som helst. '
            'Det som ikke har bilde ennå, tegnes av koden som før, så spillet får aldri hull.', ''] + hvordan(stil)
     ut += ['## Alle ark', '', 'Samme oversikt finnes som regneark i `tegneliste.csv`.', '', '| Nr | Filnavn | Mal | Bilder |', '|---|---|---|---|']
     rader = []
@@ -534,7 +540,7 @@ $('#fot').textContent = 'Laget av tools/lag_tegnelister.py ' + DATA.dato + '. Av
 </script>
 """
 
-KORT = {1: 'Fiender', 2: 'Koret og Klumpen', 3: 'Spriteark', 4: 'HUD', 5: 'Parken og skogen', 6: 'Hendelsene', 7: 'Drømmene', 8: 'Møblene', 9: 'Delark'}
+KORT = {1: 'Fiender', 2: 'Koret og Klumpen', 3: 'Spriteark', 4: 'HUD', 5: 'Parken og skogen', 6: 'Hendelsene', 7: 'Drømmene', 8: 'Møblene', 9: 'Delark', 10: 'Historien'}
 def skriv_side(lister, sti):
     """Én side til mobilen med alle arkene, kopieringsknapper og referansebildene (lagt ved som referanse/ref_*.png)."""
     import datetime
