@@ -17,6 +17,15 @@ Lista har nå 19 åpne spørsmål til Tom (lyd, blod, mørke, vanskelighet, hist
 - [ ] Tom og ChatGPT, i denne rekkefølgen: liste 10 (historien, fire bestillinger), liste 5 og 1 (fiendene i parken og første etasje), hjertene og ringene i liste 4.
 - [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, og andre halvdel av UI-settet.
 
+## Mobil, 2026-09-26 formiddag (Tom: «Noe gikk galt», WebGL mistet)
+- [x] Tre lekkasjer i grafikkminnet tettet (skyggekartet, strekbåndene til dukkene, flekker, plakater og dører). Minnet ligger flatt i stedet for å vokse rundt 12 MB per etasje.
+- [x] Mistet WebGL gir pause og kommer tilbake med lettere grafikk i stedet for «Noe gikk galt». Bytte av app gir ingen feilmelding og ingen nedgradering.
+- [x] Menyene får plass eller kan rulles med fingeren, liggende og stående. HUD-en i hjørnene liggende, dødskortet og utskrivningen i to kolonner, butikken side om side, større journal og brev stående, høyst 20 hjerter.
+- [ ] Tom: spill på samme telefon igjen, gjerne med https://tombonator3000.github.io/morbidium/?testmodus, både stående og liggende. Si fra om noe fortsatt er for smått, kuttet av eller vanskelig å treffe med fingeren. Rapporten viser telefonen, skjermkortet og om grafikken ble mistet underveis.
+- [ ] Tom: hvilken telefon og nettleser var det? Det avgjør om startkvaliteten på mobil bør settes lavere.
+- [ ] Claude, hvis grafikken fortsatt mistes: starte på lav 3D-kvalitet på berøringsskjerm, mindre skyggekart, og pakke ut stemningslydene først når de trengs.
+- [ ] Claude, senere: en test som følger grafikkminnet over mange etasjeskifter, så nye lekkasjer blir oppdaget.
+
 ## Lyd, musikk og vått på skjermen, 2026-09-26 morgen
 - [x] 165 frie lyder (CC0): 102 effekter og stemningslyder fra Freesound og 63 instrumenttoner fra VCSL, med verktøy (tools/lag_lyd.py) og kildeliste (assets/lyd/KILDER.md).
 - [x] Lydbanken (42_lyd.js): opptakene i stedet for synthlydene der de finnes, fottrinn etter gulvet, stemningssløyfer per etasje, rom og vær, knitring fra bål, havet i drømmene og stemmer fra fiendene. Innstillingen «Innspilte lyder».

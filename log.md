@@ -684,3 +684,10 @@ Alle tidspunkt er UTC.
 ## 2026-09-26 10:25 Testdel 36 for mobil, og papirflatene regner med panelets marger
 - Ny testdel 36 i tools/test_ekstra.py, med liggende og stående telefon (berøring, iPhone): HUD-en overlapper ikke liggende, innstillingene kan rulles med fingeren (ekte berøringshendelser), et nytt panel begynner øverst selv om det forrige var rullet, butikken ligger side om side, dødskortet og utskrivningen får plass uten rulling, brevet begynner øverst, høyst 20 hjerter og «+N», journalen og brevet skaleres ikke under 0,7 stående, og mistet grafikk: i bakgrunnen pause uten feilmelding og uten nedgradering, synlig tilbake med lettere grafikk.
 - Testen fant én feil: passInn regnet med 20 piksler marg, men panelene har 16 på hver side (32). Utskrivningen kunne derfor rulles 12 piksler liggende. passInn måler nå plassen innenfor margene på panelet flata ligger i. På PC blir papirflatene rundt to prosent mindre.
+
+## 2026-09-26 10:27 Dokumentasjon for mobilrettingene
+- memory.md: ny del om mobil (lekkasjene og regelen om å frigjøre alt per etasje, hvordan grafikkminnet ble målt, mistet WebGL i forgrunn og bakgrunn, layout med passInn og de to telefonoppsettene, rulling og fokus, touch-action og hvordan berøring testes).
+- todo.md: ny del for mobil med det som er gjort, og det Tom bør gjøre: spille på samme telefon igjen med ?testmodus, stående og liggende, og si hvilken telefon og nettleser det var.
+- AGENTS.md: to nye regler, om grafikkminne per etasje og om nye papirflater på mobil.
+- README.md: telefon stående og liggende. Rettet også «fire genererte etasjer» til seks.
+- Den fulle testkjøringen på det endelige bygget går i en egen arbeidskopi.

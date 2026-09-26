@@ -16,6 +16,8 @@
 - Lyder: bare lyder som er fri til bruk (CC0). `tools/lag_lyd.py` henter, klipper og koder dem, sjekker lisensen på hver lydside og skriver `assets/lyd/KILDER.md` med alle som har spilt inn. Nye lyder legges inn i lista der, ikke rett i mappa.
 - «Enkel grafikk» og oppstartsbrødsmulene (`morbidium_boot`) skal alltid virke. De er det som hindrer hvit skjerm på svake mobiler.
 - Store effekter følger innstillingene: forvrengning (sjokkbølger, zoom, drømmebølger) følger «Forvrengning», blink (negativ, lynblink) følger «Hvite glimt», og alt nytt i etterbehandlingen og partiklene må slås av med «Enkel grafikk» (`R.safe`). Blod og vann på skjermen følger «Blod og vann på skjermen», og blodet også «Blod og skrekkeffekter».
+- Grafikkminne: alt som lages på skjermkortet per etasje (teksturer, materialer, geometri, lys med skygge), må frigjøres når etasjen rives (`D3.riv`, `Paint.owned`, `dispose` på dukkene). `R.remove` kobler bare løs. En telefon tåler lite, og en lekkasje på noen MB per etasje gir «Noe gikk galt» etter en stund.
+- Mobil: nye papirflater skaleres med `passInn` (klassen `fit` i `#panel` gjør det via `fitPanel`) og må virke både stående og liggende på telefon. Panelene kan rulles når de er høyere enn skjermen, så knapper som får fokus når et panel åpnes, bruker `focus({ preventScroll: true })`. Testdel 36 i `test_ekstra.py` sjekker mobiloppsettet.
 - Rommene er 3D som standard. `#2d` i adressen og «Enkel grafikk» slår 3D av, og automatisk kvalitet går ned fra høy til middels til lav og slår til slutt 3D av når bildet hakker. Testnettlesere (navigator.webdriver) måles ikke, så testene styrer kvaliteten selv (`D3.nedgrader`, `D3.tvingMaal`).
 
 ## Kode
