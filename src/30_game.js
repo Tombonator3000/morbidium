@@ -168,6 +168,8 @@ function decorateLevel() {
   }
 }
 function startFloor(depth, first) {
+  // et panel som ble åpnet i sekundet før etasjen byttes (kartet eller pausen mens drømmen blekner), ville ellers blitt liggende over den nye etasjen
+  if (G.state === 'panel') { const o = G.panelO || {}; show('panel', false); G.panelO = null; if (o.onClose) try { o.onClose(); } catch (e) { } }
   clearFloor();
   const run = G.run, A0 = AWAKENINGS[run.awk];
   // drømmen før etasjen (36_drom.js): egen liten etasje, eget tema, ingen fiender

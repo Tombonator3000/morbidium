@@ -169,11 +169,11 @@ const Glorie = {
   styrke(L) { if (!L || !L.parent) return 0; const c = L.material.color, b = L.userData.col; return clamp(Math.max(c.r, c.g, c.b) / Math.max(.001, Math.max(b.r, b.g, b.b) * (L.userData.base || 1)), 0, 1.3); },
   oppdater(k, dt, mf) {
     if (k.t === 'ting') {
-      const o = k.eier, L = o.light; if (o.alive === false || !o.g.parent || !o.g.visible || (L && !L.parent)) { k.lys = 0; return; }
+      const o = k.eier, L = o.light; if (!k.c) k.c = k.f || (L ? L.userData.col : new THREE.Color('#ffd89a')); // fargen før den tidlige returen: en glorie som blekner ut, trenger den også
+      if (o.alive === false || !o.g.parent || !o.g.visible || (L && !L.parent)) { k.lys = 0; return; }
       const sy = clamp(o.g.scale.y, 0, 1); k.lys = (L ? this.styrke(L) : .92 + Math.sin(G.time * 7 + o.x * 3) * .08) * sy * mf; // byggeanimasjonen: gloria vokser med tingen
       if (o.fallen && L) { k.x = L.position.x; k.y = .35; k.z = L.position.z - .3; } else { k.x = o.x + k.dx; k.y = k.h * BILL_Y * sy; k.z = k.z0; }
-      if (!k.c) k.c = k.f || (L ? L.userData.col : new THREE.Color('#ffd89a'));
-    } else if (k.t === 'pare') { const L = k.eier.lp; k.lys = this.styrke(L); if (!k.c) k.c = L.userData.col; } // mørket er allerede i platen (D3.tick)
+    } else if (k.t === 'pare') { const L = k.eier.lp; k.lys = this.styrke(L); if (!k.c && L) k.c = L.userData.col; } // mørket er allerede i platen (D3.tick)
     else {
       // lyset ved pasienten: i hoftehøyde på siden bak figuren, så det ikke ligger over ansiktet eller våpenet, og det glir etter når figuren snur seg
       const P = k.eier, L = P.lantern; k.lys = P.alive && L && L.parent ? this.styrke(L) * Math.max(.6, mf) : 0; if (!k.c) k.c = L ? L.userData.col : new THREE.Color('#ffe2b0');
@@ -195,7 +195,7 @@ const Glorie = {
     const A = pts.geometry.attributes, pos = A.position.array, col = A.aFarge.array, str = A.aStr.array, sk = this.STYRKE * (D3.on ? 1 : this.UTEN_3D), fy = this.FRAM * SINP, fz = this.FRAM * COSP;
     let j = 0;
     for (const k of K) {
-      if (k.w <= 0 || j >= N) continue; const f = k.lys * k.w * k.k * sk, i = j * 3;
+      if (k.w <= 0 || j >= N || !k.c) continue; const f = k.lys * k.w * k.k * sk, i = j * 3;
       pos[i] = k.x; pos[i + 1] = k.y + fy; pos[i + 2] = k.z + fz; col[i] = k.c.r * f; col[i + 1] = k.c.g * f; col[i + 2] = k.c.b * f; str[j++] = k.s;
     }
     pts.geometry.setDrawRange(0, j); A.position.needsUpdate = A.aFarge.needsUpdate = A.aStr.needsUpdate = true;

@@ -32,6 +32,8 @@ Tom sendte et bilde av et HD-2D-spill og ba om å undersøke bedre grafikk med 2
 - [ ] Tom: kråka og koret svever nå synlig, og små fiender hopper. Før holdt en feil dem på gulvet. Si om det ser riktig ut.
 - [ ] Tom: skal hemmelige rom skjules på kartene til de er funnet?
 - [ ] Tom: skal «Enkel grafikk» også slå av regn, snø og ildfluer, og skal «Lys og skygge» av også slå av glød og tilt-shift? I dag gjør de ikke det.
+- [ ] Claude, senere: gloriene tegnes som punkter, og en glorie forsvinner brått når midten går ut av skjermkanten. Kan løses med små flater i stedet for punkter.
+- [ ] Claude, senere: i TV-modus laster tilbake på tittelen spillet én gang til rett etter at siden er lastet på nytt (nettleseren lar ikke siden fange et steg fra før omlastingen).
 - [ ] Claude, senere: dukkene og tingene som ikke er i G.props (lik, sprekker, ting i hendelser) i 3D, billige lyspøler for lamper uten punktlys, glød fra malte flammer, og en egen Tizen-app bare hvis nettleseren på TV-en ikke slipper kontrolleren inn.
 
 ## Mobil, 2026-09-26 formiddag (Tom: «Noe gikk galt», WebGL mistet)

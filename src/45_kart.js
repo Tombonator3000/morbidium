@@ -158,11 +158,12 @@ const Kart = {
     // 4) rommet du står i får gullkant, låste dører røde bommer og dørene til forbannede rom torner
     const ri = F.roomId[clamp(Math.floor(P.z), 0, H - 1) * W + clamp(Math.floor(P.x), 0, W - 1)];
     if (ri >= 0) { const r = F.rooms[ri]; g.beginPath(); g.rect(r.x - .15, r.z - .15, r.w + .3, r.h + .3); g.lineWidth = 6 / s; g.strokeStyle = INK; g.stroke(); g.lineWidth = 3 / s; g.strokeStyle = '#e8b93a'; g.stroke(); }
-    const bom = (dorer, rid) => { g.beginPath(); for (const i of dorer) { if (!G.seen[i]) continue; const x = i % W, z = (i / W) | 0, loddrett = F.roomId[i - 1] === rid || F.roomId[i + 1] === rid; if (loddrett) { g.moveTo(x + .5, z + .08); g.lineTo(x + .5, z + .92); } else { g.moveTo(x + .08, z + .5); g.lineTo(x + .92, z + .5); } } };
+    // sprekken i veggen er vegg på kartet, også når rommet er låst eller forbannet
+    const bom = (dorer, rid) => { g.beginPath(); for (const i of dorer) { if (!G.seen[i] || krakk.has(i)) continue; const x = i % W, z = (i / W) | 0, loddrett = F.roomId[i - 1] === rid || F.roomId[i + 1] === rid; if (loddrett) { g.moveTo(x + .5, z + .08); g.lineTo(x + .5, z + .92); } else { g.moveTo(x + .08, z + .5); g.lineTo(x + .92, z + .5); } } };
     if (G.lock && G.combat && G.combat.r) { bom(G.lock, G.combat.r.id); g.lineWidth = 7 / s; g.strokeStyle = INK; g.stroke(); g.lineWidth = 4 / s; g.strokeStyle = '#b3261e'; g.stroke(); }
     g.beginPath();
     for (const r of F.rooms) if (r.role === 'cursed') for (const i of r.doors) {
-      if (!G.seen[i]) continue; const x = i % W, z = (i / W) | 0, loddrett = F.roomId[i - 1] === r.id || F.roomId[i + 1] === r.id;
+      if (!G.seen[i] || krakk.has(i)) continue; const x = i % W, z = (i / W) | 0, loddrett = F.roomId[i - 1] === r.id || F.roomId[i + 1] === r.id;
       for (let t = 0; t <= 4; t++) { const u = .1 + t * .2, w = t % 2 ? .22 : -.22, px = loddrett ? x + .5 + w : x + u, pz = loddrett ? z + u : z + .5 + w; t ? g.lineTo(px, pz) : g.moveTo(px, pz); }
     }
     g.lineWidth = 2.2 / s; g.strokeStyle = '#6a0a0a'; g.stroke();

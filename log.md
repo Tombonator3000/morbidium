@@ -871,3 +871,19 @@ Alle tidspunkt er UTC.
   1. Minnesjekken i del 36 målte +7 teksturer mellom første og andre runde. Med fire runder på rad ble tallene 122, 122, 126 og 126, altså bilder som bufres første gang noe dukker opp (det varierer litt fra runde til runde), ikke en lekkasje. Sjekken sammenligner nå andre og tredje runde. Lekkasjen fra før rettingen ga +16 i hver runde, så den fanges fortsatt. Nå: +1 tekstur og 0 geometrier.
   2. B-testen i del 43 regnet med at fem bilder tar under 450 ms. I testnettleseren tar de mer. Nå holdes B inne idet panelet åpnes, slik det skjer når den hamres på i kampen, og da virker vakta uansett fart.
 - Del 36 og 43 går gjennom.
+
+## 2026-09-26 21:01 Gjennomgang av de flettede sporene: 13 funn, 12 rettet
+- Seks lesere (skygger, lys, diorama, kart, menyer, TV) og to skeptikere per funn gikk gjennom hele endringen siden e068b3b. 15 funn, 13 holdt.
+- Rettet:
+  1. Gloriene kunne krasje spillet («Noe gikk galt»): en glorie som fortsatt blekner for en ting som var død eller skjult, fikk aldri farge og ble lest som undefined. Fargen settes nå før den tidlige returen, og tegnesløyfa hopper over glorier uten farge.
+  2. Kartet eller pausen som ble åpnet i sekundet før etasjen byttes (når drømmen blekner), ble liggende over den nye etasjen. startFloor lukker nå et åpent panel først og kjører onClose.
+  3. Lappen for å snakke dekket toppen av evnekortene med stor skjermtekst og i TV-modus. Den flytter seg nå opp med --ui.
+  4. Lyspuljen kunne ta lyset fra en lampe blant de nærmeste når en annen allerede var på vei ut. Bytte skjer nå bare når det venter flere enn det er plasser som er ledige eller på vei ut. Med FYLL_SIST sammenlignes ekte avstand mellom to romlys.
+  5. Kartet tegnet rød bom og torner på sprekken til det hemmelige rommet og røpet den. Sprekken er vegg på kartet også der.
+  6. Den første A etter mus eller tastatur trykket med en gang på den første knappen i menyen. Nå viser den bare hvor fokuset er.
+  7. En knapp som kom tilbake avslått (Neste på siste side), sendte fokuset til den første knappen i menyen. Nå går det til den nærmeste.
+  8. Skyggekartet står stille i paneler, så et våpen kjøpt i butikken hadde gammel skygge til panelet ble lukket. D3.dukke ber nå om ny skygge når en figur får nye deler.
+  9. A på en håndkontroll teller ikke alltid som et ekte trykk i nettleseren, så lyden kan vente og fullskjerm kan bli nektet. Spillet sier nå én gang hva som virker (OK på fjernkontrollen, en tast eller et klikk), og meldingen om fullskjerm sier det samme på TV.
+- Ikke rettet, og lagt i todo: en glorie som forsvinner brått når midten går ut av skjermkanten (slik tegnes punkter), og at tilbake på tittelen i TV-modus laster spillet én gang til rett etter at siden er lastet på nytt (nettleseren lar ikke siden fange et steg som hører til dokumentet før omlastingen).
+- Under rettingen havnet en kommentar midt på en enlinjes funksjon i 45_kart.js, så resten av linja ble kommentert bort og spillet ikke startet. Fanget av del 43 og rettet. Alle filene i src/ sjekkes nå også med node --check før testene.
+- Nye sjekker i del 43: gloria krasjer ikke, panelet lukkes når etasjen byttes, og lappen ligger over kortene i TV-modus. Del 43 går gjennom.
