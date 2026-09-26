@@ -359,8 +359,10 @@ async def main():
           if (!r) return null; const f = G.props.filter(o => o.room === r.id && o.byggS).length; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; window.__rom = r.id; return { rom: r.id, skjult: f }; }""")
         await pg.wait_for_timeout(250)
         midt = await pg.evaluate("() => MORBIDIUM.props.filter(o => o.room === window.__rom && o.byggS).length")
-        await pg.wait_for_timeout(1500)
-        etter = await pg.evaluate("() => ({ igjen: MORBIDIUM.props.filter(o => o.room === window.__rom && o.byggS).length, feil: MORBIDIUM.props.filter(o => o.room === window.__rom && o.g.scale.y < .5 && !o.byggS && o.p.k !== 'drain').length })")
+        # animasjonen går i spilltid, og testnettleseren går langt under sanntid, så vi venter på at den blir ferdig (høyst 12 sekunder)
+        etter = await pg.evaluate("""async () => { const G = MORBIDIUM, igjen = () => G.props.filter(o => o.room === window.__rom && o.byggS).length;
+          for (let i = 0; i < 120 && igjen() > 0; i++) await new Promise(r => setTimeout(r, 100));
+          return { igjen: igjen(), feil: G.props.filter(o => o.room === window.__rom && o.g.scale.y < .5 && !o.byggS && o.p.k !== 'drain').length }; }""")
         sjekk('møblene i et rom bygges opp når pasienten kommer inn', r is not None and r['skjult'] > 0 and etter == {'igjen': 0, 'feil': 0}, [r, midt, etter])
         sjekk('første tips vises som lapp', t1['tips'] and len(t1['tekst']) > 10, t1)
         await pg.evaluate("() => rolig()")
@@ -687,7 +689,7 @@ async def main():
             const fl = typer.map((t, i) => { const a = i / typer.length * Math.PI * 2, s = freeSpot(P.x + Math.sin(a) * 3.5, P.z + Math.cos(a) * 3.5, 3), e = spawnEnemy(t, s.x, s.z, false, d); e.t = 0; return e; });
             for (let k = 0; k < 44; k++) { await vent(250); P.hp = 9999; for (const e of fl) { const S = ut.sett[e.type] || (ut.sett[e.type] = {}); S[e.state] = 1; if (e.lokker > 0) S.lokker = 1; if (e.dukket) S.nede = 1; if (e.dukket === false) S.oppe = 1; } }
             ut['levende' + d] = fl.filter(e => e.alive).length;
-            if (d === 5) { for (const e of fl) if (e.type === 'vedkubbe') hurt(e, 99999, { from: 'player' }); for (const e of fl) if (e.type === 'nokken') { e.cd = 99; e.stille = 99; } await vent(300); const h = fl.find(e => e.type === 'huldra'), sp = freeSpot(P.x + 4, P.z, 3); h.x = sp.x; h.z = sp.z; h.stille = 99; h.cd = 99; h.state = 'chase'; const x0 = Math.hypot(P.x - h.x, P.z - h.z); h.lokker = 1.5; await vent(700); ut.dratt = x0 > 1.5 && Math.hypot(P.x - h.x, P.z - h.z) < x0 - .3; h.stille = 0; for (const e of fl) if (e.type === 'nokken') { e.cd = 0; e.stille = 0; } const n = fl.find(e => e.type === 'nokken'); n.dukket = true; const h0 = n.hp; hurt(n, 30, { from: 'player' }); ut.nokkenUrort = n.hp === h0; n.dukket = false; hurt(n, 30, { from: 'player' }); ut.nokkenTruffet = n.hp < h0; }
+            if (d === 5) { for (const e of fl) if (e.type === 'vedkubbe') hurt(e, 99999, { from: 'player' }); for (const e of fl) if (e.type === 'nokken') { e.cd = 99; e.stille = 99; } await vent(300); const h = fl.find(e => e.type === 'huldra'), sp = freeSpot(P.x + 4, P.z, 3); h.x = sp.x; h.z = sp.z; h.stille = 99; h.cd = 99; h.state = 'chase'; const x0 = Math.hypot(P.x - h.x, P.z - h.z); h.lokker = 1.5; const gl = G.time; for (let i = 0; i < 100 && G.time - gl < .7 && !(Math.hypot(P.x - h.x, P.z - h.z) < x0 - .3); i++) await vent(100); ut.dratt = x0 > 1.5 && Math.hypot(P.x - h.x, P.z - h.z) < x0 - .3; h.stille = 0; for (const e of fl) if (e.type === 'nokken') { e.cd = 0; e.stille = 0; } const n = fl.find(e => e.type === 'nokken'); n.dukket = true; const h0 = n.hp; hurt(n, 30, { from: 'player' }); ut.nokkenUrort = n.hp === h0; n.dukket = false; hurt(n, 30, { from: 'player' }); ut.nokkenTruffet = n.hp < h0; }
             for (const e of fl) hurt(e, 99999, { from: 'player' });
           }
           ut.indeks = ['gartner', 'kraake', 'kaalhode', 'huldra', 'vedkubbe', 'nokken', 'hekk', 'hjort'].every(t => (FIENDE_INFO[t] || [])[0]) && SJEF_PULJE.includes('hekk') && SJEF_PULJE.includes('hjort');
@@ -709,7 +711,7 @@ async def main():
           // etterbehandlingen: alt slår inn neste bilde og dør ut av seg selv
           R.sjokk(P.x, P.z, 1.2); R.zoomStot(P.x, P.z, .8); R.negativ(.1); R.fx.lyn = 1; await vent(120);
           ut.paa = u.uSjokk.value[0].w > .1 && u.uZoom.value.z > .1 && u.uNeg.value > .5 && u.uLyn.value > .1;
-          await vent(1800); ut.av = u.uSjokk.value[0].w === 0 && u.uZoom.value.z === 0 && u.uNeg.value === 0 && u.uLyn.value === 0 && R.sjokkL.length === 0;
+          const avNaa = () => u.uSjokk.value[0].w === 0 && u.uZoom.value.z === 0 && u.uNeg.value === 0 && u.uLyn.value === 0 && R.sjokkL.length === 0, ge = G.time; for (let i = 0; i < 150 && !avNaa() && G.time - ge < 4; i++) await vent(100); ut.av = avNaa();
           // uten forvrengning og uten glimt blir de borte
           R.distortOn = false; R.flashOn = false; R.sjokk(P.x, P.z, 1); R.zoomStot(P.x, P.z, 1); R.negativ(); R.fx.lyn = 1; await vent(120);
           ut.skaansom = u.uSjokk.value[0].w === 0 && u.uZoom.value.z === 0 && u.uNeg.value === 0 && u.uLyn.value === 0; R.distortOn = true; R.flashOn = true; await vent(900);
@@ -844,8 +846,9 @@ async def main():
         hi = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
           const tittel = () => (document.querySelector('#panel:not(.hidden) .samtale .stittel') || document.querySelector('.samtale .stittel') || {}).textContent || '', tekst = () => (document.querySelector('.samtale .stekst') || {}).innerText || '';
           const venteTittel = async (s, maks = 40) => { for (let i = 0; i < maks && !tittel().startsWith(s); i++) await vent(100); return tittel(); };
-          // side 1 før første drøm: ingen sjef nevnt når ingen er behandlet, og «Les videre» går inn i drømmen
-          startFloor(1, false); rolig(); G.run.behandlet = []; descend(); ut.side1 = await venteTittel('Journalen, side 1'); ut.tekst1 = tekst();
+          // side 1 før første drøm: ingen sjef nevnt når ingen er behandlet, og «Les videre» går inn i drømmen.
+          // Innleggelsen tilbyr tre tilfeldige oppvåkninger, så testen setter Eget rom (etasje 1), ellers følger kapitlene en annen startetasje.
+          G.run.awk = 'eget'; startFloor(1, false); rolig(); G.run.behandlet = []; descend(); ut.side1 = await venteTittel('Journalen, side 1'); ut.tekst1 = tekst();
           ut.knapp = ((document.querySelector('[data-sv]') || {}).innerText || '').split('\\n')[0]; Samtale.velg(0); ut.intro1 = await venteTittel('Kapittel 1');
           // side 2 etter en behandlet sjef: gravskriften, sannheten om huset og forrige valg. Escape går til innledningen.
           closePanel(); Drom.hopp('tilgivelse'); await vent(400); rolig(); G.run.behandlet = [2]; const B2 = sjefFor(2); descend(); ut.side2 = await venteTittel('Journalen, side 2'); ut.tekst2 = tekst();
