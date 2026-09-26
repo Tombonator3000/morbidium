@@ -691,3 +691,6 @@ Alle tidspunkt er UTC.
 - AGENTS.md: to nye regler, om grafikkminne per etasje og om nye papirflater på mobil.
 - README.md: telefon stående og liggende. Rettet også «fire genererte etasjer» til seks.
 - Den fulle testkjøringen på det endelige bygget går i en egen arbeidskopi.
+
+## 2026-09-26 10:29 Lekkasjetest for grafikkminnet i testdel 36 (ikke kalibrert ennå)
+- Testdel 36 bygger fire etasjer med seks fiender som dør i hver, to ganger, og sammenligner renderer.info.memory (teksturer og geometrier) etter første og andre runde. Den andre runden skal ikke legge igjen noe. Grensene (høyst 4 teksturer og 12 geometrier) er satt før testen er kjørt, og justeres når den store testkjøringen er ferdig og testen er prøvd mot versjonen fra før rettingen.
