@@ -321,3 +321,11 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Testrapporten sier om det er en Samsung-TV (Tizen og Chromium-versjon), hvilken kontroller som er funnet, om TV-modus er på og om spillet er i fullskjerm. Innstillinger, Styring viser om en kontroller er funnet.
 - Samsung lover Gamepad API bare for installerte Tizen-apper, ikke for nettleseren på TV-en. Det må prøves på Toms TV. Veiledningen står i TV.md og i håndboka under Styring.
 
+
+## Runde 5 (26.9. natt): kontrakten mellom sporene
+Toms liste med fem skjermbilder (angrepsvarsler, snø, hårruller, skjulte rom, vegger og gulv fra ChatGPT, nye fiender), pluss stemplene oppå hverandre og blodet på skjermen. Gjøres i fire spor: A (varsler, lekkasje, partikler, nedslag), D (tekster og stempler, skjermblod, hårruller, snøfall), B (vegger og bakke fra ChatGPT, det skjulte rommet, vinter i teksturene) og C (nye fiender). Nye filer: 46_blekk.js (A), 47_sno.js (D), 48_skjult.js (B), 49_havet.js og 50_skinnlauget.js (C).
+- `addTele(shape, o, dur, fire, owner)` tar disse valgfrie feltene, og gammel kode ser bort fra dem: `o.type` (skadetypen: fysisk, morb, strom, gass, vann, gift, ild, lys, papir, natur, lenke), `o.folg` (en figur som varselet følger i x og z) og `o.stille` (ingen automatisk nedslagseffekt).
+- `R.kastTele(mesh, how, t)` erstatter `R.remove(t.mesh)` for varsler, med how `'fyr'`, `'avbryt'` eller `'rydd'`. Spor A lager den.
+- `G.skjult` (Uint8Array eller null) og `gulvSynlig(i)` (global i 12_paint.js) kommer fra spor B. De andre sporene bruker dem ikke før flettingen.
+- `e.dukket` er en fiende under vann som ikke kan treffes eller siktes på. Spor C gjør det generelt.
+- Testdeler: A 44, 46, 48, 49; D 45, 47, 56, 57; B 50 til 55; C 58 til 63. Test 28 teller typene i GLOD_TYPER i stedet for å vente åtte.
