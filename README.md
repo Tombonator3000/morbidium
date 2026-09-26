@@ -6,6 +6,8 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og He
 - Nettleser: https://tombonator3000.github.io/morbidium/
 - Tastatur og mus: WASD, mus for å sikte, venstreklikk slag, høyreklikk tungt slag, mellomrom rull, 1 til 4 evner, V apparat, F flaske, E snakk, Tab journal, Esc pause.
 - Håndkontroll og berøring virker også. På telefon kan du spille både stående og liggende: HUD-en og menyene legger seg etter skjermen, og det som ikke får plass, kan rulles med fingeren. Hele oversikten står i Pasienthåndboka på tittelskjermen og i pausemenyen.
+- Kartet: trykk eller klikk på minikartet oppe til høyre, eller trykk M, så åpnes hele etasjen som plantegning.
+- Hele spillet, også menyene, kan styres med bare en håndkontroll. Spille på TV (Samsung og andre): se [TV.md](TV.md). TV-modus slår seg på av seg selv i nettleseren på TV-en, eller under Innstillinger, Spill.
 - Testmodus: https://tombonator3000.github.io/morbidium/?testmodus (eller Innstillinger, Spill). Viser bilder i sekundet og minne i et hjørne, gir «Si din mening» med spørsmål som knapper i pausemenyen, og lager en rapport etter hvert løp som kan kopieres og limes inn til Claude.
 
 ## Innhold

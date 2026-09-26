@@ -115,7 +115,11 @@ const Testmodus = {
     const os = m(/Android ([\d.]+)/) ? 'Android ' + m(/Android ([\d.]+)/) : m(/(?:iPhone|CPU) OS (\d+)/) ? 'iOS ' + m(/OS (\d+)/) : /Windows/.test(u) ? 'Windows' : /Mac OS X/.test(u) ? 'macOS' : /Linux/.test(u) ? 'Linux' : 'ukjent system';
     let gpu = '';
     try { const gl = R.renderer.getContext(), x = gl.getExtension('WEBGL_debug_renderer_info'); gpu = x ? gl.getParameter(x.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); } catch (e) { }
-    return `${nett} på ${os}, ${innerWidth} x ${innerHeight} (dpr ${+(devicePixelRatio || 1).toFixed(2)}), ${R.coarse ? 'berøring' : 'mus og tastatur'}${navigator.hardwareConcurrency ? ', ' + navigator.hardwareConcurrency + ' kjerner' : ''}${navigator.deviceMemory ? ', ' + navigator.deviceMemory + ' GB' : ''}${gpu ? ', skjermkort ' + gpu : ''}${Sound.ctx ? ', lydkort ' + Sound.ctx.sampleRate + ' Hz' : ''}`;
+    // TV-er: Samsung (Tizen) med Chromium-versjonen, som sier hva nettleseren klarer (2023 og nyere trengs), og andre TV-er med navnet i nettleser-ID-en
+    const tv = /SMART-TV|Tizen/.test(u) ? `Samsung-TV (Tizen ${m(/Tizen ([\d.]+)/) || '?'}${m(/Chrome\/(\d+)/) ? ', Chromium ' + m(/Chrome\/(\d+)/) : ''})` : TV_UA.test(u) ? `TV (${u.match(TV_UA)[0]}${m(/Chrome\/(\d+)/) ? ', Chromium ' + m(/Chrome\/(\d+)/) : ''})` : '';
+    // håndkontrollen slik nettleseren ser den: navnet, oppsettet og antall knapper og akser. Det avgjør om spillet virker med kontroll på TV-en
+    const g = Input.gp, pad = g.connected ? `kontroller ${g.id || 'uten navn'} (${g.mapping || 'ukjent'} oppsett, ${g.nk ?? '?'} knapper, ${g.na ?? '?'} akser)` : 'ingen kontroller funnet';
+    return `${tv || nett + ' på ' + os}, ${innerWidth} x ${innerHeight} (dpr ${+(devicePixelRatio || 1).toFixed(2)}), ${R.coarse ? 'berøring' : 'mus og tastatur'}, ${pad}, TV-modus ${R.tv ? 'på' : 'av'}, fullskjerm ${Fullskjerm.paa() ? 'ja' : Fullskjerm.kan() ? 'nei' : 'kan ikke'}${navigator.hardwareConcurrency ? ', ' + navigator.hardwareConcurrency + ' kjerner' : ''}${navigator.deviceMemory ? ', ' + navigator.deviceMemory + ' GB' : ''}${gpu ? ', skjermkort ' + gpu : ''}${Sound.ctx ? ', lydkort ' + Sound.ctx.sampleRate + ' Hz' : ''}`;
   },
   tekst() {
     const run = G.run, T = this.data(), P = G.player; if (!run || !T) return 'Ingen løp ennå.';
@@ -173,9 +177,9 @@ const Testmodus = {
     if (!el) {
       el = document.createElement('div'); el.id = 'testpanel'; el.className = 'hidden'; document.body.appendChild(el);
       // tastene i panelet (fritekst) skal ikke styre spillet
-      el.addEventListener('keydown', e => { if (e.code === 'Escape') this.lukk(); e.stopPropagation(); });
+      el.addEventListener('keydown', e => { if (Input.kode(e) === 'Escape') this.lukk(); e.stopPropagation(); });
       // mens panelet er åpent, når ingen taster spillet (P eller Escape ville ellers lukke pausen under), men skriving i feltene virker
-      addEventListener('keydown', e => { if (!this.apen) return; if (e.code === 'Escape') { this.lukk(); e.preventDefault(); } e.stopPropagation(); }, true);
+      addEventListener('keydown', e => { if (!this.apen) return; if (Input.kode(e) === 'Escape') { this.lukk(); e.preventDefault(); } e.stopPropagation(); }, true); // også tilbake på fjernkontrollen
       addEventListener('resize', () => { if (this.apen) this.tilpass(); });
     }
     this.fane = fane; this.apen = true; el.classList.remove('hidden'); this.tegn(); el.scrollTop = 0;

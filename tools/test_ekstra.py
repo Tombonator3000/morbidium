@@ -28,12 +28,21 @@ async def ny_side(b, **kw):
     pg.on('console', lambda m: pg.errs.append(m.type + ': ' + m.text) if m.type == 'error' else None)
     return pg
 
+# et vanlig klikk først; svarer ikke siden (en 3D-side i programvaregrafikk på en travel maskin kan bruke sekunder per bilde),
+# trykkes knappen fra siden selv, så testen prøver spillet og ikke hvor rask maskinen er. Klikket kan ha gått gjennom selv om svaret
+# kom for sent: da er knappen skjult (tittelen eller innleggelsen er borte), og den trykkes ikke en gang til
+async def klikk(pg, sel):
+    try: await pg.click(sel, timeout=15000); return
+    except Exception: pass
+    await pg.wait_for_selector(sel, state='attached', timeout=30000)
+    await pg.evaluate("s => { const e = document.querySelector(s), r = e.getBoundingClientRect(); if (r.width && r.height && !e.closest('.hidden')) e.click(); }", sel)
+
 async def start_lop(pg, awk=None, url=None):
     await pg.goto(url or URL); await pg.wait_for_timeout(2500)
-    await pg.click('#tNew'); await pg.wait_for_timeout(500)
+    await klikk(pg, '#tNew'); await pg.wait_for_timeout(500)
     sel = f'[data-awk="{awk}"]' if awk else '[data-awk]'
     if awk and not await pg.query_selector(sel): sel = '[data-awk]'
-    await pg.click(sel); await pg.wait_for_timeout(1500)
+    await klikk(pg, sel); await pg.wait_for_timeout(1500)
 
 # en side i pasienthåndboka får plass: panelet er innenfor skjermen, teksten eller fiendekortene flyter ikke over, og hvert fiendekort har bilde
 HB_PLASS = """() => { const f = document.querySelector('#panel .fit'), r = f.getBoundingClientRect(), t = document.querySelector('.htext') || document.querySelector('.findeks'), kort = [...document.querySelectorAll('.fkort')];
@@ -293,7 +302,7 @@ async def main():
             for side in range(await pg.evaluate("(k) => hbSider(HANDBOK[k])", k)):
                 if side: await pg.click('#hNext'); await pg.wait_for_timeout(150)
                 kap.append(await pg.evaluate(HB_PLASS))
-        sjekk('pasienthåndboka har ti kapitler med fiendeindeks, og alle sidene får plass', nkap == 10 and len(kap) == 17 and all(kap), kap)
+        sjekk('pasienthåndboka har ti kapitler med fiendeindeks, og alle sidene får plass', nkap == 10 and len(kap) == 18 and all(kap), kap)
         await pg.click('[data-close]'); await pg.wait_for_timeout(300)
         await pg.click('#tArch'); await pg.wait_for_timeout(400)
         a = await pg.evaluate("() => ({ mapper: document.querySelectorAll('.mappe').length, portrett: document.querySelectorAll('.mappe canvas').length })")
@@ -535,17 +544,20 @@ async def main():
         lagret = await pg.evaluate("() => { Merknad.onBoss({ type: 'klumpen' }); return (JSON.parse(localStorage.getItem('morbidium_meta_v2')).sjefDrap || {}).klumpen; }")
         sjekk('en slått sjef lagres med en gang (til fiendeindeksen)', lagret == 1, lagret)
 
-        # 22) UI-settet fra ChatGPT: uten bilder tegner CSS-en som før, med bilder byttes rammer, ringer, hjerter og ikoner inn uten at boksene endrer størrelse
+        # 22) UI-settet fra ChatGPT: uten bilder tegner CSS-en som før, med bilder byttes rammer, ringer, hjerter og ikoner inn uten at boksene endrer størrelse.
+        #     Alle UI-bildene er levert nå, så de tas ut av SPRITES mens sjekken går, og legges tilbake etterpå
         await start_lop(pg)
         ui = await pg.evaluate("""async () => { rolig(); const a = {}, px = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
           const P = MORBIDIUM.player; P.cds[1] = 4.6; (P.cdMax || (P.cdMax = [1, 1, 1, 1]))[1] = 8; await new Promise(r => setTimeout(r, 500));
           const cd = document.querySelector('#ac1 .cd'); a.nedtelling = cd && !cd.classList.contains('hidden') ? cd.textContent : null; a.sektor = cd ? +cd.style.getPropertyValue('--p') : -1;
+          const ekte = {}; for (const k of Object.keys(SPRITES)) if (k.startsWith('ui_')) { ekte[k] = SPRITES[k]; delete SPRITES[k]; }
           a.uten = brukUIsett().length === 0 && !document.body.classList.contains('ui-sett'); a.kodehjerte = !hjerteHtml(1, c => '<i style="color:' + c + '"></i>').includes('uihjerte');
           const boks = () => { const r = document.getElementById('plate').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }, f0 = boks();
           for (const k of ['ui_panel', 'ui_kort', 'ui_ring_kart', 'ui_hjerte_full', 'ui_hjerte_halv', 'ui_ikon_pause']) SPRITES[k] = px;
           a.halvtSett = hjerteHtml(1, c => '').includes('uihjerte'); SPRITES.ui_hjerte_tom = px;
           a.brukt = brukUIsett(); a.css = (document.getElementById('uiSett') || { textContent: '' }).textContent.includes('border-image'); a.ikon = !!document.querySelector('#bPause img');
           a.hjerte = hjerteHtml(.5, c => '').includes('uihjerte'); const f1 = boks(); a.boks = Math.abs(f1[0] - f0[0]) <= 2 && Math.abs(f1[1] - f0[1]) <= 2;
+          for (const k of Object.keys(SPRITES)) if (k.startsWith('ui_')) delete SPRITES[k]; Object.assign(SPRITES, ekte); brukUIsett(); // de leverte bildene tilbake
           return a; }""")
         sjekk('kortet viser nedtellingen i sekunder og en sektor som krymper', ui['nedtelling'] in ('4s', '5s') and 0.3 < ui['sektor'] < 0.65, ui)
         sjekk('UI-settet: CSS-en tegner når bildene mangler, og ChatGPTs bilder tas i bruk uten å endre størrelsen på boksene',
@@ -1186,7 +1198,8 @@ async def main():
           R.safe = false; G.meta.settings.simple = false; G.meta.settings.d3 = true; applySettings();
           const runde = async () => { for (let d = 1; d <= 4; d++) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
             await vent(150); const P = G.player; for (let i = 0; i < 6; i++) { const s = freeSpot(P.x + 2 + i * .3, P.z, 4), e = spawnEnemy('pleier', s.x, s.z, false, d); killEntity(e, {}); } await vent(250); } };
-          await runde(); const m1 = { t: info.textures, g: info.geometries }; await runde(); const m2 = { t: info.textures, g: info.geometries };
+          // tre runder: de to første fyller bufrene (bilder som lages første gang noe dukker opp, og det varierer litt), den tredje skal ikke legge igjen noe
+          await runde(); await runde(); const m1 = { t: info.textures, g: info.geometries }; await runde(); const m2 = { t: info.textures, g: info.geometries };
           // skyggekartet direkte: kartet til månen i denne etasjen skal kastes når neste etasje bygges
           const kart = D3.mane && D3.mane.shadow && D3.mane.shadow.map; let kastet = false; if (kart) kart.addEventListener('dispose', () => { kastet = true; });
           startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200);
@@ -1215,6 +1228,775 @@ async def main():
         await pg.screenshot(path='/tmp/e_22mobil.png')
         sjekk('ingen konsollfeil (mobil stående)', not [e for e in pg.errs if 'CONTEXT_LOST' not in e], pg.errs[:6])
         await ctx.close()
+
+        # 37) Skygger og vær
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        # været: bare regn, snø og ildfluer lager partikler og lyd. Klarvær, tåke og etasjer uten vær får ingenting (vakta lå i en kommentar
+        # og ga 60 hvite prikker og vindsus overalt), men Vaer.F følger etasjen likevel, så ute() svarer for riktig etasje
+        va = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} }, aktiv = v => v === 'regn' || v === 'sno' || v === 'ildfluer';
+          const bygg = async d => { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); const g0 = G.time; for (let i = 0; i < 100 && G.time - g0 < .1; i++) await vent(50); };
+          const tilstand = () => ({ vaer: G.F.vaer, obj: !!Vaer.obj, type: Vaer.type, F: Vaer.F === G.F, lyd: Sound.vaerType || null });
+          for (let d = 1; d <= 6; d++) { await bygg(d); const s = tilstand(); s.ok = s.F && (aktiv(s.vaer) ? s.obj && s.type === s.vaer && s.lyd === (s.vaer === 'regn' ? 'regn' : 'vind') : !s.obj && s.type === null && s.lyd === null); ut.etasjer[d] = s; }
+          const F = G.F, v0 = F.vaer; ut.stille = {};
+          for (const v of [null, 'klart', 'taake']) { F.vaer = v; Vaer.start(F); ut.stille[v] = Vaer.obj === null && Vaer.type === null && Vaer.F === F && !Sound.vaerType && !Regnringer.obj; }
+          F.vaer = 'regn'; Vaer.start(F); ut.regn = !!(Vaer.obj && Vaer.obj.isLineSegments && Vaer.obj.parent === R.scene && Vaer.type === 'regn' && Sound.vaerType === 'regn');
+          F.vaer = 'sno'; Vaer.start(F); ut.sno = !!(Vaer.obj && Vaer.obj.isPoints && Vaer.type === 'sno' && Sound.vaerType === 'vind');
+          R.lowTex = true; F.vaer = 'regn'; Vaer.start(F); ut.lowTex = Vaer.obj === null && Vaer.type === null && Vaer.F === F && !Sound.vaerType; R.lowTex = false;
+          // fra regn i en inneetasje til klarvær i parken: ute() skal svare for parken, ikke for etasjen før
+          F.vaer = 'regn'; Vaer.start(F); const F6 = F; await bygg(1); const F1 = G.F, v1 = F1.vaer;
+          Vaer.start(F6); F1.vaer = 'klart'; Vaer.start(F1); let feil = 0, rom = 0, pav = 0;
+          for (let z = 0; z < F1.H; z++) for (let x = 0; x < F1.W; x++) { const i = z * F1.W + x, rid = F1.tiles[i] ? F1.roomId[i] : -1, venter = rid >= 0 ? !!F1.rooms[rid].ute : true; if (rid >= 0) { if (venter) rom++; else pav++; } if (Vaer.ute(x + .5, z + .5) !== venter) feil++; }
+          ut.parken = { F: Vaer.F === F1, obj: Vaer.obj, utenfor: Vaer.ute(-5, -5), feil, rom, pav };
+          F1.vaer = v1; F6.vaer = v0; Vaer.start(F1); ut.tilbake = Vaer.F === F1 && !!Vaer.obj === aktiv(v1);
+          return ut; }""")
+        sjekk('været lager partikler og lyd bare ved regn, snø og ildfluer, og følger etasjen i alle seks', all(va['etasjer'][str(d)]['ok'] for d in range(1, 7)), va['etasjer'])
+        sjekk('klarvær, tåke og etasjer uten vær gir ingen prikker, ingen vind og ingen regnringer', all(va['stille'].values()) and va['lowTex'], va)
+        sjekk('regn er streker og snø er prikker, med lyden som hører til', va['regn'] and va['sno'], va)
+        pk = va['parken']
+        sjekk('etter regn i etasjen før svarer været riktig for parken i klarvær', pk['F'] and pk['obj'] is None and pk['utenfor'] is True and pk['feil'] == 0 and pk['rom'] > 0 and va['tilbake'], pk)
+        sjekk('ingen konsollfeil (skygger og vær)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # lykteskygger: i samme bilde som figurene, ikke gjennom vegger, kortere mot en vegg bak og myke nær lykta (at de er borte like etter et drap, sjekker del 30)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ly = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, ut = {};
+          // vegg mellom to punkter, målt for seg: tette prøver langs linja, og bare veggruter teller (ikke møbler)
+          const vegg = (ax, az, bx, bz) => { const F = G.F; for (let i = 0; i <= 120; i++) { const t = i / 120, x = Math.floor(ax + (bx - ax) * t), z = Math.floor(az + (bz - az) * t); if (x < 0 || z < 0 || x >= F.W || z >= F.H || !F.tiles[z * F.W + x]) return true; } return false; };
+          const fri = (x, z) => [[0, 0], [.45, 0], [-.45, 0], [0, .45], [0, -.45]].every(([a, c]) => !solid(Math.floor(x + a), Math.floor(z + c)));
+          const rom = (x, z) => { const i = Math.floor(z) * G.F.W + Math.floor(x); return G.F.tiles[i] ? G.F.roomId[i] : -1; };
+          const hoy = o => o.alive && o.g && o.g.parent && o.m && !o.g.userData.flat && o.m.userData && o.m.userData.P && o.m.userData.P.h >= 1.1;
+          const fiende = (x, z) => { const e = spawnEnemy('pleier', x, z, false, 2); e.stun = 99; e.hp = e.max = 1e6; e.state = 'chase'; return e; };
+          const plass = (x, z) => { P.x = x; P.z = z; P.vx = P.vz = P.kvx = P.kvz = 0; R.snapCamera(P.x, P.z); };
+          const RR = () => Math.max(2.5, P.lantern.scale.x * .5 * 1.15);
+          // et sted i et rom med en høy ting like ved og en fri rute bak en vegg innen tre ruter
+          let S = null;
+          for (const d of [2, 3, 4, 6, 1, 5]) {
+            startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999;
+            const F = G.F, maks = Math.min(2.9, RR() - .4);
+            for (const o of G.props.filter(hoy)) { const oz = o.g.position.z - .15;
+              for (let k = 0; k < 24 && !S; k++) { const a = k / 24 * Math.PI * 2, r = 1.3 + (k % 3) * .4, px = o.x + Math.cos(a) * r, pz = oz + Math.sin(a) * r; if (!fri(px, pz) || rom(px, pz) !== o.room || vegg(px, pz, o.x, oz)) continue;
+                for (let dz = -3; dz <= 3 && !S; dz++) for (let dx = -3; dx <= 3 && !S; dx++) { const ex = Math.floor(px) + dx + .5, ez = Math.floor(pz) + dz + .5, dd = Math.hypot(ex - px, ez - pz); if (dd > maks || dd < 1.2 || !fri(ex, ez) || !vegg(px, pz, ex, ez)) continue; S = { d, o, px, pz, ex, ez }; } }
+              if (S) break; }
+            if (S) break; }
+          ut.funnet = !!S; if (!S) return ut;
+          plass(S.px, S.pz); const e1 = fiende(S.ex, S.ez); await spill(.8);
+          ut.vegg = { etasje: S.d, bak: vegg(P.x, P.z, e1.x, e1.z), avstand: +Math.hypot(e1.x - P.x, e1.z - P.z).toFixed(2), rr: +RR().toFixed(2), fiende: Dybde.skygger.has(e1), ting: Dybde.skygger.has(S.o) && Dybde.skygger.get(S.o).material.opacity > .05 };
+          killEntity(e1, {}); await spill(.8);
+          // en fiende rett foran en vegg, med lykta bak seg: skyggen stopper ved veggen i stedet for å gå gjennom den
+          let V = null; const F = G.F;
+          for (let z = 1; z < F.H - 3 && !V; z++) for (let x = 1; x < F.W - 1 && !V; x++) { const i = z * F.W + x; if (!F.tiles[i] || F.tiles[i - F.W] || !fri(x + .5, z + .5) || !fri(x + .5, z + 2.1) || vegg(x + .5, z + .5, x + .5, z + 2.1) || rom(x + .5, z + .5) < 0) continue; V = { x: x + .5, z: z + .5 }; }
+          ut.veggFunnet = !!V; if (!V) return ut;
+          plass(V.x, V.z + 1.6); const e = fiende(V.x, V.z); await spill(.8);
+          { const m = Dybde.skygger.get(e), d = Math.hypot(e.x - P.x, e.z - P.z), ux = (e.x - P.x) / d, uz = (e.z - P.z) / d, L = .8 + d * 1.15, l = m ? m.scale.y : 0;
+            ut.kort = { finnes: !!m, lengde: +l.toFixed(3), full: +L.toFixed(3), forbi: vegg(e.x, e.z, e.x + ux * L, e.z + uz * L), inni: vegg(e.x, e.z, e.x + ux * l * .97, e.z + uz * l * .97) }; }
+          // samme bilde: platen står der fienden står når bildet tegnes, også mens den dyttes fram og tilbake
+          { const r0 = R.render, L = { n: 0, flytt: 0, maks: 0 }; let x0 = e.x, z0 = e.z, f = 0;
+            R.render = function (dt) { const m = Dybde.skygger.get(e); if (m) { L.n++; if (Math.hypot(e.x - x0, e.z - z0) > 1e-3) { L.flytt++; L.maks = Math.max(L.maks, Math.abs(m.position.x - e.x), Math.abs(m.position.z - e.z)); } } x0 = e.x; z0 = e.z; e.kvx = ++f % 12 < 6 ? 3 : -3; return r0.call(this, dt); };
+            await spill(1.2); R.render = r0; e.kvx = e.kvz = 0; ut.sammeBilde = L; }
+          await spill(.4);
+          // nær lykta blekner skyggen jevnt bort i stedet for å klippes ved 0,35
+          { const d0 = Math.hypot(e.x - P.x, e.z - P.z), ux = (e.x - P.x) / d0, uz = (e.z - P.z) / d0, ex0 = e.x, ez0 = e.z; ut.naer = [];
+            for (const d of [.8, .55, .4, .3, .22]) { e.x = P.x + ux * d; e.z = P.z + uz * d; Dybde.lykt(0); const m = Dybde.skygger.get(e); ut.naer.push(m ? +m.material.opacity.toFixed(4) : -1); }
+            e.x = ex0; e.z = ez0; Dybde.lykt(0);
+            // gjennomsiktige og halvt oppløste figurer kaster svakere skygge
+            const m = Dybde.skygger.get(e), o0 = m.material.opacity; e.doll.U.uAlpha.value = .3; Dybde.lykt(0); const o1 = m.material.opacity; e.doll.U.uAlpha.value = 1; e.doll.U.uDissolve.value = .5; Dybde.lykt(0); const o2 = m.material.opacity; e.doll.U.uDissolve.value = 0; Dybde.lykt(0);
+            ut.alfa = { o0: +o0.toFixed(4), gjennomsiktig: +(o1 / o0).toFixed(4), oppløst: +(o2 / o0).toFixed(4) }; }
+          return ut; }""")
+        sjekk('lykta kaster ikke skygge gjennom vegger, men de høye tingene i rommet beholder sin', ly.get('funnet') and ly['vegg']['bak'] and ly['vegg']['avstand'] < ly['vegg']['rr'] and not ly['vegg']['fiende'] and ly['vegg']['ting'], ly.get('vegg', ly))
+        k = ly.get('kort', {})
+        sjekk('lykteskyggen stopper ved første vegg bak fienden', ly.get('veggFunnet') and k.get('finnes') and k['forbi'] and not k['inni'] and .15 < k['lengde'] < k['full'] - .8, k)
+        sb = ly.get('sammeBilde', {})
+        sjekk('lykteskyggen står der fienden står i samme bilde, også under et dytt', sb.get('flytt', 0) >= 5 and sb.get('maks', 1) < 1e-6, sb)
+        n = ly.get('naer', [])
+        sjekk('nær lykta blekner skyggen jevnt i stedet for å klippes', len(n) == 5 and all(x >= 0 for x in n) and all(n[i] > n[i + 1] for i in range(4)) and n[4] < .03 and n[0] > .3, n)
+        al = ly.get('alfa', {})
+        sjekk('gjennomsiktige og halvt oppløste figurer kaster svakere lykteskygge', abs(al.get('gjennomsiktig', 0) - .3) < 1e-3 and abs(al.get('oppløst', 0) - .5) < 1e-3, al)
+        sjekk('ingen konsollfeil (lykteskygger)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 3D: månens skygger står stille når kameraet glir, lykta lyser fra der pasienten er i samme bilde, og telefoner får 1024 i skyggekartet
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        m3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
+          const bygg = async d => { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; await spill(.3); };
+          await bygg(2); ut.d3 = D3.on && D3.bygd;
+          // seks tilfeldige små flytt av kameraet: midtpunktet ligger alltid på hele ruter i skyggekartet, med samme retning og lengde, på gulvet og nær kameraet.
+          // Aksene regnes ut her fra lyset selv, slik lookAt gjør det for skyggekameraet, og ruta er bredden på kameraet delt på kartet
+          const M = D3.mane, C = M.shadow.camera, z = new THREE.Vector3(-7, 16, 9).normalize(), x = new THREE.Vector3(0, 1, 0).cross(z).normalize(), B = { x, y: z.clone().cross(x), texel: (C.right - C.left) / M.shadow.mapSize.x }, A = { rute: 0, retning: 0, gulv: 0, naer: 0 };
+          for (let i = 0; i < 6; i++) { R.camT.x += Math.random() - .5; R.camT.z += Math.random() - .5; D3.tick(0); const t = M.target.position, fx = t.dot(B.x) / B.texel, fy = t.dot(B.y) / B.texel;
+            A.rute = Math.max(A.rute, Math.abs(fx - Math.round(fx)), Math.abs(fy - Math.round(fy))); A.retning = Math.max(A.retning, Math.abs(M.position.x - t.x + 7), Math.abs(M.position.y - t.y - 16), Math.abs(M.position.z - t.z - 9)); A.gulv = Math.max(A.gulv, Math.abs(t.y)); A.naer = Math.max(A.naer, Math.hypot(t.x - R.camT.x, t.z - R.camT.z) / B.texel); }
+          ut.maane = A; ut.texel = B.texel; ut.kart = M.shadow.mapSize.x; ut.niva = D3.kval();
+          // lykta: punktlyset står der pasienten står når bildet tegnes, også under et dytt
+          { const r0 = R.render, L = { n: 0, flytt: 0, maks: 0 }; let x0 = P.x, z0 = P.z, f = 0;
+            R.render = function (dt) { const l = D3.pool[0]; if (l && G.state === 'play') { L.n++; if (Math.hypot(P.x - x0, P.z - z0) > 1e-3) { L.flytt++; L.maks = Math.max(L.maks, Math.abs(l.position.x - P.x), Math.abs(l.position.z + .3 - P.z)); } } x0 = P.x; z0 = P.z; P.kvx = ++f % 10 < 5 ? 3 : -3; return r0.call(this, dt); };
+            await spill(1.2); R.render = r0; P.kvx = P.kvz = 0; ut.lykt = L; }
+          // skyggekartet tegnes ikke i pausen, bare én gang når den åpnes, og igjen når spillet går videre
+          { const SM = R.renderer.shadowMap, r1 = SM.render; let n = 0; SM.render = function (...a) { if (this.enabled && (this.autoUpdate || this.needsUpdate) && a[0] && a[0].length) n++; return r1.apply(this, a); };
+            await bilder(3); const spillN = n; openPause(); await bilder(2); n = 0; await bilder(4); const pauseN = n, auto = SM.autoUpdate; closePanel(); await bilder(3); ut.kartpass = { spill: spillN, pause: pauseN, auto, etter: n, autoEtter: SM.autoUpdate }; SM.render = r1; }
+          // telefon (grov peker) på høy: 1024 i skyggekartet, uten at nivåene endres
+          { const s = G.meta.settings, k0 = s.kvalitet; s.kvalitet = 3; R.coarse = true; applySettings(); ut.mobil = { niva: D3.kval(), skygge: D3.Q().skygge, kart: D3.mane.shadow.mapSize.x, texel: D3.maneB && D3.maneB.texel, hoy: D3.NIVA.hoy.skygge };
+            R.coarse = false; applySettings(); ut.pc = { skygge: D3.Q().skygge, kart: D3.mane.shadow.mapSize.x };
+            s.lights = false; applySettings(); D3.tick(0); ut.lysAv = !D3.maneB && !D3.mane.castShadow; s.lights = true; s.kvalitet = k0; applySettings(); }
+          const r = G.F.rooms.find(r => r.role === 'combat' && !r.ute && r.w >= 8) || G.F.rooms[G.F.startId]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z); await spill(.6);
+          return ut; }""")
+        await pg.screenshot(path='/tmp/e_skygge_a.png')
+        await pg.evaluate("async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); G.player.x += .02; while (G.time - g0 < .8 && performance.now() - t0 < 20000) await new Promise(r => setTimeout(r, 50)); }")
+        await pg.screenshot(path='/tmp/e_skygge_b.png')
+        ma = m3['maane']
+        sjekk('månens skyggekamera flytter seg bare i hele ruter av skyggekartet, med samme retning og lengde', m3['d3'] and ma['rute'] < 1e-3 and ma['retning'] < 1e-6 and ma['gulv'] < 1e-6 and ma['naer'] < 2, m3)
+        ly3 = m3['lykt']
+        sjekk('lykta i 3D lyser fra der pasienten står i samme bilde, også under et dytt', ly3['flytt'] >= 5 and ly3['maks'] < 1e-6, ly3)
+        kp = m3['kartpass']
+        sjekk('skyggekartet tegnes ikke på nytt i pausen, men igjen når spillet går videre', kp['spill'] >= 3 and kp['pause'] == 0 and kp['auto'] is False and kp['etter'] >= 2 and kp['autoEtter'] is True, kp)
+        sjekk('telefoner får høyst 1024 i skyggekartet på høy, PC 2048, og uten lys og skygge er det ingen måneskygge', m3['mobil'] == {'niva': 'hoy', 'skygge': 1024, 'kart': 1024, 'texel': 32 / 1024, 'hoy': 2048} and m3['pc'] == {'skygge': 2048, 'kart': 2048} and m3['lysAv'], m3)
+        sjekk('ingen konsollfeil (måneskygger)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # skyggeflekkene i 2D: kråka og koret svever og et hopp løfter tegningen, men flekken blir liggende på gulvet, mindre og lysere.
+        # Fiendene settes på plass etter update (roten til y 0), så det sjekkes når bildet tegnes. Full styrke i 2D, og den blekner med figuren
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        fl = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, ut = {};
+          startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999;
+          const fiende = (t, dx, dz) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy(t, s.x, s.z, false, 2); e.stun = 99; e.hp = e.max = 1e6; return e; };
+          const v = new THREE.Vector3(), y = o => o.getWorldPosition(v).y, r0 = R.render;
+          const kr = fiende('kraake', 2, 0), ko = fiende('koret', -2, 0), pl = fiende('pleier', 0, 2);
+          // pleieren hopper (som rottene og yngelen gjør når de løper): update får hopp, og updateEnemy setter roten på plass etterpå som ellers
+          const u0 = pl.doll.update; pl.doll.update = function (dt, st) { return u0.call(this, dt, Object.assign({}, st, { hop: .5 })); };
+          await spill(1.2);
+          const M = { n: 0, kraake: 9, koret: 9, hopp: 9, flekk: 0 };
+          R.render = function (dt) { M.n++; M.kraake = Math.min(M.kraake, y(kr.doll.plane)); M.koret = Math.min(M.koret, y(ko.doll.plane)); M.hopp = Math.min(M.hopp, y(pl.doll.plane)); for (const e of [kr, ko, pl]) M.flekk = Math.max(M.flekk, Math.abs(y(e.doll.shadow) - .012));
+            const s = pl.doll.shadow; M.str = +(s.scale.x / s.userData.sx).toFixed(4); M.a = +s.material.opacity.toFixed(4); return r0.call(this, dt); };
+          await spill(.5); R.render = r0; pl.doll.update = u0; ut.hoyde = M; await spill(.2); ut.full = pl.doll.shadow.material.opacity;
+          // et drap: flekken følger oppløsningen (og høyden) og går aldri over full styrke, og kråka daler ned mens den løses opp
+          const L = { n: 0, avvik: 0, maks: 0, kraake: 9 };
+          R.render = function (dt) { for (const e of [pl, kr]) if (!e.gone) { const d = e.doll, h = Math.max(0, d.plane.position.y); L.n++; L.avvik = Math.max(L.avvik, Math.abs(d.shadow.material.opacity - (1 - d.U.uDissolve.value) * (1 - Math.min(.5, h * .4)))); L.maks = Math.max(L.maks, d.shadow.material.opacity); } if (!kr.gone) L.kraake = kr.doll.plane.position.y; return r0.call(this, dt); };
+          killEntity(pl, {}); killEntity(kr, {}); await spill(.7); R.render = r0; L.borte = pl.gone && kr.gone; ut.drap = L;
+          return ut; }""")
+        h = fl['hoyde']
+        sjekk('kråka og koret svever i spillet, men skyggeflekken ligger på gulvet', h['n'] >= 3 and h['kraake'] > .5 and h['koret'] > .2 and h['flekk'] < 1e-3, h)
+        sjekk('et hopp løfter tegningen og ikke skyggeflekken, som blir mindre og lysere', h['hopp'] > .45 and abs(h['str'] - .8) < .01 and abs(h['a'] - .8) < .01, h)
+        d = fl['drap']
+        sjekk('i 2D har skyggeflekken full styrke, den blekner med figuren når den dør, og kråka daler ned', abs(fl['full'] - 1) < 1e-6 and d['n'] >= 4 and d['avvik'] < 1e-6 and d['maks'] <= 1 and d['kraake'] < .15 and d['borte'], fl)
+        sjekk('ingen konsollfeil (skyggeflekker)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 3D: figurene kaster måneskygge etter hele tegningen, også våpen og tillegg som kommer senere. Skyggeflekken er .45 og blir der,
+        # også gjennom et drap og når hjorten skjuler seg. Halvt oppløste og gjennomsiktige kaster ikke. Den åpne kista, dekalene, lys av og 3D av
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        s3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
+          const bygg = async d => { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; await spill(.3); };
+          const fiende = (t, dx, dz) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy(t, s.x, s.z, false, 2); e.stun = 99; e.hp = e.max = 1e6; return e; };
+          const plate = d => d.meshes.length > 0 && d.meshes.every(m => !!m.customDepthMaterial && m.castShadow), K = d => d.d3k || [], v = new THREE.Vector3(), y = o => o.getWorldPosition(v).y, r0 = R.render;
+          await bygg(2); ut.d3 = D3.on && D3.bygd;
+          const pd = P.doll; ut.spiller = { deler: pd.meshes.length, plate: plate(pd), baand: [pd.back.mesh, pd.front.mesh].every(m => K(pd).includes(m) && m.castShadow), flekk: +pd.shadow.material.opacity.toFixed(4) };
+          // et våpen som plukkes opp midt i etasjen får skyggeplate, og det gamle våpenet frigjøres
+          { let kastet = false; const gml = pd.wpMesh; if (gml) gml.material.addEventListener('dispose', () => { kastet = true; }); const w = Object.keys(WEAPONS).find(w => w !== P.weapon); P.weapon = w; pd.setWeapon(w); await bilder(3);
+            ut.vaapen = { ny: pd.wpMesh !== gml, plate: !!pd.wpMesh.customDepthMaterial && pd.wpMesh.castShadow && plate(pd), kastet: !gml || kastet }; }
+          // en ny fiende og en kråke: flekken er .45 i 3D (lysere når kråka svever), og et tillegg som kommer senere får skyggeplate
+          const e = fiende('pleier', 2, 0), kr = fiende('kraake', -2, 0); await spill(1.2);
+          ut.fiende = { flekk: +e.doll.shadow.material.opacity.toFixed(4), a: e.doll.shadowA, plate: plate(e.doll) };
+          { const M = { n: 0, kraake: 9, flekk: 0 }; R.render = function (dt) { M.n++; M.kraake = Math.min(M.kraake, y(kr.doll.plane)); M.flekk = Math.max(M.flekk, Math.abs(y(kr.doll.shadow) - .012)); return r0.call(this, dt); }; await spill(.3); R.render = r0; M.a = +kr.doll.shadow.material.opacity.toFixed(4); ut.kraake = M; }
+          { const m = e.doll.addAddon(weaponPart('mopp'), { at: 'head', off: { f: [0, .2] } }); await bilder(3); ut.tillegg = !!m.customDepthMaterial && m.castShadow; }
+          // den gjennomsiktige mesteren kaster ikke måneskygge, og skyggen kommer tilbake når figuren er synlig igjen
+          e.doll.U.uAlpha.value = .3; await bilder(3); const gj = K(e.doll).length > 3 && K(e.doll).every(m => !m.castShadow); e.doll.U.uAlpha.value = 1; await bilder(3); ut.gjennomsiktig = gj && K(e.doll).every(m => m.castShadow);
+          // den skjulte hjorten (oppløst .55 og så 0 igjen): ingen måneskygge mens den er skjult, og flekken går tilbake til .45, ikke til 1
+          e.doll.dissolve(.55); await bilder(3); const skjult = K(e.doll).length > 3 && K(e.doll).every(m => !m.castShadow); e.doll.dissolve(0); await bilder(3); ut.skjult = { skygge: skjult && K(e.doll).every(m => m.castShadow), flekk: +e.doll.shadow.material.opacity.toFixed(4) };
+          // et drap: flekken går aldri over .45 mens figuren løses opp, måneskyggen er borte før halvveis, og skyggeplatene frigjøres med dukken
+          { let kastet = false; const m0 = e.doll.meshes[0]; if (m0 && m0.customDepthMaterial) m0.customDepthMaterial.addEventListener('dispose', () => { kastet = true; });
+            const M = { n: 0, maks: 0 }; R.render = function (dt) { if (!e.gone) { M.n++; M.maks = Math.max(M.maks, e.doll.shadow.material.opacity); } return r0.call(this, dt); };
+            killEntity(e, {}); const g0 = G.time; await spill(.3); M.tid = +(G.time - g0).toFixed(2); M.skygge = K(e.doll).length === 0 || K(e.doll).some(m => m.castShadow); await spill(.5); R.render = r0; M.borte = e.gone; M.kastet = kastet; M.maks = +M.maks.toFixed(4); ut.drap = M; }
+          // dekaler, plakater og dører er toon som gulvet (Lambert tok lykta og lampene bort i måneskyggen)
+          { const lag = D3.byttet.filter(([m]) => m.userData.d3 && !m.userData.vaat).map(([m]) => m.material.type); ut.dekaler = { n: lag.length, toon: lag.every(t => t === 'MeshToonMaterial'), lambert: R.level.children.filter(c => c.material && c.material.isMeshLambertMaterial).length }; }
+          // den åpne kista: ny tegning i U og m, lyses av lampene, kaster måneskygge og har ikke lenger den bakte skyggen
+          { let K = null; for (const d of [2, 3, 4, 1, 6, 5]) { if (d !== G.depth) await bygg(d); K = G.props.find(o => o.kind === 'chest' && !o.opened && o.g); if (K) break; }
+            if (K) { openChest(K); const t0 = D3.t; for (let i = 0; i < 300 && D3.t - t0 < .7; i++) await vent(50); const c = K.U.uTint.value; ut.kiste = { U: K.U === K.g.userData.U, m: K.m === K.g.userData.m, bakt: K.g.userData.shadow.visible, plate: !!K.m.customDepthMaterial && K.m.castShadow, r: +c.r.toFixed(3), panel: G.state }; closePanel(); await bilder(2); } }
+          // lys og skygge av: tingene beholder den bakte skyggen, og flekken under figurene har full styrke. Så på igjen
+          { const s = G.meta.settings; s.lights = false; applySettings(); await bilder(3); const tegnet = G.props.filter(o => o.g && o.g.userData.shadow && !o.g.userData.flat && o.g.userData.m);
+            ut.lysAv = { d3: D3.on && D3.bygd, ting: tegnet.length, bakt: tegnet.every(o => o.g.userData.shadow.visible), flekk: +P.doll.shadow.material.opacity.toFixed(4) };
+            s.lights = true; applySettings(); await bilder(3); ut.lysPaa = { flekk: +P.doll.shadow.material.opacity.toFixed(4), gjemt: tegnet.filter(o => !o.g.userData.shadow.visible).length, plate: plate(P.doll) }; }
+          // 3D av: skyggeflekkene får full styrke igjen, og tilbake på .45 når 3D slås på
+          { const s = G.meta.settings; s.d3 = false; applySettings(); await bilder(3); ut.av = { d3: D3.on, flekk: +P.doll.shadow.material.opacity.toFixed(4), a: P.doll.shadowA };
+            s.d3 = true; applySettings(); await bilder(3); ut.paaIgjen = { d3: D3.on && D3.bygd, flekk: +P.doll.shadow.material.opacity.toFixed(4), plate: plate(P.doll) }; }
+          // kuriositeter som vises på pasienten (Items.addons) kaster måneskygge, og materialet og skyggeplaten frigjøres når utseendet tømmes
+          { const id = Object.keys(ITEMS).find(k => ITEMS[k].look); Items.give(id); Items.updateLook(); await bilder(3); const ms = Object.values(Items.addons); let kastet = 0;
+            for (const m of ms) { if (m.customDepthMaterial) m.customDepthMaterial.addEventListener('dispose', () => kastet++); m.material.addEventListener('dispose', () => kastet++); }
+            ut.utseende = { n: ms.length, plate: ms.length > 0 && ms.every(m => !!m.customDepthMaterial && m.castShadow) }; Items.clearLook(); ut.utseende.kastet = kastet; }
+          return ut; }""")
+        sp = s3['spiller']
+        sjekk('i 3D kaster alle tegnede deler og strekbåndene måneskygge, og skyggeflekken er .45', s3['d3'] and sp['deler'] >= 4 and sp['plate'] and sp['baand'] and abs(sp['flekk'] - .45) < 1e-3, s3)
+        sjekk('et våpen som plukkes opp og et tillegg som kommer senere, kaster måneskygge, og det gamle våpenet frigjøres', s3['vaapen'] == {'ny': True, 'plate': True, 'kastet': True} and s3['tillegg'], s3)
+        fi, kr = s3['fiende'], s3['kraake']
+        sjekk('en ny fiende har flekken på .45, og kråka svever i 3D med flekken på gulvet', abs(fi['flekk'] - .45) < 1e-3 and fi['a'] == .45 and fi['plate'] and kr['n'] >= 3 and kr['kraake'] > .5 and kr['flekk'] < 1e-3 and .22 < kr['a'] < .45, s3)
+        sjekk('gjennomsiktige og halvt oppløste figurer kaster ikke måneskygge, og hjorten som har skjult seg får flekken tilbake på .45', s3['gjennomsiktig'] and s3['skjult']['skygge'] and abs(s3['skjult']['flekk'] - .45) < 1e-3, s3)
+        dr = s3['drap']
+        sjekk('under et drap går flekken aldri over .45, måneskyggen er borte etter 0,3 sekunder, og skyggeplatene frigjøres', dr['n'] >= 3 and dr['maks'] <= .46 and dr['tid'] >= .3 and not dr['skygge'] and dr['borte'] and dr['kastet'], dr)
+        dk = s3['dekaler']
+        sjekk('dekaler, plakater og dører er toon som gulvet, ikke Lambert', dk['n'] > 0 and dk['toon'] and dk['lambert'] == 0, dk)
+        ki = s3.get('kiste')
+        sjekk('den åpne kista lyses av lampene, kaster måneskygge og har ikke lenger den bakte skyggen', ki is not None and ki['U'] and ki['m'] and not ki['bakt'] and ki['plate'] and ki['r'] < .95 and ki['panel'] == 'panel', ki)
+        la, lp = s3['lysAv'], s3['lysPaa']
+        sjekk('uten lys og skygge beholder tingene den bakte skyggen og flekken har full styrke, og med lys igjen er alt som før', la['d3'] and la['ting'] > 5 and la['bakt'] and abs(la['flekk'] - 1) < 1e-3 and abs(lp['flekk'] - .45) < 1e-3 and lp['gjemt'] > 5 and lp['plate'], s3)
+        sjekk('når 3D slås av, får skyggeflekken full styrke igjen, og .45 når det slås på', s3['av'] == {'d3': False, 'flekk': 1, 'a': 1} and s3['paaIgjen']['d3'] and abs(s3['paaIgjen']['flekk'] - .45) < 1e-3 and s3['paaIgjen']['plate'], s3)
+        ut_ = s3['utseende']
+        sjekk('kuriositetene på pasienten kaster måneskygge, og materialet og skyggeplaten frigjøres når utseendet tømmes', ut_['plate'] and ut_['kastet'] == 2 * ut_['n'], ut_)
+        sjekk('ingen konsollfeil (skygger i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 38) Lyspuljen
+        # 3D: punktlysene hopper ikke av og på når pasienten går, lykta har det første, bare ett lysglimt får lys om gangen, svarte kilder
+        # får ingenting, en lampe som er mørk en kort stund beholder lyset sitt, romlyset kan settes sist i køen, og antallet følger kvaliteten.
+        # D3.tick kjøres for hånd i faste steg (1/60) inne i én evaluate, så spillet ikke går imellom og maskinens fart ikke betyr noe
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        lp = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, ut = {};
+          startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; await spill(.3);
+          ut.d3 = D3.on && D3.bygd; const pool = D3.pool, N = pool.length, lys = m => { const c = m.material.color; return c.r + c.g + c.b >= .05; };
+          // ingen flimring, intet mørke og ingen Morbidium, så bare fordelingen kan endre lysene
+          const ro = () => { for (const L of D3.lamper) L.flimrer = false; D3.morkeT = 0; P.morb = 0; };
+          const flytt = (x, z) => { P.x = x; P.z = z; P.lantern.position.x = x; P.lantern.position.z = z; R.camT.x = x; R.camT.z = z; };
+          const steg = (n, f) => { const L = []; for (let k = 0; k < n; k++) { if (f) f(k); D3.tick(1 / 60); L.push(pool.map(l => [l.position.x, l.position.z, l.intensity])); } return L; };
+          // et hopp: lyset flytter seg mer enn en halv rute mens det lyser (etter flyttet, eller mer enn ett steg i blekningen før)
+          const hopp = L => { let pop = 0, maks = 0; for (let k = 1; k < L.length; k++) for (let i = 1; i < N; i++) { const [x0, z0, a] = L[k - 1][i], [x1, z1, b] = L[k][i]; maks = Math.max(maks, Math.abs(b - a)); if (Math.hypot(x1 - x0, z1 - z0) > .5 && (b > .01 || a > .2)) pop++; } return { pop, maks: +maks.toFixed(3) }; };
+          const paa = m => pool.findIndex((l, i) => i > 0 && l.intensity > 0 && Math.abs(l.position.x - m.position.x) < 1e-6 && Math.abs(l.position.z - m.position.z + .3) < 1e-6);
+          const kand = () => D3.kilder().filter(m => m !== P.lantern && lys(m)).length, tent = () => pool.filter((l, i) => i > 0 && l.intensity > 0).length;
+          // pasienten går 12 ruter i 60 steg, fra midten av et rom og den veien flest lyskilder kommer inn blant de nærmeste
+          const K0 = D3.kilder().filter(m => m !== P.lantern && lys(m)), naer = (x, z) => K0.map(m => [(m.position.x - x) ** 2 + (m.position.z - z) ** 2, m]).sort((a, b) => a[0] - b[0]).slice(0, N - 1).map(a => a[1]);
+          let x0 = P.x, z0 = P.z, dir = [1, 0], mulige = -1;
+          for (const r of G.F.rooms) for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ax = r.x + r.w / 2, az = r.z + r.h / 2, S = new Set(); for (let t = 0; t <= 12; t += 1) for (const m of naer(ax + dx * t, az + dz * t)) S.add(m); if (S.size > mulige) { mulige = S.size; x0 = ax; z0 = az; dir = [dx, dz]; } }
+          ro(); flytt(x0, z0); steg(90);
+          const sett = new Set(), nest = new Set(), L = steg(60, k => { flytt(x0 + dir[0] * .2 * (k + 1), z0 + dir[1] * .2 * (k + 1)); for (const m of naer(R.camT.x, R.camT.z)) nest.add(m); for (const l of pool.slice(1)) if (l.intensity > 0) sett.add(Math.round(l.position.x * 100) + ',' + Math.round(l.position.z * 100)); });
+          ut.gange = Object.assign(hopp(L), { kilder: sett.size, naermeste: nest.size, n: N, mulige });
+          steg(90); ut.hvile = { tent: tent(), kand: kand(), lykt: pool[0].userData.lykt === true && Math.abs(pool[0].position.x - P.x) < 1e-6 && Math.abs(pool[0].position.z + .3 - P.z) < 1e-6 && pool[0].intensity > 0 };
+          // fem lysglimt rundt kameraet samtidig: bare ett får et punktlys, og det tennes med en gang. Når de er over, får lampene lyset tilbake
+          { const cx = R.camT.x, cz = R.camT.z, fl = [], f0 = tent(); for (let k = 0; k < 5; k++) { flashLight(cx + .37 * (k - 2) + .011, cz + .23 * (k - 2) + .013, 3, '#ffd0a0', .3); fl.push(G.fxl[G.fxl.length - 1].obj); }
+            D3.tick(1 / 60); const i = fl.map(paa).find(i => i > 0), maks = { n: 0 };
+            ut.glimt = { lys: fl.filter(m => paa(m) > 0).length, sterk: i > 0 ? +pool[i].intensity.toFixed(3) : 0, blink: i > 0 && !!(pool[i].userData.kilde && pool[i].userData.kilde.userData.blink) };
+            steg(40, () => { updateFx(1 / 60); maks.n = Math.max(maks.n, fl.filter(m => paa(m) > 0).length); });
+            ut.glimt.maks = maks.n; ut.glimt.borte = fl.every(m => !m.parent) && fl.every(m => paa(m) < 0); steg(60); ut.glimt.for = f0; ut.glimt.etter = tent(); }
+          // en svart kilde rett ved kameraet får aldri lys
+          { const sv = R.light(R.camT.x + .123, R.camT.z + .077, 3, '#ffd89a', 0, R.levelL); steg(30); ut.svart = pool.some(l => Math.abs(l.position.x - sv.position.x) < 1e-6 && Math.abs(l.position.z - sv.position.z + .3) < 1e-6); R.remove(sv); }
+          // en lampe som blir mørk ett sekund (som i mørket etter en sjef), beholder lyset og lyser med en gang den tennes igjen. Mørk i 2,5 sekunder mister den det
+          { const i1 = pool.findIndex((l, i) => i > 0 && l.userData.kilde && l.userData.w === 1 && !l.userData.kilde.userData.blink && !D3.lamper.some(L => L.lp === l.userData.kilde));
+            if (i1 > 0) { const m1 = pool[i1].userData.kilde, k1 = m1.material.color.clone();
+              m1.material.color.setRGB(0, 0, 0); steg(60); const kort = pool[i1].userData.kilde === m1; m1.material.color.copy(k1); steg(1); const igjen = pool[i1].intensity > 0 && pool[i1].userData.w === 1;
+              m1.material.color.setRGB(0, 0, 0); steg(150); const lang = pool.every(l => l.userData.kilde !== m1); m1.material.color.copy(k1); steg(30); ut.morkt = { kort, igjen, lang }; } }
+          // romlyset (fyll) er merket i hvert rom, og med FYLL_SIST går punktlysene til lampene så lenge det er nok av dem
+          { const fylte = D3.kilder().filter(m => m.userData.fyll), andre = D3.kilder().filter(m => !m.userData.fyll && m !== P.lantern && lys(m)).length;
+            D3.FYLL_SIST = true; steg(120); ut.fyll = { n: fylte.length, rom: G.F.rooms.length, andre, sist: pool.filter(l => l.userData.kilde && l.userData.kilde.userData.fyll).length, n1: N - 1 }; D3.FYLL_SIST = false; steg(30); }
+          // antallet punktlys følger kvaliteten (8, 6 og 4), og uten lys og skygge er det ingen
+          { const s = G.meta.settings, k0 = s.kvalitet; ut.niva = {};
+            for (const [k, n] of [[1, 'lav'], [2, 'middels'], [3, 'hoy']]) { s.kvalitet = k; applySettings(); ro(); for (let j = 0; j < 20; j++) D3.tick(1 / 60); ut.niva[n] = [D3.pool.length, D3.pool.filter(l => l.intensity > 0).length]; }
+            s.lights = false; applySettings(); for (let j = 0; j < 5; j++) D3.tick(1 / 60); ut.niva.av = D3.pool.length; s.lights = true; s.kvalitet = k0; applySettings(); }
+          await spill(.6); ut.spill = D3.pool.filter(l => l.intensity > 0).length;
+          return ut; }""")
+        ga = lp['gange']
+        sjekk('punktlysene hopper ikke av og på når pasienten går 12 ruter, og de blekner jevnt', lp['d3'] and ga['naermeste'] >= ga['n'] + 2 and ga['pop'] == 0 and ga['maks'] <= .3 and ga['kilder'] >= ga['n'] + 1, ga)
+        hv = lp['hvile']
+        sjekk('lykta har det første punktlyset, og står pasienten stille, er ingen punktlys ledige så lenge det er kilder nok', hv['lykt'] and hv['tent'] == min(lp['gange']['n'] - 1, hv['kand']), hv)
+        gl = lp['glimt']
+        sjekk('fem lysglimt samtidig gir bare ett punktlys, det tennes med en gang, og lampene får lyset tilbake etterpå', gl['lys'] == 1 and gl['sterk'] > 1 and gl['blink'] and gl['maks'] == 1 and gl['borte'] and gl['etter'] == gl['for'], gl)
+        sjekk('en svart lyskilde får aldri punktlys', lp['svart'] is False, lp['svart'])
+        mo = lp.get('morkt')
+        sjekk('en lampe som er mørk et sekund, beholder punktlyset og lyser med en gang, men mister det etter 2,5 sekunder', mo == {'kort': True, 'igjen': True, 'lang': True}, mo)
+        fy = lp['fyll']
+        sjekk('romlyset er merket i hvert rom, og med FYLL_SIST får lampene punktlysene', fy['n'] == fy['rom'] and fy['andre'] >= fy['n1'] and fy['sist'] == 0, fy)
+        nv = lp['niva']
+        sjekk('antallet punktlys følger kvaliteten, og uten lys og skygge er det ingen', nv['lav'][0] == 4 and nv['middels'][0] == 6 and nv['hoy'][0] == 8 and all(nv[k][1] >= 2 for k in ('lav', 'middels', 'hoy')) and nv['av'] == 0 and lp['spill'] >= 2, nv)
+        sjekk('ingen konsollfeil (lyspuljen)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 39) Diorama
+        # Glorier rundt lampene og flammene, tilt-shift også på middels med det skarpe båndet der pasienten står, og etterbehandlingen med
+        # hjelpemål uten dybdebuffer som kastes når de slås av, og ingen lysbuffer i 3D. Gloriene kjøres for hånd i faste steg, og bildet
+        # tegnes med R.render(0) to ganger i samme evaluate (uten og med glorier), så maskinens fart ikke betyr noe
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        di = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {}, s = G.meta.settings, u = R.post.uniforms;
+            G.run.seed = 4242; startFloor(3, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999;
+            const tikk = n => { for (let i = 0; i < n; i++) Glorie.tick(1 / 60); }, antall = () => Glorie.pts && Glorie.pts.visible ? Glorie.pts.geometry.drawRange.count : 0, lyser = () => Glorie.K.filter(k => k.lys > .01).length;
+            const mal = () => ({ tilt: +u.uTilt.value.toFixed(3), bl: R.bl ? [R.bl.a.depthBuffer, R.bl.b.depthBuffer] : null, us: R.us ? [R.us.a.depthBuffer, R.us.b.depthBuffer] : null, lrt: R.lrt ? R.lrt.depthBuffer : null, rt: R.rt.depthBuffer, lys: u.uLights.value });
+            // etterbehandlingen per nivå: tilt-shift på høy og middels, glød og tilt i mål uten dybdebuffer som kastes når de slås av, ingen lysbuffer i 3D.
+            // Antallet glorier følger taket, også mens kameraet glir over hele etasjen
+            ut.niva = {}; const glc = R.renderer.getContext(); ut.maks = [(Glorie.maks || {}).value, glc.getParameter(glc.ALIASED_POINT_SIZE_RANGE)[1]];
+            for (const [k, n] of [[3, 'hoy'], [2, 'middels'], [1, 'lav']]) {
+              s.kvalitet = k; applySettings(); await bilder(3); tikk(30); const m = mal(); m.kval = D3.kval(); m.tak = Glorie.tak(); m.n = antall(); m.lyser = lyser();
+              let maks = 0; const W = G.F.W, H = G.F.H; for (let i = 0; i <= 90; i++) { const t = i / 90; R.camT.x = W * (.1 + .8 * t); R.camT.z = H * (.2 + .6 * Math.abs(Math.sin(t * 5))); tikk(1); maks = Math.max(maks, antall()); }
+              m.maks = maks; ut.niva[n] = m;
+            }
+            s.kvalitet = 3; applySettings(); await bilder(3);
+            // uten 3D: lysbufferen uten dybdebuffer, ingen glød eller tilt, og høyst ti glorier
+            s.d3 = false; applySettings(); await bilder(3); tikk(30); ut.uten3d = Object.assign(mal(), { d3: D3.on, tak: Glorie.tak(), n: antall() }); s.d3 = true; applySettings(); await bilder(3); tikk(30);
+            // enkel grafikk, lette teksturer og uten lys og skygge: ingen glorier
+            const av = () => [Glorie.tak(), Glorie.pts.visible, antall()];
+            // enkel grafikk slått på midt i spillet kaster også hjelpemålene til glød, tilt-shift og lysbufferen
+            R.safe = true; tikk(1); R.render(0); ut.safe = av(); ut.safeMal = [!!R.bl, !!R.us, !!R.lrt]; R.safe = false; R.lowTex = true; tikk(1); ut.lowTex = av(); R.lowTex = false;
+            s.lights = false; applySettings(); await bilder(2); tikk(1); ut.lysAv = av(); s.lights = true; applySettings(); await bilder(3); tikk(30); ut.igjen = av();
+            // lyset i gloria ved et stearinlys nær pasienten. Bildet tegnes to ganger i samme øyeblikk, med og uten glorier, og blekkstrekene
+            // (under 30 uten glorier) skal holde seg mørke
+            const kand = Glorie.K.filter(k => k.t === 'ting' && k.eier.kind === 'candles' && k.lys > .5);
+            ut.kand = kand.length; if (!kand.length) return ut;
+            const L = kand[0], o = L.eier, fs = freeSpot(o.x + 1.6, o.z + 1.2, 3); P.x = fs.x; P.z = fs.z; P.vx = P.vz = 0; R.snapCamera(P.x, P.z); D3.tick(1 / 60); tikk(40);
+            const gl = R.renderer.getContext(), Wb = gl.drawingBufferWidth, Hb = gl.drawingBufferHeight, v = new THREE.Vector3(L.x, L.y, L.z).project(R.camera);
+            const cx = Math.round((v.x + 1) / 2 * Wb), cy = Math.round((v.y + 1) / 2 * Hb), B = 48, px = new Uint8Array(B * B * 4), les = () => { gl.readPixels(cx - B / 2, cy - B / 2, B, B, gl.RGBA, gl.UNSIGNED_BYTE, px); return Array.from({ length: B * B }, (_, i) => .299 * px[i * 4] + .587 * px[i * 4 + 1] + .114 * px[i * 4 + 2]); };
+            const info = R.renderer.info; info.autoReset = false;
+            Glorie.pts.visible = false; info.reset(); R.render(0); const kall0 = info.render.calls, uten = les();
+            Glorie.pts.visible = true; info.reset(); R.render(0); const kall1 = info.render.calls, med = les(); info.autoReset = true;
+            const boks = a => { let sum = 0, n = 0; for (let y = 12; y < 36; y++) for (let x = 12; x < 36; x++) { sum += a[y * B + x]; n++; } return sum / n; };
+            const blekk = []; for (let i = 0; i < B * B; i++) if (uten[i] < 30) blekk.push(i);
+            ut.lys = { kind: o.kind, skjerm: [cx, cy, Wb, Hb], uten: +boks(uten).toFixed(1), med: +boks(med).toFixed(1), blekk: blekk.length, blekkMaks: +Math.max(0, ...blekk.map(i => med[i])).toFixed(1), blekkUten: +Math.max(0, ...blekk.map(i => uten[i])).toFixed(1), kall: [kall0, kall1] };
+            // det skarpe båndet står der pasienten står
+            ut.fokus = { x: +u.uFokus.value.x.toFixed(4), P: +R.uvAv(P.x, .9, P.z).y.toFixed(4), y: u.uFokus.value.y, z: u.uFokus.value.z };
+            // gloriene følger lyset: mørket etter en sjef slukker dem, og et stearinlys som mister lyset (knust), blekner bort
+            const sum = () => Glorie.K.filter(k => k.t === 'ting' && k.w > 0).reduce((a, k) => a + k.lys, 0), s0 = sum(); D3.morke(1.2, .08); D3.tick(1 / 60); tikk(1); const s1 = sum(); D3.morkeT = 0; D3.tick(1 / 60); tikk(1);
+            ut.morke = { for: +s0.toFixed(3), under: +s1.toFixed(3), etter: +sum().toFixed(3) };
+            const ly = Glorie.K.find(k => k.t === 'ting' && k.eier.kind === 'candles' && k.w === 1);
+            if (ly) { R.remove(ly.eier.light); tikk(6); const w1 = ly.w; tikk(20); ut.knust = { w1: +w1.toFixed(3), w2: ly.w, lys: ly.lys }; }
+            // ny etasje: den gamle gloria frigjøres og en ny lages
+            const g = Glorie.pts.geometry; let kastet = false; g.addEventListener('dispose', () => { kastet = true; });
+            startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await bilder(2);
+            ut.nyEtasje = { kastet, ny: !!Glorie.pts && Glorie.pts.geometry !== g, iScenen: !!Glorie.pts && Glorie.pts.parent === R.scene, gammel: R.scene.children.some(c => c.geometry === g) };
+            return ut; }""")
+        nv = di['niva']; h, m, l = nv['hoy'], nv['middels'], nv['lav']
+        sjekk('tilt-shift på høy (0,7) og middels (0,45), ikke på lav, og glød og tilt har mål uten dybdebuffer som kastes når de slås av', h['tilt'] == .7 and m['tilt'] == .45 and l['tilt'] == 0 and h['bl'] == [False, False] and h['us'] == [False, False] and m['us'] == [False, False] and l['bl'] is None and l['us'] is None and all(x['rt'] and x['lrt'] is None for x in (h, m, l)), nv)
+        u3 = di['uten3d']
+        sjekk('uten 3D: lysbufferen uten dybdebuffer, ingen glød eller tilt, og høyst ti glorier', not u3['d3'] and u3['lrt'] is False and u3['bl'] is None and u3['us'] is None and u3['tilt'] == 0 and u3['lys'] == 1 and 0 < u3['n'] <= 10 and u3['tak'] == 10, u3)
+        sjekk('gloriene holder seg under taket (32, 20 og 10) også mens kameraet glir over etasjen, og taket fylles når det er kilder nok', all(x['n'] == min(x['tak'], x['lyser']) and x['maks'] <= x['tak'] for x in (h, m, l)) and [h['tak'], m['tak'], l['tak']] == [32, 20, 10], nv)
+        sjekk('enkel grafikk slått på underveis kaster målene til glød, tilt-shift og lysbufferen', di['safeMal'] == [False, False, False], di['safeMal'])
+        sjekk('gloriene kan bli så store som skjermkortet tillater (de vokser i de uskarpe båndene også på store skjermer)', di['maks'][0] == di['maks'][1] and (di['maks'][0] or 0) > 160, di['maks'])
+        sjekk('ingen glorier med enkel grafikk, lette teksturer eller uten lys og skygge, og de kommer tilbake', di['safe'] == [0, False, 0] and di['lowTex'] == [0, False, 0] and di['lysAv'] == [0, False, 0] and di['igjen'][1] and di['igjen'][2] > 0, [di['safe'], di['lowTex'], di['lysAv'], di['igjen']])
+        ly = di.get('lys', {})
+        sjekk('gloria lyser opp rundt stearinlyset, blekkstrekene holder seg mørke, og den koster ett tegnekall', di.get('kand', 0) > 0 and ly.get('med', 0) - ly.get('uten', 0) >= 8 and ly.get('blekk', 0) >= 5 and ly.get('blekkMaks', 99) < 60 and ly['kall'][1] - ly['kall'][0] == 1, ly)
+        fo = di.get('fokus', {})
+        sjekk('det skarpe båndet i tilt-shift står der pasienten står, bredere på liggende skjerm', abs(fo.get('x', 0) - fo.get('P', 1)) < 1e-3 and fo.get('y') == .2 and fo.get('z') == .42, fo)
+        mo, kn = di.get('morke', {}), di.get('knust', {})
+        sjekk('gloriene slukner i mørket etter sjefene og kommer tilbake, og et lys som blir borte, blekner bort', mo.get('under', 99) < mo.get('for', 0) * .2 and abs(mo.get('etter', 0) - mo.get('for', 0)) < .05 * mo.get('for', 1) and 0 < kn.get('w1', 0) < 1 and kn.get('w2') == 0, [mo, kn])
+        ne = di.get('nyEtasje', {})
+        sjekk('gloriene frigjøres når etasjen rives, og den nye etasjen får sine egne', ne == {'kastet': True, 'ny': True, 'iScenen': True, 'gammel': False}, ne)
+        await pg.screenshot(path='/tmp/e_diorama_pc.png')
+        sjekk('ingen konsollfeil (diorama)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # telefon: middels som standard, med tilt-shift og et smalere skarpt bånd stående, og bredere liggende
+        pg = await ny_side(b, viewport={'width': 390, 'height': 844}, has_touch=True, is_mobile=True, device_scale_factor=2)
+        await pg.goto(URL3D); await pg.wait_for_timeout(2500)
+        await pg.tap('#tNew'); await pg.wait_for_timeout(500); await pg.tap('[data-awk]'); await pg.wait_for_timeout(1500)
+        TLF = """async () => { const G = MORBIDIUM, P = G.player, u = R.post.uniforms, bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });
+          if (G.state === 'play') { rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; } await bilder(4); R.render(0);
+          return { kval: D3.on && D3.kval(), tilt: u.uTilt.value, us: R.us ? [R.us.a.depthBuffer, R.us.b.depthBuffer] : null, fokus: [+u.uFokus.value.x.toFixed(4), +R.uvAv(P.x, .9, P.z).y.toFixed(4), u.uFokus.value.y], n: Glorie.pts.geometry.drawRange.count, tak: Glorie.tak(), coarse: R.coarse }; }"""
+        st = await pg.evaluate(TLF)
+        await pg.screenshot(path='/tmp/e_diorama_mobil.png')
+        await pg.set_viewport_size({'width': 844, 'height': 390}); await pg.wait_for_timeout(600)
+        lg = await pg.evaluate(TLF)
+        sjekk('telefon: middels med tilt-shift (0,45) i mål uten dybdebuffer, og høyst 20 glorier', st['coarse'] and st['kval'] == 'middels' and st['tilt'] == .45 and st['us'] == [False, False] and 0 < st['n'] <= 20 and st['tak'] == 20, st)
+        sjekk('telefon: det skarpe båndet følger pasienten, smalere stående (0,14) enn liggende (0,2)', abs(st['fokus'][0] - st['fokus'][1]) < 1e-3 and st['fokus'][2] == .14 and abs(lg['fokus'][0] - lg['fokus'][1]) < 1e-3 and lg['fokus'][2] == .2, [st['fokus'], lg['fokus']])
+        sjekk('ingen konsollfeil (diorama på telefon)', not pg.errs, pg.errs[:6])
+        # 40) Stort kart: ringen, M, pausen og håndkontrollen åpner det, M, Esc, B og Lukk lukker det, i kamp slår et klikk på ringen,
+        #     tegnforklaringen viser det du har sett, lerretene frigjøres, og det får plass stående og liggende på telefon, i 3D og i alle slags etasjer
+        ramme = "const ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });"
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg)
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        ring = await pg.evaluate("() => { const r = document.getElementById('mapring'); return { rolle: r.getAttribute('role'), pe: getComputedStyle(r).pointerEvents, navn: r.getAttribute('aria-label'), rad: KONTROLLER.some(k => k[0] === 'Kartet'), tips: !!TIPS.kart }; }")
+        sjekk('kartringen er en knapp (rolle, navn og pekerhendelser), og kartet står i kontrollene og tipsene', ring == {'rolle': 'button', 'pe': 'auto', 'navn': 'Kartet (M)', 'rad': True, 'tips': True}, ring)
+        await pg.evaluate("() => rolig()")  # noen oppvåkninger begynner i kamp, og da er et klikk på ringen et slag
+        await pg.click('#mapring')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=10000)
+        k1 = await pg.evaluate("""() => { const c = document.getElementById('kCan'), p = document.getElementById('kPil'), l = parseFloat(p.style.left), t = parseFloat(p.style.top);
+          return { w: c.width, h: c.height, pil: l >= 3 && t >= 3 && l <= parseFloat(c.style.width) + 3 && t <= parseFloat(c.style.height) + 3, fokus: document.activeElement.id, forste: Math.round(Kart.ms), gulv: !!Kart.gulvBilde() }; }""")
+        await pg.screenshot(path='/tmp/e_kart_pc.png')
+        await pg.keyboard.press('m')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        k1['frigjort'] = await pg.evaluate("() => { const c = document.getElementById('kCan'); return !!c && c.width === 0 && c.height === 0; }")
+        sjekk('et klikk på ringen åpner kartet over det malte gulvet, med pila på pasienten, og M lukker det og frigjør lerretet', k1['w'] >= 360 and k1['h'] > 300 and k1['pil'] and k1['fokus'] == 'kLukk' and k1['gulv'] and k1['frigjort'], k1)
+        await pg.keyboard.press('m')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=20000)
+        await pg.keyboard.press('Escape')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        # tegnetiden: det beste av tre nye tegninger, så en annen nettleser som går samtidig ikke gir falsk feil
+        tid = await pg.evaluate("() => { Kart.apne(); const ms = []; for (let i = 0; i < 3; i++) { Kart.tegn(); ms.push(Kart.ms); } closePanel(); return { beste: Math.round(Math.min(...ms)), forste: " + str(k1['forste']) + " }; }")
+        sjekk('M åpner kartet, Esc lukker det, og kartet tegnes på under 60 ms', tid['beste'] < 60, tid)
+        # i kamp: et klikk på ringen er et slag, og musa sikter gjennom den
+        kamp = await pg.evaluate("() => { const G = MORBIDIUM; window.__md = 0; document.getElementById('game').addEventListener('mousedown', () => window.__md++); G.combat = { r: G.F.rooms[G.F.startId], wave: 0, t: 999 }; const r = document.getElementById('mapring').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }")
+        await pg.click('#mapring'); await pg.wait_for_timeout(300)
+        kamp.update(await pg.evaluate("() => { const G = MORBIDIUM, ut = { state: G.state, md: window.__md, mx: Input.mouse.x, my: Input.mouse.y }; G.combat = null; return ut; }"))
+        sjekk('i kamp på PC åpner ikke et klikk på ringen kartet: det blir et slag, og musa sikter videre', kamp['state'] == 'play' and kamp['md'] == 1 and abs(kamp['mx'] - kamp['x']) < 3 and abs(kamp['my'] - kamp['y']) < 3, kamp)
+        # fiender fra en hendelse låser ingen dører (G.combat er tom), men et klikk på ringen er et slag da også
+        await pg.evaluate("() => { const P = MORBIDIUM.player; spawnEnemyBareTest('rotte', P.x + 2, P.z); }")
+        await pg.click('#mapring'); await pg.wait_for_timeout(300)
+        hf = await pg.evaluate("() => { const G = MORBIDIUM, ut = { state: G.state, md: window.__md, combat: !!G.combat }; if (G.state === 'panel') closePanel(); rolig(); return ut; }")
+        sjekk('fiender fra en hendelse rundt pasienten: et klikk på ringen er et slag og ikke kartet', hf == {'state': 'play', 'md': 2, 'combat': False}, hf)
+        # et annet panel som tar over mens kartet er oppe (drømmen begynner), frigjør lerretet også
+        byttet = await pg.evaluate("() => { Kart.apne(); const c = document.getElementById('kCan'), for_ = c.width; openPause(); const ut = { for: for_, etter: c.width, pause: !!document.getElementById('pK') }; closePanel(); return ut; }")
+        sjekk('kartet som byttes ut med et annet panel, frigjør lerretet', byttet['for'] >= 360 and byttet['etter'] == 0 and byttet['pause'], byttet)
+        # fra pausen og tilbake
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.getElementById('pK')", timeout=20000)
+        await pg.click('#pK'); await pg.wait_for_timeout(200)
+        pa = await pg.evaluate("() => !!document.querySelector('#panel .kartark')")
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => !!document.querySelector('#panel .clip')", timeout=20000)
+        await pg.click('#panel [data-close]'); await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        sjekk('Kartet i pausen åpner kartet, og Esc går tilbake til pausen', pa, pa)
+        # håndkontroll: pil høyre (15) åpner, pil høyre igjen lukker ikke (den skal bla i menyene), B (1) lukker
+        pad = await pg.evaluate("""async () => { """ + ramme + """ const G = MORBIDIUM, ut = {};
+          const p = { id: 'testpad', index: 0, connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [p] });
+          const trykk = async i => { p.buttons[i].pressed = true; p.buttons[i].value = 1; await ramme(4); p.buttons[i].pressed = false; p.buttons[i].value = 0; await ramme(4); };
+          await ramme(3); await trykk(15); ut.apnet = G.state === 'panel' && Kart.aapen(); ut.hint = (document.querySelector('.khint') || {}).textContent;
+          await trykk(15); ut.blir = Kart.aapen(); await trykk(1); ut.lukket = G.state === 'play';
+          await trykk(9); ut.pause = G.state === 'panel' && !!document.querySelector('#panel .clip'); await trykk(1); ut.pauseB = G.state === 'play';
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [] }); await ramme(3); return ut; }""")
+        sjekk('håndkontrollen: pil høyre åpner kartet, B lukker det (og pausen), og pil høyre lukker det ikke', pad == {'apnet': True, 'hint': 'B eller Start lukker kartet', 'blir': True, 'lukket': True, 'pause': True, 'pauseB': True}, pad)
+        # journalen bytter ut alt med data-kart med bilder av kuriositeter; ringen og minikartet skal overleve den
+        jr = await pg.evaluate("() => { openJournal('kuriositeter'); closeJournal(); openJournal(); closeJournal(); const m = document.getElementById('map'); return !!m && m.parentElement.id === 'mapring' && document.getElementById('mapring').parentElement.id === 'hud'; }")
+        sjekk('minikartet og ringen står igjen etter journalen', jr, jr)
+        # tegnforklaringen viser det du har sett: tjenestene med navn, overlegen uten navn før du har vært der
+        leg = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F; Folge.kart('alt'); Kart.apne(); const L = [...document.querySelectorAll('.kleg li')].map(l => l.textContent), tj = F.rooms.filter(r => r.role === 'service');
+          const ut = { tjenester: tj.every(r => L.some(t => t.startsWith(SERVICES[r.service].name))), sjef: L.some(t => t.startsWith('Overlegen')), du: L[0] === 'Du er her', ikoner: document.querySelectorAll('.kleg canvas').length === L.length, tall: document.querySelector('.ktall').textContent };
+          closePanel(); return ut; }""")
+        sjekk('tegnforklaringen: tjenestene med navn, overlegen uten navn før du har vært der, og hvor mye som er utforsket', leg['tjenester'] and leg['sjef'] and leg['du'] and leg['ikoner'] and 'utforsket' in leg['tall'], leg)
+        # alle slags etasjer: Parken, Nattskogen, en drøm, «Enkel grafikk» og uten det malte gulvet
+        et = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const prov = navn => { Kart.apne(); ut[navn] = !!document.querySelector('#panel .kartark') && Kart.merker().L.length >= 1 && document.getElementById('kCan').width >= 360; closePanel(); };
+          for (const d of [1, 5]) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); prov('etasje' + d); }
+          G.run.dromVent = 3; startFloor(3, false); await vent(300); ut.drom = !!G.drom; G.seen.fill(1); Kart.apne(); ut.dor = [...document.querySelectorAll('.kleg li')].some(l => l.textContent.startsWith('Døra')) && document.querySelector('.kund').textContent.startsWith('Drømmen'); closePanel();
+          for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
+          G.meta.settings.simple = true; applySettings(); startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); ut.safe = R.safe; prov('enkel');
+          G.meta.settings.simple = false; applySettings();
+          const gb = Kart.gulvBilde; Kart.gulvBilde = () => null; prov('flatt'); Kart.gulvBilde = gb;
+          return ut; }""")
+        sjekk('kartet virker i Parken, Nattskogen, drømmen (med døra), med «Enkel grafikk» og uten det malte gulvet', et == {'etasje1': True, 'etasje5': True, 'drom': True, 'dor': True, 'safe': True, 'enkel': True, 'flatt': True}, et)
+        sjekk('ingen konsollfeil (stort kart på PC)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: det malte gulvet ligger under et annet materiale, men kartet finner det
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL3D); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg, url=URL3D)
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=60000)
+        d3 = await pg.evaluate("() => { Folge.kart('alt'); Kart.apne(); const ut = { d3: D3.on && D3.bygd, kart: !!document.querySelector('#panel .kartark'), gulv: !!Kart.gulvBilde() }; return ut; }")
+        await pg.wait_for_timeout(300); await pg.screenshot(path='/tmp/e_kart_3d.png')
+        await pg.evaluate("() => closePanel()")
+        sjekk('kartet i 3D bruker det malte gulvet', d3 == {'d3': True, 'kart': True, 'gulv': True}, d3)
+        sjekk('ingen konsollfeil (stort kart i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # telefon: trykk på ringen stående og liggende, snu telefonen med kartet oppe, og ingenting ruller
+        UA_K = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        ctx = await b.new_context(viewport={'width': 390, 'height': 844}, has_touch=True, is_mobile=True, device_scale_factor=2, user_agent=UA_K)
+        pg = await ctx.new_page()
+        if THREE:
+            await pg.route('**/three.min.js', lambda r: r.fulfill(path=THREE, content_type='application/javascript'))
+            await pg.route('https://fonts.googleapis.com/**', lambda r: r.fulfill(body='', content_type='text/css'))
+        pg.errs = []
+        pg.on('pageerror', lambda e: pg.errs.append('PAGEERROR: ' + str(e)))
+        pg.on('console', lambda m: pg.errs.append(m.type + ': ' + m.text) if m.type == 'error' else None)
+        await pg.goto(URL); await pg.wait_for_timeout(2500); await pg.evaluate("() => localStorage.clear()")
+        await pg.goto(URL); await pg.wait_for_timeout(2500)
+        await pg.tap('#tNew'); await pg.wait_for_timeout(600); await pg.tap('[data-awk]')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        await pg.evaluate("() => { rolig(); Folge.kart('alt'); }")
+        plass = """() => { const p = document.getElementById('panel'), a = document.getElementById('kartark'), r = a.getBoundingClientRect(), l = document.getElementById('kLukk').getBoundingClientRect();
+          return { lag: a.className.replace('fit kartark paper', '').trim() || 'bred', rull: p.scrollHeight > p.clientHeight + 2 || p.scrollWidth > p.clientWidth + 2, inne: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1, lukk: l.bottom <= innerHeight && l.width > 30, zoom: +a.style.zoom, lup: getComputedStyle(document.querySelector('#mapring .kluppe')).display, hint: !!document.querySelector('.khint') }; }"""
+        await pg.tap('#mapring')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=10000); await pg.wait_for_timeout(300)
+        st = await pg.evaluate(plass)
+        await pg.screenshot(path='/tmp/e_kart_staende.png')
+        sjekk('stående telefon: et trykk på ringen åpner kartet i smalt oppsett, alt får plass uten rulling, og uten tastehint', st['lag'] == 'smal' and not st['rull'] and st['inne'] and st['lukk'] and st['zoom'] >= .75 and st['lup'] == 'block' and not st['hint'], st)
+        await pg.set_viewport_size({'width': 844, 'height': 390})
+        await pg.wait_for_function("() => { const a = document.getElementById('kartark'); return !!a && a.classList.contains('lig'); }", timeout=20000); await pg.wait_for_timeout(300)
+        lg = await pg.evaluate(plass)
+        await pg.screenshot(path='/tmp/e_kart_liggende.png')
+        await pg.tap('#kLukk')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        lg['frigjort'] = await pg.evaluate("() => document.getElementById('kCan').width === 0")
+        await pg.tap('#mapring')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=10000); await pg.wait_for_timeout(300)
+        lg['igjen'] = await pg.evaluate(plass)
+        await pg.tap('#kLukk'); await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        sjekk('telefonen snus med kartet oppe: liggende oppsett uten rulling, Lukk frigjør lerretet, og ringen kan trykkes på liggende også', lg['lag'] == 'lig' and not lg['rull'] and lg['inne'] and lg['lukk'] and not lg['hint'] and lg['frigjort'] and lg['igjen']['lag'] == 'lig' and not lg['igjen']['rull'], lg)
+        sjekk('ingen konsollfeil (stort kart på telefon)', not pg.errs, pg.errs[:6])
+        await ctx.close()
+
+        # 41) Kontroller i menyene: A, B, retningene, LB og RB på tittelen, i innleggelsen, pausen, innstillingene, journalen, butikken
+        #     og dødsskjermen, piltastene i menyene, tastene i tekstene etter enheten, berøringsknappene skjules, og kontrollen på plass 1 styrer
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.add_init_script("""(() => {
+          window.__pad = { id: 'Testkontroll (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+          window.__pads = () => [window.__pad];
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => window.__pads() });
+          window.__ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });
+          window.__trykk = async (i, ned = 3, opp = 3) => { const k = window.__pad.buttons[i]; k.pressed = true; k.value = 1; await window.__ramme(ned); k.pressed = false; k.value = 0; await window.__ramme(opp); };
+        })()""")
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await pg.goto(URL)
+        await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title' && document.activeElement && document.activeElement.id === 'tNew'", timeout=30000)
+        t1 = await pg.evaluate("""async () => { await __trykk(0); await __ramme(2); const f = document.activeElement, cs = getComputedStyle(f);
+          return { inntak: MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .intake'), fokus: f.hasAttribute('data-awk'), ring: cs.outlineStyle === 'solid' && parseFloat(cs.outlineWidth) >= 2.5, pad: document.body.classList.contains('pad'), enhet: Input.lastDevice }; }""")
+        sjekk('håndkontrollen på tittelen: A trykker Ny pasient, og innleggelsen har fokus med synlig ring', t1 == {'inntak': True, 'fokus': True, 'ring': True, 'pad': True, 'enhet': 'pad'}, t1)
+        await pg.evaluate("() => __trykk(0)")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        hud = await pg.evaluate("async () => { rolig(); await __ramme(3); return [...document.querySelectorAll('#cards .acard .k')].map(e => e.textContent).join(' '); }")
+        sjekk('A i innleggelsen legger inn pasienten, og evnekortene viser LB RB LT RT', hud == 'LB RB LT RT', hud)
+        # pausen og innstillingene: Start, pil ned til Innstillinger, A, RB bytter fane, pil ned til spaken, pil høyre og venstre endrer den
+        ps = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; await __trykk(9); await __ramme(2);
+          ut.pause = G.state === 'panel' && !!document.querySelector('#panel .clip'); ut.forste = document.activeElement.hasAttribute('data-close');
+          await __trykk(13); ut.ned = document.activeElement.id;
+          for (let i = 0; i < 8 && document.activeElement.id !== 'pS'; i++) await __trykk(13);
+          await __trykk(0); await __ramme(2); ut.inn = !!document.getElementById('settings') && document.activeElement.dataset.tab === 'lyd';
+          await __trykk(5); await __ramme(2); const on = document.querySelector('.ktab.on'); ut.fane = on.dataset.tab; ut.fanefokus = document.activeElement === on;
+          await __trykk(13); const sp = document.activeElement, k = sp.dataset.s, v0 = G.meta.settings[k]; ut.spak = k;
+          await __trykk(15); ut.opp = +(G.meta.settings[k] - v0).toFixed(3);
+          await __trykk(14); ut.ned2 = +(G.meta.settings[k] - v0).toFixed(3);
+          await __trykk(13); ut.neste = document.activeElement.dataset.s; await __trykk(12); await __trykk(12); ut.oppTilFane = document.activeElement.dataset.tab;
+          return ut; }""")
+        await pg.screenshot(path='/tmp/e_pad_meny.png')
+        ps.update(await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; await __trykk(4); await __ramme(2); ut.lb = document.querySelector('.ktab.on').dataset.tab;
+          await __trykk(1); await __ramme(2); ut.tilbake = !!document.querySelector('#panel .clip'); await __trykk(1); await __ramme(2); ut.ute = G.state; return ut; }"""))
+        sjekk('pausen og innstillingene med håndkontroll: pil ned, A, RB og LB bytter fane, spaken endres med pil høyre og venstre, B går tilbake',
+              ps == {'pause': True, 'forste': True, 'ned': 'pJ', 'inn': True, 'fane': 'bilde', 'fanefokus': True, 'spak': 'kamera', 'opp': .05, 'ned2': 0, 'neste': 'shake', 'oppTilFane': 'bilde', 'lb': 'lyd', 'tilbake': True, 'ute': 'play'}, ps)
+        # journalen: Select åpner, A velger et kort, retningene flytter fokus, A på en tom plass flytter kortet dit og så til lomma, RB og LB bytter fane, B slipper kortet og lukker
+        jr = await pg.evaluate("""async () => { const G = MORBIDIUM, run = G.run, ut = {};
+          run.slots = [null, null, null, null]; run.reserve = []; giveCard('due', true); const fra = run.slots.findIndex(Boolean), til = run.slots.findIndex(c => !c);
+          await __trykk(8); await __ramme(2); ut.aapen = G.state === 'journal' && document.activeElement.matches('.jcard[data-ref]');
+          document.querySelector('.jcard[data-ref="s"][data-i="' + fra + '"]').focus(); await __trykk(0); ut.valgt = !!G.jsel && !!document.querySelector('#journal .jcard.sel');
+          const sett = new Set(); for (const d of [15, 13, 14, 12]) { await __trykk(d); if (document.getElementById('journal').contains(document.activeElement)) sett.add(document.activeElement); }
+          ut.flyttet = sett.size >= 2;
+          document.querySelector('.slot.empty[data-slot="' + til + '"]').focus(); await __trykk(0);
+          const f = document.activeElement; ut.flytt = !run.slots[fra] && !!run.slots[til] && run.slots[til].id === 'due'; ut.fokus = f.classList.contains('jcard') && f.dataset.ref === 's' && +f.dataset.i === til;
+          f.focus(); await __trykk(0); document.querySelector('.pocket [data-lomme]').focus(); await __trykk(0);
+          ut.lomme = run.reserve.length === 1 && run.reserve[0].id === 'due' && !run.slots.some(Boolean) && !!document.activeElement.dataset.lomme;
+          await __trykk(5); ut.rb = G.jtab; await __trykk(4); await __trykk(4); ut.lb = G.jtab; await __trykk(5);
+          document.querySelector('.jcard[data-ref]').focus(); await __trykk(0); const v = !!G.jsel; await __trykk(1); ut.slipp = v && !G.jsel && G.state === 'journal';
+          ut.knapp = document.getElementById('jClose').textContent; await __trykk(1); await __ramme(2); ut.lukket = G.state === 'play'; return ut; }""")
+        sjekk('journalen med håndkontroll: A og A flytter et kort til en tom plass, retningene, RB og LB, og B slipper kortet og lukker',
+              jr == {'aapen': True, 'valgt': True, 'flyttet': True, 'flytt': True, 'fokus': True, 'lomme': True, 'rb': 'diagnoser', 'lb': 'utstyr', 'slipp': True, 'knapp': 'Lukk journalen (B)', 'lukket': True}, jr)
+        # butikken: knappen sier B, og B lukker
+        sh = await pg.evaluate("""async () => { const G = MORBIDIUM; openService('kafeteria'); await __ramme(2); const ut = { knapp: document.querySelector('#panel [data-close]').textContent, fokus: document.activeElement.classList.contains('offer') };
+          await __trykk(1); await __ramme(2); ut.ute = G.state; return ut; }""")
+        sjekk('butikken med håndkontroll: Gå (B), første vare har fokus, og B lukker', sh == {'knapp': 'Gå (B)', 'fokus': True, 'ute': 'play'}, sh)
+        # piltastene i pausen, og tekstene går tilbake til tastaturet
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .clip')", timeout=20000)
+        await pg.wait_for_timeout(200)
+        await pg.keyboard.press('ArrowDown'); await pg.keyboard.press('ArrowDown')
+        kb = await pg.evaluate("() => ({ fokus: document.activeElement.id, pad: document.body.classList.contains('pad') })")
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        kb['kort'] = await pg.evaluate("async () => { await __ramme(3); return [...document.querySelectorAll('#cards .acard .k')].map(e => e.textContent).join(' '); }")
+        sjekk('piltastene flytter fokus i pausen, og tastaturet tar bort ringen og gir tallene tilbake', kb == {'fokus': 'pJ', 'pad': False, 'kort': '1 2 3 4'}, kb)
+        # berøringsknappene skjules når håndkontrollen brukes (telefon speilet til TV med kontroll), og en kontroll på plass 1 styrer pasienten
+        mv = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, ut = {};
+          Input.touch.active = true; document.getElementById('touch').classList.remove('hidden'); document.body.classList.add('touch'); Input.enhet('touch');
+          __pad.axes[0] = .9; await __ramme(2); __pad.axes[0] = 0; await __ramme(2);
+          ut.touch = { skjult: document.getElementById('touch').classList.contains('hidden'), body: document.body.classList.contains('touch'), aktiv: Input.touch.active, pad: document.body.classList.contains('pad') };
+          const r = G.F.rooms[G.F.startId]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; __pad.index = 1; window.__pads = () => [null, __pad]; __pad.axes[0] = 1;
+          const x0 = P.x, t0 = G.time; for (let i = 0; i < 600 && G.time < t0 + .4; i++) await __ramme(1); __pad.axes[0] = 0;
+          ut.dx = P.x - x0 > .5; ut.index = Input.gp.index;
+          window.__pads = () => [{ id: 'noe annet', index: 0, connected: true, mapping: '', timestamp: 0, axes: [0, 0], buttons: [] }, __pad]; await __ramme(2); ut.standard = Input.gp.index === 1 && Input.gp.mapping === 'standard';
+          window.__pads = () => []; dispatchEvent(new Event('gamepaddisconnected')); await __ramme(2);
+          ut.frakoblet = !Input.gp.connected && Input.lastDevice === 'kb' && !document.body.classList.contains('pad');
+          __pad.index = 0; window.__pads = () => [__pad]; return ut; }""")
+        sjekk('håndkontrollen skjuler berøringsknappene, en kontroll på plass 1 styrer pasienten, standardoppsettet velges, og frakobling rydder',
+              mv == {'touch': {'skjult': True, 'body': False, 'aktiv': False, 'pad': True}, 'dx': True, 'index': 1, 'standard': True, 'frakoblet': True}, mv)
+        # døden: en A som holdes gjennom dødsfallet trykker ikke på Ny pasient det første halve sekundet, så gjør A det
+        await pg.evaluate("() => { __pad.buttons[0].pressed = true; __pad.buttons[0].value = 1; const P = MORBIDIUM.player; P.invuln = 0; P.iframe = 0; hurt(P, 9999, { type: 'kultist' }); }")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'dead' && !!document.getElementById('dNew')", timeout=30000)
+        dd = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = { vakt: MenyNav.ro > 0, fokus: document.activeElement.id };
+          __pad.buttons[0].pressed = false; __pad.buttons[0].value = 0; await __ramme(1); await __trykk(0, 1, 1); ut.blokkert = G.state === 'dead';
+          await __trykk(15); ut.hoyre = document.activeElement.id; await __trykk(14); ut.venstre = document.activeElement.id;
+          for (let i = 0; i < 400 && MenyNav.ro > 0; i++) await __ramme(1);
+          await __trykk(0); await __ramme(2); ut.inntak = G.state === 'panel' && !!document.querySelector('#panel .intake'); return ut; }""")
+        await pg.evaluate("() => __trykk(0)")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .2", timeout=30000)
+        dd['nytt'] = await pg.evaluate("() => MORBIDIUM.player.alive && MORBIDIUM.player.hp > 0")
+        sjekk('døden med håndkontroll: A holdt gjennom dødsfallet trykker ikke, retningene flytter, og A på Ny pasient legger inn en ny pasient',
+              dd == {'vakt': True, 'fokus': 'dNew', 'blokkert': True, 'hoyre': 'dTitle', 'venstre': 'dNew', 'inntak': True, 'nytt': True}, dd)
+        sjekk('ingen konsollfeil (kontroller i menyene)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 42) TV-modus: nettleseren i en Samsung-TV kjennes igjen, HUD-en holder seg innenfor margene uten overlapp og står midt på,
+        #     middels kvalitet, tilbaketasten på fjernkontrollen og historikken, fullskjerm, håndboka, linja om kontrolleren, rapporten og innstillingen
+        TVUA = 'Mozilla/5.0 (SMART-TV; LINUX; Tizen 8.0) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/7.0 Chrome/120.0.6099.5 TV Safari/537.36'
+        TV_INIT = """(() => {
+          window.__pad = { id: 'Testkontroll (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+          window.__pads = () => [];
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => window.__pads() });
+          window.__ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });
+          window.__vent = async (f, n = 400) => { for (let i = 0; i < n && !f(); i++) await window.__ramme(1); return !!f(); };
+          // fullskjerm uten ekte fullskjerm: nettleseren i testen kan ikke, men knappen skal be om det og teksten følge med
+          window.__fs = null; const bytt = el => { window.__fs = el; setTimeout(() => document.dispatchEvent(new Event('fullscreenchange', { bubbles: true })), 0); return Promise.resolve(); };
+          Object.defineProperty(Document.prototype, 'fullscreenEnabled', { configurable: true, get: () => true });
+          Object.defineProperty(Document.prototype, 'fullscreenElement', { configurable: true, get: () => window.__fs });
+          Element.prototype.requestFullscreen = function () { return bytt(this); }; Document.prototype.exitFullscreen = function () { return bytt(null); };
+          // tilbaketasten på fjernkontrollen: Samsung sender keyCode 10009 og key XF86Back, uten code
+          window.__tilbake = () => { for (const t of ['keydown', 'keyup']) { const e = new KeyboardEvent(t, { key: 'XF86Back', bubbles: true, cancelable: true }); Object.defineProperty(e, 'keyCode', { get: () => 10009 }); document.body.dispatchEvent(e); } };
+        })()"""
+        HUD_TV = """() => { const W = innerWidth, H = innerHeight, r = id => { const e = document.getElementById(id); if (!e || getComputedStyle(e).display === 'none') return null; const b = e.getBoundingClientRect(); return b.width ? [b.left, b.top, b.right, b.bottom] : null; };
+          const navn = ['badge', 'roomsign', 'tools', 'cards', 'weapon', 'cons', 'mapring', 'tips'], k = navn.map(r), ute = [], par = [];
+          const over = (a, c) => a[0] < c[2] - 1 && c[0] < a[2] - 1 && a[1] < c[3] - 1 && c[1] < a[3] - 1;
+          k.forEach((a, i) => { if (a && (a[0] < W * .045 - 1 || a[1] < H * .045 - 1 || a[2] > W * .955 + 1 || a[3] > H * .955 + 1)) ute.push(navn[i]); });
+          for (let i = 0; i < k.length; i++) for (let j = i + 1; j < k.length; j++) if (k[i] && k[j] && over(k[i], k[j])) par.push(navn[i] + '-' + navn[j]);
+          const c = k[3], s = k[1]; return { ute, par, alle: k.filter(Boolean).length, kortMidt: Math.round((c[0] + c[2]) / 2 - W / 2), skiltMidt: Math.round((s[0] + s[2]) / 2 - W / 2), ui: getComputedStyle(document.documentElement).getPropertyValue('--ui').trim() }; }"""
+        pg = await ny_side(b, viewport={'width': 1920, 'height': 1080}, user_agent=TVUA)
+        await pg.add_init_script(TV_INIT)
+        await pg.goto(URL)
+        await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title' && document.activeElement && document.activeElement.id === 'tNew'", timeout=30000)
+        t = await pg.evaluate("""async () => { const cs = getComputedStyle(document.documentElement), ut = { tv: R.tv, body: document.body.classList.contains('tv'), ui: cs.getPropertyValue('--ui').trim(), kval: D3.kval(), zoom: getComputedStyle(document.querySelector('#title .tmenu')).zoom };
+          await new Promise(r => setTimeout(r, 700)); ut.tittelFelle = !!(history.state && history.state.morbidium);
+          // pilene på fjernkontrollen kan komme uten code, bare med key
+          document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })); ut.pil = document.activeElement.id;
+          const f = document.querySelector('#title [data-fs]'); ut.fs = f ? f.textContent : ''; f.click(); ut.fsBedt = window.__fs === document.documentElement;
+          await __vent(() => f.textContent === 'Avslutt fullskjerm', 100); ut.fsTekst = f.textContent; f.click(); await __vent(() => f.textContent === 'Fullskjerm', 100); ut.fsAv = !window.__fs && f.textContent === 'Fullskjerm';
+          return ut; }""")
+        sjekk('TV-modus: nettleseren i Samsung-TV-en kjennes igjen, større HUD og tittel, middels kvalitet, og ingen felle i historikken på tittelen',
+              t['tv'] and t['body'] and t['ui'] == '1.4' and t['kval'] == 'middels' and abs(float(t['zoom']) - 1.4) < .01 and not t['tittelFelle'], t)
+        sjekk('TV-modus: pilene på fjernkontrollen uten code flytter i menyen, og Fullskjerm på tittelen slås av og på med teksten etter',
+              t['pil'] == 'tHelp' and t['fs'] == 'Fullskjerm' and t['fsBedt'] and t['fsTekst'] == 'Avslutt fullskjerm' and t['fsAv'], t)
+        await pg.click('#tNew'); await pg.wait_for_timeout(500); await pg.click('[data-awk]')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        await pg.evaluate("() => { rolig(); MORBIDIUM.run.patient.name = 'Alf Nygaard'; MORBIDIUM.meta.tips = {}; MORBIDIUM.meta.settings.tips = true; Tips.vis('sjef'); }")
+        await pg.wait_for_function("() => { const t = document.getElementById('tips'); return t && t.classList.contains('inn') && getComputedStyle(t).opacity === '1'; }", timeout=20000)
+        h = await pg.evaluate(HUD_TV)
+        await pg.screenshot(path='/tmp/e_tv_hud.png')
+        # berøringsknappene vises ikke på TV, selv om noe skulle sende en berøring
+        h['touch'] = await pg.evaluate("() => { Input.touch.active = true; const t = document.getElementById('touch'); t.classList.remove('hidden'); const d = getComputedStyle(t).display; t.classList.add('hidden'); Input.touch.active = false; return d; }")
+        # største skjermtekst: taket på 1,6 holder kortene klar av apparatet
+        await pg.evaluate("() => { const s = MORBIDIUM.meta.settings; s.ui = 1.3; applySettings(); }"); await pg.wait_for_timeout(300)
+        h2 = await pg.evaluate(HUD_TV)
+        await pg.evaluate("() => { const s = MORBIDIUM.meta.settings; s.ui = 1; applySettings(); }")
+        sjekk('TV-modus: HUD-en holder seg innenfor 4,5 prosent av kanten uten overlapp, kort og skilt står midt på, og berøringsknappene er skjult',
+              not h['ute'] and not h['par'] and h['alle'] == 8 and abs(h['kortMidt']) <= 3 and abs(h['skiltMidt']) <= 3 and h['touch'] == 'none' and h['ui'] == '1.4', h)
+        sjekk('TV-modus med største skjermtekst: taket på 1,6, og fortsatt innenfor margene uten overlapp', h2['ui'] == '1.6' and not h2['ute'] and not h2['par'], h2)
+        # tilbaketasten og historikken: et ekstra steg i spillet, tilbake åpner og lukker pausen, og tasten og steget sammen gjør det bare én gang
+        tb = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}, felle = () => !!(history.state && history.state.morbidium);
+          ut.felle = await __vent(felle, 200);
+          __tilbake(); ut.tastPause = await __vent(() => G.state === 'panel' && !!document.getElementById('pS')); ut.fsPause = !!document.querySelector('#panel .pmenu [data-fs]');
+          ut.zoom = +document.querySelector('#panel .fit').style.zoom;
+          __tilbake(); ut.tastLukk = await __vent(() => G.state === 'play');
+          // en nettleser som bare går tilbake i historikken, uten tastetrykk: tiden siden forrige tast nullstilles, ellers ville en rask maskin
+          // tatt steget for en del av tasten over (samme trykk)
+          Input.tilbakeT = -1e9; history.back(); ut.histPause = await __vent(() => G.state === 'panel' && !!document.getElementById('pS')); ut.igjen = await __vent(felle, 200);
+          Input.tilbakeT = -1e9; history.back(); ut.histLukk = await __vent(() => G.state === 'play'); ut.igjen2 = await __vent(felle, 200);
+          // Samsung kan sende både tastetrykket og steget tilbake i historikken for samme trykk: da skal pausen åpnes, ikke åpnes og lukkes
+          const n0 = TvTilbake.n; __tilbake(); history.back(); ut.tatt = await __vent(() => TvTilbake.n > n0 && G.state === 'panel', 600); await __ramme(10);
+          ut.begge = G.state === 'panel' && !!document.getElementById('pS'); ut.igjen3 = await __vent(felle, 200);
+          return ut; }""")
+        sjekk('TV-modus: tilbake på fjernkontrollen åpner og lukker pausen, også som steg i historikken, og steget legges inn igjen',
+              tb == {'felle': True, 'tastPause': True, 'fsPause': True, 'zoom': tb['zoom'], 'tastLukk': True, 'histPause': True, 'igjen': True, 'histLukk': True, 'igjen2': True, 'tatt': True, 'begge': True, 'igjen3': True} and tb['zoom'] > 1.15, tb)
+        # testpanelet over pausen (?testmodus på TV-en): ett trykk på tilbake, som tast og som steg i historikken, lukker bare testpanelet
+        tp = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; Testmodus.apne('lyd'); await __ramme(3); ut.apen = Testmodus.apen;
+          const n0 = TvTilbake.n; __tilbake(); history.back(); ut.tatt = await __vent(() => TvTilbake.n > n0, 600); await __ramme(10);
+          ut.lukket = !Testmodus.apen; ut.pause = G.state === 'panel' && !!document.getElementById('pS'); ut.igjen = await __vent(() => !!(history.state && history.state.morbidium), 200); return ut; }""")
+        sjekk('TV-modus: tilbake med testpanelet over pausen lukker bare testpanelet, også når steget i historikken kommer i tillegg',
+              tp == {'apen': True, 'tatt': True, 'lukket': True, 'pause': True, 'igjen': True}, tp)
+        # rapporten og linja om kontrolleren i Innstillinger, Styring (kontrolleren dukker først opp etter et knappetrykk)
+        rp = await pg.evaluate("""async () => { const ut = {}; ut.uten = Testmodus.enhet(); openSettings(false, null, 'styring'); await __ramme(2); ut.ingen = document.getElementById('kStatus').textContent;
+          window.__pads = () => [window.__pad]; __pad.buttons[3].pressed = true; await __ramme(3); __pad.buttons[3].pressed = false; await __vent(() => document.getElementById('kStatus').textContent.startsWith('Kontroller funnet'), 100);
+          ut.funnet = document.getElementById('kStatus').textContent; ut.med = Testmodus.enhet(); closePanel(); await __ramme(2);
+          openSettings(false, null, 'spill'); await __ramme(2); ut.fane = document.querySelector('[data-s="tv"]').parentNode.querySelector('em').textContent; closePanel();
+          openHandbook({}, 1, 1); await __ramme(2); ut.sider = hbSider(HANDBOK[1]); ut.side = document.querySelector('.hpage h2').textContent + ': ' + (document.querySelector('.htext .hunder') || {}).textContent; return ut; }""")
+        rp['plass'] = await pg.evaluate(HB_PLASS)
+        await pg.screenshot(path='/tmp/e_tv_handbok.png')
+        sjekk('TV-modus: testrapporten nevner Samsung-TV-en, kontrolleren, TV-modus og fullskjerm, og Styring sier om kontrolleren er funnet',
+              'Samsung-TV (Tizen 8.0, Chromium 120)' in rp['uten'] and 'ingen kontroller funnet' in rp['uten'] and 'TV-modus på' in rp['uten'] and 'fullskjerm nei' in rp['uten']
+              and rp['ingen'].startswith('Ingen kontroller funnet') and rp['funnet'] == 'Kontroller funnet: Testkontroll (STANDARD GAMEPAD).' and 'kontroller Testkontroll (STANDARD GAMEPAD) (standard oppsett, 17 knapper, 4 akser)' in rp['med'] and rp['fane'] == 'automatisk (på)', rp)
+        sjekk('håndboka: Styring har en side til, «Spille på TV», som får plass', rp['sider'] == 2 and rp['side'] == 'Styring: Spille på TV' and rp['plass'], rp)
+        # journalen er større på TV, men innenfor margene
+        await pg.evaluate("() => { closePanel(); openJournal(); }"); await pg.wait_for_timeout(600)
+        jr = await pg.evaluate("() => { const r = document.querySelector('#journal .jwrap').getBoundingClientRect(), m = /scale\\(([\\d.]+)\\)/.exec(document.querySelector('#journal .jwrap').style.transform); closeJournal(); return { s: m ? +m[1] : 0, inne: r.left >= innerWidth * .045 - 1 && r.top >= innerHeight * .045 - 1 && r.right <= innerWidth * .955 + 1 && r.bottom <= innerHeight * .955 + 1 }; }")
+        # innstillingen: av (2) slår TV-modus av også i TV-en, og automatisk (0) slår den på igjen
+        av = await pg.evaluate("() => { const s = MORBIDIUM.meta.settings; s.tv = 2; applySettings(); const ut = { tv: R.tv, body: document.body.classList.contains('tv'), ui: getComputedStyle(document.documentElement).getPropertyValue('--ui').trim(), kval: D3.kval() }; s.tv = 0; applySettings(); ut.igjen = R.tv && document.body.classList.contains('tv'); return ut; }")
+        sjekk('TV-modus: journalen skaleres innenfor margene, og innstillingen «av» slår TV-modus av (automatisk på igjen)',
+              jr['inne'] and jr['s'] > 1 and av == {'tv': False, 'body': False, 'ui': '1', 'kval': 'hoy', 'igjen': True}, [jr, av])
+        # tilbake til tittelen: steget som er igjen, tar tilbake med seg ut av spillet, slik tilbake på tittelen skal,
+        # også når tasten kommer fram i tillegg (Samsung). Uten tastetrykk sjekkes det i 3D-delen under
+        await pg.evaluate("() => showTitle()"); await pg.wait_for_timeout(300)
+        sjekk('ingen konsollfeil (TV-modus)', not pg.errs, pg.errs[:6])
+        await pg.evaluate("() => { __tilbake(); history.back(); }")
+        for i in range(100):
+            if pg.url == 'about:blank': break
+            await pg.wait_for_timeout(100)
+        sjekk('TV-modus: tilbake på tittelen går ut av spillet, også når steget fra spillet er igjen og tasten kommer fram', pg.url == 'about:blank', pg.url)
+        await pg.close()
+        # vanlig nettleser: TV-modus er av, ingen felle i historikken, lappen om TV-modus med håndkontroll på stor skjerm, og «på» slår den på
+        pg = await ny_side(b, viewport={'width': 1920, 'height': 1080})
+        await pg.add_init_script(TV_INIT)
+        await start_lop(pg)
+        pc = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = { tv: R.tv, body: document.body.classList.contains('tv'), kval: D3.kval() }; await new Promise(r => setTimeout(r, 700)); ut.felle = !!(history.state && history.state.morbidium);
+          rolig(); G.meta.tips = {}; G.meta.settings.tips = true; Input.enhet('pad'); const t0 = G.time; await __vent(() => G.meta.tips.tv || G.time > t0 + 2, 600); ut.tips = !!G.meta.tips.tv;
+          Input.enhet('kb'); G.meta.settings.tv = 1; applySettings(); ut.paa = R.tv && document.body.classList.contains('tv') && D3.kval() === 'middels'; G.meta.settings.tv = 0; applySettings(); return ut; }""")
+        sjekk('vanlig nettleser: TV-modus er av uten felle i historikken, lappen om TV-modus kommer med håndkontroll på stor skjerm, og «på» slår den på',
+              pc == {'tv': False, 'body': False, 'kval': 'hoy', 'felle': False, 'tips': True, 'paa': True}, pc)
+        sjekk('ingen konsollfeil (TV-modus av)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D og «Enkel grafikk» på TV-en: 3D starter på middels, og enkel grafikk slår det av uten feil
+        pg = await ny_side(b, viewport={'width': 1920, 'height': 1080}, user_agent=TVUA)
+        await pg.add_init_script(TV_INIT)
+        await pg.goto(URL3D); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=30000)
+        # klikk i siden i stedet for med musa: 3D i 1920 x 1080 med programvaregrafikk tegner så sakte at et museklikk kan gå ut på tid når maskinen har mye å gjøre
+        await pg.evaluate("() => document.getElementById('tNew').click()"); await pg.wait_for_selector('[data-awk]', timeout=30000); await pg.evaluate("() => document.querySelector('[data-awk]').click()")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .2", timeout=60000)
+        d3 = await pg.evaluate("""async () => { const ut = { on: D3.on, bygd: D3.bygd, kval: D3.kval(), skygge: D3.Q().skygge };
+          const s = MORBIDIUM.meta.settings; s.simple = true; applySettings(); await __ramme(5); ut.enkel = !D3.on && R.safe && document.body.classList.contains('tv'); return ut; }""")
+        await pg.screenshot(path='/tmp/e_tv_enkel.png')
+        sjekk('TV-modus i 3D: starter på middels, og «Enkel grafikk» virker', d3 == {'on': True, 'bygd': True, 'kval': 'middels', 'skygge': 1024, 'enkel': True}, d3)
+        sjekk('ingen konsollfeil (TV-modus i 3D)', not pg.errs, pg.errs[:6])
+        # nettleserens egen tilbakeknapp (ingen tast): på tittelen tar steget fra spillet tilbake med seg ut av spillet
+        await pg.wait_for_function("() => TvTilbake.fanget", timeout=10000)
+        await pg.evaluate("() => { showTitle(); history.back(); }")
+        for i in range(100):
+            if pg.url == 'about:blank': break
+            await pg.wait_for_timeout(100)
+        sjekk('TV-modus: tilbake uten tastetrykk på tittelen går ut av spillet, også når steget fra spillet er igjen', pg.url == 'about:blank', pg.url)
+        await pg.close()
+
+        # 43) Etter flettingen av sporene: lista over lyskilder vokser ikke med etasjene, B (rull) i kampen lukker ikke et panel som
+        #     akkurat åpnet seg, og merkene for flaska og apparatet viser knappen for det du spiller med
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.add_init_script("""(() => {
+          window.__pad = { id: 'Testkontroll (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [window.__pad] });
+          window.__ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });
+          window.__trykk = async (i, ned = 3, opp = 3) => { const k = window.__pad.buttons[i]; k.pressed = true; k.value = 1; await window.__ramme(ned); k.pressed = false; k.value = 0; await window.__ramme(opp); };
+        })()""")
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg)
+        kl = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), n = [];
+          for (const d of [1, 2, 3, 4, 5, 6, 1, 2, 3]) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(80); n.push(R.kilder.length); }
+          return { n, festet: R.kilder.every(k => k.parent && (k.parent === R.lscene || !!k.parent.parent)) }; }""")
+        sjekk('lista over lyskilder vokser ikke når etasjene bygges på nytt, og alle i den henger i scenen', abs(kl['n'][6] - kl['n'][0]) <= 12 and max(kl['n']) < 300 and kl['festet'], kl)
+        bv = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; rolig(); await __ramme(3);
+          // B som rull i spillet, og et panel som dukker opp rett etterpå
+          // B holdes inne idet panelet åpnes (som når den hamres på i kampen), så testen ikke avhenger av hvor fort nettleseren tegner
+          const k = __pad.buttons[1]; k.pressed = true; k.value = 1; await __ramme(2); openPanel('<div class="paper" style="padding:20px"><button data-close>Lukk</button></div>'); await __ramme(1);
+          k.pressed = false; k.value = 0; await __ramme(1); await __trykk(1, 1, 1); ut.bliver = G.state === 'panel';
+          for (let i = 0; i < 120 && MenyNav.roB > 0; i++) await __ramme(1);
+          await __trykk(1); await __ramme(2); ut.lukker = G.state === 'play';
+          return ut; }""")
+        sjekk('B som ble trykket for å rulle, lukker ikke et panel som akkurat åpnet seg, men gjør det etter et halvt sekund', bv == {'bliver': True, 'lukker': True}, bv)
+        mk = await pg.evaluate("""async () => { await __trykk(3); await __ramme(3); return { pad: document.getElementById('consk').textContent, apparat: document.querySelector('#akt .n').textContent }; }""")
+        await pg.keyboard.press('KeyW'); await pg.wait_for_timeout(400)
+        mk.update(await pg.evaluate("() => ({ kb: document.getElementById('consk').textContent, apparatKb: document.querySelector('#akt .n').textContent })"))
+        sjekk('merkene for flaska og apparatet viser Ned og Opp med håndkontroll og F og V med tastatur', mk == {'pad': 'Ned', 'apparat': 'Opp', 'kb': 'F', 'apparatKb': 'V'}, mk)
+        # funnene fra gjennomgangen: gloria til en ting som dør mens den blekner, krasjer ikke; et panel som er åpent når etasjen byttes,
+        # lukkes; og lappen for å snakke ligger over kortene også med TV-modus og stor skjermtekst
+        gj = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          let o = null; for (const d of [1, 2, 3, 4, 5, 6]) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(150); o = G.props.find(p => GLORIE_KILDER[p.kind] && p.g); if (o) break; }
+          ut.ting = !!o; if (o) { Glorie.tick(1 / 60); o.alive = false; for (const k of Glorie.K) if (k.eier === o) { k.w = 1; delete k.c; }
+            try { for (let i = 0; i < 4; i++) Glorie.tick(1 / 60); ut.glorie = 'ok'; } catch (e) { ut.glorie = String(e); } }
+          // kartet åpent idet etasjen byttes (som når drømmen blekner): panelet lukkes og lerretet frigjøres
+          rolig(); Kart.apne(); await vent(200); ut.kart = Kart.aapen(); startFloor(G.depth, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(150);
+          const c = document.getElementById('kCan'); ut.lukket = G.state === 'play' && document.getElementById('panel').classList.contains('hidden') && (!c || c.width === 0);
+          // TV-modus: lappen over kortene
+          const s = G.meta.settings, tv0 = s.tv; s.tv = 1; applySettings(); await vent(300); const pr = document.getElementById('prompt'); pr.innerHTML = '<kbd>Y</kbd> Snakk'; pr.classList.remove('hidden');
+          // målt med en gang: spillet skjuler lappen i neste bilde når det ikke er noe å snakke med
+          const a = pr.getBoundingClientRect(), b = document.getElementById('cards').getBoundingClientRect(); ut.lapp = { over: a.height > 10 && a.bottom <= b.top + 1, a: [Math.round(a.top), Math.round(a.bottom)], kort: Math.round(b.top) };
+          pr.classList.add('hidden'); s.tv = tv0; applySettings(); return ut; }""")
+        sjekk('gloria til en ting som dør mens den blekner, krasjer ikke spillet', gj['ting'] and gj['glorie'] == 'ok', gj)
+        sjekk('et panel som er åpent når etasjen byttes, lukkes, og kartets lerret frigjøres', gj['kart'] and gj['lukket'], gj)
+        sjekk('lappen for å snakke ligger over kortene i TV-modus', gj['lapp']['over'], gj['lapp'])
+        sjekk('ingen konsollfeil (etter flettingen)', not pg.errs, pg.errs[:6])
+        await pg.close()
 
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
