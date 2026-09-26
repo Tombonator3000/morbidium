@@ -131,9 +131,10 @@ async def main():
             const tx = Math.floor(c.x), tz = Math.floor(c.z); let ix = tx, iz = tz; if (tz === parent.z - 1) iz = tz + 1; else if (tz === parent.z + parent.h) iz = tz - 1; else if (tx === parent.x - 1) ix = tx + 1; else ix = tx - 1;
             P.x = ix + .5; P.z = iz + .5; P.face = Math.atan2(c.x - P.x, c.z - P.z); R.snapCamera(P.x, P.z); return { hp: c.hp, secretReach: false }; }""")
         await pg.wait_for_timeout(600); await pg.screenshot(path='/tmp/e_10sprekk.png')
-        await pg.evaluate("() => { const P = MORBIDIUM.player; const c = Spesial.cracks[0]; startSwing(true, 1); }")
-        await pg.wait_for_timeout(900)
-        brutt = await pg.evaluate("() => ({ broken: Spesial.cracks.every(c => c.broken), block: Spesial.cracks.map(c => MORBIDIUM.F.block[c.i]), secrets: MORBIDIUM.run.secrets || 0 })")
+        # det tunge slaget tar litt spilltid, og testnettleseren går langt under sanntid, så vi venter på spilltiden (høyst fem sekunder spilltid)
+        brutt = await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time; startSwing(true, 1);
+          for (let i = 0; i < 400 && !Spesial.cracks.every(c => c.broken) && G.time - g0 < 5; i++) await new Promise(r => setTimeout(r, 100));
+          return { broken: Spesial.cracks.every(c => c.broken), block: Spesial.cracks.map(c => G.F.block[c.i]), secrets: G.run.secrets || 0 }; }""")
         sjekk('tungt slag knuser den sprukne veggen', brutt['broken'] and brutt['secrets'] == 1 and not any(brutt['block']), brutt)
         # b) forbannet rom: gå inn, ta glasset, overlev bakholdet
         cur = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, P = G.player; P.hp = P.maxHp; const r = F.rooms.find(r => r.role === 'cursed'); const h0 = P.hp; const d = r.doors[0]; P.x = d % F.W + .5; P.z = ((d / F.W) | 0) + .5; return { h0, id: r.id }; }""")
@@ -146,9 +147,11 @@ async def main():
         kamp = await pg.evaluate("async () => { for (let i = 0; i < 120 && !MORBIDIUM.enemies.some(e => e.alive); i++) await new Promise(r => setTimeout(r, 100)); return { combat: !!MORBIDIUM.combat, n: MORBIDIUM.enemies.filter(e => e.alive).length, items: MORBIDIUM.run.items.length }; }")
         sjekk('kuriositeten utløser bakhold', kamp['combat'] and kamp['n'] > 0 and kamp['items'] == 1, kamp)
         await pg.screenshot(path='/tmp/e_12bakhold.png')
-        for _ in range(3):
-            await pg.evaluate("() => { for (const e of MORBIDIUM.enemies) if (e.alive) hurt(e, 9999, { from: 'player' }); }"); await pg.wait_for_timeout(1700)
-        sjekk('bakholdet kan ryddes', await pg.evaluate("() => !MORBIDIUM.combat"))
+        # bølgene kommer etter hverandre i spilltid: drep det som lever til kampen er over (høyst 30 sekunder spilltid)
+        ryddet = await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time;
+          for (let i = 0; i < 1500 && G.combat && G.time - g0 < 30; i++) { for (const e of G.enemies) if (e.alive) hurt(e, 9999, { from: 'player' }); await new Promise(r => setTimeout(r, 100)); }
+          return { kamp: !!G.combat, spilltid: +(G.time - g0).toFixed(1) }; }""")
+        sjekk('bakholdet kan ryddes', not ryddet['kamp'], ryddet)
         # c) blodoffer
         await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player; P.teeth = 60; P.hp = P.maxHp; const o = G.props.find(o => o.kind === 'offeralter'); P.x = o.x; P.z = o.z + 1.6; R.snapCamera(P.x, P.z); Spesial.offer(o); }""")
         await pg.wait_for_timeout(700); await pg.screenshot(path='/tmp/e_13offer.png')
@@ -228,9 +231,11 @@ async def main():
         await pg.evaluate("(d) => { if (MORBIDIUM.depth !== d) startFloor(d, false); }", posisjoner[0]['d'])
         cs = await pg.evaluate("() => MORBIDIUM.corpses.map(c => ({ x: +c.x.toFixed(1), z: +c.z.toFixed(1), name: c.ld.name }))")
         sjekk('begge likene ligger i etasjen', len(cs) == 2, cs)
-        await pg.evaluate("() => { const C = MORBIDIUM.corpses[0], P = MORBIDIUM.player; rolig(); P.x = C.x; P.z = C.z + 1.6; R.snapCamera(C.x, C.z); }")
-        await pg.wait_for_timeout(1000); await pg.screenshot(path='/tmp/e_19lik.png')
-        pr = await pg.evaluate("() => document.getElementById('prompt').textContent")
+        # stå ved liket fra en side der det er det nærmeste som kan undersøkes (på kirkegården kan en gravstein stå nærmere)
+        pr = await pg.evaluate("""async () => { const C = MORBIDIUM.corpses[0], P = MORBIDIUM.player; rolig(); let pr = '';
+          for (const [dx, dz] of [[0, 1.6], [0, .9], [.9, 0], [-.9, 0], [0, -.9]]) { P.x = C.x + dx; P.z = C.z + dz; R.snapCamera(C.x, C.z); await new Promise(r => setTimeout(r, 700)); pr = document.getElementById('prompt').textContent; if (pr.includes('Undersøk liket')) break; }
+          return pr; }""")
+        await pg.screenshot(path='/tmp/e_19lik.png')
         sjekk('liket kan undersøkes', 'Undersøk liket' in pr, pr)
         sjekk('likene husker utseendet', await pg.evaluate("() => MORBIDIUM.meta.lik.every(l => l.look && l.look.v === 1)"))
         sjekk('ingen konsollfeil (lik)', not pg.errs, pg.errs[:6])
@@ -472,8 +477,8 @@ async def main():
           await new Promise(r => setTimeout(r, 300)); a.flekker = n() - n0; a.biter = Blod.bitene.length;
           let vegg = false; for (let x = r.x + 1; x < r.x + r.w - 1 && !vegg; x++) for (let z = r.z + .4; z < r.z + 2.5 && !vegg; z += .3) vegg = Blod.vegg(x + .5, z, '#8a1010', 1);
           a.vegg = vegg && Blod.vegger.length > 0 && Blod.drypper.length > 0;
-          R.fx.blod = 0; P.hp = P.maxHp; P.iframe = P.invuln = 0; P.deny = null; hurt(P, 2, { type: 'pleier', x: P.x - 1, z: P.z }); a.skjerm = R.fx.blod > 0;
-          const gulv = n(); Blod.sett(false); a.av = R.fx.blod === 0 && !Blod.on; a.ryddet = { vegger: Blod.vegger.length, drypp: Blod.drypper.length, biter: Blod.bitene.length, gulvIgjen: n() === gulv }; Blod.sett(true); P.hp = P.maxHp;
+          R.fx.blod = 0; P.hp = P.maxHp; P.iframe = P.invuln = 0; P.deny = null; hurt(P, 2, { type: 'pleier', x: P.x - 1, z: P.z }); a.skjerm = R.fx.blod > 0 || Vaatt.draper.some(d => d.blod);
+          const gulv = n(); Blod.sett(false); a.av = R.fx.blod === 0 && !Blod.on && !Vaatt.draper.some(d => d.blod); a.ryddet = { vegger: Blod.vegger.length, drypp: Blod.drypper.length, biter: Blod.bitene.length, gulvIgjen: n() === gulv }; Blod.sett(true); P.hp = P.maxHp;
           return a; }""")
         sjekk('blod: flekker og kjøttbiter når en fiende knuses, sprut med drypp på veggen og blod på skjermen', bl['flekker'] > 3 and bl['biter'] >= 4 and bl['vegg'] and bl['skjerm'] and bl['av'], bl)
         sjekk('slås blod og skrekk av, forsvinner sprut på veggene, drypp og kjøttbiter, mens flekkene på gulvet blir liggende', bl['ryddet'] == {'vegger': 0, 'drypp': 0, 'biter': 0, 'gulvIgjen': True}, bl)
@@ -486,10 +491,9 @@ async def main():
         await start_lop(pg)
         await pg.evaluate("""() => { rolig(); const G = MORBIDIUM, P = G.player, r = G.F.rooms.filter(r => r.role === 'combat')[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.hp = P.maxHp = 9999; Bygg.alt();
           window._nye = ['kasteren', 'trille', 'speil', 'klumpunge'].map((t, i) => { const e = spawnEnemy(t, P.x - 3 + i * 2, P.z - 2.5, false, 1); e.t = 0; e.sleep = 0; e.cd = 0; return e; }); window._luck0 = Items.stat('luck'); }""")
-        # programvaregrafikken er treg, så vi venter til Kasteren har kastet og noen har truffet (høyst 30 sekunder)
-        for _ in range(30):
-            await pg.wait_for_timeout(1000)
-            if await pg.evaluate("() => { const G = MORBIDIUM; return (G.puddles.some(p => p.kind === 'mokk') || G.projectiles.some(p => p.type === 'klump')) && G.player.hp < 9999; }"): break
+        # programvaregrafikken er treg, så vi venter i spilltid til Kasteren har kastet og noen har truffet (høyst 25 sekunder spilltid)
+        await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time, ferdig = () => (G.puddles.some(p => p.kind === 'mokk') || G.projectiles.some(p => p.type === 'klump')) && G.player.hp < 9999;
+          for (let i = 0; i < 2400 && !ferdig() && G.time - g0 < 25; i++) await new Promise(r => setTimeout(r, 100)); }""")
         ny_ = await pg.evaluate("""() => { const G = MORBIDIUM, [k, t, s, u] = window._nye;
           const a = { typer: window._nye.map(e => e.type), levende: window._nye.filter(e => e.alive).length, hjul: !!t.doll.hjul, kastet: G.puddles.some(p => p.kind === 'mokk') || G.projectiles.some(p => p.type === 'klump'), skadet: G.player.hp < 9999 };
           hurt(s, 99999, { from: 'player', x: G.player.x, z: G.player.z }); a.ulykke = (G.run.buffs || {}).ulykke || 0; a.luck = window._luck0 - Items.stat('luck');
