@@ -51,14 +51,21 @@ const Input = {
   TAST: { pause: ['Esc', 'Start', ''], journal: ['Tab', 'Select', ''], lukkJ: ['Tab', 'B', ''], tilbake: ['Esc', 'B', ''], kort: ['1 2 3 4', 'LB RB LT RT', '1 2 3 4'] },
   tast(h, i) { const d = this.lastDevice === 'pad' ? 1 : this.lastDevice === 'touch' ? 2 : 0, t = (this.TAST[h] || [])[d] || ''; return i === undefined ? t : t.split(' ')[i] || ''; },
   parentes(h) { const t = this.tast(h); return t ? ' (' + t + ')' : ''; },
+  /* tilbaketasten på fjernkontrollen er Esc: Samsung (10009), LG (461), Android TV og Fire TV (GoBack, BrowserBack).
+     Fjernkontroller sender ikke alltid code, så key brukes når code mangler (pilene og Enter heter det samme) */
+  tilbakeT: -1e9,
+  kode(e) { return e.keyCode === 10009 || e.keyCode === 461 || e.key === 'GoBack' || e.key === 'BrowserBack' || e.key === 'XF86Back' || e.code === 'BrowserBack' ? 'Escape' : e.code || e.key || ''; },
   init(canvas) {
     const block = ['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
     addEventListener('keydown', e => {
-      if (block.includes(e.code) && !(e.target && e.target.tagName === 'INPUT')) e.preventDefault();
-      if (!this.keys[e.code]) this.pressed[e.code] = true;
-      this.keys[e.code] = true; this.enhet('kb');
+      const k = this.kode(e);
+      // tilbake på fjernkontrollen: nettleseren skal ikke gå en side tilbake midt i spillet, men på tittelen går den ut som vanlig
+      if (k === 'Escape' && e.code !== 'Escape') { this.tilbakeT = performance.now(); if (window.MORBIDIUM && MORBIDIUM.state !== 'title') e.preventDefault(); }
+      if (block.includes(k) && !(e.target && e.target.tagName === 'INPUT')) e.preventDefault();
+      if (!this.keys[k]) this.pressed[k] = true;
+      this.keys[k] = true; this.enhet('kb');
     });
-    addEventListener('keyup', e => { this.keys[e.code] = false; this.released[e.code] = true; });
+    addEventListener('keyup', e => { const k = this.kode(e); this.keys[k] = false; this.released[k] = true; });
     addEventListener('blur', () => { this.keys = {}; this.mouse.l = this.mouse.r = false; });
     canvas.addEventListener('mousemove', e => { if (Math.hypot(e.clientX - this.mouse.x, e.clientY - this.mouse.y) > 2) this.mouse.movedT = performance.now(); this.mouse.x = e.clientX; this.mouse.y = e.clientY; this.mouse.moved = true; this.enhet('kb'); });
     canvas.addEventListener('mousedown', e => {
@@ -119,7 +126,7 @@ const Input = {
     let p = null; try { const pads = navigator.getGamepads ? navigator.getGamepads() : []; for (let i = 0; i < (pads ? pads.length : 0); i++) { const q = pads[i]; if (q && q.connected !== false && (!p || (q.mapping === 'standard' && p.mapping !== 'standard'))) p = q; } } catch (e) { }
     const g = this.gp; g.prev = g.cur;
     if (!p) { g.cur = []; g.connected = false; g.lx = g.ly = g.rx = g.ry = 0; return; }
-    g.connected = true; g.id = p.id; g.mapping = p.mapping; g.index = p.index;
+    g.connected = true; g.id = p.id; g.mapping = p.mapping; g.index = p.index; g.nk = p.buttons.length; g.na = p.axes.length;
     g.cur = p.buttons.map(b => b.pressed || b.value > 0.5);
     const dz = v => Math.abs(v) < 0.2 ? 0 : v;
     g.lx = dz(p.axes[0] || 0); g.ly = dz(p.axes[1] || 0);

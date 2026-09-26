@@ -8,7 +8,7 @@
    enkel grafikk slår det alltid av. Alt legges oppå den vanlige etasjen og
    kan tas bort igjen uten å bygge etasjen på nytt.
    Kvalitet: høy, middels eller lav, valgt i innstillingene eller automatisk.
-   Automatisk starter på høy (middels på berøringsskjerm) og går ned et trinn
+   Automatisk starter på høy (middels på berøringsskjerm og TV) og går ned et trinn
    når bildefrekvensen holder seg lav, til slutt slås 3D av.
    ============================================================ */
 const D3 = {
@@ -20,7 +20,7 @@ const D3 = {
     lav: { navn: 'lav', skygge: 512, lys: 4, glod: false, stov: 0, straaler: false, taake: false, tilt: false, kant: false, dpr: 1 }
   },
   /* valgt nivå: fast i innstillingene (1 lav, 2 middels, 3 høy) eller automatisk (0) */
-  kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse ? 'middels' : 'hoy'); },
+  kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse || R.tv ? 'middels' : 'hoy'); },
   /* «Lys og skygge» av (R.lightsOn) gir et jevnt opplyst rom: ingen punktlys, skygger, lysstråler eller kantlys */
   Q() { const q = this.NIVA[this.kval()] || this.NIVA.hoy; return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },
   /* oppløsningen følger nivået når 3D er på; uten 3D brukes det skjermen tåler */

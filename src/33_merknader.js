@@ -122,7 +122,8 @@ const TIPS = {
   niva: { kb: 'Nytt nivå. Tab åpner journalen, der poengene fordeles.', pad: 'Nytt nivå. Select åpner journalen, der poengene fordeles.', touch: 'Nytt nivå. Journal-knappen oppe til høyre, der poengene fordeles.' },
   morb: { alle: 'Morbidium stiger i blodet. Over 60 kommer hikken, over 75 ser du ting som ikke er der.' },
   luke: { alle: 'Luka ned er åpen. Gå ned når du er klar. Det er ingen vei tilbake.' },
-  sjef: { alle: 'En overlege. Hold avstand og rull unna de store slagene. Et rødt felt på gulvet betyr at noe kommer.' }
+  sjef: { alle: 'En overlege. Hold avstand og rull unna de store slagene. Et rødt felt på gulvet betyr at noe kommer.' },
+  tv: { alle: 'Spiller du på TV? Slå på TV-modus under Innstillinger, Spill. Da blir teksten større.' }
 };
 const Tips = {
   vis(id, forsink = 0) {
@@ -135,7 +136,9 @@ const Tips = {
     }, forsink);
   },
   t: 0,
-  tick(dt) { this.t -= dt; if (this.t > 0) return; this.t = .5; const P = G.player; if (!P || !P.alive) return; if (P.hp < P.maxHp * .35) this.vis('lav'); if (P.morb >= 50) this.vis('morb'); }
+  tick(dt) { this.t -= dt; if (this.t > 0) return; this.t = .5; const P = G.player; if (!P || !P.alive) return; if (P.hp < P.maxHp * .35) this.vis('lav'); if (P.morb >= 50) this.vis('morb');
+    // håndkontroll på en stor skjerm uten berøring: kanskje en PC på TV-en, som ikke kan kjennes igjen (TV-modus står på automatisk)
+    if (Input.lastDevice === 'pad' && !R.tv && !R.coarse && innerWidth >= 1600 && !G.meta.settings.tv) this.vis('tv'); }
 };
 
 /* ---------- byggeanimasjon: møblene i et rom spretter opp første gang pasienten nærmer seg ---------- */
