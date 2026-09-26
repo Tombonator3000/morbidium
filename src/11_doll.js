@@ -89,6 +89,8 @@ function partMesh(P, U) {
   const m = new THREE.Mesh(quadGeo(P), spriteMat(P.tex, U || makeU()));
   m.userData.P = P; return m;
 }
+/* de tegnede delene i en dukke (ikke strekbåndene). Tegningene er ShaderMaterial med kartet i uniforms, ikke i material.map */
+const tegnetDel = o => o.isMesh && !!(o.material.map || (o.material.uniforms && o.material.uniforms.map));
 function setPart(m, P) { if (m.userData.P === P) return; m.userData.P = P; m.geometry = quadGeo(P); m.material.uniforms.map.value = P.tex; m.material.uniforms.uTexel.value.set(1 / P.canvas.width, 1 / P.canvas.height); if (m.customDepthMaterial) m.customDepthMaterial.map = P.tex; }
 
 /* armer og bein: tynne blekkstreker som i Conan Chop Chop, eller de gamle tykke båndene i klesfarge (innstillingen Lemmer) */
@@ -102,7 +104,7 @@ class Doll {
     this.view = 'f'; this.flip = 1; this.phase = 0; this.speed = 0; this.t = 0;
     this.headOff = { x: 0, y: 0, vx: 0, vy: 0 }; this.squash = 0; this.lean = 0; this.spin = 0;
     this.attack = null; this.flashT = 0; this.wpId = opt.weapon || null;
-    this.shadow = Doll.blob(opt.shadow || .42); if (!opt.noShadow) this.root.add(this.shadow);
+    this.shadow = Doll.blob(opt.shadow || .42); this.shadowA = 1; if (!opt.noShadow) this.root.add(this.shadow);
     this.back = new Ribbon(3200, this.U); this.front = new Ribbon(3200, this.U); this.plane.add(this.back.mesh); this.plane.add(this.front.mesh);
     if (this.rig.blob) { this.body = partMesh(charPart(type, 'blob', 'f'), this.U); this.plane.add(this.body); }
     else {
@@ -115,17 +117,20 @@ class Doll {
       // sittende figurer (Trillepasienten): et stort hjul som ruller, synlig fra siden
       if (this.rig.hjul) { this.hjul = partMesh(charPart(type, 'hjul', 'f'), this.U); this.plane.add(this.hjul); this.hjulA = 0; }
     }
-    this.meshes = []; this.plane.traverse(o => { if (o.isMesh && o.material.map) this.meshes.push(o); });
+    this.meshes = []; this.plane.traverse(o => { if (tegnetDel(o)) this.meshes.push(o); });
   }
   static blob(r) {
     if (!Doll.blobTex) Doll.blobTex = R.canvasTex(64, 64, g => { const gr = g.createRadialGradient(32, 32, 4, 32, 32, 31); gr.addColorStop(0, 'rgba(42,26,20,.42)'); gr.addColorStop(.8, 'rgba(42,26,20,.38)'); gr.addColorStop(.93, 'rgba(42,26,20,.08)'); gr.addColorStop(1, 'rgba(42,26,20,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
     const m = new THREE.Mesh(R.plane1(), new THREE.MeshBasicMaterial({ map: Doll.blobTex, transparent: true, depthWrite: false }));
-    m.rotation.x = -Math.PI / 2; m.scale.set(r * 2.2, r * 1.5, 1); m.position.y = .012; m.renderOrder = 1; return m;
+    m.rotation.x = -Math.PI / 2; m.scale.set(r * 2.2, r * 1.5, 1); m.userData.sx = r * 2.2; m.userData.sy = r * 1.5; m.position.y = .012; m.renderOrder = 1; return m;
   }
+  /* skyggeflekken blir liggende på gulvet når figuren hopper eller svever (det er bare tegningen, plane, som løftes), og blir mindre og lysere
+     jo høyere figuren er. Grunnstyrken shadowA er 1, eller .45 i 3D der månen også kaster skygge (D3.dukke), og flekken blekner med oppløsningen */
+  static bakke(d) { const s = d.shadow, h = Math.max(0, d.plane.position.y), k = 1 / (1 + h * .5); s.scale.set(s.userData.sx * k, s.userData.sy * k, 1); s.material.opacity = d.shadowA * (1 - d.U.uDissolve.value) * (1 - Math.min(.5, h * .4)); }
   setWeapon(id) {
-    this.wpId = id; this.wp.children.slice().forEach(c => this.wp.remove(c));
+    this.wpId = id; this.wp.children.slice().forEach(c => { this.wp.remove(c); c.material.dispose(); if (c.customDepthMaterial) c.customDepthMaterial.dispose(); });
     if (!id) return; const m = partMesh(weaponPart(id), this.U); this.wp.add(m); this.wpMesh = m;
-    this.meshes = []; this.plane.traverse(o => { if (o.isMesh && o.material.map) this.meshes.push(o); });
+    this.meshes = []; this.plane.traverse(o => { if (tegnetDel(o)) this.meshes.push(o); }); // ny liste, så 3D gir våpenet skyggeplate (D3.dukke)
   }
   /* oppskrifter: egne hode- og kroppsdeler per visning, tillegg som følger hode eller kropp, farget kropp */
   setParts(head, body) { this.headOv = head || null; this.bodyOv = body || null; }
@@ -164,7 +169,8 @@ class Doll {
     // rulling og velt
     this.plane.rotation.z = st.spin ? -st.spin * flipX : lerp(this.plane.rotation.z, ((st.lean || 0) + pv('lean')) * -.12 * flipX, dt * (PO ? 18 : 10));
     if (st.down) this.plane.rotation.z = lerp(this.plane.rotation.z, -1.35 * flipX, dt * 10);
-    this.root.position.y = (st.hop || 0) + pv('hopp');
+    // hopp løfter tegningen, ikke roten: skyggeflekken blir på gulvet, og de som flytter roten etterpå (fiendene, spilleren) tar ikke hoppet bort
+    this.plane.position.y = (st.hop || 0) + pv('hopp'); Doll.bakke(this);
     // bytt tegninger etter retning
     if (this.rig.blob) {
       setPart(this.body, charPart(this.type, 'blob', v === 'b' ? 'b' : v === 's' ? 's' : 'f'));
@@ -242,7 +248,7 @@ class Doll {
     this.placeAddons(v); this.applyFlash(dt);
   }
   applyFlash(dt) { this.flashT -= dt; this.U.uFlash.value = this.flashT > 0 && R.flashOn ? 1 : 0; }
-  dissolve(p) { this.U.uDissolve.value = p; this.shadow.material.opacity = 1 - p; }
+  dissolve(p) { this.U.uDissolve.value = p; Doll.bakke(this); }
   /* ut av scenen og ut av grafikkminnet: strekbåndene har egen geometri (3200 punkter hver, rundt 150 kB per dukke),
      og delene har egne materialer. Teksturene og firkantene deles med andre dukker (Art.cache, Q_GEO) og blir liggende.
      Før ble bare roten koblet løs, så hver fiende som døde, lå igjen i grafikkminnet (en av grunnene til at mobiler mistet WebGL). */
@@ -251,7 +257,7 @@ class Doll {
 function dukkeKast(d) {
   R.remove(d.root);
   for (const r of [d.back, d.front]) if (r && r.geo) r.geo.dispose();
-  d.root.traverse(o => { if (o.material && o.material.dispose) o.material.dispose(); });
+  d.root.traverse(o => { if (o.material && o.material.dispose) o.material.dispose(); if (o.customDepthMaterial) o.customDepthMaterial.dispose(); }); // også skyggeplatene fra 3D
 }
 
 /* rekvisitt som stående illustrasjon, festet i forkant */
