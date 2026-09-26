@@ -10,7 +10,7 @@ Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke red
 4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).
 5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.
 
-Status: 287 av 532 bilder er levert. Kolonnen «Levert» viser hvilke.
+Status: 287 av 542 bilder er levert. Kolonnen «Levert» viser hvilke.
 
 ## Stilblokk (lim inn i ChatGPT)
 
@@ -24,6 +24,23 @@ Technical: PNG with a TRANSPARENT background. Exactly one object, centered, full
 - Samme stil i alle bilder er viktigere enn at hvert enkelt bilde er perfekt. Bruk samme ChatGPT-samtale for en hel runde.
 - Gjennomsiktig bakgrunn er best. Hvit eller ensfarget bakgrunn går også, verktøyet fjerner den fra kantene og innover.
 - Ikke tegn skygge på bakken. Spillet legger på skygge og lys selv.
+
+## Runde 14: historien (10 bilder, 0 levert)
+
+Journalsidene før drømmene, de fire sluttbildene og forstanderen i Dypet. De vises stort i samtalepanelet, som bildene til hendelsene. Journalsidene er stilleben (ting, ikke folk), litt mørkere og mer høytidelige enn resten. Forstanderen står også i etasjen, så han tegnes forfra som møblene.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
+| `historie_1.png` | a hospital admission form from 1923: a sheet of yellowed paper with rows of handwritten lines, a red rectangular rubber-stamp mark at an angle, and a black fountain pen lying across it, seen slightly from above | liggende |  |
+| `historie_2.png` | a thick journal bound in cracked black leather, closed, with a dark red ribbon bookmark hanging out, and an old dip pen with one drop of purple ink beside it (the only text allowed: a faded gold 1887 and the initial M. on the cover) | liggende |  |
+| `historie_3.png` | an old glass inkwell full of glowing purple ink, the ink creeping out over the rim as if it were alive, with a few purple drops and small pale violet sparks around it | liggende |  |
+| `historie_4.png` | a cutaway of the sanatorium: a small roof on top and five floors stacked downwards, each floor darker than the one above, warm lit windows at the top and dark windows further down, and under the foundation a black pine forest growing into the earth | kvadrat |  |
+| `historie_5.png` | an open journal lying flat, the left page full of handwritten lines, the right page only half written with the last line trailing off in purple ink, and a burning candle stub beside it | liggende |  |
+| `historie_slutt_fornektelse.png` | a blank sheet of paper with nothing written on it, with a red ribbon bookmark lying across it | liggende |  |
+| `historie_slutt_gjentakelse.png` | a freshly made iron hospital bed with a blue blanket, a new admission form lying on the pillow, and a red curved arrow looping back to where it started | liggende |  |
+| `historie_slutt_sannheten.png` | a lone figure standing still in the rain on a stone quay, seen small from behind, a puddle reflecting pale grey light | liggende |  |
+| `historie_slutt_tilgivelse.png` | an open iron gate seen from the front with warm white light behind it, and a small dark figure walking out through it | liggende |  |
+| `prop_forstander.png` | an old man with a white beard in a long dark frock coat sitting behind an oversized wooden desk, reading a thick black leather journal that lies open in front of him, a green glass banker's lamp on the desk and dust on his shoulders, seen from the front | kvadrat |  |
 
 ## Runde 10: uterom og de nye rommene (59 bilder, 0 levert)
 

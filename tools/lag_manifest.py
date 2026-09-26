@@ -29,6 +29,7 @@ JS = r"""() => {
   for (const U of Object.values(typeof UTGANGER === 'object' ? UTGANGER : {})) safe(() => propArt({ k: U.k }));
   for (const [k, f] of Object.entries(typeof HEND_ART === 'object' ? HEND_ART : {})) { safe(() => f()); if (k === 'lampemann') safe(() => f(true)); }
   for (const [k, f] of Object.entries(typeof DROM_ART === 'object' ? DROM_ART : {})) { if (k === 'vindu') ['sno', 'rim', 'regn', 'brann', 'taake', 'klart'].forEach(v => safe(() => f(v))); else if (k === 'kaape') ['#7a2a2e', '#4a4a52'].forEach(c => safe(() => f(c))); else if (k === 'dor') [false, true].forEach(a => safe(() => f(a))); else safe(() => f()); }
+  for (const f of Object.values(typeof HISTORIE_ART === 'object' ? HISTORIE_ART : {})) safe(() => f());
   safe(() => flisPart());
   safe(heartPart); safe(morbPart); safe(cardPart); safe(pigeonPart); safe(stampDecal); safe(handPart); safe(toothPart); safe(starPart); safe(barrierArt); safe(thornArt);
   for (const id of Object.keys(CONSUMABLES)) safe(() => bottlePart(id)); for (let i = 0; i < 3; i++) safe(() => puffPart(i));

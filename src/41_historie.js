@@ -174,11 +174,11 @@ const NPC_DYP = {
   kafeteria: { 1: ['Suppe i parken. Det er ikke mitt valg, men suppen er god.'], 4: ['Kjelleren har ikke vinduer. Suppen merker det.'], 5: ['Jeg vet ikke hvordan jeg kom hit heller, vennen. Suppe?', 'Det er elg i suppa. Jeg har ikke puttet den der.'], 6: ['Forstanderen spiste her en gang. I 1887. Han har ikke betalt ennå.', 'Dette er siste servering. Det har det vært lenge.'] },
   medisin: { 1: ['Frisk luft er ikke en medisin. Den er et symptom.'], 5: ['Jeg har ikke resept for skog. Ta to av disse og ikke se deg tilbake.'], 6: ['Forstanderen har stått på venteliste siden 1887. Du er foran ham.'] },
   vaktmester: {
-    1: ['Denne parken hadde ikke port før i 1901. Jeg har nøkkel til den likevel.'],
-    2: ['Jeg har nøkkel til hver eneste dør her. Bortsett fra mitt eget skap.'],
+    1: ['Jeg fikk nøkkelknippet i 1901. Det var tre nøkler på det da. Nå er det fire.'],
+    2: ['Den fjerde nøkkelen på knippet har aldri passet i noe. Jeg bærer den likevel. Man vet aldri.'],
     3: ['Kjelleren var ikke der i går. Jeg har nøkkel til den i dag.'],
     4: ['Den fjerde nøkkelen varmer seg. Den har aldri gjort det før du kom.'],
-    5: ['Jeg har nøkkel til skogen. Det finnes ingen dør. Jeg bærer den likevel.'],
+    5: ['Jeg har nøkkel til skogen. Det finnes ingen dør. Nøkkelen er grønn i kanten, som om den har vokst.'],
     6: ['Den fjerde nøkkelen passer ikke i noen dør. Den passer i en journal. Jeg har visst alltid visst det.']
   },
   journal: { 4: ['Journalen blar raskere nå.', 'Et ark faller ut. Det er din håndskrift, men du har ikke skrevet det ennå.'], 5: ['Journalen er fuktig. Den har vært ute i skogen.'], 6: ['Journalskapet er tomt. Journalen er et annet sted i kveld.'] },
@@ -268,8 +268,7 @@ const Historie = {
 
 /* ---------- koblinger ---------- */
 HENDELSER.forstanderen = Historie.hendelse;
-// journalsiden før drømmen: vises først, og «Les videre» går til innledningen av drømmen
-// Escape på journalsiden går også videre til innledningen, ellers forsvinner valget om å våkne med en gang
+// journalsiden før drømmen: «Les videre» og Escape går begge til innledningen, så valget om å våkne med en gang ikke forsvinner
 { const _v = Samtale.vis; Samtale.vis = function (o) {
   const D = G.drom;
   if (o && D && !D.sideVist && typeof o.tittel === 'string' && o.tittel.startsWith('Kapittel ' + D.kap)) {
@@ -278,8 +277,7 @@ HENDELSER.forstanderen = Historie.hendelse;
   }
   return _v.call(this, o);
 }; }
-// siste side før etterordet fra drømmene
-// Escape går videre her også, ellers havner pasienten tilbake i spillet uten brev
+// siste side før etterordet fra drømmene. Escape går videre her også, ellers havner pasienten tilbake i spillet uten brev.
 { const _e = Drom.epilog; Drom.epilog = function (videre) {
   const H = G.run && G.run.historie, S0 = H ? Historie.siste(H) : null, etterord = () => { _e.call(Drom, videre); if (G.panelO) G.panelO.onBack = videre; };
   if (!S0 || !S0.tekst) return etterord();

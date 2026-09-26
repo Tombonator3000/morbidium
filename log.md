@@ -538,3 +538,12 @@ Alle tidspunkt er UTC.
 - Årstall og småfeil: ingen har jobbet der i førti år i 1923 når huset er fra 1887, så arkivaren og gartneren sier trettiseks. Radioen sender på prøvesendingen (Kringkastingselskapet kom først i 1925). Øyet i sprekken sa alltid «han» om sjefen; nå passer det til sjefen i etasjen. Krittskriften «Ikke stol på ...» bruker sjefen som faktisk er trukket til den etasjen.
 - Reservetegninger for ti nye bilder (historie_1 til 5, fire sluttbilder og prop_forstander) til ChatGPT leverer ekte.
 - Ny testdel 31 i test_ekstra (historie), og sluttesten i del 26 klikker seg gjennom siste side. Del 26 og 31 går gjennom.
+
+## 2026-09-26 00:45 Grafikklista til ChatGPT (del 3 av Toms nye bestilling)
+- tools/lag_manifest.py tar med bildene til historien (HISTORIE_ART). Manifestet har ti nye nøkler, 542 i alt: historie_1 til historie_5, fire sluttbilder (historie_slutt_tilgivelse, _sannheten, _gjentakelse og _fornektelse) og prop_forstander.
+- tools/lag_brief.py har engelske beskrivelser av de ti og en ny runde 14 (historien) først i ART_BRIEF.md. Ingen bilder står uten runde.
+- tools/lag_tegnelister.py har fått liste 10, Historien: ett «ni ting»-ark med de fem journalsidene og de fire sluttbildene, og forstanderen som eget bilde. Referansebildene er laget på nytt (52). Status: 255 bilder mangler, samlet i 61 ark og bilder på ti lister, pluss 11 delark.
+- DESIGN_BRIEF.md nevner historien som punkt 7 under «Neste bestilling».
+- Siden med alle arkene, kopieringsknapper og avkryssing for levert er publisert som en privat side i Claude, «Tegnelister»: https://claude.ai/artifact/CwTKtxx3rN65Es4PKpTPrW. Sjekket på 390 og 1280 piksler bredde, uten sidescroll og uten konsollfeil.
+- Småretting i historien: vaktmester Olsen gjentok en linje han allerede hadde, så linjene hans handler nå om den fjerde nøkkelen på knippet fra 1901 og fram til Dypet.
+- memory.md (nye deler om Dybde og Historien, byggerekkefølgen og kapitlene), todo.md, AGENTS.md (fillista) og README.md er oppdatert.
