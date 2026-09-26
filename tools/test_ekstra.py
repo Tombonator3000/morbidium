@@ -1216,6 +1216,35 @@ async def main():
         sjekk('ingen konsollfeil (mobil stående)', not [e for e in pg.errs if 'CONTEXT_LOST' not in e], pg.errs[:6])
         await ctx.close()
 
+        # 37) Skygger og vær
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        # været: bare regn, snø og ildfluer lager partikler og lyd. Klarvær, tåke og etasjer uten vær får ingenting (vakta lå i en kommentar
+        # og ga 60 hvite prikker og vindsus overalt), men Vaer.F følger etasjen likevel, så ute() svarer for riktig etasje
+        va = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} }, aktiv = v => v === 'regn' || v === 'sno' || v === 'ildfluer';
+          const bygg = async d => { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); const g0 = G.time; for (let i = 0; i < 100 && G.time - g0 < .1; i++) await vent(50); };
+          const tilstand = () => ({ vaer: G.F.vaer, obj: !!Vaer.obj, type: Vaer.type, F: Vaer.F === G.F, lyd: Sound.vaerType || null });
+          for (let d = 1; d <= 6; d++) { await bygg(d); const s = tilstand(); s.ok = s.F && (aktiv(s.vaer) ? s.obj && s.type === s.vaer && s.lyd === (s.vaer === 'regn' ? 'regn' : 'vind') : !s.obj && s.type === null && s.lyd === null); ut.etasjer[d] = s; }
+          const F = G.F, v0 = F.vaer; ut.stille = {};
+          for (const v of [null, 'klart', 'taake']) { F.vaer = v; Vaer.start(F); ut.stille[v] = Vaer.obj === null && Vaer.type === null && Vaer.F === F && !Sound.vaerType && !Regnringer.obj; }
+          F.vaer = 'regn'; Vaer.start(F); ut.regn = !!(Vaer.obj && Vaer.obj.isLineSegments && Vaer.obj.parent === R.scene && Vaer.type === 'regn' && Sound.vaerType === 'regn');
+          F.vaer = 'sno'; Vaer.start(F); ut.sno = !!(Vaer.obj && Vaer.obj.isPoints && Vaer.type === 'sno' && Sound.vaerType === 'vind');
+          R.lowTex = true; F.vaer = 'regn'; Vaer.start(F); ut.lowTex = Vaer.obj === null && Vaer.type === null && Vaer.F === F && !Sound.vaerType; R.lowTex = false;
+          // fra regn i en inneetasje til klarvær i parken: ute() skal svare for parken, ikke for etasjen før
+          F.vaer = 'regn'; Vaer.start(F); const F6 = F; await bygg(1); const F1 = G.F, v1 = F1.vaer;
+          Vaer.start(F6); F1.vaer = 'klart'; Vaer.start(F1); let feil = 0, rom = 0, pav = 0;
+          for (let z = 0; z < F1.H; z++) for (let x = 0; x < F1.W; x++) { const i = z * F1.W + x, rid = F1.tiles[i] ? F1.roomId[i] : -1, venter = rid >= 0 ? !!F1.rooms[rid].ute : true; if (rid >= 0) { if (venter) rom++; else pav++; } if (Vaer.ute(x + .5, z + .5) !== venter) feil++; }
+          ut.parken = { F: Vaer.F === F1, obj: Vaer.obj, utenfor: Vaer.ute(-5, -5), feil, rom, pav };
+          F1.vaer = v1; F6.vaer = v0; Vaer.start(F1); ut.tilbake = Vaer.F === F1 && !!Vaer.obj === aktiv(v1);
+          return ut; }""")
+        sjekk('været lager partikler og lyd bare ved regn, snø og ildfluer, og følger etasjen i alle seks', all(va['etasjer'][str(d)]['ok'] for d in range(1, 7)), va['etasjer'])
+        sjekk('klarvær, tåke og etasjer uten vær gir ingen prikker, ingen vind og ingen regnringer', all(va['stille'].values()) and va['lowTex'], va)
+        sjekk('regn er streker og snø er prikker, med lyden som hører til', va['regn'] and va['sno'], va)
+        pk = va['parken']
+        sjekk('etter regn i etasjen før svarer været riktig for parken i klarvær', pk['F'] and pk['obj'] is None and pk['utenfor'] is True and pk['feil'] == 0 and pk['rom'] > 0 and va['tilbake'], pk)
+        sjekk('ingen konsollfeil (skygger og vær)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
