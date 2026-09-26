@@ -19,7 +19,8 @@ const Kart = {
      høyre knapp er alltid tungt slag, og i kamp er et klikk på ringen et slag og ikke kartet */
   init() {
     const ring = $('mapring'), cv = $('game'); if (!ring || this.ring === ring) return; this.ring = ring; // ikke data-kart på ringen: journalen bytter ut alt med data-kart
-    const iKamp = () => G.state === 'play' && !!G.combat && !Input.touch.active, videre = e => cv.dispatchEvent(new MouseEvent(e.type, e)); let slag = false;
+    // kamp er også fiender som en hendelse har sluppet løs rundt pasienten, uten låste dører (G.combat er da tom)
+    const iKamp = () => G.state === 'play' && !Input.touch.active && (!!G.combat || G.enemies.some(e => e.alive && Math.hypot(e.x - G.player.x, e.z - G.player.z) < 12)), videre = e => cv.dispatchEvent(new MouseEvent(e.type, e)); let slag = false;
     ring.addEventListener('mousemove', e => { if (!Input.touch.active) videre(e); }); // et trykk gir også musehendelser, og de skal ikke gjøre telefonen til tastatur
     ring.addEventListener('mousedown', e => { slag = e.button !== 0 || iKamp(); if (slag) { videre(e); e.preventDefault(); } });
     ring.addEventListener('contextmenu', e => e.preventDefault());
