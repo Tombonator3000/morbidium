@@ -1058,6 +1058,49 @@ async def main():
         sjekk('ingen konsollfeil (vått på skjermen)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 35) Testmodus: måleren, tallene per etasje, «Si din mening» og «Testrapport» i pausen, rapporten ved døden og innstillingene
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg, url=URL + '&testmodus')
+        ut = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const hud = document.getElementById('testHud'); ut.paa = Testmodus.paa(); ut.hud = !!hud && !hud.classList.contains('hidden');
+          for (let i = 0; i < 60 && !(hud.textContent || '').includes('b/s'); i++) await vent(100); ut.hudTekst = hud.textContent.includes('b/s') && hud.textContent.includes('Lyder');
+          for (const e of G.enemies) if (e.alive) killEntity(e, {});
+          P.hp = P.maxHp = 100; P.invuln = 0; P.iframe = 0; hurt(P, 12, { type: 'pleier', x: P.x + 1, z: P.z }); await vent(300);
+          P.hp -= 5; await vent(300); healPlayer(8); await vent(200);
+          const T = G.run.test; ut.skade = Object.keys(T.etasjer[0].skade).sort(); ut.skadeOk = T.etasjer[0].skade.pleier > 0 && Math.abs(T.etasjer[0].skade.annet - 5) < .01; ut.hel = T.etasjer[0].hel;
+          startFloor(3, false); await vent(300); ut.etasjer = T.etasjer.length; ut.forsteFerdig = !!T.etasjer[0].ferdig && T.etasjer[0].sek > 0;
+          return ut; }""")
+        sjekk('testmodus med ?testmodus: måleren viser bilder i sekundet og lydene', ut['paa'] and ut['hud'] and ut['hudTekst'], ut)
+        sjekk('tallene per etasje: skade etter kilde (også den som ikke går gjennom treff), helse, og ny etasje avslutter den forrige', ut['skadeOk'] and ut['hel'] == 8 and ut['etasjer'] == 2 and ut['forsteFerdig'], ut)
+        await pg.keyboard.press('Escape'); await pg.wait_for_timeout(500)
+        pause = await pg.evaluate("() => !!document.getElementById('pMening') && !!document.getElementById('pRapport')")
+        await pg.click('#pMening'); await pg.wait_for_timeout(300)
+        await pg.click('[data-m="slag"][data-i="2"]'); await pg.click('[data-m="musikk"][data-i="1"]'); await pg.click('[data-m="musikk"][data-i="1"]')
+        await pg.click('[data-tf="spill"]'); await pg.wait_for_timeout(200); await pg.click('[data-m="vansk"][data-i="0"]')
+        await pg.click('[data-tf="rapport"]'); await pg.wait_for_timeout(200); await pg.fill('#mFri', 'Kråkene er for mange.')
+        r = await pg.evaluate("""() => { const t = document.getElementById('trTekst').value, T = MORBIDIUM.run.test;
+          return { mening: T.mening, fri: T.fritekst, tekst: t.startsWith('MORBIDIUM TESTRAPPORT') && t.includes('Versjon:') && t.includes('Enhet:') && t.includes('Slagene og treffene: For høye') && t.includes('Vanskeligheten: For lett') && !t.includes('Musikken mot lydene') && t.includes('Kråkene er for mange.') && t.includes('pleier') }; }""")
+        await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
+        esc_ = await pg.evaluate("() => ({ apen: Testmodus.apen, pause: MORBIDIUM.state === 'panel' && !!document.getElementById('pMening') })")
+        sjekk('«Si din mening» og «Testrapport» i pausen: svar med knapper (og angre), fritekst, og alt kommer med i rapporten', pause and r['mening'] == {'slag': 2, 'vansk': 0} and r['fri'] == 'Kråkene er for mange.' and r['tekst'], [pause, r])
+        sjekk('Escape lukker panelet, men ikke pausen under', not esc_['apen'] and esc_['pause'], esc_)
+        await pg.evaluate("() => { closePanel(); const P = MORBIDIUM.player; P.invuln = 0; P.iframe = 0; hurt(P, 9999, { type: 'kultist', x: P.x, z: P.z }); }")
+        d = await pg.evaluate("""async () => { for (let i = 0; i < 80 && !document.getElementById('dTest'); i++) await new Promise(r => setTimeout(r, 100));
+          const L = MORBIDIUM.meta.testrapporter || []; return { knapp: !!document.getElementById('dTest'), lagret: L.length, slutt: L.length && L[0].tekst.includes('Slutt: døde i etasje 3') && L[0].tekst.includes('Kråkene er for mange.') }; }""")
+        await pg.click('#dTest'); await pg.wait_for_timeout(300)
+        d['panel'] = await pg.evaluate("() => Testmodus.apen && Testmodus.fane === 'rapport' && document.getElementById('trTekst').value.includes('Slutt: døde')")
+        await pg.click('#tLukk'); await pg.wait_for_timeout(200)
+        sjekk('døden lagrer rapporten, og dødsskjermen får en knapp til den', d['knapp'] and d['lagret'] == 1 and d['slutt'] and d['panel'], d)
+        await pg.evaluate("() => openSettings(false, null, 'data')"); await pg.wait_for_timeout(300)
+        s = await pg.evaluate("() => ({ sist: !!document.getElementById('dTestSist') && !document.getElementById('dTestSist').disabled })")
+        await pg.evaluate("() => { MORBIDIUM.meta.settings.testmodus = false; applySettings(); }")
+        s['av'] = await pg.evaluate("() => { const h = document.getElementById('testHud'); return (!h || h.classList.contains('hidden')) && !Testmodus.paa(); }")
+        sjekk('de lagrede rapportene kan kopieres fra Data-fanen, og testmodus kan slås av', s['sist'] and s['av'], s)
+        await pg.screenshot(path='/tmp/e_21testmodus.png')
+        sjekk('ingen konsollfeil (testmodus)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

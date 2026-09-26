@@ -118,7 +118,7 @@ const Lydbank = {
   start() {
     if (this.startet || !this.paa || !Sound.ready || typeof LYDFILER !== 'object') return;
     if (G.meta && G.meta.settings && G.meta.settings.opptak === false) { this.paa = false; return; }
-    this.startet = true; this.gruppeListe();
+    this.startet = true; this.startT = performance.now(); this.gruppeListe();
     const pri = k => ({ sfx: 0, ins: 1, amb: 2 }[LYD_META[k] && LYD_META[k].type] ?? 3), navn = Object.keys(LYDFILER).sort((a, b) => pri(a) - pri(b));
     this.totalt = navn.length; let i = 0, aktive = 0;
     const neste = () => { while (aktive < 4 && i < navn.length) { const k = navn[i++]; aktive++; this.pakkUt(k).then(() => { aktive--; neste(); }); } };

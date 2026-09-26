@@ -492,6 +492,21 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
   #tools{ top:auto; bottom:calc(98px + env(safe-area-inset-bottom,0px)); left:calc(12px + env(safe-area-inset-left,0px)); right:auto; flex-direction:column; }
   .btn{ font-size:12px; padding:4px 8px; }
 }
+/* testmodus (44_testmodus.js): måleren til venstre og panelet med spørsmålene og rapporten */
+#testHud{ position:absolute; left:calc(8px + env(safe-area-inset-left,0px)); top:38%; pointer-events:none; font:600 11px/1.35 ui-monospace, Menlo, Consolas, monospace; color:#f6ead0; background:rgba(20,12,8,.62); border:1px solid rgba(246,234,208,.25); border-radius:4px; padding:4px 7px; white-space:pre; }
+#testpanel{ position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; padding:10px; background:rgba(14,9,7,.78); pointer-events:auto; }
+#testpanel.hidden{ display:none; }
+.mrad{ display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; margin:7px 0; font-weight:800; font-size:16px; line-height:1.15; }
+.mvalg{ display:flex; gap:4px; }
+.mvalg button{ font-family:var(--hand); font-size:18px; line-height:1.1; padding:2px 8px; min-width:82px; border:2px solid var(--ink); border-radius:4px; background:var(--parch-l); color:var(--ink); cursor:pointer; }
+.mvalg button.on{ background:var(--gold); box-shadow:inset 0 0 0 2px var(--ink); }
+.mvalg button:focus-visible{ outline:3px solid var(--gold); outline-offset:1px; }
+.mfri{ display:block; font-weight:800; font-size:15px; margin:4px 0 8px; }
+#mFri,#trTekst{ display:block; width:100%; box-sizing:border-box; margin-top:4px; border:2px solid var(--ink); border-radius:4px; background:#fffaf0; color:var(--ink); padding:6px 8px; resize:none; }
+#mFri{ font:16px/1.3 var(--body); }
+#trTekst{ font:11.5px/1.35 ui-monospace, Menlo, Consolas, monospace; white-space:pre; overflow:auto; }
+.tstatus{ font-family:var(--hand); font-size:21px; color:var(--red); text-align:center; min-height:24px; margin-top:4px; }
+.kort.smal .mrad{ grid-template-columns:1fr; gap:3px; margin:6px 0 10px; } .kort.smal .mvalg button{ flex:1; min-width:0; font-size:17px; }
 @media (prefers-reduced-motion: reduce){ #toast{ transition:none; } }
 </style>
 </head>
