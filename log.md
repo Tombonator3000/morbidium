@@ -633,3 +633,9 @@ Alle tidspunkt er UTC.
 - Generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 190 av 191 på det endelige bygget. Del 6, 9, 18 og 19 går nå gjennom også her.
 - Den ene feilen var i del 25 (hendelsene): Tannfeen fikk ikke plass i etasje 2. Etasjen lages av løpets frø, så de seks forsøkene i testen fikk samme etasje hver gang, og i dette løpet manglet etasjen rommene Tannfeen kan bo i. Testen bytter nå frø mellom forsøkene for graven, Tannfeen og dansen. Del 25 er kjørt tre ganger på rad uten feil. Feilen hadde ingenting med lydrunden å gjøre.
 - Neste: PR til main og fletting.
+
+## 2026-09-26 07:38 PR #8 flettet og publisert, og mindre dråper på stående mobil
+- PR #8 (frie lyder, musikken som iMUSE, og blod og vann som renner nedover skjermen) er flettet inn i main som bd5c716. GitHub Actions bygget og publiserte til GitHub Pages uten feil (kjøring 42).
+- Den publiserte fila (6,4 MB, 314 innebygde bilder og 165 lyder) er lastet ned og testet på PC og mobil: alle lydene pakkes ut uten feil, musikken spiller og går over med bro, stemningssløyfene går, dråpene kommer når pasienten blir truffet, og det er ingen konsollfeil.
+- Skjermbildet fra mobilen viste at bloddråpene ble for store på stående skjerm, fordi størrelsen fulgte høyden på bildet. Nå følger størrelse og fart den korteste siden (Vaatt.kk), så dråpene er like store på stående mobil som på PC. Liggende skjerm er som før. Sjekket med skjermbilde på 390 x 844, og testdel 34 går gjennom.
+- Grenen claude/practical-babbage-nc80bu er satt lik main igjen. Rettelsen og denne oppføringen flettes inn som en egen liten PR.
