@@ -351,7 +351,7 @@ const R = {
     m.rotation.x = -Math.PI / 2; m.position.set(x, 0, z); m.scale.set(r * 2, r * 2, 1); m.userData.col = new THREE.Color(color); m.userData.base = intensity;
     (parent || this.lscene).add(m);
     // lyskildene huskes, så 3D-prøven kan gi de nærmeste et ekte punktlys
-    const K = this.kilder || (this.kilder = []); K.push(m); if (K.length > 400) this.kilder = K.filter(k => k.parent);
+    const K = this.kilder || (this.kilder = []); K.push(m); if (K.length > 400) this.kilder = K.filter(k => k.parent && (k.parent === this.lscene || k.parent.parent)); // også de som ligger i en gruppe som er tatt ut
     return m;
   },
   setLight(m, intensity) { m.material.color.copy(m.userData.col).multiplyScalar(Math.max(0, intensity)); },

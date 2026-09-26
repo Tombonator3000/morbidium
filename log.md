@@ -848,3 +848,11 @@ Alle tidspunkt er UTC.
 - Rettet: når enkel grafikk ble slått på midt i spillet (i innstillingene eller av selvtesten ved hvitt bilde), ble målene til glød og tilt-shift liggende på skjermkortet. Nå kastes de, og lysbufferen, så lenge enkel grafikk er på.
 - To nye sjekker i del 39 for dette. Begge feiler mot bygget fra før og går gjennom nå.
 - Ikke rettet, men verdt å vite: med «Lys og skygge» av er glød og tilt-shift fortsatt på i 3D, som før. Planen nevnte at de skulle av der også, men det står ikke blant det som skulle sjekkes, og det endrer ikke minnet på telefon. Punkter som tegnes utenfor skjermkanten, kan på noen skjermkort forsvinne helt i stedet for å gli ut. Det skjer ikke i testnettleseren, så det er ikke sett.
+
+## 2026-09-26 19:35 Sporene flettet, og tre små rettinger etterpå (testene går)
+- Spor A (vær, skygger, lyspulje og diorama-lys) og spor B (stort kart, kontroller i menyene og TV-modus) er flettet inn i grenen med to flettecommiter. Konfliktene: kval() fra spor B (TV starter på middels) sammen med taket på skyggekartet fra spor A, MenyNav i løkka med D3.tick og Dybde.tick etter bevegelsen, begge eksportlistene, testdelene 37 til 42 i rekkefølge, og loggen sortert etter tid.
+- Rettet etter notatene fra skeptikerne:
+  1. B er også rulleknappen. Et B-trykk i spillet rett før et panel dukker opp av seg selv (brevet, drømmen), lukker ikke panelet det første halve sekundet, på samme måte som A. B i menyene teller ikke.
+  2. Merket på flaska og apparatet i HUD-en sa alltid F og V. Nå står det Ned og Opp med håndkontroll (Bruk på berøring).
+  3. R.kilder (lyskildene) vokste for hver etasje, fordi platene i den gamle lysgruppa fortsatt hadde gruppa som forelder. Når etasjen byttes, tas de ut av lista og materialene deres kastes. Grensen på 400 luker også ut kilder i grupper som er tatt ut.
+- Ny testdel 43 for de tre rettingene. En første kjøring av testdelene 36 til 42 på det flettede bygget går nå. Den har funnet tre feil i skyggesjekkene i del 37 (nye fiender får ikke skyggeplate i 3D), som undersøkes når kjøringen er ferdig.

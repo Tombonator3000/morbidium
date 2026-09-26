@@ -611,6 +611,7 @@ function hudUpdate() {
   }
   const ik = (G.run.items || []).join() + '|' + (G.run.trinket || '');
   if (ik !== Items.itemsKey) { Items.itemsKey = ik; const box = $('items'); box.innerHTML = ''; if (G.run.trinket) { const c = partCanvas(lommeIcon(G.run.trinket), 44, 44, 1); c.className = 'lomme'; c.title = 'Lommerusk: ' + LOMMERUSK[G.run.trinket].name + ': ' + LOMMERUSK[G.run.trinket].desc; box.appendChild(c); } for (const id of G.run.items || []) { const c = partCanvas(itemIcon(id), 44, 44, 1); c.title = ITEMS[id].name + ': ' + ITEMS[id].desc; box.appendChild(c); } }
+  const tk = Input.tast('drikk'), tv = Input.tast('apparat'), kn = $('consk'), an = document.querySelector('#akt .n'); if (kn && kn.textContent !== tk) kn.textContent = tk; if (an && an.textContent !== tv) an.textContent = tv; // knappen for flaska og apparatet etter det du spiller med
   const ck = G.run.slots.map((c, i) => c ? c.id + c.lvl + (c.up || '') : '-').join() + (Input.lastDevice === 'pad' ? 'p' : '');
   if (ck !== hudCardsKey) {
     hudCardsKey = ck;
