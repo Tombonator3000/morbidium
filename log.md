@@ -717,3 +717,10 @@ Alle tidspunkt er UTC.
 - memory.md: regelen for rulling i openPanel (samme panel beholder, alt annet begynner øverst), fast kvalitet ved mistet grafikk, tipslappen liggende, hjertene som +fulle/skjulte, !important på auto-margene, tastene i testpanelet, og minnesjekken i testdel 36.
 - todo.md: minnetesten og gjennomgangen er gjort.
 - Full testkjøring på 8777830 går i egen arbeidskopi.
+
+## 2026-09-26 12:04 PR #10 flettet og publisert, og ny bestilling fra Tom
+- Full testkjøring på det endelige bygget (8777830, i egen arbeidskopi): generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 215 av 215. Etter det kom bare dokumentasjon (c0b110d).
+- PR #10 (testmodus, «Si din mening», og mobil: grafikkminnet, mistet WebGL og layout) ble opprettet og flettet av Tom selv rett etterpå (1bc8561, «Merge pull request #10»). GitHub Pages publiserte samme minutt (kjøring 44, success).
+- Den publiserte siden er testet i PC-profil og telefon stående og liggende: versjon 1bc8561, tittelen midt på skjermen på PC (73 over, 91 under) og stående, mistet grafikk gir pause og kommer tilbake uten feilmelding, testmodus slås på med ?testmodus, ingen konsollfeil.
+- Grenen claude/practical-babbage-nc80bu er satt lik main igjen. De gamle arbeidskopiene wt_for og wt_lyd er fjernet.
+- Ny bestilling fra Tom, med et skjermbilde av et HD-2D-spill (pikselfigurer i en 3D-diorama om natta, sterk tilt-shift-dybdeskarphet, varme lamper med glød, lysende kuler ved spilleren): (1) undersøke hvordan grafikken kan bli enda bedre med 2D og 3D sammen, (2) minikartet skal kunne trykkes på så et stort kart åpnes («stortingsrepresentant kart» er autokorrektur for «stort kart»), (3) sjekke om skyggene virker riktig, fordi noen ser faste ut mens andre følger spilleren, (4) mulighet for å spille på Samsung-TV med kontroller. En undersøkelse med fem agenter (grafikk, kart, skygger to ganger fra hver sin kant, TV) går nå.
