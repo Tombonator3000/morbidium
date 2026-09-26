@@ -113,11 +113,13 @@ const GLOD_KILDER = {
    neste tennes først når det er plass. Ingen med enkel grafikk, lette teksturer eller uten lys og skygge. Uten 3D er tegningene
    ikke mørklagt av natta, og bildet ganges med lysbufferen etterpå, så gloriene er svakere der. */
 const GLORIE_VS = `
-  uniform float uPx, uTilt; uniform vec3 uFokus; attribute vec3 aFarge; attribute float aStr; varying vec3 vF;
+  uniform float uPx, uTilt, uMaks; uniform vec3 uFokus; attribute vec3 aFarge; attribute float aStr; varying vec3 vF;
   void main(){
     vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     float k = 1.0 + smoothstep(uFokus.y, uFokus.z, abs(p.y / p.w * 0.5 + 0.5 - uFokus.x)) * uTilt * 1.5;
-    gl_Position = p; gl_PointSize = min(160.0, aStr * uPx * k); vF = aFarge / (k * sqrt(k)); // større, men ikke lysere til sammen
+    // uMaks er det største punktet skjermkortet kan tegne. Blir gloria kappet der, dempes den bare så mye som den faktisk vokste
+    float s0 = min(uMaks, aStr * uPx), s = min(uMaks, s0 * k); k = s / s0;
+    gl_Position = p; gl_PointSize = s; vF = aFarge / (k * sqrt(k)); // større, men ikke lysere til sammen
   }`;
 const GLORIE_FS = `
   varying vec3 vF;
@@ -140,13 +142,14 @@ const GLORIE_KILDER = {
   kjempeplante: [[0, 2.1, 1.5, .5]]
 };
 const Glorie = {
-  pts: null, K: [], MAKS: 32, px: { value: 100 }, STYRKE: 1.6, UTEN_3D: .45, INN: .25, UT: .2, FRAM: 1.5,
+  pts: null, K: [], MAKS: 32, px: { value: 100 }, maks: { value: 256 }, STYRKE: 1.6, UTEN_3D: .45, INN: .25, UT: .2, FRAM: 1.5,
   tak() { if (R.safe || R.lowTex || !R.lightsOn) return 0; return D3.on ? { hoy: 32, middels: 20, lav: 10 }[D3.kval()] || 10 : 10; },
   lag() {
     this.tom(); if (!R.scene || !R.post) return;
+    const gl = R.renderer.getContext(), pr = gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE); this.maks.value = pr && pr[1] >= 1 ? pr[1] : 256; // ofte 511 til 2048
     const N = this.MAKS, geo = new THREE.BufferGeometry(), u = R.post.uniforms;
     geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3)); geo.setAttribute('aFarge', new THREE.BufferAttribute(new Float32Array(N * 3), 3)); geo.setAttribute('aStr', new THREE.BufferAttribute(new Float32Array(N), 1)); geo.setDrawRange(0, 0);
-    const mat = new THREE.ShaderMaterial({ uniforms: { uPx: this.px, uTilt: u.uTilt, uFokus: u.uFokus }, vertexShader: GLORIE_VS, fragmentShader: GLORIE_FS, transparent: true, depthWrite: false,
+    const mat = new THREE.ShaderMaterial({ uniforms: { uPx: this.px, uMaks: this.maks, uTilt: u.uTilt, uFokus: u.uFokus }, vertexShader: GLORIE_VS, fragmentShader: GLORIE_FS, transparent: true, depthWrite: false,
       blending: THREE.CustomBlending, blendSrc: THREE.DstColorFactor, blendDst: THREE.OneFactor }); // bildet ganger (1 + gloria)
     this.pts = new THREE.Points(geo, mat); this.pts.frustumCulled = false; this.pts.renderOrder = 7; R.scene.add(this.pts); this.ny = true;
   },

@@ -237,6 +237,8 @@ const R = {
   },
   safe: false, checkN: 0,
   render(dt) {
+    // enkel grafikk: hjelpemålene til glød, tilt-shift og lysbufferen trengs ikke og kastes (også når den slås på midt i spillet)
+    if (this.safe && (this.bl || this.us || this.lrt)) { this.kastPar('bl'); this.kastPar('us'); this.kastLys(); this.post.uniforms.tBloom.value = this.post.uniforms.tUskarp.value = null; }
     if (this.safe) { const r = this.renderer; this.fx.hurt = Math.max(0, this.fx.hurt - dt * 2.5); this.fx.flash = Math.max(0, this.fx.flash - dt * 5); r.setRenderTarget(null); r.setClearColor(this.clear || 0x16130c, 1); r.clear(); r.render(this.scene, this.camera); return; }
     this.renderPost(dt);
     // selvtest: blir bildet helt hvitt eller helt tomt, byttes det til enkel grafikk
