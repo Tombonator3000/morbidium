@@ -48,7 +48,7 @@ function slashFx(x, z, a, r, arc, heavy, col = 0xfffbea) {
   m.rotation.x = -Math.PI / 2; const g = new THREE.Group(); g.add(m); g.position.set(x, .06, z); g.rotation.y = a; g.renderOrder = 4; R.dyn.add(g);
   VFX.slashes.push({ g, m, t: 0, life: heavy ? .26 : .18 });
 }
-function flashLight(x, z, r, col, t = .25, k = 1.2) { const l = R.light(x, z, r, col, k); addFx(l, t, (o, p) => R.setLight(o, k * (1 - p))); }
+function flashLight(x, z, r, col, t = .25, k = 1.2) { const l = R.light(x, z, r, col, k); l.userData.blink = true; addFx(l, t, (o, p) => R.setLight(o, k * (1 - p))); } // blink: i 3D får bare ett lysglimt om gangen et punktlys (D3.fordel)
 function updateVFX(dt) {
   for (let i = VFX.puffs.length - 1; i >= 0; i--) { const p = VFX.puffs[i]; p.t += dt; const k = p.t / p.life; p.g.scale.setScalar(p.s * (.6 + k * .7)); p.g.position.x += p.vx * dt; p.g.position.y += p.vy * dt * .5; p.g.userData.U.uAlpha.value = 1 - k * k; if (k >= 1) { R.remove(p.g); VFX.puffs.splice(i, 1); } }
   for (let i = VFX.stars.length - 1; i >= 0; i--) { const s = VFX.stars[i]; s.t += dt; const k = s.t / .14; s.g.scale.setScalar(s.s * (k < .5 ? k * 2 : 2 - k * 2) * .9); if (k >= 1) { R.remove(s.g); VFX.stars.splice(i, 1); } }
