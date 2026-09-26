@@ -384,10 +384,10 @@ class Lagdukke {
     this.U = makeU({ outline: opt.elite ? 1 : 0, outlineCol: opt.outlineCol, tint: opt.tint });
     this.sc = (opt.scale || 1) * (def.scale || 1); this.flip = 1; this.view = 'f'; this.t = Math.random() * 10; this.speed = 0; this.squash = 0; this.flashT = 0;
     this.headOff = { x: 0, y: 0, vx: 0, vy: 0 };
-    this.shadow = Doll.blob(opt.shadow || def.skygge || .8); if (!opt.noShadow) this.root.add(this.shadow);
+    this.shadow = Doll.blob(opt.shadow || def.skygge || .8); this.shadowA = 1; if (!opt.noShadow) this.root.add(this.shadow);
     this.back = new Ribbon(3200, this.U); this.front = new Ribbon(3200, this.U); this.plane.add(this.back.mesh, this.front.mesh);
     this.deler = def.deler.map(d => { const m = partMesh(d.P(), this.U); m.position.set(d.x || 0, d.y || 0, d.z || 0); this.plane.add(m); return Object.assign({ m }, d); });
-    this.meshes = []; this.plane.traverse(o => { if (o.isMesh && o.material.map) this.meshes.push(o); });
+    this.meshes = []; this.plane.traverse(o => { if (tegnetDel(o)) this.meshes.push(o); });
   }
   setFacing(a) { const sx = Math.sin(a); this.flip = sx < -.25 ? -1 : sx > .25 ? 1 : this.flip; }
   flash(t = .09) { this.flashT = t; }
@@ -399,7 +399,9 @@ class Lagdukke {
     const PO = st.pose ? posStat(st.pose) : null, kl = PO && PO.klem ? PO.klem[0] : 0, sq = Math.sin(this.squash * Math.PI) * .1 * (this.squash > 0 ? 1 : 0);
     const puls = this.def.puls ? Math.sin(this.t * this.def.puls) * .03 : 0;
     this.plane.scale.set(this.sc * this.flip * (1 + sq + kl * .45 + puls), this.sc * BILL_Y * (1 - sq * .7 - kl * .5 - puls * .6), this.sc);
-    this.root.position.y = (st.hop || 0) + (this.def.sveve ? this.def.sveve + Math.sin(this.t * 1.6) * .1 : 0);
+    // som Doll: hopp og sveving løfter tegningen, og skyggeflekken blir på gulvet. Svevende skapninger (kråka, koret) daler ned når de ligger
+    this.sv = lerp(this.sv || 0, this.def.sveve && !st.down ? this.def.sveve + Math.sin(this.t * 1.6) * .1 : 0, Math.min(1, dt * 8));
+    this.plane.position.y = (st.hop || 0) + this.sv; Doll.bakke(this);
     this.plane.rotation.z = lerp(this.plane.rotation.z, st.down ? -1.1 * this.flip : st.spin ? Math.sin(st.spin) * .2 : 0, Math.min(1, dt * 8));
     const S = { t: this.t, st, PO, kl, speed: this.speed, aapen: st.aapen || 0 };
     for (const d of this.deler) if (d.anim) d.anim(d, S);
@@ -408,7 +410,7 @@ class Lagdukke {
     this.back.end(.028); this.front.end(.028);
     this.flashT -= dt; this.U.uFlash.value = this.flashT > 0 && R.flashOn ? 1 : 0;
   }
-  dissolve(p) { this.U.uDissolve.value = p; this.shadow.material.opacity = 1 - p; }
+  dissolve(p) { this.U.uDissolve.value = p; Doll.bakke(this); }
   dispose() { dukkeKast(this); } // som Doll (11_doll.js): strekbåndene og materialene ut av grafikkminnet
 }
 /* ---------- delene til Hviskekoret ---------- */

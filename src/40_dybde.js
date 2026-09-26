@@ -4,7 +4,8 @@
      lange, myke skygger bort fra lykta, som i en mørk gang med en
      parafinlampe. Skyggene er flate plater på gulvet som snus og strekkes
      hvert bilde (ekte punktlysskygger passer dårlig til tegningene, som er
-     strukket i høyden for å se riktige ut fra kameraet).
+     strukket i høyden for å se riktige ut fra kameraet). Lykta lyser ikke
+     gjennom vegger, og skyggen stopper ved første vegg bak kasteren.
    - Kontaktskygger: gulvet mørkner inn mot veggene og i hjørnene, mest under
      de høye veggene bak. Males én gang per etasje.
    - Varmeflimmer over bål, ovner, kjeler og gryter (shaderen ligger i 04_render.js).
@@ -16,7 +17,7 @@
    flimmeret følger «Forvrengning» og kameradykkene følger «Skjermristing».
    ============================================================ */
 const Dybde = {
-  skygger: new Map(), tex: null, ao: null,
+  skygger: new Map(), ledige: [], sikt: new WeakMap(), lt: 0, tex: null, ao: null,
   /* ---------- lykteskygger ---------- */
   skyggeTex() {
     // mørkest ved føttene, blekner utover, med avrundet ende
@@ -26,38 +27,61 @@ const Dybde = {
     }));
   },
   skyggeGeo() { return R.geo('lykteskygge', () => { const g = new THREE.PlaneGeometry(1, 1); g.translate(0, .5, 0); return g; }); },
-  /* hvem som kaster skygge: figurer (fiender, sjefen, personale, dukker i hendelser) og høye ting */
+  /* hvem som kaster skygge: figurer (fiender, sjefen, personale, dukker i hendelser) og høye ting.
+     U er figurens uniformer, så gjennomsiktige og halvt oppløste figurer kaster svakere skygge. De døde mister skyggen i første bilde
+     etter drapet: testdel 30 venter at den er borte etter 0,3 sekunder, og på en treg maskin kan det bildet alene ta så lang tid */
   kastere() {
     const L = [];
-    for (const e of G.enemies || []) if (e.alive && e.doll && e.state !== 'spawn') L.push({ k: e, x: e.x, z: e.z, b: e.r * 2.2, h: 1 });
-    if (G.boss && G.boss.alive && G.boss.doll) L.push({ k: G.boss, x: G.boss.x, z: G.boss.z, b: 2, h: 1.4 });
-    for (const n of G.npcs || []) if (n.doll) L.push({ k: n, x: n.x, z: n.z, b: .9, h: 1 });
-    for (const d of G.ekstraDukker || []) if (d.root && d.root.parent && d.root.visible) L.push({ k: d, x: d.root.position.x, z: d.root.position.z, b: .9, h: 1 });
+    for (const e of G.enemies || []) if (e.alive && e.doll && e.state !== 'spawn') L.push({ k: e, x: e.x, z: e.z, b: e.r * 2.2, h: 1, U: e.doll.U });
+    if (G.boss && G.boss.alive && G.boss.doll) L.push({ k: G.boss, x: G.boss.x, z: G.boss.z, b: 2, h: 1.4, U: G.boss.doll.U });
+    for (const n of G.npcs || []) if (n.doll) L.push({ k: n, x: n.x, z: n.z, b: .9, h: 1, U: n.doll.U });
+    for (const d of G.ekstraDukker || []) if (d.root && d.root.parent && d.root.visible) L.push({ k: d, x: d.root.position.x, z: d.root.position.z, b: .9, h: 1, U: d.U });
     for (const o of G.props || []) {
       const P0 = o.alive && o.g && o.g.parent && o.m && !o.g.userData.flat && o.m.userData && o.m.userData.P; // tegningen med bredde og høyde
-      if (P0 && P0.h >= 1.1) L.push({ k: o, x: o.x, z: o.g.position.z - .15, b: Math.min(1.6, P0.w * .8), h: Math.min(1.5, P0.h / 1.6) });
+      if (P0 && P0.h >= 1.1) L.push({ k: o, x: o.x, z: o.g.position.z - .15, b: Math.min(1.6, P0.w * .8), h: Math.min(1.5, P0.h / 1.6), U: o.U });
     }
     return L;
   },
+  /* vegger for lykta: bare veggruter og en sprukken vegg som står. Ikke solid(): møbler merker sin egen rute som blokkert,
+     og da ville bordene stengt lyset og de høye tingene mistet skyggen sin */
+  veggRute(tx, tz) { const F = G.F; if (tx < 0 || tz < 0 || tx >= F.W || tz >= F.H) return true; const i = tz * F.W + tx; return !F.tiles[i] || (F.block[i] === 1 && !!F.crack && F.crack.includes(i)); },
+  /* hvor langt fra (x, z) i retning (ux, uz) til første vegg, rute for rute (høyst maks) */
+  tilVegg(x, z, ux, uz, maks) {
+    ux = ux || 1e-9; uz = uz || 1e-9;
+    let tx = Math.floor(x), tz = Math.floor(z), t = 0; const sx = ux > 0 ? 1 : -1, sz = uz > 0 ? 1 : -1, dX = Math.abs(1 / ux), dZ = Math.abs(1 / uz);
+    let nX = (ux > 0 ? tx + 1 - x : x - tx) * dX, nZ = (uz > 0 ? tz + 1 - z : z - tz) * dZ;
+    while (t < maks) { if (this.veggRute(tx, tz)) return t; if (nX < nZ) { t = nX; nX += dX; tx += sx; } else { t = nZ; nZ += dZ; tz += sz; } }
+    return maks;
+  },
+  plate() {
+    const m = this.ledige.pop() || new THREE.Mesh(this.skyggeGeo(), new THREE.MeshBasicMaterial({ map: this.skyggeTex(), transparent: true, depthWrite: false, opacity: 0 }));
+    m.rotation.x = -Math.PI / 2; m.renderOrder = 1; m.visible = true; m.userData = { s: 0 }; if (!m.parent) R.scene.add(m); return m;
+  },
+  // platene legges til side og brukes om igjen, i stedet for et nytt materiale hver gang noen kommer inn i lyset
+  slipp(m) { if (this.ledige.length < 16) { m.visible = false; this.ledige.push(m); } else { R.scene.remove(m); m.material.dispose(); } },
   lykt(dt) {
     const P = G.player, lykt = P && P.alive && P.lantern && P.lantern.parent;
     if (!lykt || R.safe || !R.lightsOn || G.state === 'title') { this.tomSkygger(); return; }
     // styrken i forhold til den vanlige lykta (0,35), så skyggene flakker og blekner når lykta gjør det
     const c = P.lantern.material.color, b0 = P.lantern.userData.col, k = clamp(Math.max(c.r, c.g, c.b) / Math.max(.001, Math.max(b0.r, b0.g, b0.b) * .35), 0, 1.3), RR = Math.max(2.5, P.lantern.scale.x * .5 * 1.15), ok = new Set();
+    this.lt += dt;
     for (const K of this.kastere()) {
-      const dx = K.x - P.x, dz = K.z - P.z, d = Math.hypot(dx, dz); if (d > RR || d < .35) continue;
+      const dx = K.x - P.x, dz = K.z - P.z, d = Math.hypot(dx, dz); if (d > RR || d < .2) continue;
+      const ux = dx / d, uz = dz / d;
+      // står det en vegg mellom lykta og kasteren? Sjekkes hvert 0,2 sekund, fram til litt foran kasteren, så ting inntil en vegg ikke skygges av den
+      let S = this.sikt.get(K.k); if (!S || this.lt >= S.t) { S = { t: this.lt + .2, v: this.tilVegg(P.x, P.z, ux, uz, d) >= d - .3 }; this.sikt.set(K.k, S); }
       let m = this.skygger.get(K.k);
-      if (!m) {
-        m = new THREE.Mesh(this.skyggeGeo(), new THREE.MeshBasicMaterial({ map: this.skyggeTex(), transparent: true, depthWrite: false, opacity: 0 }));
-        m.rotation.x = -Math.PI / 2; m.renderOrder = 1; R.scene.add(m); this.skygger.set(K.k, m);
-      }
-      const ux = dx / d, uz = dz / d, n = 1 - d / RR;
+      if (!m) { if (!S.v) continue; m = this.plate(); this.skygger.set(K.k, m); }
+      // skyggen glir inn og ut bak hjørner på 0,15 sekunder
+      const u = m.userData; u.s = clamp(u.s + (S.v ? dt : -dt) / .15, 0, 1); if (!S.v && u.s <= 0) continue;
+      // lengden stopper ved første vegg bak kasteren, og nær lykta blekner den bort i stedet for å bli klippet
+      const L = (.8 + d * 1.15) * K.h, lang = Math.max(.05, Math.min(L, this.tilVegg(K.x, K.z, ux, uz, L))), n = 1 - d / RR, q = clamp((d - .2) / .4, 0, 1), a = K.U && K.U.uAlpha ? K.U.uAlpha.value * (1 - K.U.uDissolve.value) : 1;
       m.position.set(K.x, .014, K.z); m.rotation.z = Math.atan2(-ux, -uz);
-      m.scale.set(K.b, (.8 + d * 1.15) * K.h, 1); m.material.opacity = Math.min(.85, n * 1.8) * Math.min(1, k); ok.add(K.k);
+      m.scale.set(K.b, lang, 1); m.material.opacity = Math.min(.85, n * 1.8) * Math.min(1, k) * q * q * (3 - 2 * q) * clamp(a, 0, 1) * u.s; ok.add(K.k);
     }
-    for (const [key, m] of this.skygger) if (!ok.has(key)) { R.scene.remove(m); m.material.dispose(); this.skygger.delete(key); }
+    for (const [key, m] of this.skygger) if (!ok.has(key)) { this.slipp(m); this.skygger.delete(key); }
   },
-  tomSkygger() { for (const m of this.skygger.values()) { R.scene.remove(m); m.material.dispose(); } this.skygger.clear(); },
+  tomSkygger() { for (const m of this.skygger.values()) this.slipp(m); this.skygger.clear(); },
   /* ---------- kontaktskygger langs veggene ---------- */
   kontakt(F) {
     if (R.safe || !F || !R.level || !Paint.wallH) return;
@@ -137,7 +161,7 @@ const Dybde = {
     this.lykt(dt); this.varme(); this.stovTick(dt); this.stovT -= dt;
     if ((this.speilT = (this.speilT || 0) - dt) <= 0) { this.speilT = .1; this.speil(); }
   },
-  tom() { this.tomSkygger(); this.stov = []; if (this.stovMesh) this.stovMesh.count = this.stovSkygge.count = 0; if (this.ao) { this.ao.t.dispose(); this.ao.m.material.dispose(); this.ao = null; } R.varmeL = []; R.kam.hold = R.kam.kick = R.kam.holdT = 0; }
+  tom() { this.tomSkygger(); for (const m of this.ledige) { R.scene.remove(m); m.material.dispose(); } this.ledige = []; this.stov = []; if (this.stovMesh) this.stovMesh.count = this.stovSkygge.count = 0; if (this.ao) { this.ao.t.dispose(); this.ao.m.material.dispose(); this.ao = null; } R.varmeL = []; R.kam.hold = R.kam.kick = R.kam.holdT = 0; }
 };
 
 /* ---------- koblinger ---------- */

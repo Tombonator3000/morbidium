@@ -33,7 +33,7 @@ const Paint = {
   /* hele gulvet males som ett lerret: fliser med skjeve blekkfuger, malte flekker,
      tegnet skygge langs veggene, rusk og en tykk blekkant der gulvet møter veggen */
   floorCanvas(F, th) {
-    const W = F.W, H = F.H, T = R.lowTex ? 16 : W * H > 1800 ? (R.coarse ? 24 : 32) : 64, rng = mulberry32((F.seed || 1) * 31 + 7);
+    const W = F.W, H = F.H, T = R.lowTex ? 16 : W * H > 1800 ? (R.coarse || R.tv ? 24 : 32) : 64, rng = mulberry32((F.seed || 1) * 31 + 7);
     const c = document.createElement('canvas'); c.width = W * T; c.height = H * T; const g = c.getContext('2d');
     const isF = (x, z) => x >= 0 && z >= 0 && x < W && z < H && F.tiles[z * W + x] > 0, isC = (x, z) => isF(x, z) && F.tiles[z * W + x] === T_COR;
     g.lineCap = 'round'; g.lineJoin = 'round';
@@ -141,7 +141,9 @@ const Paint = {
     }, true);
   },
   level(F, th) {
-    if (R.level) { R.scene.remove(R.level); } if (R.levelL) R.lscene.remove(R.levelL);
+    if (R.level) { R.scene.remove(R.level); }
+    // lysplatene fra forrige etasje: ut av lista over lyskilder (den vokste ellers for hver etasje) og materialene kastes (teksturen deles)
+    if (R.levelL) { R.lscene.remove(R.levelL); const gml = R.levelL; gml.traverse(o => { if (o !== gml && o.material) o.material.dispose(); }); if (R.kilder) R.kilder = R.kilder.filter(k => k.parent && k.parent !== gml); }
     if (this.owned) for (const o of this.owned) try { o.dispose(); } catch (e) { }
     this.owned = []; this.opptatt = new Map(); // veggfelt med dør eller plakat, så 3D-listene holder seg unna
     const L = R.level = new THREE.Group(); R.scene.add(L); R.levelL = new THREE.Group(); R.lscene.add(R.levelL);

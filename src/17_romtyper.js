@@ -417,8 +417,9 @@ const Landskap = {
 const Vaer = {
   type: null, obj: null, n: 0, pos: null, fart: null, ripT: 0,
   start(F) {
-    this.stopp(); this.F = F; const type = F && F.vaer; // F settes alltid, så ute() svarer for riktig etasje også i klarvær og tåke if (!type || type === 'klart' || type === 'taake' || R.lowTex) return;
-    this.type = type; this.F = F; const N = this.n = type === 'regn' ? 260 : type === 'sno' ? 220 : 60;
+    this.stopp(); this.F = F; const type = F && F.vaer; // F settes alltid, så ute() svarer for riktig etasje også i klarvær og tåke
+    if (!type || type === 'klart' || type === 'taake' || R.lowTex) return;
+    this.type = type; const N = this.n = type === 'regn' ? 260 : type === 'sno' ? 220 : 60;
     this.p = new Float32Array(N * 3); this.v = new Float32Array(N); for (let i = 0; i < N; i++) this.plasser(i, true);
     const geo = new THREE.BufferGeometry();
     if (type === 'regn') {
