@@ -1,10 +1,14 @@
 # Morbidium: gjøremål
 
+## Grafikkleveranse 2026-09-26
+- [x] Alle bestillingene i de ti tegnelistene levert. 544 av 544 manifestbilder, ingen manglende delark.
+- [ ] Claude: kontroller Den hvite hjortens kropp mot hals og animerte bein i spillet. Se GRAFIKKLEVERANSE.md for konkret festepunkt og øvrig visuell kontroll.
+
 ## Venter på Tom
 - [ ] Spille prototypen og si hva som føles feil i utseende og kamp.
 - [ ] Bekrefte egenskapsnavnene fra journalskissen.
 - [ ] Bekrefte regelen om at kort i eget hjerneområde får bonus.
-- [ ] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt).
+- [x] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt). Levert 2026-09-26, se GRAFIKKLEVERANSE.md.
 - [ ] Slette grenen claude/funny-newton-cgnzav på GitHub (Claude Code får ikke lov til det). Alt på den finnes i main.
 
 ## Forslag til neste steg (Claude, 2026-09-26 morgen, etter lydrunden)
@@ -14,7 +18,7 @@ Lista har nå 19 åpne spørsmål til Tom (lyd, blod, mørke, vanskelighet, hist
 - [ ] Tom: spille tre eller fire løp på PC og mobil, gjerne med hodetelefoner, og lime inn rapportene. Slik: åpne https://tombonator3000.github.io/morbidium/?testmodus (eller slå på Testmodus under Innstillinger, Spill). Svar på spørsmålene under «Si din mening» i pausen når du har lyst. Når pasienten dør eller blir skrevet ut: trykk «Testrapport», så «Kopier rapporten», og lim den inn i samtalen med Claude. Glemmer du det, ligger de fem siste rapportene under Innstillinger, Data.
 - [ ] Claude: justere ut fra rapportene: lydmiksen, mengden blod på skjermen, vanskelighetskurven gjennom seks etasjer, lengden på et løp og ytelsen på mobil.
 - [ ] Claude, små ting som kan tas når som helst: koble inn de seks lydene som er hentet, men ikke brukt (bokslag når journalen lukkes, dørsmell når rommet låses, gulvknirk, radiosus i radiohendelsen, riving ved overkill, sluk på badet), og en fast testklokke så nettlesertestene ikke avhenger av hvor rask maskinen er.
-- [ ] Tom og ChatGPT, i denne rekkefølgen: liste 10 (historien, fire bestillinger), liste 5 og 1 (fiendene i parken og første etasje), hjertene og ringene i liste 4.
+- [x] Tom og ChatGPT, i denne rekkefølgen: liste 10 (historien, fire bestillinger), liste 5 og 1 (fiendene i parken og første etasje), hjertene og ringene i liste 4. Levert 2026-09-26, se GRAFIKKLEVERANSE.md.
 - [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, og andre halvdel av UI-settet.
 
 ## Mobil, 2026-09-26 formiddag (Tom: «Noe gikk galt», WebGL mistet)
@@ -45,15 +49,15 @@ Lista har nå 19 åpne spørsmål til Tom (lyd, blod, mørke, vanskelighet, hist
 - [x] Grafikklista: runde 14 i ART_BRIEF.md og liste 10 i tegnelister/ for de ti nye historiebildene, og en side med alle arkene og kopieringsknapper (Artifact «Tegnelister»).
 - [x] Historien skrevet om etter Toms ønske: Hellraiser møter Twin Peaks, med Lovecraft-stemning og 1920-tallet. Havet under huset og pasient nr. 0, Avdeling Null med bjelle og kroker, Venterommet, instrumentskrinet, forstanderen sydd fast til stolen, kjettinger som effekt, ni fragmenter.
 - [ ] Tom: les journalsidene, forstanderen, Venterommet og skrinet og si om tonen treffer, og om det er for mye eller for lite. Tekstene står i src/41_historie.js.
-- [ ] Tom og ChatGPT: bildene til historien (liste 10) er nå fire bestillinger: arket med sidene og sluttene, forstanderen, Venterommet og skrinet.
+- [x] Tom og ChatGPT: bildene til historien (liste 10) er nå fire bestillinger: arket med sidene og sluttene, forstanderen, Venterommet og skrinet. Levert 2026-09-26, se GRAFIKKLEVERANSE.md.
 - [ ] Senere: la kjettingene dukke opp andre steder også (Krok, Journalens død), og en egen lyd for Avdeling Null i musikken.
-- [ ] Tom og ChatGPT: liste 10 (Historien) er fire bestillinger og gjør mest for historien.
+- [x] Tom og ChatGPT: liste 10 (Historien) er fire bestillinger og gjør mest for historien. Levert 2026-09-26, se GRAFIKKLEVERANSE.md.
 - [ ] Tom: si om lykteskyggene og takstøvet er passe mye, og om kameradykket blir for mye på mobil.
 - [ ] Senere: et kapittel om historien i Pasienthåndboka (journalsidene man har lest, G.run.journalsider).
 
 ## Tegnelister, effekter og kombo, 2026-09-25 natt
 - [x] Tegnelister for alt som mangler bilde: tools/lag_tegnelister.py skriver tegnelister/ med ni lister (én ChatGPT-samtale hver), 59 ark og bilder for de 245 som mangler, og 11 delark til oppskriftssystemet. Referansebilder av dagens kodetegninger i samme rutenett som malen.
-- [ ] Tom og ChatGPT: tegne arkene i tegnelister/, liste 1 først (liste 10, historien, kan tas når som helst). Kjør tools/lag_tegnelister.py etter levering, så krymper listene.
+- [x] Tom og ChatGPT: tegne arkene i tegnelister/, liste 1 først (liste 10, historien, kan tas når som helst). Kjør tools/lag_tegnelister.py etter levering, så krymper listene. Levert 2026-09-26, se GRAFIKKLEVERANSE.md.
 - [x] Flettet inn i main som PR #3 og publisert på GitHub Pages.
 - [x] Flere effekter og shadere (38_effekter.js og 04_render.js): sjokkbølger, zoomslag, negativ, lynblink, brennende skjermkant, drømmeslør, gnister, røyk, damp, sporer, Morbidium og møll på skjermkortet, lyn i regnværet, teslaspolens buer og regnringer.
 - [x] Kombo langt over toppen (39_kombo.js): treffkjede med åtte nivåer, flerdrap opp til pandemi, overkill, miljødrap, perfekt unnvikelse, tredje slag, kortkjede, sjefdrap, fanfarer for synergier og forvandlinger, kunngjørerstemme og trist trombone. Lydmotoren har fått kirkeklang, vibrato, forvrengning, filtersveip og en kompressor.
@@ -69,11 +73,11 @@ Lista har nå 19 åpne spørsmål til Tom (lyd, blod, mørke, vanskelighet, hist
 - [ ] Tom: prøve hendelsene og si hvilke som er morsomme og hvilke som bør skrives om. Tekstene står i src/35_hendelser.js.
 - [x] Trinn 3: pasienthistoriene og drømmebanene mellom etasjene, slutten og arkivet.
 - [ ] Tom: gå gjennom en hel runde med drømmer og si om tekstene treffer, og om skyggen er for treg eller for rask.
-- [ ] Senere: et kapittel om drømmene i Pasienthåndboka, og egne bilder fra ChatGPT for minnene, figurene uten ansikt og det røde rommet.
+- [ ] Senere: et kapittel om drømmene i Pasienthåndboka. Bildene for minnene, figurene uten ansikt og det røde rommet er levert 2026-09-26.
 - [x] Trinn 4: nye fiender og sjefer for Parken og Nattskogen (gartnere, kråker, Huldra, Vedkubbemannen, Nøkken, kålhoder, Overgartner Ansgar Hekk, Den hvite hjorten).
 - [ ] Tom: slåss mot Overgartneren og hjorten og si om de er for lette eller for tunge.
 - [x] Trinn 5: nye nøkler i manifestet (171 nye, 532 i alt) og fire nye runder i ART_BRIEF.md for ChatGPT (runde 10 til 13: møblene og uteområdene, hendelsene, drømmene, de nye fiendene og sjefene).
-- [ ] Tom: bestille bildene til utvidelsen. De står som ferdige ark i tegnelister/ (liste 5 til 8), med prompt og referansebilde.
+- [x] Tom: bestille bildene til utvidelsen. De står som ferdige ark i tegnelister/ (liste 5 til 8), med prompt og referansebilde. Levert 2026-09-26, se GRAFIKKLEVERANSE.md.
 - [ ] Tom: prøve de nye etasjene og si om parken og skogen er mørke nok, og om løpet blir for langt.
 
 ## Økta 2026-09-25 (3D, grafikk, blod, nye fiender, sjefer, håndbok og HUD)
@@ -88,8 +92,8 @@ Lista har nå 19 åpne spørsmål til Tom (lyd, blod, mørke, vanskelighet, hist
 - [x] Forslag til ChatGPT som grafikkleverandør for HUD og menyer: del G, H og I i DESIGN_BRIEF.md.
 - [x] Flette grenen claude/practical-babbage-nc80bu inn i main (PR #2, flettet 25.9. om kvelden).
 - [ ] Tom: spille med 3D på mobil og PC og si om den automatiske kvaliteten treffer, og om blodet er passe mye.
-- [ ] ChatGPT: runde 7, 8 og 9 i ART_BRIEF.md. Står nå som ferdige ark i tegnelister/ (liste 1 til 4).
-- [ ] ChatGPT eller Tom: legge Kasteren-pakken inn som figur_kasteren.png og anim_kastesprut.png. De fire kastebildene trengs ikke, spillet kaster med delene.
+- [x] ChatGPT: runde 7, 8 og 9 i ART_BRIEF.md. Står nå som ferdige ark i tegnelister/ (liste 1 til 4). Levert 2026-09-26, se GRAFIKKLEVERANSE.md.
+- [x] Kasteren-pakken levert 2026-09-26 som seks navngitte hode- og kroppsdeler, anim_kasteklump.png og anim_kastesprut.png, gjenbrukt fra den tidligere prøven.
 - [ ] Claude, når Tom vil: UI-settet fase 2 (ui_bok, ui_fane, ui_stempel, ui_merke, ui_stang, ui_flaske).
 - [ ] Balanse for de nye fiendene, minisjefene og Klumpen etter spilltesting.
 
