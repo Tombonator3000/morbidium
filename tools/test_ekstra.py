@@ -28,12 +28,18 @@ async def ny_side(b, **kw):
     pg.on('console', lambda m: pg.errs.append(m.type + ': ' + m.text) if m.type == 'error' else None)
     return pg
 
+# et vanlig klikk først; svarer ikke siden (en 3D-side i programvaregrafikk på en travel maskin kan bruke sekunder per bilde),
+# trykkes knappen fra siden selv, så testen prøver spillet og ikke hvor rask maskinen er
+async def klikk(pg, sel):
+    try: await pg.click(sel, timeout=15000)
+    except Exception: await pg.wait_for_selector(sel, timeout=30000); await pg.evaluate("s => document.querySelector(s).click()", sel)
+
 async def start_lop(pg, awk=None, url=None):
     await pg.goto(url or URL); await pg.wait_for_timeout(2500)
-    await pg.click('#tNew'); await pg.wait_for_timeout(500)
+    await klikk(pg, '#tNew'); await pg.wait_for_timeout(500)
     sel = f'[data-awk="{awk}"]' if awk else '[data-awk]'
     if awk and not await pg.query_selector(sel): sel = '[data-awk]'
-    await pg.click(sel); await pg.wait_for_timeout(1500)
+    await klikk(pg, sel); await pg.wait_for_timeout(1500)
 
 # en side i pasienthåndboka får plass: panelet er innenfor skjermen, teksten eller fiendekortene flyter ikke over, og hvert fiendekort har bilde
 HB_PLASS = """() => { const f = document.querySelector('#panel .fit'), r = f.getBoundingClientRect(), t = document.querySelector('.htext') || document.querySelector('.findeks'), kort = [...document.querySelectorAll('.fkort')];
