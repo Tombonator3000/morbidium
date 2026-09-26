@@ -428,7 +428,8 @@ addEventListener('keydown', e => {
    legges det derfor inn et ekstra steg i historikken når spillet er i gang. Tilbake tar det steget, og spillet gjør det Esc gjør:
    pause i spillet, lukker panelet eller journalen. Så legges steget inn igjen. På tittelen er det ikke noe steg, så der går
    tilbake ut av spillet som vanlig (slik Samsung vil ha det), og heller ikke mens spillet lastes. Kom tasten fram som et tastetrykk også,
-   har den alt gjort jobben. Steget i historikken kan komme et godt stykke etter tasten når maskinen er treg, derfor 1,5 sekunder. */
+   har den alt gjort jobben. Steget i historikken kommer først etter bildet som tegnes, og det kan ta nesten et sekund når maskinen er treg, derfor 3 sekunder.
+   Er steget igjen fra spillet når spilleren står på tittelen, går tilbake ut av spillet der, også når tasten kom fram (den gjør ingenting på tittelen). */
 const TvTilbake = {
   fanget: false, n: 0, // n: hvor mange steg tilbake som er tatt imot (til testene)
   sjekk() {
@@ -443,11 +444,11 @@ const TvTilbake = {
   },
   popstate() {
     if (!this.fanget) return; this.fanget = false; this.n++; if (!R.tv) return;
-    if (performance.now() - Input.tilbakeT > 1500) {
-      // steget var igjen fra før spilleren gikk til tittelen: da skal tilbake ut av spillet, som på tittelen ellers
-      if (G.state === 'title') { history.back(); return; }
-      this.tilbake();
-    }
+    const tast = performance.now() - Input.tilbakeT <= 3000;
+    // steget var igjen fra før spilleren gikk til tittelen: da skal tilbake ut av spillet, som på tittelen ellers. Men lukket tasten
+    // et panel som ble åpnet fra tittelen (innstillingene, håndboka), er trykket brukt opp
+    if (G.state === 'title' && (!tast || Input.tilbakeS === 'title')) { history.back(); return; }
+    if (!tast) this.tilbake();
     this.sjekk();
   }
 };
