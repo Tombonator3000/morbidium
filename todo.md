@@ -7,9 +7,29 @@
 - [ ] Si om han vil levere egne PNG-er for hoder og kropper (SPRITES i 10_art.js tar dem inn med samme festepunkt).
 - [ ] Slette grenen claude/funny-newton-cgnzav på GitHub (Claude Code får ikke lov til det). Alt på den finnes i main.
 
+## Forslag til neste steg (Claude, 2026-09-26)
+Spillet har fått mye nytt innhold på kort tid, men ingenting er spilltestet på ekte maskinvare. Neste steg bør derfor være å spille, ikke bygge mer.
+- [ ] Claude, når Tom sier ja: en testmodus med bilder i sekundet og kvalitetsnivå i et hjørne, og en rapport etter hvert løp som kan kopieres (tid per etasje, skade tatt og fra hva, dødsårsak, kuriositeter og kort, lengste kombo, valgene i drømmene).
+- [ ] Tom: spille tre eller fire løp på PC og mobil og lime inn rapportene sammen med det som føltes feil.
+- [ ] Claude: balanse ut fra rapportene (vanskelighetskurven gjennom seks etasjer, priser, sjefene, lengden på et løp).
+- [ ] Tom og ChatGPT, i denne rekkefølgen: liste 10 (historien, fire bestillinger), liste 5 og 1 (fiendene i parken og første etasje), hjertene og ringene i liste 4.
+- [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, andre halvdel av UI-settet, og resten av testene over på spilltid.
+
+## 3D, historien og grafikklista, 2026-09-26 natt
+- [x] Mer 3D i den skrå ovenfra-visningen (40_dybde.js): lykteskygger, kontaktskygger, takstøv, kameradykk, varmeflimmer, lys i vannet og i tåka.
+- [x] En bedre historie (41_historie.js): journalside før hver drøm, forstanderen i Dypet, sjefenes andre tale, slengord og siste ord, personlige linjer i høyttaleren og koret, Olsens nøkkelhistorie, siste side, innkallingsbrev ved gjentakelse, seks nye fragmenter og fire merknader.
+- [x] Grafikklista: runde 14 i ART_BRIEF.md og liste 10 i tegnelister/ for de ti nye historiebildene, og en side med alle arkene og kopieringsknapper (Artifact «Tegnelister»).
+- [x] Historien skrevet om etter Toms ønske: Hellraiser møter Twin Peaks, med Lovecraft-stemning og 1920-tallet. Havet under huset og pasient nr. 0, Avdeling Null med bjelle og kroker, Venterommet, instrumentskrinet, forstanderen sydd fast til stolen, kjettinger som effekt, ni fragmenter.
+- [ ] Tom: les journalsidene, forstanderen, Venterommet og skrinet og si om tonen treffer, og om det er for mye eller for lite. Tekstene står i src/41_historie.js.
+- [ ] Tom og ChatGPT: bildene til historien (liste 10) er nå fire bestillinger: arket med sidene og sluttene, forstanderen, Venterommet og skrinet.
+- [ ] Senere: la kjettingene dukke opp andre steder også (Krok, Journalens død), og en egen lyd for Avdeling Null i musikken.
+- [ ] Tom og ChatGPT: liste 10 (Historien) er fire bestillinger og gjør mest for historien.
+- [ ] Tom: si om lykteskyggene og takstøvet er passe mye, og om kameradykket blir for mye på mobil.
+- [ ] Senere: et kapittel om historien i Pasienthåndboka (journalsidene man har lest, G.run.journalsider).
+
 ## Tegnelister, effekter og kombo, 2026-09-25 natt
 - [x] Tegnelister for alt som mangler bilde: tools/lag_tegnelister.py skriver tegnelister/ med ni lister (én ChatGPT-samtale hver), 59 ark og bilder for de 245 som mangler, og 11 delark til oppskriftssystemet. Referansebilder av dagens kodetegninger i samme rutenett som malen.
-- [ ] Tom og ChatGPT: tegne arkene i tegnelister/, liste 1 først. Kjør tools/lag_tegnelister.py etter levering, så krymper listene.
+- [ ] Tom og ChatGPT: tegne arkene i tegnelister/, liste 1 først (liste 10, historien, kan tas når som helst). Kjør tools/lag_tegnelister.py etter levering, så krymper listene.
 - [x] Flettet inn i main som PR #3 og publisert på GitHub Pages.
 - [x] Flere effekter og shadere (38_effekter.js og 04_render.js): sjokkbølger, zoomslag, negativ, lynblink, brennende skjermkant, drømmeslør, gnister, røyk, damp, sporer, Morbidium og møll på skjermkortet, lyn i regnværet, teslaspolens buer og regnringer.
 - [x] Kombo langt over toppen (39_kombo.js): treffkjede med åtte nivåer, flerdrap opp til pandemi, overkill, miljødrap, perfekt unnvikelse, tredje slag, kortkjede, sjefdrap, fanfarer for synergier og forvandlinger, kunngjørerstemme og trist trombone. Lydmotoren har fått kirkeklang, vibrato, forvrengning, filtersveip og en kompressor.

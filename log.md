@@ -513,3 +513,62 @@ Alle tidspunkt er UTC.
 - GitHub Pages bygget og publiserte både PR #3 og PR #4 uten feil (kjøring 37 og 38).
 - Den publiserte fila (lastet ned fra tombonator3000.github.io/morbidium, 4,1 MB med 314 innebygde bilder) starter i testnettleseren på PC og mobil uten konsollfeil. Et nytt løp kommer i gang med 3D, glød fra tingene og kombotelleren (12 treff, nivå «Blodig»). Testnettleseren her stoler ikke på sertifikatet til nettverksproxyen, så fila ble testet lokalt i stedet for fra adressen.
 - Denne oppføringen flettes inn i main som en egen liten PR.
+
+## 2026-09-26 00:15 Mer 3D i den skrå ovenfra-visningen (del 1 av Toms nye bestilling)
+- Tom ba om mer 3D i den isometriske visningen, en bedre historie og en liste til ChatGPT over grafikk som mangler. Denne oppføringen gjelder 3D-delen. Historien og lista kommer i neste oppføring.
+- Ny fil src/40_dybde.js. Lykteskygger: fiender, sjefer, personale, figurer i hendelsene og høye ting nær pasienten kaster lange, myke skygger bort fra lykta, og skyggene flakker med lykta. Ekte punktlysskygger passer dårlig fordi tegningene er strukket i høyden for kameraets skyld, så skyggene er flate plater som snus og strekkes hvert bilde.
+- Kontaktskygger: gulvet mørkner inn mot veggene og i indre hjørner, mest under de høye veggene bak. Males én gang per etasje.
+- Takstøv: når skjermen rister kraftig inne, drysser stein og puss ned fra taket, og skyggen på gulvet vokser og skjerpes mens steinen faller.
+- Kameradykk (04_render.js, R.kamZoom): kameraet går nærmere når en sjef dukker opp, når pasienten dør, og på store kombo-øyeblikk. Følger skjermristingen i innstillingene.
+- Varmeflimmer over bål, vedovner, kjeler, komfyrer og gryter i etterbehandlingen. Følger forvrengningen.
+- Pytter og vann speiler lampene og lykta i nærheten (vannshaderen), og tåka lyser opp rundt punktlysene i 3D (15_rom3d.js).
+- tools/lag_tegnelister.py kan også lage én side med alle arkene og kopieringsknapper (--side), til mobilen.
+- Ny testdel 30 i test_ekstra (dybde). Den går gjennom i 2D; hele pakken kjøres når historien er på plass.
+
+## 2026-09-26 00:38 En bedre historie (del 2 av Toms nye bestilling)
+- Ny fil src/41_historie.js. Hovedhistorien sies nå tydelig i stedet for bare å hintes: Morbidium sanatorium ble grunnlagt i 1887 av forstander dr. Mathias Morbeck («M.» i journalen). Han kjøpte en journal i svart skinn for å skrive ned alle sinn i huset, og journalen begynte å skrive tilbake. Morbidium er blekket den skriver med, bygget vokser nedover for hver pasient som slutter å lese, og pasienten er den samme sjela under nye navn.
+- En journalside før hver drøm (fem i alt), med knappen «Les videre» inn i drømmen. Siden nevner sjefen som nettopp ble behandlet (bare hvis den faktisk ble det, ikke etter heisen), en bit av sannheten om huset, og hva Journalen mener om valget i forrige kapittel. Escape går videre til innledningen, så valget om å våkne med en gang ikke forsvinner.
+- Kapitlene følger startetasjen: fra vaskesjakten blir det kapittel 1, 4 og 5, så skylda alltid kommer før sannheten. Før ble det 1, 2 og 5.
+- Personen i drømmene passer til alderen (ingen bestefar til en på sytti).
+- Forstanderen sitter i Dypet og leser. Du kan spørre hvem som skriver, lese over skulderen hans (der står linjer fra din egen historie), ta pennen fra ham (Journalen blir svakere, litt mer Morbidium, ny merknad «Pennen»), eller la ham lese i fred.
+- Sjefene: en ny tale ved en tredjedel helse for alle sju, slengord i kampen, og siste ord når de dør. Journalen spør «Hvem opprettet denne journalen?» og svarer selv litt etter. Hjorten kjenner igjen den hvite hesten fra drømmen.
+- Høyttaleren, Hviskekoret og radioen bruker personen og tegnet fra drømmene. Personalet vet hvor de er (suppe i parken, elg i suppa i skogen), og vaktmester Olsen har en historie om nøklene gjennom alle seks etasjene.
+- Siste side før etterordet ved utskrivningen, og brevet følger slutten: gjentakelse gir et innkallingsbrev med stempelet INNKALT, og har pasienten pennen, signerer pasienten selv. Legens konklusjon på kortet følger også slutten.
+- Seks nye journalfragmenter, fra forstanderens første notat i 1887 til «Hele historien». Nye merknader for Klumpen, Hekk og Hjorten, som manglet.
+- Årstall og småfeil: ingen har jobbet der i førti år i 1923 når huset er fra 1887, så arkivaren og gartneren sier trettiseks. Radioen sender på prøvesendingen (Kringkastingselskapet kom først i 1925). Øyet i sprekken sa alltid «han» om sjefen; nå passer det til sjefen i etasjen. Krittskriften «Ikke stol på ...» bruker sjefen som faktisk er trukket til den etasjen.
+- Reservetegninger for ti nye bilder (historie_1 til 5, fire sluttbilder og prop_forstander) til ChatGPT leverer ekte.
+- Ny testdel 31 i test_ekstra (historie), og sluttesten i del 26 klikker seg gjennom siste side. Del 26 og 31 går gjennom.
+
+## 2026-09-26 00:45 Grafikklista til ChatGPT (del 3 av Toms nye bestilling)
+- tools/lag_manifest.py tar med bildene til historien (HISTORIE_ART). Manifestet har ti nye nøkler, 542 i alt: historie_1 til historie_5, fire sluttbilder (historie_slutt_tilgivelse, _sannheten, _gjentakelse og _fornektelse) og prop_forstander.
+- tools/lag_brief.py har engelske beskrivelser av de ti og en ny runde 14 (historien) først i ART_BRIEF.md. Ingen bilder står uten runde.
+- tools/lag_tegnelister.py har fått liste 10, Historien: ett «ni ting»-ark med de fem journalsidene og de fire sluttbildene, og forstanderen som eget bilde. Referansebildene er laget på nytt (52). Status: 255 bilder mangler, samlet i 61 ark og bilder på ti lister, pluss 11 delark.
+- DESIGN_BRIEF.md nevner historien som punkt 7 under «Neste bestilling».
+- Siden med alle arkene, kopieringsknapper og avkryssing for levert er publisert som en privat side i Claude, «Tegnelister»: https://claude.ai/artifact/CwTKtxx3rN65Es4PKpTPrW. Sjekket på 390 og 1280 piksler bredde, uten sidescroll og uten konsollfeil.
+- Småretting i historien: vaktmester Olsen gjentok en linje han allerede hadde, så linjene hans handler nå om den fjerde nøkkelen på knippet fra 1901 og fram til Dypet.
+- memory.md (nye deler om Dybde og Historien, byggerekkefølgen og kapitlene), todo.md, AGENTS.md (fillista) og README.md er oppdatert.
+
+## 2026-09-26 01:15 Tester for hele runden, raskere etterbehandling og forslag til neste steg
+- Første fulle kjøring: generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 164 av 167. De tre som feilet (byggeanimasjonen i del 14, Huldras sang i del 27 og effektene som dør ut i del 28), ventet en fast tid i sanntid på noe som skjer i spilltid. Alle tre gikk gjennom i forrige runde.
+- Målt i testnettleseren (programvaregrafikk, 2D, samme rom): main ga rundt 9 bilder i sekundet, denne grenen rundt 6,7. Dybde sto for omtrent halvparten. Resten kom av at etterbehandlingen regnet varmeflimmer for hver piksel, og vannet speilet seks lys, også når ingen kilder var i nærheten.
+- Rettet: begge løkkene i shaderne hoppes over når første plass er tom (kildene kommer sortert, med de tomme sist). Etter det ga denne grenen rundt 7,8 bilder i sekundet, mot 9,1 for main. Dybde koster fortsatt rundt 7 prosent med programvaregrafikk, mest fordi det tegnes flere gjennomsiktige flater. På et ekte skjermkort blir det langt mindre.
+- De tre testene venter nå på spilltid, som de andre vi rettet forrige runde. Del 31 antok at løpet startet i Eget rom, men innleggelsen tilbyr tre tilfeldige oppvåkninger, så testen setter oppvåkningen selv. Del 14, 27, 28, 30 og 31 går gjennom, og gjennomspillingen er kjørt på nytt uten feil. Historien er også sjekket med 3D på.
+- Tom spurte hva neste steg bør være. Forslaget står øverst i todo.md: spille i stedet for å bygge mer. Først en liten testmodus med bilder i sekundet og en rapport etter hvert løp, så tre eller fire løp på PC og mobil, og deretter balanse ut fra rapportene. Grafikken i denne rekkefølgen: liste 10, 5, 1 og 4.
+- En siste full kjøring av test_ekstra går nå, før PR-en lages.
+
+## 2026-09-26 01:41 Historien skrevet om: Hellraiser møter Twin Peaks, med Lovecraft og 1920-tallet
+- Tom ba om at historien skulle bli «skikkelig Hellraiser møter Twin Peaks», med Lovecraft-stemning fra 1920-tallet. Den nye mytologien er vår egen, uten navn eller sitater fra filmene og serien.
+- Hovedhistorien (src/41_historie.js): under huset er det et hav, eldre enn fjorden, og der sover den første pasienten, nr. 0. Når det gjør vondt i den, drømmer den mennesker, og pasientene er drømmene dens. Morbidium er det den blør. Forstander Morbeck kjøpte en protokoll i sort skinn på auksjon i Bergen i 1886, funnet i buken på en hval utenfor Røst. Journalen er en lås. I 1887 vred han den helt rundt, en liten bjelle ringte, og Avdeling Null kom opp fra Dypet: leger med kitler sydd til huden og kroker i kjeder. Nå sitter han sydd fast til stolen med sølvkroker og leser høyt for det som sover.
+- Alle fem journalsidene, gravskriftene over sjefene, merknadene om forrige valg, siste side, brevet og legens konklusjon er skrevet om. Siste side har egne avsnitt for når forstanderen er løst.
+- Forstanderen har fått et fjerde valg: løs ham fra krokene. Når panelet lukkes, ringer bjella, kjettinger kommer ut av mørket og henter ham ned i gulvet, stol og alt. Pasienten får helse og en kuriositet, Journalen får 20 prosent mer helse, og brevet signeres av «tidligere forstander». Pennen er nå en krok av sølv og svekker Journalen direkte (før brukte den samme mekanisme som graven, og da sa Journalen feil replikk).
+- Ny effekt: kjettinger med kroker fra mørket (Kjeder), med leddtekstur og kroker som peker dit kjettingen går. Nye lyder: en liten sølvbjelle og et kjettingrasl.
+- To nye hendelser: Venterommet bak et forheng i veggen (røde forheng, sikksakkgulv, en liten lege i altfor stor kittel som snakker baklengs; sett deg, drikk kaffen som smaker sjø, spør hvem som drømmer, eller dans) og Morbecks instrumentskrin (vri på mønsteret, og Avdeling Null undersøker deg med kjettinger: skade, Morbidium og en gave).
+- Sjefene har fått nye taler og siste ord som passer mytologien. Høyttaleren, koret, kjempen, kona med kubben, radioen og personalet vet om havet under huset. Ni nye journalfragmenter, fra auksjonsprotokollen i 1886 til en styrmann som så en by stige opp av havet utenfor Røst, et brev fra Det Kongelige Frederiks Universitet og hele historien. Ny dødsårsak: kroker. Ny merknad: Løslatelse.
+- Kapittelvalget i drømmene tåler nå at testene hopper over startetasjen (den gamle regelen gjelder da). Det var årsaken til at drømmetesten feilet i siste fulle kjøring (166 av 167) når løpet tilfeldigvis startet i vaskesjakten.
+- Bildene: nye reservetegninger for journalsidene 2, 3 og 4, tre av sluttbildene og forstanderen, pluss Venterommet og skrinet. Manifestet har 544 nøkler. Runde 14 og liste 10 har fått nye beskrivelser og to nye bilder (fire bestillinger). Siden «Tegnelister» er oppdatert på samme adresse.
+- Tester: del 31 sjekker nå også Venterommet, skrinet med kjettingene og forstanderen som løses. Del 25, 26 og 31 går gjennom, og røyktesten er kjørt både i 2D og 3D uten konsollfeil.
+
+## 2026-09-26 01:57 Hele testpakken grønn før PR
+- Generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 171 av 171 (med de nye sjekkene for Venterommet, skrinet, kjettingene og forstanderen som løses).
+- Tom sendte ønsket om historien en gang til. Han har fått et sammendrag av det som er gjort, og tilbud om neste steg: knytte drømmene direkte til havet og Avdeling Null, kjettinger i kampen mot Journalen, og bjelle og hav som lyd i Dypet.
+- Neste: PR til main og fletting.

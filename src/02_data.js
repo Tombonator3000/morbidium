@@ -154,7 +154,7 @@ const LINES = {
   monolog: {
     1: ['La meg forklare min tragiske bakgrunn.', 'Det begynte i 1887, da jeg fikk avslag på permisjon...', '...og siden har jeg båret smerten. I tre ringpermer.'],
     2: ['Vann husker alt, vet du.', 'Jeg var en gang en helt vanlig badevakt...', '...helt til jeg så hva som bor i avløpet. Og det så meg.'],
-    3: ['Vet du hvor mange skjemaer jeg har stemplet?', 'Førti år uten en eneste feilarkivering...', '...bortsett fra deg. Du ble arkivert feil. Det retter jeg opp nå.'],
+    3: ['Vet du hvor mange skjemaer jeg har stemplet?', 'Trettiseks år uten en eneste feilarkivering...', '...bortsett fra deg. Du ble arkivert feil. Det retter jeg opp nå.'],
     4: ['Hver pasient er en side.', 'Hver side er et forsøk.', 'Og du har aldri lest deg selv ferdig.']
   },
   interrupted: ['Unnskyld, jeg var ikke ferdig!', 'Du avbrøt meg midt i det beste!', 'Dette er svært uprofesjonelt.'],
