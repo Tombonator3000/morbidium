@@ -15,6 +15,18 @@ Spillet har fått mye nytt innhold på kort tid, men ingenting er spilltestet p�
 - [ ] Tom og ChatGPT, i denne rekkefølgen: liste 10 (historien, fire bestillinger), liste 5 og 1 (fiendene i parken og første etasje), hjertene og ringene i liste 4.
 - [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, andre halvdel av UI-settet, og resten av testene over på spilltid.
 
+## Lyd, musikk og vått på skjermen, 2026-09-26 morgen
+- [x] 165 frie lyder (CC0): 102 effekter og stemningslyder fra Freesound og 63 instrumenttoner fra VCSL, med verktøy (tools/lag_lyd.py) og kildeliste (assets/lyd/KILDER.md).
+- [x] Lydbanken (42_lyd.js): opptakene i stedet for synthlydene der de finnes, fottrinn etter gulvet, stemningssløyfer per etasje, rom og vær, knitring fra bål, havet i drømmene og stemmer fra fiendene. Innstillingen «Innspilte lyder».
+- [x] Musikken som et lite iMUSE (06_musikk.js): bytte på taktstreken med bro, besetning etter rommet, kamplaget på slaget, innslag i tonearten, stemte plinger, roen som glir over i stemning, dronen stemt etter musikken. Rettet: drømmemusikken ble byttet ut etter første bilde.
+- [x] Blod og vann som treffer skjermen og renner nedover (43_vaatt.js), med brytning, farge gjennom blodet og glans i etterbehandlingen. Innstillingen «Blod og vann på skjermen».
+- [ ] Tom: spill med lyd på (gjerne hodetelefoner) og si hva som er for høyt eller lavt: slagene, fottrinnene, stemningen, fiendene som stønner, musikken mot lydene. Alt kan justeres i LYD_KART, FOTGULV og STEMNING_* i src/42_lyd.js.
+- [ ] Tom: si om overgangene i musikken føles myke nok, og om besetningene passer rommene (orgel i kapellet, piano i spisesalen, vibrafon på badet, saksofon i Venterommet).
+- [ ] Tom: si om det blir for mye blod på skjermen i lange kamper, og om vannet i regnet synes godt nok.
+- [ ] Claude, når Tom har spilt: finjustere styrken på lydene og instrumentene etter det han hører. Det er målt, men ikke lyttet på (skyen har ikke høyttalere).
+- [ ] Senere: kor som opptak (i dag er koret synth), en egen lyd for Avdeling Null i musikken (bjella og kjettingene på slaget), fottrinn for de store fiendene, og en egen stemning for sjefslaget.
+- [ ] Senere: sjekke minnet på en svak mobil (lydbanken bruker rundt 30 MB når alt er pakket ut). Hvis det blir trangt: pakke ut stemningen og instrumentene først når de trengs.
+
 ## 3D, historien og grafikklista, 2026-09-26 natt
 - [x] Mer 3D i den skrå ovenfra-visningen (40_dybde.js): lykteskygger, kontaktskygger, takstøv, kameradykk, varmeflimmer, lys i vannet og i tåka.
 - [x] En bedre historie (41_historie.js): journalside før hver drøm, forstanderen i Dypet, sjefenes andre tale, slengord og siste ord, personlige linjer i høyttaleren og koret, Olsens nøkkelhistorie, siste side, innkallingsbrev ved gjentakelse, seks nye fragmenter og fire merknader.

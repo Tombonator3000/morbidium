@@ -135,7 +135,8 @@ const Lydbank = {
     return new Promise(ferdig => {
       let ab; try { const s = atob(LYDFILER[k]), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); ab = u.buffer; } catch (e) { this.feil++; ferdig(); return; }
       const m = LYD_META[k] || {}, kopi = ab.slice(0);
-      const ok = b => { if (b && b.length) { this.buf[k] = b; this.forsink[k] = this.maalForsinkelse(b); this.klar++; } else this.feil++; ferdig(); };
+      // base64-teksten slippes når lyden er pakket ut, så den ikke ligger i minnet to ganger
+      const ok = b => { if (b && b.length) { this.buf[k] = b; this.forsink[k] = this.maalForsinkelse(b); this.klar++; LYDFILER[k] = null; } else this.feil++; ferdig(); };
       const dekod = (ctx, data, feil) => { try { const p = ctx.decodeAudioData(data, ok, feil); if (p && p.catch) p.catch(() => { }); } catch (e) { feil(); } };
       const d = this.dekoder(m), igjen = () => dekod(Sound.ctx, kopi, () => ok(null));
       if (d) dekod(d, ab, igjen); else igjen();
@@ -296,7 +297,11 @@ const Stemning = {
     _play.call(Sound, navn, vol, pitch);
   };
   // dronen fra synthen ligger under sløyfene, svakere når de er klare
-  Sound.startAmbience = function (depth) { Sound.droneNiva = Lydbank.paa && typeof LYDFILER === 'object' ? Stemning.droneNiva : 1; _start.call(Sound, depth); Stemning.start(depth); };
+  Sound.startAmbience = function (depth) {
+    Sound.droneNiva = Lydbank.paa && typeof LYDFILER === 'object' ? Stemning.droneNiva : 1; _start.call(Sound, depth); Stemning.start(depth);
+    // den nye dronen stemmes med en gang etter stykket som spiller (eller som kommer på neste taktstrek)
+    if (typeof Musikk === 'object' && Musikk.S) { const S = STYKKER[Musikk.neste] || Musikk.S; Sound.stemDrone(midiHz(S.rot - 24)); }
+  };
   Sound.stopAmbience = function () { _stopp.call(Sound); Stemning.stopp(); };
   Sound.vaer = function (type) { Sound.vaerType = type || null; if (type && Lydbank.har(type === 'regn' ? 'amb_regn' : 'amb_vind')) { _vaer.call(Sound, null); return; } _vaer.call(Sound, type); };
 }
