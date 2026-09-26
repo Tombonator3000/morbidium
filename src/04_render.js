@@ -50,8 +50,9 @@ const R = {
     this.tapt = false; clearTimeout(this.tapTimer); this.checkN = 3;
     if (typeof Testmodus === 'object') Testmodus.feil.push({ t: performance.now(), m: 'WebGL hentet tilbake' });
     if (this.tapSkjult) { this.resize(); return; } // spillet står i pausemenyen når du kommer tilbake
-    this.dprMax = Math.max(1, (this.dprMax || 1) - .5); this.dpr = Math.min(this.dpr, this.dprMax); this.resize();
-    try { if (D3.on) D3.nedgrader(); else toast('Grafikken er tilbake', 'Oppløsningen er satt litt ned'); } catch (e) { }
+    const d0 = this.dprMax || 1; this.dprMax = Math.max(1, d0 - .5); this.dpr = Math.min(this.dpr, this.dprMax); this.resize();
+    // fast kvalitet (Innstillinger, Bilde) er spillerens valg: da går bare oppløsningen ned, som maal() gjør
+    try { if (D3.on && !(G.meta.settings.kvalitet | 0)) D3.nedgrader(); else toast('Grafikken er tilbake', this.dprMax < d0 ? 'Oppløsningen er satt litt ned' : 'Alt er som før'); } catch (e) { }
   },
   resize() {
     const w = innerWidth, h = innerHeight, a = w / h, vh = Math.max(this.view, 10.5 / a), c = this.camera;

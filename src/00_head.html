@@ -509,7 +509,7 @@ body.uten-tall .dmg:not(.info):not(.stamp){ display:none; } body.uten-bobler .bu
 .kort.smal .mrad{ grid-template-columns:1fr; gap:3px; margin:6px 0 10px; } .kort.smal .mvalg button{ flex:1; min-width:0; font-size:17px; }
 /* ---------- mobil: HUD, bobler, tipslapper og menyer som får plass (26.9.) ---------- */
 /* skjermene sentreres med auto-marger i stedet for justify-content: det som er høyere enn skjermen, kan da rulles i stedet for å bli kuttet i toppen */
-.screen{ justify-content:flex-start; } .screen > :first-child{ margin-top:auto; } .screen > :last-child{ margin-bottom:auto; }
+.screen{ justify-content:flex-start; } .screen > :first-child{ margin-top:auto !important; } .screen > :last-child{ margin-bottom:auto !important; } /* !important: #title h1{ margin:0 } ville ellers vunnet og lagt tittelmenyen øverst */
 .dodskjerm{ display:flex; flex-direction:column; align-items:center; }
 .hplus{ align-self:center; font-family:var(--display); font-size:15px; color:var(--red); -webkit-text-stroke:0; margin-left:2px; }
 body.touch .bubble{ font-size:16px; max-width:170px; padding:3px 8px 4px; border-width:2px; box-shadow:3px 3px 0 rgba(42,26,20,.5); }
@@ -521,7 +521,7 @@ body.touch .bubble{ font-size:16px; max-width:170px; padding:3px 8px 4px; border
   .book.single .pocket{ position:relative; right:auto; bottom:auto; margin:44px auto 6px; }
 }
 @media (orientation:portrait){
-  body.touch #tips{ top:calc(116px + env(safe-area-inset-top,0px)); left:calc(50% - 46px); max-width:min(250px,62vw); font-size:14px; padding:7px 12px 7px 13px; }
+  body.touch #tips{ top:calc(128px + env(safe-area-inset-top,0px)); left:calc(50% - 46px); max-width:min(250px,62vw); font-size:14px; padding:7px 12px 7px 13px; }
   body.touch #testHud{ left:auto; right:calc(8px + env(safe-area-inset-right,0px)); top:calc(346px + env(safe-area-inset-top,0px)); font-size:9.5px; }
 }
 /* liggende telefon: lite høyde, så alt i toppen blir mindre og flyttes ut i hjørnene, og kortene legges nederst mellom spaken og knappene */
@@ -533,7 +533,8 @@ body.touch .bubble{ font-size:16px; max-width:170px; padding:3px 8px 4px; border
   body.touch #cards{ bottom:calc(6px + env(safe-area-inset-bottom,0px)); gap:6px; }
   body.touch #cards .acard{ width:50px; height:64px; } body.touch #cards .acard .nm{ font-size:8px; }
   body.touch #prompt{ bottom:calc(80px + env(safe-area-inset-bottom,0px)); font-size:14px; }
-  #tips{ top:calc(6px + env(safe-area-inset-top,0px)); left:52%; max-width:300px; font-size:13px; padding:6px 10px 6px 12px; }
+  /* tipslappen i sonen mellom merket (slutter rundt 255 px) og knappene i toppen (begynner 229 px fra høyre kant) */
+  body.touch #tips{ --sone:min(300px, calc(100vw - 500px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px))); top:calc(6px + env(safe-area-inset-top,0px)); left:calc(263px + env(safe-area-inset-left,0px) + var(--sone) / 2); max-width:var(--sone); font-size:13px; padding:6px 10px 6px 12px; }
   body.touch #kombo{ top:calc(60px + env(safe-area-inset-top,0px)); }
   #stick{ width:110px; height:110px; }
   #tbtns{ scale:.88; transform-origin:bottom right; }
