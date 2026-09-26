@@ -801,6 +801,43 @@ async def main():
         sjekk('ingen konsollfeil (kombo)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 30) Dybde: lykteskygger, kontaktskygger, varmeflimmer, speiling i vannet, lysende tåke, takstøv og kameradykk
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        dy = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, u = R.post.uniforms, ut = {};
+          startFloor(2, false); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat' && !r.ute && r.w >= 8) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
+          // kontaktskyggene males med etasjen og byttes ut ved neste
+          const ao1 = Dybde.ao; ut.ao = !!(ao1 && ao1.m.parent === R.level);
+          // lykteskygger: fiendene nær lykta kaster skygge bort fra pasienten
+          const fl = [[2, 0], [-1.5, 1.2], [0, -2]].map(([dx, dz]) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy('pleier', s.x, s.z, false, 2); e.stun = 99; e.hp = e.max = 1e6; e.state = 'chase'; return e; });
+          await vent(900); const retning = fl.every(e => { const m = Dybde.skygger.get(e); if (!m) return false; const d = Math.hypot(e.x - P.x, e.z - P.z), ux = (e.x - P.x) / d, uz = (e.z - P.z) / d, a = Math.atan2(-ux, -uz); return Math.abs(Math.atan2(Math.sin(m.rotation.z - a), Math.cos(m.rotation.z - a))) < .05 && m.material.opacity > .05; });
+          ut.skygger = retning; for (const e of fl) killEntity(e, {}); await vent(300); ut.skyggerBorte = fl.every(e => !Dybde.skygger.has(e));
+          R.lightsOn = false; const s2 = freeSpot(P.x + 1.5, P.z, 2), e2 = spawnEnemy('pleier', s2.x, s2.z, false, 2); e2.stun = 99; e2.state = 'chase'; await vent(400); ut.utenLys = Dybde.skygger.size === 0; R.lightsOn = true; killEntity(e2, {});
+          // varmeflimmer over et bål, bare med forvrengning på
+          const baal = { kind: 'baal', x: P.x + 2, z: P.z - 1, alive: true, g: { position: { z: P.z - .8 } } }; G.props.push(baal); await vent(250);
+          ut.varme = (R.varmeL || []).some(h => Math.abs(h.x - baal.x) < .01) && u.uVarme.value.some(v => v.w > 0);
+          R.distortOn = false; await vent(250); ut.varmeAv = u.uVarme.value.every(v => v.w === 0); R.distortOn = true; G.props.splice(G.props.indexOf(baal), 1);
+          // vannet speiler lykta, og tåka lyser opp rundt lampene i 3D
+          addPuddle(P.x + .8, P.z, 'wet', 1.2, 60); await vent(500); ut.speil = R.water.u.uLysF.value.some(v => v.x + v.y + v.z > 0);
+          ut.taake = !D3.on || !D3.q.taake || (!!D3.taakeLys && D3.taakeLys.f.value.some(v => v.x + v.y + v.z > 0));
+          // takstøv inne når det smeller, og det lander og blir borte
+          Dybde.stovT = 0; R.shake(.8); ut.stov = Dybde.stov.length > 0; await spill(2.6); ut.stovBorte = Dybde.stov.length === 0;
+          // kameradykk når sjefen kommer, og ikke uten skjermristing
+          spawnBoss(G.depth, P.x + 3, P.z - 2); await vent(900); ut.dykk = R.camera.zoom > 1.04 && R.kam.holdT > 0;
+          if (G.boss) killEntity(G.boss, {}); R.kam.hold = R.kam.kick = R.kam.holdT = 0; await vent(900); R.shakeOn = false; R.kamZoom(.2, 2); await vent(500); ut.dykkAv = Math.abs(R.camera.zoom - 1) < .01; R.shakeOn = true; R.kam.hold = R.kam.holdT = 0;
+          // enkel grafikk: ingen kontaktskygger eller lykteskygger
+          R.safe = true; startFloor(1, false); await vent(300); ut.enkel = !Dybde.ao && Dybde.skygger.size === 0; R.safe = false; startFloor(2, false); await vent(300); ut.aoIgjen = !!Dybde.ao && Dybde.ao !== ao1 && ao1.m.parent !== R.level && Dybde.ao.m.parent === R.level;
+          return ut; }""")
+        sjekk('kontaktskyggene males med etasjen, og fiendene nær lykta kaster skygge bort fra pasienten', dy['ao'] and dy['skygger'] and dy['skyggerBorte'], dy)
+        sjekk('uten lys og skygge blir lykteskyggene borte, og enkel grafikk lager ingen skygger', dy['utenLys'] and dy['enkel'] and dy['aoIgjen'], dy)
+        sjekk('varmeflimmer over bålet, og ikke uten forvrengning', dy['varme'] and dy['varmeAv'], dy)
+        sjekk('vannet speiler lykta, og tåka lyser opp rundt lampene', dy['speil'] and dy['taake'], dy)
+        sjekk('takstøv drysser ned når det smeller, og blir borte når det har landet', dy['stov'] and dy['stovBorte'], dy)
+        sjekk('kameraet dykker inn når sjefen kommer, men ikke uten skjermristing', dy['dykk'] and dy['dykkAv'], dy)
+        await pg.screenshot(path='/tmp/e_17dybde.png')
+        sjekk('ingen konsollfeil (dybde)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
