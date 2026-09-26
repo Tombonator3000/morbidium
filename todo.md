@@ -12,15 +12,18 @@ Spillet har fått mye nytt innhold på kort tid, men ingenting er spilltestet p�
 - [ ] Claude, når Tom sier ja: en testmodus med bilder i sekundet og kvalitetsnivå i et hjørne, og en rapport etter hvert løp som kan kopieres (tid per etasje, skade tatt og fra hva, dødsårsak, kuriositeter og kort, lengste kombo, valgene i drømmene).
 - [ ] Tom: spille tre eller fire løp på PC og mobil og lime inn rapportene sammen med det som føltes feil.
 - [ ] Claude: balanse ut fra rapportene (vanskelighetskurven gjennom seks etasjer, priser, sjefene, lengden på et løp).
-- [ ] Tom og ChatGPT, i denne rekkefølgen: liste 10 (historien, to bestillinger), liste 5 og 1 (fiendene i parken og første etasje), hjertene og ringene i liste 4.
+- [ ] Tom og ChatGPT, i denne rekkefølgen: liste 10 (historien, fire bestillinger), liste 5 og 1 (fiendene i parken og første etasje), hjertene og ringene i liste 4.
 - [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, andre halvdel av UI-settet, og resten av testene over på spilltid.
 
 ## 3D, historien og grafikklista, 2026-09-26 natt
 - [x] Mer 3D i den skrå ovenfra-visningen (40_dybde.js): lykteskygger, kontaktskygger, takstøv, kameradykk, varmeflimmer, lys i vannet og i tåka.
 - [x] En bedre historie (41_historie.js): journalside før hver drøm, forstanderen i Dypet, sjefenes andre tale, slengord og siste ord, personlige linjer i høyttaleren og koret, Olsens nøkkelhistorie, siste side, innkallingsbrev ved gjentakelse, seks nye fragmenter og fire merknader.
 - [x] Grafikklista: runde 14 i ART_BRIEF.md og liste 10 i tegnelister/ for de ti nye historiebildene, og en side med alle arkene og kopieringsknapper (Artifact «Tegnelister»).
-- [ ] Tom: les journalsidene og forstanderen og si om tonen treffer. Tekstene står i src/41_historie.js.
-- [ ] Tom og ChatGPT: liste 10 (Historien) er bare to bestillinger og gjør mest for historien.
+- [x] Historien skrevet om etter Toms ønske: Hellraiser møter Twin Peaks, med Lovecraft-stemning og 1920-tallet. Havet under huset og pasient nr. 0, Avdeling Null med bjelle og kroker, Venterommet, instrumentskrinet, forstanderen sydd fast til stolen, kjettinger som effekt, ni fragmenter.
+- [ ] Tom: les journalsidene, forstanderen, Venterommet og skrinet og si om tonen treffer, og om det er for mye eller for lite. Tekstene står i src/41_historie.js.
+- [ ] Tom og ChatGPT: bildene til historien (liste 10) er nå fire bestillinger: arket med sidene og sluttene, forstanderen, Venterommet og skrinet.
+- [ ] Senere: la kjettingene dukke opp andre steder også (Krok, Journalens død), og en egen lyd for Avdeling Null i musikken.
+- [ ] Tom og ChatGPT: liste 10 (Historien) er fire bestillinger og gjør mest for historien.
 - [ ] Tom: si om lykteskyggene og takstøvet er passe mye, og om kameradykket blir for mye på mobil.
 - [ ] Senere: et kapittel om historien i Pasienthåndboka (journalsidene man har lest, G.run.journalsider).
 

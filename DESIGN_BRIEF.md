@@ -240,7 +240,7 @@ Animasjonsark for figurer som går, slår og dør. Spillet animerer figurene ved
 4. Spritearkene i runde 8 (se I), aller først `anim_kastesprut.png` og `anim_blodsprut.png`, som synes mest.
 5. UI-settet i runde 9 (se G). Hjertene og ringene gir mest for minst.
 6. Utvidelsen (UTVIDELSE.md), runde 10 til 13 i `ART_BRIEF.md`. Aller først figurarkene til de nye fiendene: `figur_gartner.png`, `figur_huldra.png` (bakfra er hun en råtten stamme, så baksiden på arket er viktig), `figur_vedkubbe.png` og `figur_nokken.png`, og de to sjefene. Deretter figurene uten ansikt i drømmene (`figur_blank_m.png`, `figur_blank_k.png`) og hendelsene i runde 11, som vises stort i samtalepanelet. Møblene i runde 10 kan komme sist; koden tegner dem godt nok til da.
-7. Historien, runde 14 i `ART_BRIEF.md` og liste 10 i `tegnelister/`: ett «ni ting»-ark med de fem journalsidene og de fire sluttbildene (`historie_1` til `historie_5`, `historie_slutt_*`), og `prop_forstander.png`, forstanderen som sitter i Dypet og leser. Bare to bestillinger, og bildene vises stort i samtalepanelet.
+7. Historien (Hellraiser møter Twin Peaks, med et Lovecraft-hav under huset), runde 14 i `ART_BRIEF.md` og liste 10 i `tegnelister/`: ett «ni ting»-ark med de fem journalsidene og de fire sluttbildene (`historie_1` til `historie_5`, `historie_slutt_*`), `prop_forstander.png` (forstanderen sydd fast til stolen med sølvkroker), `prop_venterom.png` (Venterommet med røde forheng og sikksakkgulv) og `prop_skrin.png` (instrumentskrinet). Fire bestillinger, og bildene vises stort i samtalepanelet.
 
 ## Første bestilling (stort sett levert, se status i `ART_BRIEF.md`)
 

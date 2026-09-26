@@ -871,9 +871,9 @@ async def main():
           const h = Hendelse.aktive.find(h => h.id === 'forstanderen') || Hendelse.tving('forstanderen'); P.x = h.x; P.z = h.z + 1.2; R.snapCamera(P.x, P.z); await vent(300);
           const it = findInteract(); ut.prompt = it && it.t; it.fn(); ut.forstander = await venteTittel('Forstander'); ut.fvalg = document.querySelectorAll('[data-sv]').length;
           Samtale.velg(1); await vent(150); ut.les = tekst().includes('håndskrift'); Samtale.velg(0); await vent(100);
-          Samtale.vis(h.H.samtale(h)); await vent(100); Samtale.velg(2); await vent(150); ut.penn = run.pennen === true && run.sjefSvekk[6] === .2 && Merknad.har('pennen'); Samtale.velg(0); await vent(100);
+          Samtale.vis(h.H.samtale(h)); await vent(100); Samtale.velg(2); await vent(150); ut.penn = run.pennen === true && Merknad.har('pennen'); Samtale.velg(0); await vent(100);
           // sjefene: en ny tale ved en tredjedel helse, slengord i kampen og siste ord når de dør
-          const B = G.boss || spawnBoss(6, P.x + 3, P.z); B.t = 0; B.state = 'chase'; await vent(100);
+          const B = G.boss || spawnBoss(6, P.x + 3, P.z); ut.pennSvak = B.hp <= B.max * .81; B.t = 0; B.state = 'chase'; await vent(100);
           B.hp = B.max * .6; bossOnHurt(B, 1); ut.tale1 = B.mono === (LINES.monolog[B.type] || LINES.monolog[6]);
           B.monoT = 0; B.phase = 'fight'; B.state = 'chase'; B.hp = B.max * .3; bossOnHurt(B, 1); ut.tale2 = B.phasesDone === 2 && B.mono === LINES.monolog2[B.type];
           const bobler = () => [...document.querySelectorAll('#fx .bubble')].map(e => e.textContent);
@@ -893,7 +893,7 @@ async def main():
         sjekk('side 2 nevner sjefen som ble behandlet, grunnleggelsen og forrige valg, og Escape går til drømmen', hi['side2'] == 'Journalen, side 2' and hi['epitaf'] and hi['valgMerk'] and hi['etterEsc'].startswith('Kapittel 2'), {k: hi[k] for k in ('side2', 'epitaf', 'valgMerk', 'etterEsc')})
         sjekk('kapitlene følger startetasjen (1 4 5 fra vaskesjakten), og tusenvis av journalsider blir hele setninger', hi['vask'] == [1, 4, 5] and hi['eget'] == [1, 2, 3, 4, 5] and hi['sider'] >= 4000 and hi['antallFeil'] == 0, {k: hi[k] for k in ('vask', 'eget', 'sider', 'feil')})
         sjekk('høyttaleren og koret får linjer fra drømmene, og Olsen og personalet følger etasjen', hi['pa'] >= 2 and hi['koret'] and hi['olsen3'] and hi['paBorte'] and hi['olsen4'], {k: hi[k] for k in ('pa', 'koret', 'olsen3', 'paBorte', 'olsen4')})
-        sjekk('forstanderen sitter i Dypet med fire valg, du kan lese over skulderen, og pennen svekker Journalen', hi['prompt'] and hi['forstander'].startswith('Forstander') and hi['fvalg'] == 4 and hi['les'] and hi['penn'], {k: hi[k] for k in ('naturlig', 'prompt', 'forstander', 'fvalg', 'les', 'penn')})
+        sjekk('forstanderen sitter i Dypet med fire valg, du kan lese over skulderen, og pennen svekker Journalen', hi['prompt'] and hi['forstander'].startswith('Forstander') and hi['fvalg'] == 4 and hi['les'] and hi['penn'] and hi['pennSvak'], {k: hi[k] for k in ('naturlig', 'prompt', 'forstander', 'fvalg', 'les', 'penn', 'pennSvak')})
         sjekk('sjefen holder en ny tale ved en tredjedel helse, slenger ord i kampen og får siste ord', hi['tale1'] and hi['tale2'] and hi['tale2boble'] and hi['sleng'] and hi['sisteOrd'] and hi['behandlet'], {k: hi[k] for k in ('tale1', 'tale2', 'tale2boble', 'sleng', 'sisteOrd', 'behandlet')})
         sjekk('siste side før etterordet, Escape går videre, og gjentakelse gir innkallingsbrev signert av pasienten', hi['siste'] and hi['etterord'] and hi['brev'] == 'Innkallingsbrev' and hi['sign'] and hi['stempel'] == 'INNKALT' and 'samme dag' in hi['brevTekst'] and 'forstanderens penn' in hi['brevTekst'], {k: hi[k] for k in ('siste', 'etterord', 'brev', 'sign', 'stempel')})
         hk = await pg.evaluate("""async () => { const vent = t => new Promise(r => setTimeout(r, t)); document.getElementById('bOk').click(); await vent(500);
@@ -901,6 +901,39 @@ async def main():
         sjekk('dødskortet følger slutten, og fragmentene, øyet, talene og merknadene dekker alle sjefene', hk['kort'].startswith('Pasienten er innkalt') and hk['stempel'] == 'INNKALT' and hk['lore'] == 'Hele historien' and hk['oye'] and hk['merk'], hk)
         await pg.screenshot(path='/tmp/e_18historie.png')
         sjekk('ingen konsollfeil (historie)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # Avdeling Null og Venterommet: den lille legen, instrumentskrinet med kjettingene, og forstanderen som løses fra krokene
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, 'eget')
+        ny = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); };
+          const tekst = () => (document.querySelector('#panel:not(.hidden) .samtale .stekst') || {}).innerText || '';
+          let h = null; for (const d of [4, 3, 2, 6, 4, 3]) { startFloor(d, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('venterom'); if (h) break; }
+          ut.venterom = !!h;
+          if (h) { const s = freeSpot(h.x, h.z + 1.3, 2); P.x = s.x; P.z = s.z; R.snapCamera(P.x, P.z); await vent(300); const it = findInteract(); ut.vPrompt = it && it.t; it.fn(); await vent(150);
+            ut.bak = ((document.querySelector('.samtale .baklengs') || {}).textContent || '').includes('neffaK'); ut.vValg = document.querySelectorAll('[data-sv]').length;
+            Samtale.velg(2); await vent(150); ut.drommer = tekst().includes('Den som ligger under'); closePanel(); await vent(100); ut.vBorte = !!h.ferdig; }
+          // instrumentskrinet: kjettingene kommer når panelet er lukket, treffer pasienten og etterlater en gave
+          h = null; for (const d of [3, 4, 2, 6]) { startFloor(d, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('skrin'); if (h) break; }
+          ut.skrin = !!h;
+          if (h) { P.hp = P.maxHp = 300; const s = freeSpot(h.x, h.z + 1.2, 2); P.x = s.x; P.z = s.z; R.snapCamera(P.x, P.z); await vent(300); findInteract().fn(); await vent(150);
+            Samtale.velg(0); await vent(150); const hp0 = P.hp, n0 = G.run.items.length; ut.forLukk = Kjeder.liste.length === 0; closePanel();
+            for (let i = 0; i < 200 && !Kjeder.liste.some(K => K.truffet); i++) await vent(50); ut.kjeder = Kjeder.liste.length;
+            await spill(2.2); ut.skade = P.hp < hp0 && P.lastCause === 'kroker'; ut.gave = G.run.items.length > n0; ut.kjederBorte = Kjeder.liste.length === 0; }
+          // forstanderen: løs ham fra krokene, og kjettingene henter ham ned
+          startFloor(6, false); rolig(); await vent(300); h = Hendelse.aktive.find(x => x.id === 'forstanderen') || Hendelse.tving('forstanderen');
+          P.x = h.x; P.z = h.z + 1.2; R.snapCamera(P.x, P.z); await vent(300); findInteract().fn(); await vent(150); Samtale.velg(3); await vent(150); ut.losTekst = tekst().includes('første kroken'); closePanel();
+          await spill(2.4); ut.losBorte = !!h.ferdig && G.run.forstanderLos === true && Merknad.har('loslatt') && Kjeder.liste.length === 0;
+          const B = spawnBoss(6, P.x + 3, P.z); ut.sterkere = B.max > sjefFor(6).hp * 1.19; killEntity(B, {}); await vent(200);
+          ut.sign = Historie.brev().sign; Drom.historie(); G.run.historie.sett = 5; G.run.historie.valg = { 5: 'tilgivelse' }; ut.tomStol = Historie.siste(G.run.historie).tekst.includes('tom stol');
+          // en ny etasje rydder bort kjettinger som henger igjen
+          Kjeder.rundt({ x: P.x, y: 1, z: P.z }, 3, { hold: 5 }); startFloor(5, false); ut.rydda = Kjeder.liste.length === 0;
+          return ut; }""")
+        sjekk('Venterommet bak forhenget: den lille legen snakker baklengs, har fire valg og forteller hvem som drømmer', ny['venterom'] and ny['vPrompt'] == 'Gå gjennom forhenget' and ny['bak'] and ny['vValg'] == 4 and ny['drommer'] and ny['vBorte'], ny)
+        sjekk('instrumentskrinet: kjettingene kommer først når panelet er lukket, treffer pasienten og etterlater en gave', ny['skrin'] and ny['forLukk'] and ny['kjeder'] >= 3 and ny['skade'] and ny['gave'] and ny['kjederBorte'], ny)
+        sjekk('forstanderen kan løses fra krokene: kjettingene henter ham, Journalen blir sterkere, og siste side får en tom stol', ny['losTekst'] and ny['losBorte'] and ny['sterkere'] and ny['sign'] == 'M. Morbeck, tidligere forstander' and ny['tomStol'] and ny['rydda'], ny)
+        await pg.screenshot(path='/tmp/e_19avdeling_null.png')
+        sjekk('ingen konsollfeil (Avdeling Null og Venterommet)', not pg.errs, pg.errs[:6])
         await pg.close()
 
         await b.close()
