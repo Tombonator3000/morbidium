@@ -1245,6 +1245,102 @@ async def main():
         sjekk('ingen konsollfeil (skygger og vær)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # lykteskygger: i samme bilde som figurene, ikke gjennom vegger, kortere mot en vegg bak og myke nær lykta (at de er borte like etter et drap, sjekker del 30)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ly = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, ut = {};
+          // vegg mellom to punkter, målt for seg: tette prøver langs linja, og bare veggruter teller (ikke møbler)
+          const vegg = (ax, az, bx, bz) => { const F = G.F; for (let i = 0; i <= 120; i++) { const t = i / 120, x = Math.floor(ax + (bx - ax) * t), z = Math.floor(az + (bz - az) * t); if (x < 0 || z < 0 || x >= F.W || z >= F.H || !F.tiles[z * F.W + x]) return true; } return false; };
+          const fri = (x, z) => [[0, 0], [.45, 0], [-.45, 0], [0, .45], [0, -.45]].every(([a, c]) => !solid(Math.floor(x + a), Math.floor(z + c)));
+          const rom = (x, z) => { const i = Math.floor(z) * G.F.W + Math.floor(x); return G.F.tiles[i] ? G.F.roomId[i] : -1; };
+          const hoy = o => o.alive && o.g && o.g.parent && o.m && !o.g.userData.flat && o.m.userData && o.m.userData.P && o.m.userData.P.h >= 1.1;
+          const fiende = (x, z) => { const e = spawnEnemy('pleier', x, z, false, 2); e.stun = 99; e.hp = e.max = 1e6; e.state = 'chase'; return e; };
+          const plass = (x, z) => { P.x = x; P.z = z; P.vx = P.vz = P.kvx = P.kvz = 0; R.snapCamera(P.x, P.z); };
+          const RR = () => Math.max(2.5, P.lantern.scale.x * .5 * 1.15);
+          // et sted i et rom med en høy ting like ved og en fri rute bak en vegg innen tre ruter
+          let S = null;
+          for (const d of [2, 3, 4, 6, 1, 5]) {
+            startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999;
+            const F = G.F, maks = Math.min(2.9, RR() - .4);
+            for (const o of G.props.filter(hoy)) { const oz = o.g.position.z - .15;
+              for (let k = 0; k < 24 && !S; k++) { const a = k / 24 * Math.PI * 2, r = 1.3 + (k % 3) * .4, px = o.x + Math.cos(a) * r, pz = oz + Math.sin(a) * r; if (!fri(px, pz) || rom(px, pz) !== o.room || vegg(px, pz, o.x, oz)) continue;
+                for (let dz = -3; dz <= 3 && !S; dz++) for (let dx = -3; dx <= 3 && !S; dx++) { const ex = Math.floor(px) + dx + .5, ez = Math.floor(pz) + dz + .5, dd = Math.hypot(ex - px, ez - pz); if (dd > maks || dd < 1.2 || !fri(ex, ez) || !vegg(px, pz, ex, ez)) continue; S = { d, o, px, pz, ex, ez }; } }
+              if (S) break; }
+            if (S) break; }
+          ut.funnet = !!S; if (!S) return ut;
+          plass(S.px, S.pz); const e1 = fiende(S.ex, S.ez); await spill(.8);
+          ut.vegg = { etasje: S.d, bak: vegg(P.x, P.z, e1.x, e1.z), avstand: +Math.hypot(e1.x - P.x, e1.z - P.z).toFixed(2), rr: +RR().toFixed(2), fiende: Dybde.skygger.has(e1), ting: Dybde.skygger.has(S.o) && Dybde.skygger.get(S.o).material.opacity > .05 };
+          killEntity(e1, {}); await spill(.8);
+          // en fiende rett foran en vegg, med lykta bak seg: skyggen stopper ved veggen i stedet for å gå gjennom den
+          let V = null; const F = G.F;
+          for (let z = 1; z < F.H - 3 && !V; z++) for (let x = 1; x < F.W - 1 && !V; x++) { const i = z * F.W + x; if (!F.tiles[i] || F.tiles[i - F.W] || !fri(x + .5, z + .5) || !fri(x + .5, z + 2.1) || vegg(x + .5, z + .5, x + .5, z + 2.1) || rom(x + .5, z + .5) < 0) continue; V = { x: x + .5, z: z + .5 }; }
+          ut.veggFunnet = !!V; if (!V) return ut;
+          plass(V.x, V.z + 1.6); const e = fiende(V.x, V.z); await spill(.8);
+          { const m = Dybde.skygger.get(e), d = Math.hypot(e.x - P.x, e.z - P.z), ux = (e.x - P.x) / d, uz = (e.z - P.z) / d, L = .8 + d * 1.15, l = m ? m.scale.y : 0;
+            ut.kort = { finnes: !!m, lengde: +l.toFixed(3), full: +L.toFixed(3), forbi: vegg(e.x, e.z, e.x + ux * L, e.z + uz * L), inni: vegg(e.x, e.z, e.x + ux * l * .97, e.z + uz * l * .97) }; }
+          // samme bilde: platen står der fienden står når bildet tegnes, også mens den dyttes fram og tilbake
+          { const r0 = R.render, L = { n: 0, flytt: 0, maks: 0 }; let x0 = e.x, z0 = e.z, f = 0;
+            R.render = function (dt) { const m = Dybde.skygger.get(e); if (m) { L.n++; if (Math.hypot(e.x - x0, e.z - z0) > 1e-3) { L.flytt++; L.maks = Math.max(L.maks, Math.abs(m.position.x - e.x), Math.abs(m.position.z - e.z)); } } x0 = e.x; z0 = e.z; e.kvx = ++f % 12 < 6 ? 3 : -3; return r0.call(this, dt); };
+            await spill(1.2); R.render = r0; e.kvx = e.kvz = 0; ut.sammeBilde = L; }
+          await spill(.4);
+          // nær lykta blekner skyggen jevnt bort i stedet for å klippes ved 0,35
+          { const d0 = Math.hypot(e.x - P.x, e.z - P.z), ux = (e.x - P.x) / d0, uz = (e.z - P.z) / d0, ex0 = e.x, ez0 = e.z; ut.naer = [];
+            for (const d of [.8, .55, .4, .3, .22]) { e.x = P.x + ux * d; e.z = P.z + uz * d; Dybde.lykt(0); const m = Dybde.skygger.get(e); ut.naer.push(m ? +m.material.opacity.toFixed(4) : -1); }
+            e.x = ex0; e.z = ez0; Dybde.lykt(0);
+            // gjennomsiktige og halvt oppløste figurer kaster svakere skygge
+            const m = Dybde.skygger.get(e), o0 = m.material.opacity; e.doll.U.uAlpha.value = .3; Dybde.lykt(0); const o1 = m.material.opacity; e.doll.U.uAlpha.value = 1; e.doll.U.uDissolve.value = .5; Dybde.lykt(0); const o2 = m.material.opacity; e.doll.U.uDissolve.value = 0; Dybde.lykt(0);
+            ut.alfa = { o0: +o0.toFixed(4), gjennomsiktig: +(o1 / o0).toFixed(4), oppløst: +(o2 / o0).toFixed(4) }; }
+          return ut; }""")
+        sjekk('lykta kaster ikke skygge gjennom vegger, men de høye tingene i rommet beholder sin', ly.get('funnet') and ly['vegg']['bak'] and ly['vegg']['avstand'] < ly['vegg']['rr'] and not ly['vegg']['fiende'] and ly['vegg']['ting'], ly.get('vegg', ly))
+        k = ly.get('kort', {})
+        sjekk('lykteskyggen stopper ved første vegg bak fienden', ly.get('veggFunnet') and k.get('finnes') and k['forbi'] and not k['inni'] and .15 < k['lengde'] < k['full'] - .8, k)
+        sb = ly.get('sammeBilde', {})
+        sjekk('lykteskyggen står der fienden står i samme bilde, også under et dytt', sb.get('flytt', 0) >= 5 and sb.get('maks', 1) < 1e-6, sb)
+        n = ly.get('naer', [])
+        sjekk('nær lykta blekner skyggen jevnt i stedet for å klippes', len(n) == 5 and all(x >= 0 for x in n) and all(n[i] > n[i + 1] for i in range(4)) and n[4] < .03 and n[0] > .3, n)
+        al = ly.get('alfa', {})
+        sjekk('gjennomsiktige og halvt oppløste figurer kaster svakere lykteskygge', abs(al.get('gjennomsiktig', 0) - .3) < 1e-3 and abs(al.get('oppløst', 0) - .5) < 1e-3, al)
+        sjekk('ingen konsollfeil (lykteskygger)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 3D: månens skygger står stille når kameraet glir, lykta lyser fra der pasienten er i samme bilde, og telefoner får 1024 i skyggekartet
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        m3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
+          const bygg = async d => { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; await spill(.3); };
+          await bygg(2); ut.d3 = D3.on && D3.bygd;
+          // seks tilfeldige små flytt av kameraet: midtpunktet ligger alltid på hele ruter i skyggekartet, med samme retning og lengde, på gulvet og nær kameraet.
+          // Aksene regnes ut her fra lyset selv, slik lookAt gjør det for skyggekameraet, og ruta er bredden på kameraet delt på kartet
+          const M = D3.mane, C = M.shadow.camera, z = new THREE.Vector3(-7, 16, 9).normalize(), x = new THREE.Vector3(0, 1, 0).cross(z).normalize(), B = { x, y: z.clone().cross(x), texel: (C.right - C.left) / M.shadow.mapSize.x }, A = { rute: 0, retning: 0, gulv: 0, naer: 0 };
+          for (let i = 0; i < 6; i++) { R.camT.x += Math.random() - .5; R.camT.z += Math.random() - .5; D3.tick(0); const t = M.target.position, fx = t.dot(B.x) / B.texel, fy = t.dot(B.y) / B.texel;
+            A.rute = Math.max(A.rute, Math.abs(fx - Math.round(fx)), Math.abs(fy - Math.round(fy))); A.retning = Math.max(A.retning, Math.abs(M.position.x - t.x + 7), Math.abs(M.position.y - t.y - 16), Math.abs(M.position.z - t.z - 9)); A.gulv = Math.max(A.gulv, Math.abs(t.y)); A.naer = Math.max(A.naer, Math.hypot(t.x - R.camT.x, t.z - R.camT.z) / B.texel); }
+          ut.maane = A; ut.texel = B.texel; ut.kart = M.shadow.mapSize.x; ut.niva = D3.kval();
+          // lykta: punktlyset står der pasienten står når bildet tegnes, også under et dytt
+          { const r0 = R.render, L = { n: 0, flytt: 0, maks: 0 }; let x0 = P.x, z0 = P.z, f = 0;
+            R.render = function (dt) { const l = D3.pool[0]; if (l && G.state === 'play') { L.n++; if (Math.hypot(P.x - x0, P.z - z0) > 1e-3) { L.flytt++; L.maks = Math.max(L.maks, Math.abs(l.position.x - P.x), Math.abs(l.position.z + .3 - P.z)); } } x0 = P.x; z0 = P.z; P.kvx = ++f % 10 < 5 ? 3 : -3; return r0.call(this, dt); };
+            await spill(1.2); R.render = r0; P.kvx = P.kvz = 0; ut.lykt = L; }
+          // skyggekartet tegnes ikke i pausen, bare én gang når den åpnes, og igjen når spillet går videre
+          { const SM = R.renderer.shadowMap, r1 = SM.render; let n = 0; SM.render = function (...a) { if (this.enabled && (this.autoUpdate || this.needsUpdate) && a[0] && a[0].length) n++; return r1.apply(this, a); };
+            await bilder(3); const spillN = n; openPause(); await bilder(2); n = 0; await bilder(4); const pauseN = n, auto = SM.autoUpdate; closePanel(); await bilder(3); ut.kartpass = { spill: spillN, pause: pauseN, auto, etter: n, autoEtter: SM.autoUpdate }; SM.render = r1; }
+          // telefon (grov peker) på høy: 1024 i skyggekartet, uten at nivåene endres
+          { const s = G.meta.settings, k0 = s.kvalitet; s.kvalitet = 3; R.coarse = true; applySettings(); ut.mobil = { niva: D3.kval(), skygge: D3.Q().skygge, kart: D3.mane.shadow.mapSize.x, texel: D3.maneB && D3.maneB.texel, hoy: D3.NIVA.hoy.skygge };
+            R.coarse = false; applySettings(); ut.pc = { skygge: D3.Q().skygge, kart: D3.mane.shadow.mapSize.x };
+            s.lights = false; applySettings(); D3.tick(0); ut.lysAv = !D3.maneB && !D3.mane.castShadow; s.lights = true; s.kvalitet = k0; applySettings(); }
+          const r = G.F.rooms.find(r => r.role === 'combat' && !r.ute && r.w >= 8) || G.F.rooms[G.F.startId]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z); await spill(.6);
+          return ut; }""")
+        await pg.screenshot(path='/tmp/e_skygge_a.png')
+        await pg.evaluate("async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); G.player.x += .02; while (G.time - g0 < .8 && performance.now() - t0 < 20000) await new Promise(r => setTimeout(r, 50)); }")
+        await pg.screenshot(path='/tmp/e_skygge_b.png')
+        ma = m3['maane']
+        sjekk('månens skyggekamera flytter seg bare i hele ruter av skyggekartet, med samme retning og lengde', m3['d3'] and ma['rute'] < 1e-3 and ma['retning'] < 1e-6 and ma['gulv'] < 1e-6 and ma['naer'] < 2, m3)
+        ly3 = m3['lykt']
+        sjekk('lykta i 3D lyser fra der pasienten står i samme bilde, også under et dytt', ly3['flytt'] >= 5 and ly3['maks'] < 1e-6, ly3)
+        kp = m3['kartpass']
+        sjekk('skyggekartet tegnes ikke på nytt i pausen, men igjen når spillet går videre', kp['spill'] >= 3 and kp['pause'] == 0 and kp['auto'] is False and kp['etter'] >= 2 and kp['autoEtter'] is True, kp)
+        sjekk('telefoner får høyst 1024 i skyggekartet på høy, PC 2048, og uten lys og skygge er det ingen måneskygge', m3['mobil'] == {'niva': 'hoy', 'skygge': 1024, 'kart': 1024, 'texel': 32 / 1024, 'hoy': 2048} and m3['pc'] == {'skygge': 2048, 'kart': 2048} and m3['lysAv'], m3)
+        sjekk('ingen konsollfeil (måneskygger)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

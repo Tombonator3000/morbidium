@@ -678,7 +678,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   let dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
   Input.pollGamepad(); const A = Input.actions();
-  Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); D3.tick(dt); Effekter.tick(dt); Dybde.tick(dt); Vaatt.tick(dt); Testmodus.tick();
+  Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); Effekter.tick(dt); Vaatt.tick(dt); Testmodus.tick();
   if (G.state === 'play') {
     const P = G.player;
     if (A.pauseP) openPause(); else if (A.journalP) openJournal();
@@ -719,6 +719,8 @@ function loop(now) {
   } else if (G.state === 'journal') {
     if (A.pauseP || A.journalP) closeJournal();
   }
+  // lysene, månen og lykteskyggene etter at alt har flyttet seg, så de følger figurene og lykta i samme bilde og ikke ett bilde etter
+  D3.tick(dt); Dybde.tick(dt);
   R.render(dt);
   Input.endFrame();
   if (G.okFrames !== null && ++G.okFrames === 90) { if (window.bootStep) bootStep('ok'); const b = $('boot'); if (b) b.remove(); G.okFrames = null; }

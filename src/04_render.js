@@ -48,6 +48,7 @@ const R = {
   },
   hentet() {
     this.tapt = false; clearTimeout(this.tapTimer); this.checkN = 3;
+    this.renderer.shadowMap.needsUpdate = true; // skyggekartet er tomt igjen, og i pausen tegnes det ikke av seg selv (D3.tick)
     if (typeof Testmodus === 'object') Testmodus.feil.push({ t: performance.now(), m: 'WebGL hentet tilbake' });
     if (this.tapSkjult) { this.resize(); return; } // spillet står i pausemenyen når du kommer tilbake
     const d0 = this.dprMax || 1; this.dprMax = Math.max(1, d0 - .5); this.dpr = Math.min(this.dpr, this.dprMax); this.resize();
