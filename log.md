@@ -756,3 +756,9 @@ Alle tidspunkt er UTC.
 - Skyggeplatene til dukkene frigjøres med dukken, og materialet til et våpen som byttes ut, frigjøres også.
 - Lyset på figurene regnes nå midt på tegningen også når den svever.
 - Testdel 37 har fått sjekker for alt dette, i 2D og i 3D. Mot bygget fra før feiler alle de nye sjekkene unntatt den som sjekker at flekken blekner riktig i 2D. Del 37, 15, 30, 36, 16, 19, 20 og 27 går gjennom.
+
+## 2026-09-26 15:37 Kontroll av skyggeflekkene og måneskyggene til figurene
+- Gikk gjennom f2a9a24 opp mot planen: flekken som blir på gulvet (Doll.bakke), styrken shadowA gjennom 3D, oppløsningen og 3D av, skyggeplatene når delene endrer seg, figurene som ikke kaster måneskygge når de er halvt oppløst eller gjennomsiktige, den åpne kista, de bakte skyggene uten lys og dekalene i toon. Sjekket også at ingenting annet flytter roten til dukkene i høyden (B.hop settes aldri), og at ingen andre leser d.meshes.
+- Prøvde PC i 3D og 2D, enkel grafikk og telefon stående og liggende med berøring: kråka og koret svever med flekken på gulvet, flekken er 0,45 i 3D og 1 i 2D og enkel grafikk, telefonene får 1024 i skyggekartet, og ingen konsollfeil.
+- Én feil: kuriositetene som vises på pasienten (Items.addons) fikk skyggeplate i 3D nå som hele tegningen kaster skygge, men Items.clearLook koblet dem bare løs. Materialet og skyggeplaten ble liggende for hvert løp. Nå frigjøres begge, og del 37 sjekker det.
+- Del 37, 15, 30 og 36 går gjennom.

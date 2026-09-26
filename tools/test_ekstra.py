@@ -1408,6 +1408,10 @@ async def main():
           // 3D av: skyggeflekkene får full styrke igjen, og tilbake på .45 når 3D slås på
           { const s = G.meta.settings; s.d3 = false; applySettings(); await bilder(3); ut.av = { d3: D3.on, flekk: +P.doll.shadow.material.opacity.toFixed(4), a: P.doll.shadowA };
             s.d3 = true; applySettings(); await bilder(3); ut.paaIgjen = { d3: D3.on && D3.bygd, flekk: +P.doll.shadow.material.opacity.toFixed(4), plate: plate(P.doll) }; }
+          // kuriositeter som vises på pasienten (Items.addons) kaster måneskygge, og materialet og skyggeplaten frigjøres når utseendet tømmes
+          { const id = Object.keys(ITEMS).find(k => ITEMS[k].look); Items.give(id); Items.updateLook(); await bilder(3); const ms = Object.values(Items.addons); let kastet = 0;
+            for (const m of ms) { if (m.customDepthMaterial) m.customDepthMaterial.addEventListener('dispose', () => kastet++); m.material.addEventListener('dispose', () => kastet++); }
+            ut.utseende = { n: ms.length, plate: ms.length > 0 && ms.every(m => !!m.customDepthMaterial && m.castShadow) }; Items.clearLook(); ut.utseende.kastet = kastet; }
           return ut; }""")
         sp = s3['spiller']
         sjekk('i 3D kaster alle tegnede deler og strekbåndene måneskygge, og skyggeflekken er .45', s3['d3'] and sp['deler'] >= 4 and sp['plate'] and sp['baand'] and abs(sp['flekk'] - .45) < 1e-3, s3)
@@ -1424,6 +1428,8 @@ async def main():
         la, lp = s3['lysAv'], s3['lysPaa']
         sjekk('uten lys og skygge beholder tingene den bakte skyggen og flekken har full styrke, og med lys igjen er alt som før', la['d3'] and la['ting'] > 5 and la['bakt'] and abs(la['flekk'] - 1) < 1e-3 and abs(lp['flekk'] - .45) < 1e-3 and lp['gjemt'] > 5 and lp['plate'], s3)
         sjekk('når 3D slås av, får skyggeflekken full styrke igjen, og .45 når det slås på', s3['av'] == {'d3': False, 'flekk': 1, 'a': 1} and s3['paaIgjen']['d3'] and abs(s3['paaIgjen']['flekk'] - .45) < 1e-3 and s3['paaIgjen']['plate'], s3)
+        ut_ = s3['utseende']
+        sjekk('kuriositetene på pasienten kaster måneskygge, og materialet og skyggeplaten frigjøres når utseendet tømmes', ut_['plate'] and ut_['kastet'] == 2 * ut_['n'], ut_)
         sjekk('ingen konsollfeil (skygger i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
