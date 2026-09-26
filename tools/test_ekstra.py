@@ -628,12 +628,13 @@ async def main():
             return { for: for_ ? for_.t : null, etter: etter ? etter.t : null }; } return null; }""")
         sjekk('en hendelse i et kamprom kan først brukes når rommet er ryddet', bool(rom) and rom['for'] != 'Hils på kua' and rom['etter'] == 'Hils på kua', rom)
         fl = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
-          startFloor(1, false); rolig(); Hendelse.fjern(); let h = null; for (let k = 0; k < 6 && !h; k++) { startFloor(1, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('graven'); }
+          startFloor(1, false); rolig(); Hendelse.fjern(); let h = null; const nyttFro = k => { if (k) G.run.seed = (G.run.seed + 104729) >>> 0; }; // etasjen lages av frøet, så et nytt forsøk trenger et nytt frø
+          for (let k = 0; k < 6 && !h; k++) { nyttFro(k); startFloor(1, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('graven'); }
           G.run.sjefSvekk = {}; Hendelse.start(h); await vent(50); Samtale.velg(2); closePanel(); const B = spawnBoss(1, P.x + 4, P.z); ut.sjef = B.hp / B.max;
           h = null; for (const d of [3, 4, 6, 2, 4, 6]) { if (h) break; startFloor(d, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('hjemmebrent'); } if (h) { Hendelse.start(h); await vent(50); Samtale.velg(0); closePanel(); ut.sterk = P.kamferT > 20; await vent(3000); ut.spy = G.puddles.filter(p => p.kind === 'vomit').length; }
-          startFloor(2, false); rolig(); Hendelse.fjern(); h = null; for (let k = 0; k < 6 && !h; k++) { startFloor(2, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('tannfeen'); }
+          startFloor(2, false); rolig(); Hendelse.fjern(); h = null; for (let k = 0; k < 6 && !h; k++) { nyttFro(k); startFloor(2, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('tannfeen'); }
           if (h) { P.teeth = 20; const m0 = P.maxHp; Hendelse.start(h); await vent(50); Samtale.velg(0); closePanel(); ut.hjerte = P.maxHp - m0; ut.tenner = P.teeth; }
-          startFloor(2, false); rolig(); Hendelse.fjern(); h = null; for (let k = 0; k < 6 && !h; k++) { startFloor(2, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('dans'); }
+          startFloor(2, false); rolig(); Hendelse.fjern(); h = null; for (let k = 0; k < 6 && !h; k++) { nyttFro(k); startFloor(2, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('dans'); }
           if (h) { P.x = h.x + 1.5; P.z = h.z + 1.5; P.vx = P.vz = 0; Hendelse.start(h); await vent(50); Samtale.velg(0); for (let t = 0; t < 40 && !h.ferdig; t++) { P.vx = P.vz = 0; await vent(500); } ut.dans = h.ferdig === true && h.brukt === true && !h.dukke; ut.dansIgjen = h.data.dans; }
           const gamle = Hendelse.aktive.flatMap(x => x.obj); startFloor(3, false); rolig(); ut.ryddet = gamle.every(o => !o.parent);
           return ut; }""")
