@@ -15,6 +15,8 @@
 const Vaatt = {
   on: true, draper: [], spor: [], W: 0, H: 0, cv: null, g: null, tex: null, spr: null, styrke: 0, regnT: 0, tomT: 0, tall: { blod: 0, vann: 0, sklidd: 0, slatt: 0 },
   MAKS: 110,
+  /* skala for dråpestørrelse og fart: den korteste siden, så dråpene er like store på stående mobil som på PC */
+  kk() { return Math.min(this.W, this.H) / 135; },
   sett(on) { this.on = on !== false; if (!this.on) this.tom(); },
   aktiv() { return this.on && !R.safe && !!R.post; },
   blodOk() { return typeof Blod !== 'object' || Blod.on; },
@@ -53,8 +55,8 @@ const Vaatt = {
     const W = this.W, H = this.H, cx = x0 * W, cy = y0 * H;
     if (blod) this.tall.blod++; else this.tall.vann++;
     for (let i = 0; i < n; i++) {
-      const a = Math.random() * TAU, u = Math.pow(Math.random(), 1.6), d = u * (10 + 26 * s) * (H / 135);
-      const r = (blod ? 1.1 : 1.2) * (H / 135) * (1 + (1 - u) * (2.6 * s) * Math.random() + (Math.random() < .12 ? 1.5 * s : 0));
+      const a = Math.random() * TAU, u = Math.pow(Math.random(), 1.6), d = u * (10 + 26 * s) * this.kk();
+      const r = (blod ? 1.1 : 1.2) * this.kk() * (1 + (1 - u) * (2.6 * s) * Math.random() + (Math.random() < .12 ? 1.5 * s : 0));
       this.ny(cx + Math.cos(a) * d * 1.3, cy + Math.sin(a) * d, r, blod);
     }
   },
@@ -66,7 +68,7 @@ const Vaatt = {
     const x = side < 0 ? .06 + Math.random() * .3 : .64 + Math.random() * .3, y = .12 + Math.random() * .6;
     this.sprut(x, y, Math.round(4 + kraft * 8), true, .6 + kraft * .45);
     // og noen store som blir tunge nok til å renne med en gang
-    const k = this.H / 135; if (kraft > .7) for (let i = 0, n = Math.round(kraft * 1.5); i < n; i++) this.ny(clamp(x + (Math.random() - .5) * .3, .03, .97) * this.W, clamp(y + (Math.random() - .5) * .4, .03, .9) * this.H, (3.2 + Math.random() * 2 * kraft) * k, true);
+    const k = this.kk(); if (kraft > .7) for (let i = 0, n = Math.round(kraft * 1.5); i < n; i++) this.ny(clamp(x + (Math.random() - .5) * .3, .03, .97) * this.W, clamp(y + (Math.random() - .5) * .4, .03, .9) * this.H, (3.2 + Math.random() * 2 * kraft) * k, true);
     if (kraft > 1.2) this.sprut(side < 0 ? .5 - Math.random() * .4 : .5 + Math.random() * .4, .04 + Math.random() * .12, 5, true, .8); // tunge treff: noe når toppen og renner lenge
   },
   /* noe døde tett ved pasienten */
@@ -87,7 +89,7 @@ const Vaatt = {
     const rr = typeof roomAt === 'function' ? roomAt(P.x, P.z) : -1, rom = rr >= 0 ? G.F.rooms[rr] : null;
     if (!(G.F.ute || (rom && rom.ute))) return;
     this.regnT -= dt; if (this.regnT > 0) return; this.regnT = .08 + Math.random() * .2;
-    if (!this.init()) return; const k = this.H / 135;
+    if (!this.init()) return; const k = this.kk();
     this.ny(Math.random() * this.W, Math.random() * this.H * .95, (1 + Math.random() * 1.6) * k, false);
     this.tall.vann++;
   },
@@ -102,7 +104,7 @@ const Vaatt = {
     this.styrke = 1; R.post.uniforms.uVaatt.value = 1; this.tex.needsUpdate = true;
   },
   fysikk(dt) {
-    const D = this.draper, k = this.H / 135, S = this.spor;
+    const D = this.draper, k = this.kk(), S = this.spor;
     for (const d of D) {
       d.t += dt; if (d.ny > 0) d.ny -= dt;
       const grense = (d.blod ? 3.0 : 2.3) * k;
@@ -147,7 +149,7 @@ const Vaatt = {
     }
     // dråpene: kupler, strukket litt i fartsretningen, med tyngden nederst
     for (const d of this.draper) {
-      const spr = d.blod ? this.spr.b : this.spr.v, s = d.glir ? 1 + Math.min(.35, d.vy / (90 * H / 135)) : 1, h = d.r * 2 * s;
+      const spr = d.blod ? this.spr.b : this.spr.v, s = d.glir ? 1 + Math.min(.35, d.vy / (90 * this.kk())) : 1, h = d.r * 2 * s;
       g.globalAlpha = d.blod ? 1 : clamp(d.r * 1.4, 0, 1);
       g.drawImage(spr, d.x - d.r, d.y + d.r - h, d.r * 2, h);
     }
