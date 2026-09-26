@@ -15,10 +15,10 @@ const D3 = {
   on: false, bygd: false, ting: [], byttet: [], egne: [], gjemt: [], pool: [], dukker: new Set(), t: 0,
   BUMP: .7,
   NIVA: {
-    hoy: { navn: 'høy', skygge: 2048, lys: 8, glod: true, stov: 192, straaler: true, taake: true, tilt: true, kant: true, dpr: 2 },
-    middels: { navn: 'middels', skygge: 1024, lys: 6, glod: true, stov: 96, straaler: true, taake: true, tilt: false, kant: true, dpr: 1.5 },
-    lav: { navn: 'lav', skygge: 512, lys: 4, glod: false, stov: 0, straaler: false, taake: false, tilt: false, kant: false, dpr: 1 }
-  },
+    hoy: { navn: 'høy', skygge: 2048, lys: 8, glod: true, stov: 192, straaler: true, taake: true, tilt: .7, kant: true, dpr: 2 },
+    middels: { navn: 'middels', skygge: 1024, lys: 6, glod: true, stov: 96, straaler: true, taake: true, tilt: .45, kant: true, dpr: 1.5 },
+    lav: { navn: 'lav', skygge: 512, lys: 4, glod: false, stov: 0, straaler: false, taake: false, tilt: 0, kant: false, dpr: 1 }
+  }, // tilt: hvor uskarpt det blir over og under pasienten (04_render.js), også på telefon (middels)
   /* valgt nivå: fast i innstillingene (1 lav, 2 middels, 3 høy) eller automatisk (0) */
   kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse ? 'middels' : 'hoy'); },
   /* «Lys og skygge» av (R.lightsOn) gir et jevnt opplyst rom: ingen punktlys, skygger, lysstråler eller kantlys.
@@ -102,7 +102,7 @@ const D3 = {
     // skyggeflekkene får full styrke igjen i 2D, der de er den eneste skyggen figurene har
     for (const d of this.dukker) { if (d.U && d.U.tint0) d.U.uTint.value.copy(d.U.tint0); utenKant(d.U); if (d.shadow) { d.shadowA = 1; Doll.bakke(d); } } this.dukker.clear();
     if (G.props) for (const o of G.props) { o.d3 = false; if (o.U && o.U.tint0) o.U.uTint.value.copy(o.U.tint0); utenKant(o.U); }
-    this.lamper = []; this.morkeT = 0; this.taakeLys = null;
+    this.lamper = []; this.morkeT = 0; this.mf = 1; this.taakeLys = null;
     if (R.post) R.post.uniforms.uLights.value = R.lightsOn ? 1 : 0;
     if (R.renderer) R.renderer.shadowMap.autoUpdate = true;
     this.bygd = false;
@@ -147,7 +147,7 @@ const D3 = {
           let kj = null;
           if (this.q.straaler) { kj = new THREE.Mesh(this.kjegleGeo(), this.straaleMat(th.pool || '#ffd89a', .22)); kj.position.set(0, 0, .3); kj.renderOrder = 5; g.add(kj); this.egne.push(kj.material); }
           // noen lamper flimrer, flere jo lenger ned i bygget
-          this.lamper.push({ lp, pm, kj, base: .45, farge: new THREE.Color('#ffd89a'), flimrer: Math.random() < .12 + dybdeStyrke(G.depth) * .07, t: Math.random() * 10, burst: 0 });
+          this.lamper.push({ lp, pm, p, kj, base: .45, farge: new THREE.Color('#ffd89a'), flimrer: Math.random() < .12 + dybdeStyrke(G.depth) * .07, t: Math.random() * 10, burst: 0 });
         } else if ((Paint.wallS && Paint.wallS[(z - 1) * F.W + x]) !== 'forheng') { // ingen vinduer i de røde forhengene
           // vindu: ramme, glass i månelys og en lysstripe ned på gulvet
           const fr = new THREE.Mesh(R.geo('d3vr', () => new THREE.BoxGeometry(.9, 1.0, .06)), ramme); fr.position.set(0, 1.45, 0); g.add(fr);
@@ -385,7 +385,7 @@ const D3 = {
     this.mane.intensity = (this.maneI || .42) + (R.flashOn ? R.fx.lyn || 0 : 0) * 2.8;
     // mye Morbidium: av og til slukner lyset
     if (P && P.alive && P.morb >= 70 && R.distortOn && G.state === 'play') { this.morkeR = (this.morkeR ?? rnd(8, 20)) - dt; if (this.morkeR <= 0) { this.morkeR = rnd(15, 35); this.morke(rnd(.7, 1.3), .12); } }
-    const mf = this.morkeFaktor(dt);
+    const mf = this.mf = this.morkeFaktor(dt); // gloriene (38_effekter.js) slukner med
     // vegglampene: noen flimrer i korte støt, og alle slukner i mørket
     for (const L of this.lamper || []) {
       let f = 1;
