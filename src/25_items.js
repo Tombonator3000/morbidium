@@ -254,7 +254,8 @@ const Items = {
   },
   /* ---------- utseende: gjenstandene vises på pasienten ---------- */
   looks() { const L = []; for (const id of this.owned()) if (ITEMS[id].look) L.push(ITEMS[id].look); if (this.tf('edgelord')) L.push('horn'); if (this.tf('kirurg')) L.push('bandasje'); return L; },
-  clearLook() { for (const k in this.addons) R.remove(this.addons[k]); this.addons = {}; },
+  // tilleggene har eget materiale, og i 3D en skyggeplate (D3.dukke): begge frigjøres, ikke bare kobles løs
+  clearLook() { for (const k in this.addons) { const m = this.addons[k]; R.remove(m); m.material.dispose(); if (m.customDepthMaterial) m.customDepthMaterial.dispose(); } this.addons = {}; },
   updateLook() {
     const P = G.player; if (!P || !P.doll) return;
     for (const k of this.looks()) if (!this.addons[k]) { const m = partMesh(addonPart(k), P.doll.U); P.doll.plane.add(m); this.addons[k] = m; }

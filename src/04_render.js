@@ -48,6 +48,7 @@ const R = {
   },
   hentet() {
     this.tapt = false; clearTimeout(this.tapTimer); this.checkN = 3;
+    this.renderer.shadowMap.needsUpdate = true; // skyggekartet er tomt igjen, og i pausen tegnes det ikke av seg selv (D3.tick)
     if (typeof Testmodus === 'object') Testmodus.feil.push({ t: performance.now(), m: 'WebGL hentet tilbake' });
     if (this.tapSkjult) { this.resize(); return; } // spillet står i pausemenyen når du kommer tilbake
     const d0 = this.dprMax || 1; this.dprMax = Math.max(1, d0 - .5); this.dpr = Math.min(this.dpr, this.dprMax); this.resize();
@@ -60,11 +61,17 @@ const R = {
     const pw = Math.round(w * this.dpr), ph = Math.round(h * this.dpr);
     this.renderer.setSize(pw, ph, false); this.renderer.domElement.style.width = w + 'px'; this.renderer.domElement.style.height = h + 'px';
     const MS = false; // multisample-mål ga hvit skjerm på enkelte mobil-GPU-er
-    if (this.rt) this.rt.dispose(); if (this.lrt) this.lrt.dispose();
+    if (this.rt) this.rt.dispose(); this.kastLys();
     this.rt = MS ? new THREE.WebGLMultisampleRenderTarget(pw, ph) : new THREE.WebGLRenderTarget(pw, ph); if (MS) this.rt.samples = 4;
-    this.lrt = new THREE.WebGLRenderTarget(Math.max(2, pw >> 1), Math.max(2, ph >> 1));
-    if (this.post) { this.post.uniforms.tScene.value = this.rt.texture; this.post.uniforms.tLight.value = this.lrt.texture; this.post.uniforms.uRes.value.set(pw, ph); }
+    if (this.post) { this.post.uniforms.tScene.value = this.rt.texture; this.post.uniforms.uRes.value.set(pw, ph); }
   },
+  /* lysbufferen (halv oppløsning) trengs bare uten 3D, der lysplatene lyser opp bildet. Den lages når den brukes og kastes i 3D.
+     Ingen dybdebuffer: lysplatene tegnes uten dybdetest, og en tom dybdebuffer tar bare minne og båndbredde på telefonen */
+  lysBuf() {
+    if (!this.lrt) { this.lrt = new THREE.WebGLRenderTarget(Math.max(2, this.rt.width >> 1), Math.max(2, this.rt.height >> 1), { depthBuffer: false }); this.post.uniforms.tLight.value = this.lrt.texture; }
+    return this.lrt;
+  },
+  kastLys() { if (this.lrt) { this.lrt.dispose(); this.lrt = null; } if (this.post) this.post.uniforms.tLight.value = null; },
   makePost() {
     this.postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); this.postScene = new THREE.Scene();
     this.post = new THREE.ShaderMaterial({
@@ -73,13 +80,13 @@ const R = {
         uMorb: { value: 0 }, uHurt: { value: 0 }, uLow: { value: 0 }, uFlash: { value: 0 }, uDistort: { value: 1 }, uLights: { value: 1 }, uVig: { value: .55 }, tBloom: { value: null }, uBloom: { value: 0 },
         tBlod: { value: this.blodSkjerm() }, uBlod: { value: 0 }, uBlodFlip: { value: 0 }, uAarer: { value: 0 }, uPuls: { value: 3 },
         tVaatt: { value: null }, uVaatt: { value: 0 }, uVaattPx: { value: new THREE.Vector2(1 / 384, 1 / 216) },
-        tUskarp: { value: null }, uTilt: { value: 0 }, uSplit: { value: 0 }, uFilm: { value: 0 },
+        tUskarp: { value: null }, uTilt: { value: 0 }, uFokus: { value: new THREE.Vector3(.54, .2, .42) }, uSplit: { value: 0 }, uFilm: { value: 0 },
         uSjokk: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uVarme: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uZoom: { value: new THREE.Vector3() }, uCa: { value: 0 }, uNeg: { value: 0 }, uDrom: { value: 0 }, uLyn: { value: 0 }, uHete: { value: 0 } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: `
         uniform sampler2D tScene, tLight, tBloom, tBlod, tUskarp; uniform vec2 uRes; uniform float uTime, uMorb, uHurt, uLow, uFlash, uDistort, uLights, uVig, uBloom, uBlod, uBlodFlip, uAarer, uPuls, uTilt, uSplit, uFilm;
         uniform vec3 uAmbient, uLift, uGain; varying vec2 vUv;
-        uniform vec4 uSjokk[4], uVarme[4]; uniform vec3 uZoom; uniform float uCa, uNeg, uDrom, uLyn, uHete;
+        uniform vec4 uSjokk[4], uVarme[4]; uniform vec3 uZoom; uniform float uCa, uNeg, uDrom, uLyn, uHete; uniform vec3 uFokus;
         uniform sampler2D tVaatt; uniform float uVaatt; uniform vec2 uVaattPx;
         float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
@@ -128,17 +135,19 @@ const R = {
             }
           }
           float ca = (uHurt * 0.006 + m * 0.0015 + uCa * 0.009) * smoothstep(0.1, 0.8, d) + sj * 0.008;
-          vec3 col = vec3(texture2D(tScene, uv + vec2(ca, 0.0)).r, texture2D(tScene, uv).g, texture2D(tScene, uv - vec2(ca, 0.0)).b);
+          // uten fargesplitt holder ett oppslag
+          vec3 col; if (ca < 0.0001) col = texture2D(tScene, uv).rgb; else col = vec3(texture2D(tScene, uv + vec2(ca, 0.0)).r, texture2D(tScene, uv).g, texture2D(tScene, uv - vec2(ca, 0.0)).b);
           // zoomslag: bildet trekkes mot et punkt i et kort øyeblikk
           if (uZoom.z > 0.001) {
             vec3 z = vec3(0.0);
             for (int i = 1; i <= 8; i++) z += texture2D(tScene, uv + (uZoom.xy - uv) * float(i) * uZoom.z * 0.018).rgb;
             col = mix(col, z / 8.0, min(1.0, uZoom.z * 1.6));
           }
-          // tilt-shift (3D, høy kvalitet): topp og bunn av bildet blir litt uskarpe, som et diorama
-          if (uTilt > 0.0) col = mix(col, texture2D(tUskarp, uv).rgb, smoothstep(0.2, 0.52, abs(vUv.y - 0.54)) * uTilt);
-          vec3 L = texture2D(tLight, uv).rgb;
-          col *= mix(vec3(1.0), uAmbient + L * 1.35, uLights);
+          // tilt-shift (3D, høy og middels): et skarpt bånd der pasienten står, og uskarpt over og under, som et diorama.
+          // uFokus: x er midten av båndet på skjermen, y er hvor langt ut det er skarpt, z er der det er helt uskarpt
+          if (uTilt > 0.0) col = mix(col, texture2D(tUskarp, uv).rgb, smoothstep(uFokus.y, uFokus.z, abs(vUv.y - uFokus.x)) * uTilt);
+          // lysbufferen finnes bare uten 3D
+          if (uLights > 0.0) col *= mix(vec3(1.0), uAmbient + texture2D(tLight, uv).rgb * 1.35, uLights);
           if (uBloom > 0.0) col += texture2D(tBloom, uv).rgb * uBloom;
           col = col * uGain + uLift;
           // fargetoning i 3D: kalde skygger og varme høylys
@@ -228,6 +237,8 @@ const R = {
   },
   safe: false, checkN: 0,
   render(dt) {
+    // enkel grafikk: hjelpemålene til glød, tilt-shift og lysbufferen trengs ikke og kastes (også når den slås på midt i spillet)
+    if (this.safe && (this.bl || this.us || this.lrt)) { this.kastPar('bl'); this.kastPar('us'); this.kastLys(); this.post.uniforms.tBloom.value = this.post.uniforms.tUskarp.value = null; }
     if (this.safe) { const r = this.renderer; this.fx.hurt = Math.max(0, this.fx.hurt - dt * 2.5); this.fx.flash = Math.max(0, this.fx.flash - dt * 5); r.setRenderTarget(null); r.setClearColor(this.clear || 0x16130c, 1); r.clear(); r.render(this.scene, this.camera); return; }
     this.renderPost(dt);
     // selvtest: blir bildet helt hvitt eller helt tomt, byttes det til enkel grafikk
@@ -246,13 +257,15 @@ const R = {
     u.uTime.value += dt; u.uHurt.value = this.fx.hurt; u.uFlash.value = this.flashOn ? this.fx.flash : 0; u.uMorb.value = this.fx.morb; u.uLow.value = this.fx.low;
     u.uBlod.value = this.fx.blod; u.uBlodFlip.value = this.fx.blodFlip; u.uAarer.value = Math.max(0, this.fx.aarer || 0); u.uPuls.value = this.fx.puls || 3; this.fx.blod = Math.max(0, this.fx.blod - dt * .38);
     const Q = D3.on ? D3.Q() : null; u.uDistort.value = this.distortOn ? 1 : 0; u.uLights.value = this.lightsOn && !D3.on ? 1 : 0; u.uBloom.value = Q && Q.glod ? .7 : 0;
-    u.uTilt.value = Q && Q.tilt ? .62 : 0; u.uSplit.value = Q ? .7 : 0; u.uFilm.value = this.distortOn ? .35 + (G.depth || 1) * .16 : 0;
+    u.uTilt.value = Q && Q.tilt ? Q.tilt : 0; u.uSplit.value = Q ? .7 : 0; u.uFilm.value = this.distortOn ? .35 + (G.depth || 1) * .16 : 0;
     this.fx.hurt = Math.max(0, this.fx.hurt - dt * 2.5); this.fx.flash = Math.max(0, this.fx.flash - dt * 5);
     this.storeFx(dt, u);
-    if (!D3.on) { r.setRenderTarget(this.lrt); r.setClearColor(0x000000, 1); r.clear(); r.render(this.lscene, this.camera); }
+    // det skarpe båndet følger pasienten (midt på figuren), og er smalere på stående skjerm, der bildet er høyere
+    if (u.uTilt.value > 0) { const P = G.player, y = P && G.state !== 'title' ? this.uvAv(P.x, .9, P.z).y : .54; u.uFokus.value.set(clamp(y, .25, .75), this.rt.width < this.rt.height ? .14 : .2, .42); }
+    if (!D3.on && this.lightsOn) { r.setRenderTarget(this.lysBuf()); r.setClearColor(0x000000, 1); r.clear(); r.render(this.lscene, this.camera); } else if (this.lrt) this.kastLys();
     r.setRenderTarget(this.rt); r.setClearColor(this.clear || 0x16130c, 1); r.clear(); r.render(this.scene, this.camera);
-    if (Q && Q.glod) this.renderBloom();
-    if (Q && Q.tilt) this.renderUskarp();
+    if (Q && Q.glod) this.renderBloom(); else if (this.bl) { this.kastPar('bl'); u.tBloom.value = null; }
+    if (Q && Q.tilt) this.renderUskarp(); else if (this.us) { this.kastPar('us'); u.tUskarp.value = null; }
     r.setRenderTarget(null); r.render(this.postScene, this.postCam);
   },
   /* ---------- store øyeblikk ----------
@@ -274,45 +287,43 @@ const R = {
     u.uDrom.value = f.drom; u.uHete.value = f.hete;
     f.zoom = Math.max(0, f.zoom - dt * 3.2); f.ca = Math.max(0, f.ca - dt * 2.6); f.neg = Math.max(0, f.neg - dt * 12); f.lyn = Math.max(0, f.lyn - dt * 3.5);
   },
-  /* glød til 3D-prøven: lyse deler av bildet i kvart oppløsning, uskarpt to veier, lagt oppå */
-  renderBloom() {
-    const r = this.renderer, w = Math.max(2, this.rt.width >> 2), h = Math.max(2, this.rt.height >> 2);
-    if (!this.bl || this.bl.w !== w || this.bl.h !== h) {
-      if (this.bl) { this.bl.a.dispose(); this.bl.b.dispose(); }
-      const vs = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
-      const lys = new THREE.ShaderMaterial({ uniforms: { t: { value: null } }, vertexShader: vs, fragmentShader: 'uniform sampler2D t; varying vec2 vUv; void main(){ vec3 c = texture2D(t, vUv).rgb; float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(0.86, 1.0, l) * 1.4, 1.0); }', depthTest: false, depthWrite: false });
-      const blur = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, uDir: { value: new THREE.Vector2(1, 0) } }, vertexShader: vs, depthTest: false, depthWrite: false,
-        fragmentShader: 'uniform sampler2D t; uniform vec2 uDir; varying vec2 vUv; void main(){ vec3 c = texture2D(t, vUv).rgb * 0.227; c += (texture2D(t, vUv + uDir * 1.38).rgb + texture2D(t, vUv - uDir * 1.38).rgb) * 0.316; c += (texture2D(t, vUv + uDir * 3.23).rgb + texture2D(t, vUv - uDir * 3.23).rgb) * 0.070; gl_FragColor = vec4(c, 1.0); }' });
-      const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), lys), sc = new THREE.Scene(); q.frustumCulled = false; sc.add(q);
-      this.bl = { w, h, a: new THREE.WebGLRenderTarget(w, h), b: new THREE.WebGLRenderTarget(w, h), lys, blur, q, sc };
-    }
-    const B = this.bl;
-    B.q.material = B.lys; B.lys.uniforms.t.value = this.rt.texture; r.setRenderTarget(B.a); r.render(B.sc, this.postCam);
-    B.q.material = B.blur;
-    for (let i = 0; i < 2; i++) {
-      B.blur.uniforms.t.value = B.a.texture; B.blur.uniforms.uDir.value.set((1 + i) / w, 0); r.setRenderTarget(B.b); r.render(B.sc, this.postCam);
-      B.blur.uniforms.t.value = B.b.texture; B.blur.uniforms.uDir.value.set(0, (1 + i) / h); r.setRenderTarget(B.a); r.render(B.sc, this.postCam);
-    }
-    this.post.uniforms.tBloom.value = B.a.texture;
+  /* glød og tilt-shift i 3D: lyse deler av bildet (glød) og hele bildet (tilt-shift) i kvart oppløsning, uskarpt to ganger to veier.
+     De deler firkanten og shaderne. Nedskaleringen tar fire oppslag en piksel ut fra midten på skrå, så hver rute får snittet av alle
+     4 x 4 pikslene under seg: små lyse ting (pærer, gnister, støv) blinker ikke inn og ut av gløden når de flytter seg, og tynne streker
+     flimrer ikke i de uskarpe båndene. Glødterskelen tas per oppslag, før snittet. Målene har ingen dybdebuffer og kastes når
+     glød eller tilt slås av (lavere kvalitet eller uten 3D) */
+  kjede() {
+    if (this.kj) return this.kj;
+    const vs = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }', px = { value: new THREE.Vector2(1, 1) };
+    const ned = f => new THREE.ShaderMaterial({ uniforms: { t: { value: null }, uPx: px }, vertexShader: vs, depthTest: false, depthWrite: false,
+      fragmentShader: `uniform sampler2D t; uniform vec2 uPx; varying vec2 vUv; vec3 f(vec2 o){ vec3 c = texture2D(t, vUv + o * uPx).rgb; return ${f}; }
+        void main(){ gl_FragColor = vec4((f(vec2(-1.0, -1.0)) + f(vec2(1.0, -1.0)) + f(vec2(-1.0, 1.0)) + f(vec2(1.0, 1.0))) * 0.25, 1.0); }` });
+    const blur = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, uDir: { value: new THREE.Vector2(1, 0) } }, vertexShader: vs, depthTest: false, depthWrite: false,
+      fragmentShader: 'uniform sampler2D t; uniform vec2 uDir; varying vec2 vUv; void main(){ vec3 c = texture2D(t, vUv).rgb * 0.227; c += (texture2D(t, vUv + uDir * 1.38).rgb + texture2D(t, vUv - uDir * 1.38).rgb) * 0.316; c += (texture2D(t, vUv + uDir * 3.23).rgb + texture2D(t, vUv - uDir * 3.23).rgb) * 0.070; gl_FragColor = vec4(c, 1.0); }' });
+    const lys = ned('c * smoothstep(0.86, 1.0, max(c.r, max(c.g, c.b))) * 1.4'), kopi = ned('c');
+    const q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), lys), sc = new THREE.Scene(); q.frustumCulled = false; sc.add(q);
+    return this.kj = { lys, kopi, blur, q, sc, px };
   },
-  /* uskarp kopi av hele bildet i kvart oppløsning, til tilt-shift. Bruker glødens uskarphet-shader. */
-  renderUskarp() {
-    const B = this.bl; if (!B) return;
-    const r = this.renderer, w = B.w, h = B.h;
-    if (!this.us || this.us.w !== w || this.us.h !== h) {
-      if (this.us) { this.us.a.dispose(); this.us.b.dispose(); }
-      const kopi = new THREE.ShaderMaterial({ uniforms: { t: { value: null } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }', fragmentShader: 'uniform sampler2D t; varying vec2 vUv; void main(){ gl_FragColor = vec4(texture2D(t, vUv).rgb, 1.0); }', depthTest: false, depthWrite: false });
-      this.us = { w, h, a: new THREE.WebGLRenderTarget(w, h), b: new THREE.WebGLRenderTarget(w, h), kopi };
-    }
-    const U = this.us;
-    B.q.material = U.kopi; U.kopi.uniforms.t.value = this.rt.texture; r.setRenderTarget(U.a); r.render(B.sc, this.postCam);
-    B.q.material = B.blur;
-    for (let i = 0; i < 2; i++) {
-      B.blur.uniforms.t.value = U.a.texture; B.blur.uniforms.uDir.value.set((1 + i * 1.5) / w, 0); r.setRenderTarget(U.b); r.render(B.sc, this.postCam);
-      B.blur.uniforms.t.value = U.b.texture; B.blur.uniforms.uDir.value.set(0, (1 + i * 1.5) / h); r.setRenderTarget(U.a); r.render(B.sc, this.postCam);
-    }
-    this.post.uniforms.tUskarp.value = U.a.texture;
+  /* to mål i kvart oppløsning, laget på nytt bare når størrelsen endres */
+  par(P) {
+    const w = Math.max(2, this.rt.width >> 2), h = Math.max(2, this.rt.height >> 2); if (P && P.w === w && P.h === h) return P;
+    if (P) { P.a.dispose(); P.b.dispose(); } const o = { depthBuffer: false }; return { w, h, a: new THREE.WebGLRenderTarget(w, h, o), b: new THREE.WebGLRenderTarget(w, h, o) };
   },
+  kastPar(k) { const P = this[k]; if (P) { P.a.dispose(); P.b.dispose(); this[k] = null; } },
+  /* ned i kvart oppløsning med shaderen mat, så uskarpt to runder; steg er hvor mye lenger ut andre runde strekker seg */
+  uskarp(P, mat, steg) {
+    const r = this.renderer, K = this.kjede(), B = K.blur.uniforms;
+    K.px.value.set(1 / this.rt.width, 1 / this.rt.height); K.q.material = mat; mat.uniforms.t.value = this.rt.texture; r.setRenderTarget(P.a); r.render(K.sc, this.postCam);
+    K.q.material = K.blur;
+    for (let i = 0; i < 2; i++) {
+      B.t.value = P.a.texture; B.uDir.value.set((1 + i * steg) / P.w, 0); r.setRenderTarget(P.b); r.render(K.sc, this.postCam);
+      B.t.value = P.b.texture; B.uDir.value.set(0, (1 + i * steg) / P.h); r.setRenderTarget(P.a); r.render(K.sc, this.postCam);
+    }
+    return P.a.texture;
+  },
+  renderBloom() { this.bl = this.par(this.bl); this.post.uniforms.tBloom.value = this.uskarp(this.bl, this.kjede().lys, 1); },
+  /* uskarp kopi av hele bildet til tilt-shift */
+  renderUskarp() { this.us = this.par(this.us); this.post.uniforms.tUskarp.value = this.uskarp(this.us, this.kjede().kopi, 1.5); },
   /* ---------- hjelpere ---------- */
 
   geo(key, make) { if (!this.geoCache.has(key)) this.geoCache.set(key, make()); return this.geoCache.get(key); },

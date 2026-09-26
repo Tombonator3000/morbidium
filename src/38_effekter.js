@@ -11,6 +11,8 @@
    - Regnringer: små ringer som sprer seg på bakken der det regner.
    - Drømmesløret mellom etasjene, og sjokkbølger og zoomslag på eksplosjoner,
      nytt nivå og sjefer som dør (selve shaderne ligger i 04_render.js).
+   - Glorier: et mykt lys rundt lampene, flammene og pærene, og et lite lys
+     som følger pasienten, som i et diorama.
    Enkel grafikk slår alt av. Antallet partikler følger kvaliteten i 3D.
    ============================================================ */
 const GLOD_VS = `
@@ -98,6 +100,106 @@ const GLOD_KILDER = {
   candles: [['glor', 0, .45, 0, { n: 3, stig: .6 }]],
   kjempeplante: [['sporer', 0, 1.1, 0]],
   lyktestolpe: [['moll', 0, 0, 0, { h: 2.8 * BILL_Y }]]
+};
+
+/* ---------- glorier: et mykt lys rundt lampene, flammene og pærene, og et lite lys ved pasienten ----------
+   Ett Points-objekt per etasje. Gloria ganges inn i det som ligger under (bildet blir bildet ganger 1 pluss gloria), i stedet for
+   å legges oppå: flammene, lampeglasset og det som står rundt lyser opp og kan ta gløden i 3D, mens blekkstrekene holder seg like
+   mørke i forhold til det rundt, så de blir like skarpe. Lagt oppå ble det enten for svakt til å synes eller grå strek.
+   Hver glorie følger lysplaten sin (flimring, en lampe som faller, mørket etter sjefene) og står halvannen enhet nærmere kameraet
+   enn det som lyser, så den ikke går inn i veggen bak. Bildet er ortografisk, så den står likevel på samme sted på skjermen.
+   Størrelsen er i verdensenheter og følger kamerazoomen. I de uskarpe båndene fra tilt-shift blir glorien større og svakere, som et
+   lys ute av fokus. Høyst 32, 20 og 10 (høy, middels, og lav og 2D), de nærmeste kameraet. En som faller utenfor, blekner, og den
+   neste tennes først når det er plass. Ingen med enkel grafikk, lette teksturer eller uten lys og skygge. Uten 3D er tegningene
+   ikke mørklagt av natta, og bildet ganges med lysbufferen etterpå, så gloriene er svakere der. */
+const GLORIE_VS = `
+  uniform float uPx, uTilt, uMaks; uniform vec3 uFokus; attribute vec3 aFarge; attribute float aStr; varying vec3 vF;
+  void main(){
+    vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    float k = 1.0 + smoothstep(uFokus.y, uFokus.z, abs(p.y / p.w * 0.5 + 0.5 - uFokus.x)) * uTilt * 1.5;
+    // uMaks er det største punktet skjermkortet kan tegne. Blir gloria kappet der, dempes den bare så mye som den faktisk vokste
+    float s0 = min(uMaks, aStr * uPx), s = min(uMaks, s0 * k); k = s / s0;
+    gl_Position = p; gl_PointSize = s; vF = aFarge / (k * sqrt(k)); // større, men ikke lysere til sammen
+  }`;
+const GLORIE_FS = `
+  varying vec3 vF;
+  void main(){ float d = length(gl_PointCoord - 0.5) * 2.0; if (d >= 1.0) discard; gl_FragColor = vec4(vF * exp(-d * d * 4.5) * (1.0 - d * d), 1.0); }`;
+/* hvor på tingene det lyser: [x, høyde i tegningen, størrelse (verdensenheter), styrke, farge (ellers lysets egen)]. Høyden ganges med BILL_Y.
+   Lampen, stearinlysene, journalskapet, offeralteret og alteret med tre ruter er bilder fra ChatGPT, og der er stedet målt i bildet */
+const GLORIE_KILDER = {
+  lamp: [[.24, 1.4, 1.4, .65]], // skjermen er lys fra før, så den får mindre
+  candles: [[0, .47, 1.25, .9]],
+  altar: o => { const fw = (o.p && o.p.fw) || 1, b = !!SPRITES['alter' + fw], x = b ? .97 : fw * .95 / 2 - .25, h = b ? 1.34 : 1.49; return [[-x, h, .85, .9, '#ffcf5a'], [x, h, .85, .9, '#ffcf5a']]; },
+  offeralter: [[-.71, 1.26, 1.25, .8, '#ffb24a'], [.71, 1.26, 1.25, .8, '#ffb24a']],
+  journalskap: [[0, .87, 1.5, .7]],
+  lyktestolpe: [[0, 2.72, 2.2, 1]],
+  baal: [[0, .6, 3.2, .8]],
+  vedovn: [[0, .5, 1.5, .8]],
+  kjele: [[0, .37, 1.8, .7]],
+  komfyr: [[0, .28, .7, .6, '#ff7a3a']],
+  spole: [[0, 1.95, 1.7, .8]],
+  lysskjerm: [[0, 1.32, 1.9, .45]],
+  kjempeplante: [[0, 2.1, 1.5, .5]]
+};
+const Glorie = {
+  pts: null, K: [], MAKS: 32, px: { value: 100 }, maks: { value: 256 }, STYRKE: 1.6, UTEN_3D: .45, INN: .25, UT: .2, FRAM: 1.5,
+  tak() { if (R.safe || R.lowTex || !R.lightsOn) return 0; return D3.on ? { hoy: 32, middels: 20, lav: 10 }[D3.kval()] || 10 : 10; },
+  lag() {
+    this.tom(); if (!R.scene || !R.post) return;
+    const gl = R.renderer.getContext(), pr = gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE); this.maks.value = pr && pr[1] >= 1 ? pr[1] : 256; // ofte 511 til 2048
+    const N = this.MAKS, geo = new THREE.BufferGeometry(), u = R.post.uniforms;
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3)); geo.setAttribute('aFarge', new THREE.BufferAttribute(new Float32Array(N * 3), 3)); geo.setAttribute('aStr', new THREE.BufferAttribute(new Float32Array(N), 1)); geo.setDrawRange(0, 0);
+    const mat = new THREE.ShaderMaterial({ uniforms: { uPx: this.px, uMaks: this.maks, uTilt: u.uTilt, uFokus: u.uFokus }, vertexShader: GLORIE_VS, fragmentShader: GLORIE_FS, transparent: true, depthWrite: false,
+      blending: THREE.CustomBlending, blendSrc: THREE.DstColorFactor, blendDst: THREE.OneFactor }); // bildet ganger (1 + gloria)
+    this.pts = new THREE.Points(geo, mat); this.pts.frustumCulled = false; this.pts.renderOrder = 7; R.scene.add(this.pts); this.ny = true;
+  },
+  tom() { if (this.pts) { R.scene.remove(this.pts); this.pts.geometry.dispose(); this.pts.material.dispose(); } this.pts = null; this.K = []; this.sig = null; },
+  /* kildene: tingene i GLORIE_KILDER, pærene i vegglampene (bare i 3D) og lyset ved pasienten. Samles på nytt når etasjen, tingene,
+     vegglampene eller pasienten endrer seg, og en glorie som fantes før, beholder styrken sin */
+  samle(lam, P) {
+    const gml = new Map(); for (const k of this.K) gml.set(k.eier, (gml.get(k.eier) || []).concat(k));
+    const K = [], legg = (eier, t, o) => { const g = gml.get(eier), j = K.filter(k => k.eier === eier).length; K.push(Object.assign({ eier, t, w: g && g[j] ? g[j].w : 0, lys: 0, x: 0, y: 0, z: 0 }, o)); };
+    for (const o of G.props || []) { let E = GLORIE_KILDER[o.kind]; if (!E || !o.g || !o.g.position) continue; if (typeof E === 'function') E = E(o);
+      for (const [dx, h, s, k, f] of E) legg(o, 'ting', { dx, h, s, k, z0: o.g.position.z + .1, f: f ? new THREE.Color(f) : null }); }
+    for (const L of lam || []) if (L.p && L.p.parent) legg(L, 'pare', { x: L.p.parent.position.x + L.p.position.x, y: L.p.position.y, z: L.p.parent.position.z + L.p.position.z, s: 1.3, k: .55, f: null }); // pæra og veggen rundt er lyse fra før
+    if (P && P.lantern) legg(P, 'lykt', { s: 1.1, k: .45, f: null, x: P.x, z: P.z });
+    this.K = K; this.sig = [G.F, (G.props || []).length, lam, P];
+  },
+  /* lyset i platen i forhold til det den ble laget med: flimring, en lampe som faller eller slukker */
+  styrke(L) { if (!L || !L.parent) return 0; const c = L.material.color, b = L.userData.col; return clamp(Math.max(c.r, c.g, c.b) / Math.max(.001, Math.max(b.r, b.g, b.b) * (L.userData.base || 1)), 0, 1.3); },
+  oppdater(k, dt, mf) {
+    if (k.t === 'ting') {
+      const o = k.eier, L = o.light; if (o.alive === false || !o.g.parent || !o.g.visible || (L && !L.parent)) { k.lys = 0; return; }
+      const sy = clamp(o.g.scale.y, 0, 1); k.lys = (L ? this.styrke(L) : .92 + Math.sin(G.time * 7 + o.x * 3) * .08) * sy * mf; // byggeanimasjonen: gloria vokser med tingen
+      if (o.fallen && L) { k.x = L.position.x; k.y = .35; k.z = L.position.z - .3; } else { k.x = o.x + k.dx; k.y = k.h * BILL_Y * sy; k.z = k.z0; }
+      if (!k.c) k.c = k.f || (L ? L.userData.col : new THREE.Color('#ffd89a'));
+    } else if (k.t === 'pare') { const L = k.eier.lp; k.lys = this.styrke(L); if (!k.c) k.c = L.userData.col; } // mørket er allerede i platen (D3.tick)
+    else {
+      // lyset ved pasienten: i hoftehøyde på siden bak figuren, så det ikke ligger over ansiktet eller våpenet, og det glir etter når figuren snur seg
+      const P = k.eier, L = P.lantern; k.lys = P.alive && L && L.parent ? this.styrke(L) * Math.max(.6, mf) : 0; if (!k.c) k.c = L ? L.userData.col : new THREE.Color('#ffe2b0');
+      const tx = P.x - .42 * ((P.doll && P.doll.flip) || 1), ty = .8 + Math.sin(G.time * 2.1) * .04, tz = P.z + .12, a = k.plassert ? Math.min(1, dt * 9) : 1;
+      k.x += (tx - k.x) * a; k.y += (ty - k.y) * a; k.z += (tz - k.z) * a; k.plassert = true;
+    }
+  },
+  tick(dt) {
+    const pts = this.pts; if (!pts) return; const N = this.tak(); pts.visible = N > 0; if (!N) return;
+    const P = G.player, lam = D3.on && D3.bygd ? D3.lamper : null, S = this.sig;
+    if (!S || S[0] !== G.F || S[1] !== (G.props || []).length || S[2] !== lam || S[3] !== P) this.samle(lam, P);
+    const c = R.camera; this.px.value = R.renderer.domElement.height / Math.max(.001, c.top - c.bottom) * c.zoom;
+    const K = this.K, cx = R.camT.x, cz = R.camT.z, mf = D3.on ? D3.mf ?? 1 : 1;
+    for (const k of K) { this.oppdater(k, dt, mf); k.d2 = (k.x - cx) ** 2 + (k.z - cz) ** 2 + (k.lys > .01 ? 0 : 1e6); }
+    K.sort((a, b) => a.d2 - b.d2);
+    let n = 0; for (let i = 0; i < K.length; i++) { const k = K[i]; k.vil = i < N && k.lys > .01; if (!k.vil) k.w = Math.max(0, k.w - dt / this.UT); if (k.w > 0) n++; }
+    for (const k of K) if (k.vil && (k.w > 0 || n < N)) { if (k.w <= 0) n++; k.w = this.ny ? 1 : Math.min(1, k.w + dt / this.INN); }
+    this.ny = false;
+    const A = pts.geometry.attributes, pos = A.position.array, col = A.aFarge.array, str = A.aStr.array, sk = this.STYRKE * (D3.on ? 1 : this.UTEN_3D), fy = this.FRAM * SINP, fz = this.FRAM * COSP;
+    let j = 0;
+    for (const k of K) {
+      if (k.w <= 0 || j >= N) continue; const f = k.lys * k.w * k.k * sk, i = j * 3;
+      pos[i] = k.x; pos[i + 1] = k.y + fy; pos[i + 2] = k.z + fz; col[i] = k.c.r * f; col[i + 1] = k.c.g * f; col[i + 2] = k.c.b * f; str[j++] = k.s;
+    }
+    pts.geometry.setDrawRange(0, j); A.position.needsUpdate = A.aFarge.needsUpdate = A.aStr.needsUpdate = true;
+  }
 };
 
 /* ---------- lyn: taggete bånd som alltid vender mot kameraet ---------- */
@@ -245,7 +347,7 @@ const Effekter = {
     }
   },
   onFloor() {
-    Glod.tom(); Lyn.tom(); Uvaer.t = rnd(6, 12);
+    Glod.tom(); Lyn.tom(); Glorie.lag(); Uvaer.t = rnd(6, 12);
     // lilla pytter som ble lagt ut sammen med etasjen, får gløden sin tilbake
     for (const p of G.puddles || []) if (p.kind === 'morb') p.glod = Glod.lag(p.x, .08, p.z, 'morb', { eier: p }) || true;
     for (const o of G.props || []) {
@@ -265,7 +367,7 @@ const Effekter = {
 
 /* ---------- koblinger ---------- */
 { const _sp = spawnProps; spawnProps = function () { _sp(); try { Effekter.onFloor(); } catch (e) { console.warn('glød feilet', e); } }; }
-{ const _cf = clearFloor; clearFloor = function () { Glod.tom(); Lyn.tom(); Regnringer.stopp(); _cf(); }; }
+{ const _cf = clearFloor; clearFloor = function () { Glod.tom(); Lyn.tom(); Glorie.tom(); Regnringer.stopp(); _cf(); }; }
 { const _st = Vaer.start, _so = Vaer.stopp; Vaer.start = function (F) { _st.call(this, F); if (this.type === 'regn') try { Regnringer.start(F); } catch (e) { console.warn('regnringer feilet', e); } }; Vaer.stopp = function () { Regnringer.stopp(); _so.call(this); }; }
 // Morbidium stiger fra de lilla pyttene
 { const _ap = addPuddle; addPuddle = function (x, z, kind, r, life) { const p = _ap(x, z, kind, r, life); if (p && kind === 'morb' && !p.glod) p.glod = Glod.lag(p.x, .08, p.z, 'morb', { eier: p }) || true; return p; }; }
@@ -276,3 +378,4 @@ const Effekter = {
 { const _gx = gainXp; gainXp = function (v) { const P = G.player, l0 = P ? P.level : 0; _gx(v); if (P && P.level > l0) { R.sjokk(P.x, P.z, .55, { life: .8 }); Glod.lag(P.x, .2, P.z + .1, 'kombo', { liv: 1.6, n: 24, farger: ['#fff8d0', '#ffd24a'] }); } }; }
 // dødsårsaken når lynet tar deg
 if (typeof DEATH_CAUSES === 'object') DEATH_CAUSES.lyn = ['Truffet av lynet. Det slår visst ned to ganger.', 'Stod ute i tordenvær. Journalen sier «uforsiktig».', 'Lynet fant deg før sykepleieren gjorde det.'];
+Object.assign(window, { Glorie, GLORIE_KILDER }); // til testene

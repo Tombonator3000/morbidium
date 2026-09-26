@@ -15,18 +15,19 @@ const D3 = {
   on: false, bygd: false, ting: [], byttet: [], egne: [], gjemt: [], pool: [], dukker: new Set(), t: 0,
   BUMP: .7,
   NIVA: {
-    hoy: { navn: 'høy', skygge: 2048, lys: 8, glod: true, stov: 192, straaler: true, taake: true, tilt: true, kant: true, dpr: 2 },
-    middels: { navn: 'middels', skygge: 1024, lys: 6, glod: true, stov: 96, straaler: true, taake: true, tilt: false, kant: true, dpr: 1.5 },
-    lav: { navn: 'lav', skygge: 512, lys: 4, glod: false, stov: 0, straaler: false, taake: false, tilt: false, kant: false, dpr: 1 }
-  },
+    hoy: { navn: 'høy', skygge: 2048, lys: 8, glod: true, stov: 192, straaler: true, taake: true, tilt: .7, kant: true, dpr: 2 },
+    middels: { navn: 'middels', skygge: 1024, lys: 6, glod: true, stov: 96, straaler: true, taake: true, tilt: .45, kant: true, dpr: 1.5 },
+    lav: { navn: 'lav', skygge: 512, lys: 4, glod: false, stov: 0, straaler: false, taake: false, tilt: 0, kant: false, dpr: 1 }
+  }, // tilt: hvor uskarpt det blir over og under pasienten (04_render.js), også på telefon (middels)
   /* valgt nivå: fast i innstillingene (1 lav, 2 middels, 3 høy) eller automatisk (0) */
   kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse ? 'middels' : 'hoy'); },
-  /* «Lys og skygge» av (R.lightsOn) gir et jevnt opplyst rom: ingen punktlys, skygger, lysstråler eller kantlys */
-  Q() { const q = this.NIVA[this.kval()] || this.NIVA.hoy; return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },
+  /* «Lys og skygge» av (R.lightsOn) gir et jevnt opplyst rom: ingen punktlys, skygger, lysstråler eller kantlys.
+     Telefoner og TV får høyst 1024 i skyggekartet, også på høy: 2048 med dybdebuffer tar rundt 24 MB mer grafikkminne, og telefoner har mistet WebGL av mindre */
+  Q() { let q = this.NIVA[this.kval()] || this.NIVA.hoy; if ((R.coarse || R.tv) && q.skygge > 1024) q = Object.assign({}, q, { skygge: 1024 }); return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },
   /* oppløsningen følger nivået når 3D er på; uten 3D brukes det skjermen tåler */
   dpr() { const k = this.on ? Math.min(R.dprMax || 1, this.Q().dpr) : (R.dprMax || 1); if (Math.abs(k - R.dpr) > .01) { R.dpr = k; R.resize(); } },
   /* kalles fra applySettings: nytt nivå bygger 3D-laget på nytt */
-  nokkel() { return this.kval() + (R.lightsOn ? '' : '-flat'); },
+  nokkel() { return this.kval() + (R.lightsOn ? '' : '-flat') + (R.coarse || R.tv ? '-mob' : ''); },
   kvalitet() { const k = this.nokkel(); if (k === this.kSist) return; this.kSist = k; if (this.on) { this.dpr(); this.onFloor(); } },
   /* automatisk kvalitet: måler bildefrekvensen i spill, to sekunder om gangen. To lave målinger på rad gir et trinn ned.
      Hopper over fanebytter og automatiske testnettlesere, som bare har programvaregrafikk. */
@@ -66,10 +67,13 @@ const D3 = {
     const hemi = new THREE.HemisphereLight('#8a90c8', '#2a1a14', Q.flat ? .45 : .16);
     const mane = new THREE.DirectionalLight('#9aaee8', .42); mane.castShadow = Q.skygge > 0;
     if (Q.skygge) mane.shadow.mapSize.set(Q.skygge, Q.skygge); const sc2 = mane.shadow.camera; sc2.left = -16; sc2.right = 16; sc2.top = 16; sc2.bottom = -16; sc2.near = 1; sc2.far = 60; mane.shadow.bias = -.0015; mane.shadow.normalBias = .02;
+    // skyggekameraet følger kameraet, men bare i hele ruter av skyggekartet (se tick), ellers kryper kantene på alle faste skygger
+    // når kameraet glir. Aksene er de samme som lookAt gir skyggekameraet: z mot månen, x vannrett, y oppover i kartet
+    this.maneB = null; if (Q.skygge) { const off = new THREE.Vector3(-7, 16, 9), z = off.clone().normalize(), x = new THREE.Vector3(0, 1, 0).cross(z).normalize(); this.maneB = { off, x, y: z.clone().cross(x), z, texel: (sc2.right - sc2.left) / Q.skygge, t: new THREE.Vector3() }; }
     if (F.ute) { mane.intensity = .78; mane.color.set('#a8bce8'); } // ute lyser månen sterkere
     this.maneI = mane.intensity; // lynet (38_effekter.js) løfter månelyset et øyeblikk, så alt kaster skarp skygge
     sc.add(amb, hemi, mane, mane.target); this.mane = mane; this.ting.push(amb, hemi, mane, mane.target);
-    this.pool = []; for (let i = 0; i < Q.lys; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); }
+    this.pool = []; this.nyPool = true; for (let i = 0; i < Q.lys; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); } // i en ny etasje tennes lysene med en gang (fordel)
     // nivået: materialene byttes til tegneseriebelyste varianter
     const bytt = (mesh, ny) => { this.byttet.push([mesh, mesh.material]); mesh.material = ny; };
     const PM = Paint.mesh || {};
@@ -84,7 +88,7 @@ const D3 = {
     this.lamper = []; this.tidU = this.tidU || { value: 0 };
     this.vegglamper(F, th); this.arkitektur(F, th); if (Q.stov) this.stov(Q.stov); if (Q.taake) this.taake(F, th);
     for (const o of G.props) { o.d3 = true; this.moble(o); }
-    R.post.uniforms.uLights.value = 0;
+    R.post.uniforms.uLights.value = 0; R.renderer.shadowMap.needsUpdate = true;
     this.bygd = true; this.t = 0;
   },
   riv() {
@@ -95,16 +99,19 @@ const D3 = {
     for (const s of this.gjemt) s.visible = true; this.gjemt = []; this.stovP = null;
     for (const o of this.egne) o.dispose(); this.egne = [];
     const utenKant = U => { if (U && U.uRimCol) U.uRimCol.value.setRGB(0, 0, 0); };
-    for (const d of this.dukker) { if (d.U && d.U.tint0) d.U.uTint.value.copy(d.U.tint0); utenKant(d.U); } this.dukker.clear();
+    // skyggeflekkene får full styrke igjen i 2D, der de er den eneste skyggen figurene har
+    for (const d of this.dukker) { if (d.U && d.U.tint0) d.U.uTint.value.copy(d.U.tint0); utenKant(d.U); if (d.shadow) { d.shadowA = 1; Doll.bakke(d); } } this.dukker.clear();
     if (G.props) for (const o of G.props) { o.d3 = false; if (o.U && o.U.tint0) o.U.uTint.value.copy(o.U.tint0); utenKant(o.U); }
-    this.lamper = []; this.morkeT = 0; this.taakeLys = null;
+    this.lamper = []; this.morkeT = 0; this.mf = 1; this.taakeLys = null;
     if (R.post) R.post.uniforms.uLights.value = R.lightsOn ? 1 : 0;
+    if (R.renderer) R.renderer.shadowMap.autoUpdate = true;
     this.bygd = false;
   },
   /* veggstiler: lamper henger bare på innevegger, og lister og pilastre bare på pussede vegger */
   inneVegg(i) { const st = Paint.wallS && Paint.wallS[i]; return !st || !{ hekk: 1, gjerde: 1, steinmur: 1, skog: 1, ruin: 1, glass: 1 }[st]; },
   listeVegg(i) { const st = Paint.wallS && Paint.wallS[i]; return !st || !!{ panel: 1, tapet: 1, paviljong: 1 }[st]; },
-  /* vanlige materialer i nivået (dekaler, plakater, dører) blir lyssatt, ellers lyser de i mørket */
+  /* vanlige materialer i nivået (dekaler, plakater, dører) blir lyssatt, ellers lyser de i mørket. Toon som gulvet, ikke Lambert:
+     Lambert ganger alt lyset med måneskyggen, så en flekk i skyggen av en vegg mistet lykta og lampene også og ble en mørk flekk */
   lysLag() {
     if (!R.level) return;
     for (const c of R.level.children) {
@@ -112,7 +119,7 @@ const D3 = {
       const b = c.material; c.userData.d3 = true;
       // blod og andre våte flekker blir blanke og fanger lampene
       const ny = c.userData.vaat ? new THREE.MeshPhongMaterial({ map: b.map, color: b.color.clone().multiplyScalar(1.45), emissive: new THREE.Color('#1a0808'), transparent: b.transparent, opacity: b.opacity, depthWrite: b.depthWrite, side: b.side, shininess: 70, specular: new THREE.Color('#8a6060') })
-        : new THREE.MeshLambertMaterial({ map: b.map, color: b.color, transparent: b.transparent, opacity: b.opacity, depthWrite: b.depthWrite, side: b.side, vertexColors: b.vertexColors });
+        : this.toon({ map: b.map, color: b.color, transparent: b.transparent, opacity: b.opacity, depthWrite: b.depthWrite, side: b.side, vertexColors: b.vertexColors });
       // blodet lyser litt av seg selv, som gulvets laveste tegneserietrinn, ellers blir det svart i mørke hjørner
       if (c.userData.vaat) ny.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n\ttotalEmissiveRadiance += diffuseColor.rgb * 0.34;'); };
       this.byttet.push([c, b]); c.material = ny; c.receiveShadow = true;
@@ -140,7 +147,7 @@ const D3 = {
           let kj = null;
           if (this.q.straaler) { kj = new THREE.Mesh(this.kjegleGeo(), this.straaleMat(th.pool || '#ffd89a', .22)); kj.position.set(0, 0, .3); kj.renderOrder = 5; g.add(kj); this.egne.push(kj.material); }
           // noen lamper flimrer, flere jo lenger ned i bygget
-          this.lamper.push({ lp, pm, kj, base: .45, farge: new THREE.Color('#ffd89a'), flimrer: Math.random() < .12 + dybdeStyrke(G.depth) * .07, t: Math.random() * 10, burst: 0 });
+          this.lamper.push({ lp, pm, p, kj, base: .45, farge: new THREE.Color('#ffd89a'), flimrer: Math.random() < .12 + dybdeStyrke(G.depth) * .07, t: Math.random() * 10, burst: 0 });
         } else if ((Paint.wallS && Paint.wallS[(z - 1) * F.W + x]) !== 'forheng') { // ingen vinduer i de røde forhengene
           // vindu: ramme, glass i månelys og en lysstripe ned på gulvet
           const fr = new THREE.Mesh(R.geo('d3vr', () => new THREE.BoxGeometry(.9, 1.0, .06)), ramme); fr.position.set(0, 1.45, 0); g.add(fr);
@@ -293,22 +300,61 @@ const D3 = {
   },
   /* tingene i rommet er de samme tegningene som ellers: de lyses av lampene og kaster skygge etter tegningen */
   moble(o) {
-    if (!o.g || !o.p || o.g.userData.flat || !o.g.userData.m) return;
+    if (!this.q || !this.q.skygge || !o.g || !o.p || o.g.userData.flat || !o.g.userData.m) return; // uten skyggekart (lys og skygge av) beholder tingene den bakte skyggen
     this.skyggePlate(o.g.userData.m); if (o.g.userData.shadow) { o.g.userData.shadow.visible = false; this.gjemt.push(o.g.userData.shadow); }
   },
   /* tegnede plater kaster skygge etter tegningen (alfa), ikke som firkanter */
   skyggePlate(m) {
-    if (!m || !m.material || !m.material.uniforms || m.customDepthMaterial) return;
+    if (!m || !m.material || !m.material.uniforms || !m.material.uniforms.map || m.customDepthMaterial) return;
     m.castShadow = true; m.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: m.material.uniforms.map.value, alphaTest: .5, side: THREE.DoubleSide });
   },
+  /* dukkene kaster skygge etter tegningen: alle tegnede deler og strekbåndene. Et våpen som plukkes opp, tillegg og pynt som kommer til
+     senere, får skyggeplate når delene endrer seg (ny liste i d.meshes, eller flere eller færre deler). Skyggeflekken under blir svakere
+     når månen kaster skygge også (shadowA, se Doll.bakke). Uten skyggekart (lys og skygge av) er flekken den eneste skyggen og beholder full styrke */
   dukke(d) {
-    if (!d || this.dukker.has(d)) return; this.dukker.add(d);
-    if (d.U && !d.U.tint0) d.U.tint0 = d.U.uTint.value.clone();
-    for (const m of d.meshes || []) this.skyggePlate(m);
-    for (const r of [d.back, d.front]) if (r && r.mesh) r.mesh.castShadow = true;
-    if (d.shadow) d.shadow.material.opacity = .45;
+    if (!d || !d.plane) return; const ny = !this.dukker.has(d), sk = !!(this.q && this.q.skygge), n = (d.meshes ? d.meshes.length : 0) * 256 + d.plane.children.length;
+    if (ny) { this.dukker.add(d); if (d.U && !d.U.tint0) d.U.tint0 = d.U.uTint.value.clone(); if (d.shadow) { d.shadowA = sk ? .45 : 1; Doll.bakke(d); } }
+    if (!ny && d.d3m === d.meshes && d.d3n === n) return;
+    d.d3m = d.meshes; d.d3n = n; d.d3vis = null; const K = d.d3k = [], baand = [d.back && d.back.mesh, d.front && d.front.mesh]; if (!sk) return;
+    d.plane.traverse(o => { if (!o.isMesh) return; this.skyggePlate(o); if (o.customDepthMaterial || baand.includes(o)) K.push(o); });
   },
+  /* halvt oppløste og gjennomsiktige figurer kaster ikke måneskygge (dybdematerialet vet ikke om oppløsningen), så de døde ikke har full skygge
+     til de blir borte. Grensen .6 holder den gjennomsiktige mesteren (.08 til .52) ute hele tiden i stedet for at skyggen blinker */
+  dukkeVis(d) { const vis = d.U.uDissolve.value < .5 && d.U.uAlpha.value > .6; if (vis === d.d3vis) return; d.d3vis = vis; for (const m of d.d3k) m.castShadow = vis; },
   /* ---------- hvert bilde ---------- */
+  /* punktlysene deles ut uten at lyset hopper av og på rundt pasienten. Lykta har det første for seg selv. Resten går til de nærmeste
+     kildene, men en kilde som har et punktlys, beholder det så lenge den er blant de N+2 nærmeste og ingen kilde uten lys er 1,5 nærmere
+     enn den lengst unna. Den som mister lyset, blekner bort på 0,2 sekunder, og først da tennes den neste, på 0,25. Et lysglimt (blink) får
+     lyset med en gang, fra den som er lengst unna, men bare ett om gangen. Svarte kilder (en lampe som har falt ned) får aldri punktlys, og
+     en som blir svart, beholder sitt i to sekunder, så lampene har lyset sitt igjen når mørket etter sjefene er over. Kilder som er borte,
+     slukner med en gang. FYLL_SIST setter romlyset midt i hvert rom (fyll) sist i køen, så lampene får lysene i stedet */
+  FYLL_SIST: false, INN: .25, UT: .2,
+  fordel(dt, cx, cz, P) {
+    const pool = this.pool, S = pool.map(l => l.userData), LY = P && P.lantern && P.lantern.parent ? P.lantern : null, f0 = LY ? 1 : 0, N = pool.length - f0, ny = this.nyPool;
+    this.nyPool = false; if (!pool.length) return;
+    if (LY) Object.assign(S[0], { kilde: LY, w: 1, vil: true, lykt: true, svart: 0 });
+    const eie = new Map(); for (let i = f0; i < pool.length; i++) { S[i].lykt = false; if (S[i].kilde) eie.set(S[i].kilde, S[i]); }
+    const d2 = m => (m.position.x - cx) ** 2 + (m.position.z - cz) ** 2 + (this.FYLL_SIST && m.userData.fyll ? 1e4 : 0), blink = m => !!m.userData.blink;
+    const C = []; for (const m of this.kilder()) { if (m === LY) continue; const s = eie.get(m), c = m.material.color; if (s ? s.svart > 2 : c.r + c.g + c.b < .05) continue; m.userData.d2 = d2(m); C.push(m); }
+    C.sort((a, b) => a.userData.d2 - b.userData.d2);
+    // bare ett lysglimt i køen: det som har lys, ellers det nærmeste
+    let harB = C.some(m => blink(m) && eie.has(m)); const K = C.filter(m => !blink(m) || eie.has(m) || (!harB && (harB = true)));
+    K.forEach((m, i) => { m.userData.rang = i; });
+    // de som har lys: kilder som er borte, slukner, og de som har kommet for langt unna, blekner
+    let verst = null;
+    for (let i = f0; i < pool.length; i++) { const s = S[i], m = s.kilde; if (!m) continue; if (K[m.userData.rang] !== m) { s.kilde = null; s.w = 0; continue; } s.vil = m.userData.rang < N + 2; if (s.vil && !blink(m) && (!verst || m.userData.d2 > verst.kilde.userData.d2)) verst = s; }
+    const venter = K.filter((m, i) => i < N && !eie.has(m)), vl = venter.find(m => !blink(m)), vb = venter.find(blink);
+    if (verst && vl && Math.sqrt(vl.userData.d2) + 1.5 < Math.sqrt(verst.kilde.userData.d2)) verst.vil = false;
+    // lysglimtet tar en ledig plass, ellers den som er på vei ut, ellers den lengst unna, og tennes med en gang
+    if (vb) { let s = null, sd = -1; for (let i = f0; i < pool.length; i++) { const t = S[i], d = !t.kilde ? 1e9 : (t.vil ? 0 : 1e8) + t.kilde.userData.d2; if (!(t.kilde && blink(t.kilde)) && d > sd) { sd = d; s = t; } }
+      if (s) { Object.assign(s, { kilde: vb, w: 1, vil: true, svart: 0 }); venter.splice(venter.indexOf(vb), 1); } }
+    for (let i = f0; i < pool.length; i++) {
+      const s = S[i];
+      if (s.kilde) { s.w = s.vil ? Math.min(1, s.w + dt / this.INN) : Math.max(0, s.w - dt / this.UT); if (!s.vil && s.w <= 0) s.kilde = null; }
+      if (!s.kilde) { const m = venter.find(m => !blink(m)); if (m) { venter.splice(venter.indexOf(m), 1); Object.assign(s, { kilde: m, w: ny ? 1 : 0, vil: true, svart: 0 }); } else s.w = 0; }
+      if (s.kilde) { const c = s.kilde.material.color; s.svart = c.r + c.g + c.b < .05 ? s.svart + dt : 0; }
+    }
+  },
   kilder() { return (R.kilder || []).filter(m => m.parent && (m.parent === R.lscene || m.parent === R.levelL) && (m.parent !== R.levelL || R.levelL.parent)); },
   /* lyset ved et punkt: en farge å gange tegningen med, og (valgfritt i K) den sterkeste lampen, som gir kantlys */
   lysVed(x, z, y = .9, K) {
@@ -327,26 +373,32 @@ const D3 = {
   },
   tick(dt) {
     if (!this.on || !this.bygd || !G.F) return;
-    this.t += dt; if (this.tidU) this.tidU.value += dt; const cx = R.camT.x, cz = R.camT.z, P = G.player;
-    this.mane.position.set(cx - 7, 16, cz + 9); this.mane.target.position.set(cx, 0, cz); this.mane.target.updateMatrixWorld();
+    this.t += dt; if (this.tidU) this.tidU.value += dt; const cx = R.camT.x, cz = R.camT.z, P = G.player, B = this.maneB;
+    // månen: samme retning og lengde som før, men midtpunktet rundes av til en hel rute i skyggekartet på tvers av lyset,
+    // og skyves langs lyset ned på gulvet igjen. Da ligger rutene fast i verden, og kantene står stille når kameraet glir
+    if (B) { const t = B.t.set(cx, 0, cz), s = B.texel, u = Math.round(t.dot(B.x) / s) * s, v = Math.round(t.dot(B.y) / s) * s; t.copy(B.x).multiplyScalar(u).addScaledVector(B.y, v); t.addScaledVector(B.z, -t.y / B.z.y); this.mane.target.position.copy(t); this.mane.position.copy(t).add(B.off); }
+    else { this.mane.position.set(cx - 7, 16, cz + 9); this.mane.target.position.set(cx, 0, cz); }
+    this.mane.target.updateMatrixWorld();
+    // skyggekartet tegnes bare når noe kan flytte seg (spill og tittel), og én gang til hver gang tilstanden skifter.
+    // I pausen, panelene og journalen står det stille, så telefonen slipper skyggepasset
+    const SM = R.renderer.shadowMap; SM.autoUpdate = G.state === 'play' || G.state === 'title'; if (G.state !== this.stSist) { this.stSist = G.state; SM.needsUpdate = true; }
     this.mane.intensity = (this.maneI || .42) + (R.flashOn ? R.fx.lyn || 0 : 0) * 2.8;
     // mye Morbidium: av og til slukner lyset
     if (P && P.alive && P.morb >= 70 && R.distortOn && G.state === 'play') { this.morkeR = (this.morkeR ?? rnd(8, 20)) - dt; if (this.morkeR <= 0) { this.morkeR = rnd(15, 35); this.morke(rnd(.7, 1.3), .12); } }
-    const mf = this.morkeFaktor(dt);
+    const mf = this.mf = this.morkeFaktor(dt); // gloriene (38_effekter.js) slukner med
     // vegglampene: noen flimrer i korte støt, og alle slukner i mørket
     for (const L of this.lamper || []) {
       let f = 1;
       if (L.flimrer) { L.t -= dt; if (L.burst > 0) { L.burst -= dt; f = Math.random() < .55 ? .12 + Math.random() * .3 : 1; if (L.burst <= 0) L.t = rnd(2, 9); } else if (L.t <= 0) L.burst = rnd(.25, 1.1); }
       f *= mf; R.setLight(L.lp, L.base * f); L.pm.color.copy(L.farge).multiplyScalar(.2 + .8 * f); if (L.kj) L.kj.material.uniforms.uStyrke.value = .22 * f;
     }
-    // de nærmeste lyskildene får punktlysene; spillerens lykt først
-    const K = this.kilder();
-    K.sort((a, b) => (a === (P && P.lantern) ? -1 : b === (P && P.lantern) ? 1 : 0) || ((a.position.x - cx) ** 2 + (a.position.z - cz) ** 2) - ((b.position.x - cx) ** 2 + (b.position.z - cz) ** 2));
+    // punktlysene går til spillerens lykt og de nærmeste lyskildene, uten at lyset hopper (se fordel), og følger kilden sin
+    this.fordel(dt, cx, cz, P);
     for (let i = 0; i < this.pool.length; i++) {
-      const l = this.pool[i], m = K[i];
-      if (!m) { l.intensity = 0; continue; }
-      const base = m.userData.col, cur = m.material.color, k = Math.max(cur.r, cur.g, cur.b) / Math.max(.001, Math.max(base.r, base.g, base.b)), lykt = m === (P && P.lantern);
-      l.color.copy(base); l.intensity = k * (lykt ? 1.2 : 1.5) * (lykt ? Math.max(.6, mf) : mf); l.distance = m.scale.x * .55 + 1;
+      const l = this.pool[i], s = l.userData, m = s.kilde;
+      if (!m) { l.intensity = 0; continue; } // en ny kilde får lyset flyttet til seg mens det er slukket (w 0), så det ikke hopper
+      const base = m.userData.col, cur = m.material.color, k = Math.max(cur.r, cur.g, cur.b) / Math.max(.001, Math.max(base.r, base.g, base.b)), lykt = s.lykt;
+      l.color.copy(base); l.intensity = k * (lykt ? 1.2 : 1.5) * (lykt ? Math.max(.6, mf) : mf) * s.w; l.distance = m.scale.x * .55 + 1;
       l.position.set(m.position.x, m.userData.y || (lykt ? 1.8 : 1.6), m.position.z - .3);
     }
     // tåka får vite hvor lyset er, så den gløder rundt lampene
@@ -355,7 +407,7 @@ const D3 = {
     const alle = []; if (P && P.doll) alle.push(P.doll); for (const e of G.enemies || []) if (e.doll) alle.push(e.doll);
     if (G.boss && G.boss.doll) alle.push(G.boss.doll); for (const n of G.npcs || []) if (n.doll) alle.push(n.doll); for (const d of G.titleDolls || []) alle.push(d); for (const d of G.ekstraDukker || []) if (d.root.parent) alle.push(d); // figurer i hendelser og drømmer
     const KL = this._kl || (this._kl = {});
-    for (const d of alle) { this.dukke(d); const p = d.root.position, c = this.lysVed(p.x, p.z, .9, KL); d.U.uTint.value.copy(d.U.tint0).multiply(c); this.settKant(d.U, KL, p.x, .9 + p.y, p.z, d.flip || 1); }
+    for (const d of alle) { this.dukke(d); this.dukkeVis(d); const p = d.root.position, hy = .9 + p.y + d.plane.position.y, c = this.lysVed(p.x, p.z, hy, KL); d.U.uTint.value.copy(d.U.tint0).multiply(c); this.settKant(d.U, KL, p.x, hy, p.z, d.flip || 1); } // hy: midt på tegningen, også når den svever
     if ((this.nyT = (this.nyT || 0) - dt) <= 0) { this.nyT = .5; this.lysLag(); for (const o of G.props) if (o.g && !o.d3) { o.d3 = true; this.moble(o); } }
     this.stovTick(dt);
     for (const o of G.props) { if (!o.U || !o.g || !o.g.visible) continue; if (!o.U.tint0) o.U.tint0 = o.U.uTint.value.clone(); const c = this.lysVed(o.x, o.z, 1, KL); o.U.uTint.value.copy(o.U.tint0).multiply(c); this.settKant(o.U, KL, o.x, .8, o.z, o.g.userData.m && o.g.userData.m.scale.x < 0 ? -1 : 1); }
