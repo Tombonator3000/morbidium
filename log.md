@@ -914,3 +914,10 @@ Alle tidspunkt er UTC.
 - Feilen var i del 22 (UI-settet): testen gikk ut fra at UI-bildene mangler ved start, og slik er det ikke etter leveransen. Nå tas ui_*-bildene ut av SPRITES mens sjekken går, begge tilstandene prøves, og de leverte bildene legges tilbake.
 - Stoppen i del 40: på den tunge 3D-siden bruker hvert klikk 6 til 7 sekunder, og i den lange kjøringen enda mer. Klikket på oppvåkningen gikk trolig gjennom selv om svaret kom for sent, så innleggelsen var borte da reserven ventet på at knappen skulle synes. Reserveklikket i hjelperen klikk trykker nå bare når knappen fortsatt synes, og venter ikke på at den skal bli synlig.
 - Del 21, 22 og 40 til 43 kjøres nå på nytt med alle bildene.
+
+## 2026-09-26 22:36 PR #11 flettet og publisert
+- Del 21, 22 og 40 til 43 med alle 544 bildene: 54 av 54. Sammen med den fulle kjøringen er hele suiten grønn på det endelige bygget med grafikkleveransen.
+- PR #11 (skygger som står stille, lys uten blinking, diorama-lys, stort kart, kontroller i menyene og TV-modus, pluss grafikkleveransen fra main) er flettet som 799f983, «Flett PR #11». GitHub Pages publiserte på 30 sekunder (kjøring 46).
+- Den publiserte siden er testet på PC og telefon, stående og liggende: versjon 799f983, tittelen midt på skjermen på PC og stående, kartet åpnes, TV-modus er av på PC og telefon, gloriene og menynavigasjonen finnes, mistet grafikk gir pause og kommer tilbake, ingen konsollfeil.
+- Grenen claude/practical-babbage-nc80bu er satt lik main. Arbeidskopiene og grenene til sporene (spor-a, spor-b) er fjernet.
+- Neste: Toms nye liste (angrepseffekter, snø, hårruller, skjulte rom, vegger og gulv fra ChatGPT, nye fiender), stemplene som legger seg oppå hverandre, blodet på skjermen, og kontrollene som GRAFIKKLEVERANSE.md ber om. Undersøkelsen går.
