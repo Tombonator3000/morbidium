@@ -652,3 +652,13 @@ Alle tidspunkt er UTC.
 - «Si din mening»: et kartotekkort med fanene Lyd, Bilde, Spill, Historien og Rapport. 26 spørsmål fra todo.md med tre knapper hver (trykk en gang til for å angre), fritekst, og en knapp som kopierer rapporten (med reserve når nettleseren ikke gir tilgang til utklippstavla). Panelet ligger over alt annet, og Escape lukker bare det.
 - Pausemenyen får «Si din mening» og «Testrapport», dødsskjermen og utskrivningen får «Testrapport». Rapporten lagres ved slutten av løpet (de fem siste), oppdateres hvis svarene endres etterpå, og kan kopieres fra Data-fanen.
 - Røyktest på PC og mobil med skjermbilder: måleren, pausemenyen, spørsmålene, rapporten, døden og innstillingene virker, ingen konsollfeil. Ny testdel 35 i test_ekstra går gjennom. Den fant én ekte feil: med ?testmodus i adressen gikk testmodus ikke an å slå av.
+
+## 2026-09-26 09:24 Mobilen mistet WebGL: lekkasjer i grafikkminnet funnet og tettet
+- Tom fikk «Noe gikk galt: grafikken gikk tom for minne (WebGL-konteksten ble mistet)» på mobil. PC går fint. Han ba også om at layout og bruk tilpasses mobil.
+- Den fulle testkjøringen av testmodusen ble stoppet halvveis (generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 72 av 72 så langt), fordi mobilrettingen endrer bygget.
+- Målt med et eget skript som følger med på alt spillet legger i grafikkminnet (teksturer, render-buffere og vertex-buffere) i en mobilprofil (412 x 839, dpr 2,625, berøring). Grafikkminnet vokste for hver etasje, også i versjonen fra før lydrunden. Med 15 fiender som dør per etasje gikk den publiserte versjonen fra rundt 65 til nesten 190 MB over tolv etasjeskifter, omtrent 12 MB per etasje. Et langt løp med drømmer blir mer enn en telefon tåler.
+- Tre lekkasjer:
+  1. Skyggekartet til månelyset (1024 x 1024 på mobil, med dybdebuffer, 8 MB) ble aldri frigjort når 3D-rommet ble revet (D3.riv i 15_rom3d.js). R.remove kobler bare løs. Nå kastes lysene med dispose, som tar skyggekartet.
+  2. Hver papirdukke (fiender, personale, figurer i drømmene) har to strekbånd med 3200 punkter hver, rundt 150 kB i grafikkminnet. Doll.dispose og Lagdukke.dispose koblet bare roten løs. Nå frigjøres strekbåndene og materialene (dukkeKast i 11_doll.js). Teksturene og firkantene deles og blir liggende.
+  3. Flekkene på gulvet, plakatene og dørene til tjenesterommene fikk nye teksturer og materialer i hver etasje uten å bli registrert for opprydding (12_paint.js). Nå havner de i Paint.owned.
+- Etter rettingene ligger grafikkminnet flatt på rundt 52 MB (tekstur 41, render-buffere 7, buffere 4) gjennom tolv etasjeskifter med fiender. Små teksturer som fortsatt dukker opp, er bilder av møbler som bufres første gang de vises. De flater ut.

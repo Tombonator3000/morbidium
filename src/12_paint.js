@@ -214,19 +214,22 @@ const Paint = {
   },
   decals(F, n = 26) {
     const rng = mulberry32(F.seed || 1), W = F.W;
+    // teksturene lages for hver etasje og ryddes med den (Paint.owned); før ble de liggende i grafikkminnet
     const tex = [0, 1, 2, 3].map(k => R.canvasTex(128, 128, g => {
       const r2 = mulberry32(k * 7 + 3);
       if (k < 2) { g.fillStyle = k ? 'rgba(110,70,30,.22)' : 'rgba(60,70,20,.18)'; g.beginPath(); for (let a = 0; a <= 14; a++) { const an = a / 14 * TAU, rr = 38 + r2() * 22; g.lineTo(64 + Math.cos(an) * rr, 64 + Math.sin(an) * rr * .8); } g.fill(); g.fillStyle = 'rgba(60,40,20,.12)'; g.beginPath(); g.arc(64 + 20, 64 - 10, 12, 0, TAU); g.fill(); }
       else { g.strokeStyle = 'rgba(42,26,20,.55)'; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); let x = 20, y = 30 + r2() * 60; g.moveTo(x, y); while (x < 110) { x += 10 + r2() * 14; y += (r2() - .5) * 26; g.lineTo(x, y); } g.stroke(); if (k === 3) { g.beginPath(); g.moveTo(60, 60); g.lineTo(70 + r2() * 20, 95); g.stroke(); } }
-    }));
+    })); this.owned.push(...tex);
     for (let i = 0; i < n; i++) {
       const x = rng() * W, z = rng() * F.H, t = F.tiles[Math.floor(z) * W + Math.floor(x)]; if (!t) continue;
-      const m = new THREE.Mesh(R.geo('plane1', () => new THREE.PlaneGeometry(1, 1)), new THREE.MeshBasicMaterial({ map: tex[Math.floor(rng() * 4)], transparent: true, depthWrite: false }));
+      const mat = new THREE.MeshBasicMaterial({ map: tex[Math.floor(rng() * 4)], transparent: true, depthWrite: false }); this.owned.push(mat);
+      const m = new THREE.Mesh(R.geo('plane1', () => new THREE.PlaneGeometry(1, 1)), mat);
       m.rotation.x = -Math.PI / 2; m.rotation.z = rng() * TAU; const s = .8 + rng() * 1.4; m.scale.set(s, s, 1); m.position.set(x, .008, z); m.renderOrder = 1; R.level.add(m);
     }
   },
   poster(text, x, z) {
-    const m = new THREE.Mesh(R.geo('poster2', () => new THREE.PlaneGeometry(.72, .95)), new THREE.MeshBasicMaterial({ map: R.posterTex(text) }));
+    const t = R.posterTex(text), mat = new THREE.MeshBasicMaterial({ map: t }); this.owned.push(t, mat);
+    const m = new THREE.Mesh(R.geo('poster2', () => new THREE.PlaneGeometry(.72, .95)), mat);
     m.position.set(x, 1.62, z + .01); R.level.add(m); this.opptatt.set(Math.floor(x) + ',' + z, 'plakat'); return m;
   },
   door(x, z, label) {
@@ -238,7 +241,8 @@ const Paint = {
       g.fillStyle = '#efe4c4'; g.fillRect(20, 0, 120, 30); g.strokeStyle = INK; g.lineWidth = 5; g.strokeRect(20, 0, 120, 30);
       g.fillStyle = INK; g.font = 'bold 17px Georgia, serif'; g.textAlign = 'center'; g.fillText(label, 80, 21);
     });
-    const m = new THREE.Mesh(R.geo('door', () => new THREE.PlaneGeometry(1.1, 1.8)), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true }); this.owned.push(tex, mat);
+    const m = new THREE.Mesh(R.geo('door', () => new THREE.PlaneGeometry(1.1, 1.8)), mat);
     m.position.set(x, .9, z + .012); R.level.add(m); for (const tx of [Math.floor(x - .5), Math.floor(x)]) this.opptatt.set(tx + ',' + z, 'dor'); return m;
   }
 };

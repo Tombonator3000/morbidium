@@ -409,7 +409,7 @@ class Lagdukke {
     this.flashT -= dt; this.U.uFlash.value = this.flashT > 0 && R.flashOn ? 1 : 0;
   }
   dissolve(p) { this.U.uDissolve.value = p; this.shadow.material.opacity = 1 - p; }
-  dispose() { R.remove(this.root); }
+  dispose() { dukkeKast(this); } // som Doll (11_doll.js): strekbåndene og materialene ut av grafikkminnet
 }
 /* ---------- delene til Hviskekoret ---------- */
 function korDel(k, w, h, draw) { return () => Art.part('koret_' + k, w, h, w / 2, h / 2, draw); }

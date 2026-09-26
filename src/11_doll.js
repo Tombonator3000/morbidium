@@ -243,7 +243,15 @@ class Doll {
   }
   applyFlash(dt) { this.flashT -= dt; this.U.uFlash.value = this.flashT > 0 && R.flashOn ? 1 : 0; }
   dissolve(p) { this.U.uDissolve.value = p; this.shadow.material.opacity = 1 - p; }
-  dispose() { R.remove(this.root); }
+  /* ut av scenen og ut av grafikkminnet: strekbåndene har egen geometri (3200 punkter hver, rundt 150 kB per dukke),
+     og delene har egne materialer. Teksturene og firkantene deles med andre dukker (Art.cache, Q_GEO) og blir liggende.
+     Før ble bare roten koblet løs, så hver fiende som døde, lå igjen i grafikkminnet (en av grunnene til at mobiler mistet WebGL). */
+  dispose() { dukkeKast(this); }
+}
+function dukkeKast(d) {
+  R.remove(d.root);
+  for (const r of [d.back, d.front]) if (r && r.geo) r.geo.dispose();
+  d.root.traverse(o => { if (o.material && o.material.dispose) o.material.dispose(); });
 }
 
 /* rekvisitt som stående illustrasjon, festet i forkant */
