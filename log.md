@@ -680,3 +680,7 @@ Alle tidspunkt er UTC.
 - Sjekket at panelene kan rulles med fingeren selv om body har touch-action:none (sveip med ekte berøringshendelser i testen).
 - WebGL som mistes mens spillet ligger i bakgrunnen (bytte av app): de åtte sekundene før feilmeldingen telles først når siden synes igjen, og grafikken settes ikke ned når den kommer tilbake. Før kunne feilmeldingen dukke opp med en gang man kom tilbake til spillet. Testet med skjult side i ni sekunder: ingen feilmelding, ingen nedgradering, og feilmeldingen kommer fortsatt etter åtte sekunder når siden synes og grafikken ikke kommer tilbake.
 - Ingen konsollfeil i noen av rundene.
+
+## 2026-09-26 10:25 Testdel 36 for mobil, og papirflatene regner med panelets marger
+- Ny testdel 36 i tools/test_ekstra.py, med liggende og stående telefon (berøring, iPhone): HUD-en overlapper ikke liggende, innstillingene kan rulles med fingeren (ekte berøringshendelser), et nytt panel begynner øverst selv om det forrige var rullet, butikken ligger side om side, dødskortet og utskrivningen får plass uten rulling, brevet begynner øverst, høyst 20 hjerter og «+N», journalen og brevet skaleres ikke under 0,7 stående, og mistet grafikk: i bakgrunnen pause uten feilmelding og uten nedgradering, synlig tilbake med lettere grafikk.
+- Testen fant én feil: passInn regnet med 20 piksler marg, men panelene har 16 på hver side (32). Utskrivningen kunne derfor rulles 12 piksler liggende. passInn måler nå plassen innenfor margene på panelet flata ligger i. På PC blir papirflatene rundt to prosent mindre.
