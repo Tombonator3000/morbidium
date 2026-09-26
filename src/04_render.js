@@ -46,6 +46,7 @@ const R = {
         uAmbient: { value: new THREE.Color(1, 1, 1) }, uLift: { value: new THREE.Color(0, 0, 0) }, uGain: { value: new THREE.Color(1, 1, 1) },
         uMorb: { value: 0 }, uHurt: { value: 0 }, uLow: { value: 0 }, uFlash: { value: 0 }, uDistort: { value: 1 }, uLights: { value: 1 }, uVig: { value: .55 }, tBloom: { value: null }, uBloom: { value: 0 },
         tBlod: { value: this.blodSkjerm() }, uBlod: { value: 0 }, uBlodFlip: { value: 0 }, uAarer: { value: 0 }, uPuls: { value: 3 },
+        tVaatt: { value: null }, uVaatt: { value: 0 }, uVaattPx: { value: new THREE.Vector2(1 / 384, 1 / 216) },
         tUskarp: { value: null }, uTilt: { value: 0 }, uSplit: { value: 0 }, uFilm: { value: 0 },
         uSjokk: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uVarme: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uZoom: { value: new THREE.Vector3() }, uCa: { value: 0 }, uNeg: { value: 0 }, uDrom: { value: 0 }, uLyn: { value: 0 }, uHete: { value: 0 } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
@@ -53,6 +54,7 @@ const R = {
         uniform sampler2D tScene, tLight, tBloom, tBlod, tUskarp; uniform vec2 uRes; uniform float uTime, uMorb, uHurt, uLow, uFlash, uDistort, uLights, uVig, uBloom, uBlod, uBlodFlip, uAarer, uPuls, uTilt, uSplit, uFilm;
         uniform vec3 uAmbient, uLift, uGain; varying vec2 vUv;
         uniform vec4 uSjokk[4], uVarme[4]; uniform vec3 uZoom; uniform float uCa, uNeg, uDrom, uLyn, uHete;
+        uniform sampler2D tVaatt; uniform float uVaatt; uniform vec2 uVaattPx;
         float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
         // årer: rygger i støyen gir tynne, forgreinede linjer
@@ -85,6 +87,18 @@ const R = {
               vec2 dv = (vUv - v.xy) * vec2(asp, 1.0); float r = length(vec2(dv.x * 1.6, (dv.y - v.z * 0.8) * 0.55));
               float k = max(0.0, 1.0 - r / v.z) * v.w * smoothstep(-0.03, 0.04, dv.y) * uDistort;
               uv += vec2(sin(vUv.y * 95.0 - uTime * 7.0 + float(i) * 1.7), cos(vUv.x * 71.0 + uTime * 5.3)) * 0.0017 * k;
+            }
+          }
+          // vått på skjermen (43_vaatt.js): dråpene er kupler i et høydekart, rødt for vann og grønt for blod.
+          // Bildet brytes gjennom kuplene (litt også uten «Forvrengning», fordi det er selve dråpen).
+          vec4 wv = vec4(0.0); vec2 wn = vec2(0.0);
+          if (uVaatt > 0.0) {
+            wv = texture2D(tVaatt, vUv);
+            if (wv.r + wv.g > 0.004) {
+              vec2 e = uVaattPx;
+              vec4 a1 = texture2D(tVaatt, vUv + vec2(e.x, 0.0)), a2 = texture2D(tVaatt, vUv - vec2(e.x, 0.0)), a3 = texture2D(tVaatt, vUv + vec2(0.0, e.y)), a4 = texture2D(tVaatt, vUv - vec2(0.0, e.y));
+              wn = vec2((a1.r + a1.g * 0.7) - (a2.r + a2.g * 0.7), (a3.r + a3.g * 0.7) - (a4.r + a4.g * 0.7));
+              uv -= wn * 0.012 * uVaatt * (0.4 + 0.6 * uDistort);
             }
           }
           float ca = (uHurt * 0.006 + m * 0.0015 + uCa * 0.009) * smoothstep(0.1, 0.8, d) + sj * 0.008;
@@ -123,7 +137,25 @@ const R = {
             col = mix(col, vec3(0.2, 0.0, 0.03), v * kant * min(1.0, uAarer * 1.4) * puls * 0.92);
             col += vec3(0.25, 0.02, 0.02) * aare(q + vec2(3.1, 1.705)) * (1.0 - v) * kant * uAarer * puls * 0.3;
           }
-          // blod på skjermen etter treff: sprut langs kantene som sklir litt nedover mens det blekner
+          // blod og vann på glasset: tykt blod slipper bare gjennom rødt, tynt blod er klart rødt, kantene blir mørke,
+          // og lyset fra øvre venstre hjørne glinser i dråpene
+          if (uVaatt > 0.0 && wv.r + wv.g > 0.004) {
+            float tb = wv.g, tw = wv.r, fukt = min(1.0, (tw + tb) * 3.0);
+            vec3 N = normalize(vec3(-wn * 7.0, 1.0));
+            // blodet: rødt slipper gjennom, grønt og blått nesten ikke; tykt blod er nesten svart
+            vec3 gj = exp(-vec3(1.6, 8.0, 7.0) * tb);
+            float mb = smoothstep(0.03, 0.16, tb), mw = smoothstep(0.03, 0.14, tw);
+            col = col * mix(vec3(1.0), gj, mb) + vec3(0.2, 0.008, 0.012) * (1.0 - exp(-3.0 * tb)) * mb;
+            col *= 1.0 + tw * 0.15 * mw;
+            // et skarpt lyspunkt fra øvre venstre hjørne, og lyset som samles i bunnen av dråpen
+            float gl = pow(max(0.0, dot(N, normalize(vec3(-0.45, 0.55, 0.7)))), 60.0);
+            float ks = pow(max(0.0, dot(N, normalize(vec3(0.25, -0.6, 0.76)))), 14.0);
+            col += vec3(1.0, 0.97, 0.92) * gl * (1.8 * mw + 0.8 * mb) * uVaatt;
+            col += mix(vec3(0.26, 0.28, 0.3), vec3(0.3, 0.02, 0.02), min(1.0, tb * 3.0)) * ks * fukt * uVaatt;
+            // mørk kant der glasset og dråpen møtes
+            col *= 1.0 - clamp(length(wn) * 0.7, 0.0, 0.25) * max(mw, mb);
+          }
+          // blod på skjermen etter treff (når «Blod og vann på skjermen» er av): sprut langs kantene som sklir litt nedover mens det blekner
           if (uBlod > 0.0) {
             vec2 bu = vec2(mix(vUv.x, 1.0 - vUv.x, uBlodFlip), vUv.y + (1.0 - uBlod) * 0.05);
             vec4 b = texture2D(tBlod, bu);
