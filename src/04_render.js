@@ -77,8 +77,9 @@ const R = {
               uv -= dv / dd / vec2(asp, 1.0) * ring * s.w * 0.04; sj += ring * s.w;
             }
           }
-          // varmeflimmer over bål, ovner og kjeler (40_dybde.js): lufta dirrer i en søyle over flammen
-          for (int i = 0; i < 4; i++) {
+          // varmeflimmer over bål, ovner og kjeler (40_dybde.js): lufta dirrer i en søyle over flammen.
+          // Kildene kommer sortert med de tomme sist, så en tom første plass betyr at hele løkka kan hoppes over.
+          if (uVarme[0].w > 0.0) for (int i = 0; i < 4; i++) {
             vec4 v = uVarme[i];
             if (v.w > 0.0) {
               vec2 dv = (vUv - v.xy) * vec2(asp, 1.0); float r = length(vec2(dv.x * 1.6, (dv.y - v.z * 0.8) * 0.55));
@@ -330,7 +331,7 @@ const R = {
           col = mix(col, uHigh, clamp(acc * 1.4, 0.0, 1.0));
           // speiling: lampene i nærheten glitrer i vannet, mest på bølgetoppene (xz er stedet, y er radius)
           vec3 glans = vec3(0.0);
-          for (int i = 0; i < 6; i++) { float dl = length(vWorldPos - uLysP[i].xz); glans += uLysF[i] * pow(max(0.0, 1.0 - dl / max(uLysP[i].y, 0.001)), 3.0); }
+          if (dot(uLysF[0], vec3(1.0)) > 0.0) for (int i = 0; i < 6; i++) { float dl = length(vWorldPos - uLysP[i].xz); glans += uLysF[i] * pow(max(0.0, 1.0 - dl / max(uLysP[i].y, 0.001)), 3.0); } // tomme plasser ligger sist
           col += glans * (0.3 + 0.7 * max(t, acc));
           float rim = 1.0 - smoothstep(0.1, 0.3, m);
           col = mix(col, uDeep * 0.45, rim * 0.85);
