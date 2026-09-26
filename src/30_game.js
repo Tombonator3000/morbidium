@@ -402,6 +402,8 @@ function openPanel(html, o = {}) {
   // Det samme panelet tegnet på nytt (butikken etter et kjøp, innstillingene etter et valg) beholder rullingen.
   // Rullingen nullstilles etter at panelet vises: mens det er skjult, husker nettleseren den gamle og legger den tilbake
   const el = $('panel'), hvem = f => f ? f.className + '#' + f.id : '', for0 = G.state === 'panel' && !el.classList.contains('hidden') ? hvem(el.firstElementChild) : '';
+  // et panel som byttes ut uten closePanel (drømmen som begynner mens kartet er oppe), rydder etter seg likevel
+  if (G.state === 'panel' && G.panelO && G.panelO.onClose && G.panelO !== o) G.panelO.onClose();
   el.innerHTML = html; show('panel', true); if (!for0 || for0 !== hvem(el.firstElementChild)) el.scrollTop = 0; G.prevState = G.state === 'panel' ? G.prevState : G.state; G.state = 'panel'; G.panelO = o;
   el.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closePanel());
 }

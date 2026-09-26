@@ -1247,6 +1247,14 @@ async def main():
         await pg.click('#mapring'); await pg.wait_for_timeout(300)
         kamp.update(await pg.evaluate("() => { const G = MORBIDIUM, ut = { state: G.state, md: window.__md, mx: Input.mouse.x, my: Input.mouse.y }; G.combat = null; return ut; }"))
         sjekk('i kamp på PC åpner ikke et klikk på ringen kartet: det blir et slag, og musa sikter videre', kamp['state'] == 'play' and kamp['md'] == 1 and abs(kamp['mx'] - kamp['x']) < 3 and abs(kamp['my'] - kamp['y']) < 3, kamp)
+        # fiender fra en hendelse låser ingen dører (G.combat er tom), men et klikk på ringen er et slag da også
+        await pg.evaluate("() => { const P = MORBIDIUM.player; spawnEnemyBareTest('rotte', P.x + 2, P.z); }")
+        await pg.click('#mapring'); await pg.wait_for_timeout(300)
+        hf = await pg.evaluate("() => { const G = MORBIDIUM, ut = { state: G.state, md: window.__md, combat: !!G.combat }; if (G.state === 'panel') closePanel(); rolig(); return ut; }")
+        sjekk('fiender fra en hendelse rundt pasienten: et klikk på ringen er et slag og ikke kartet', hf == {'state': 'play', 'md': 2, 'combat': False}, hf)
+        # et annet panel som tar over mens kartet er oppe (drømmen begynner), frigjør lerretet også
+        byttet = await pg.evaluate("() => { Kart.apne(); const c = document.getElementById('kCan'), for_ = c.width; openPause(); const ut = { for: for_, etter: c.width, pause: !!document.getElementById('pK') }; closePanel(); return ut; }")
+        sjekk('kartet som byttes ut med et annet panel, frigjør lerretet', byttet['for'] >= 360 and byttet['etter'] == 0 and byttet['pause'], byttet)
         # fra pausen og tilbake
         await pg.keyboard.press('Escape'); await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.getElementById('pK')", timeout=20000)
         await pg.click('#pK'); await pg.wait_for_timeout(200)
@@ -1318,7 +1326,8 @@ async def main():
         st = await pg.evaluate(plass)
         await pg.screenshot(path='/tmp/e_kart_staende.png')
         sjekk('stående telefon: et trykk på ringen åpner kartet i smalt oppsett, alt får plass uten rulling, og uten tastehint', st['lag'] == 'smal' and not st['rull'] and st['inne'] and st['lukk'] and st['zoom'] >= .75 and st['lup'] == 'block' and not st['hint'], st)
-        await pg.set_viewport_size({'width': 844, 'height': 390}); await pg.wait_for_timeout(800)
+        await pg.set_viewport_size({'width': 844, 'height': 390})
+        await pg.wait_for_function("() => { const a = document.getElementById('kartark'); return !!a && a.classList.contains('lig'); }", timeout=20000); await pg.wait_for_timeout(300)
         lg = await pg.evaluate(plass)
         await pg.screenshot(path='/tmp/e_kart_liggende.png')
         await pg.tap('#kLukk')
