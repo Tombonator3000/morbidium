@@ -547,3 +547,11 @@ Alle tidspunkt er UTC.
 - Siden med alle arkene, kopieringsknapper og avkryssing for levert er publisert som en privat side i Claude, «Tegnelister»: https://claude.ai/artifact/CwTKtxx3rN65Es4PKpTPrW. Sjekket på 390 og 1280 piksler bredde, uten sidescroll og uten konsollfeil.
 - Småretting i historien: vaktmester Olsen gjentok en linje han allerede hadde, så linjene hans handler nå om den fjerde nøkkelen på knippet fra 1901 og fram til Dypet.
 - memory.md (nye deler om Dybde og Historien, byggerekkefølgen og kapitlene), todo.md, AGENTS.md (fillista) og README.md er oppdatert.
+
+## 2026-09-26 01:15 Tester for hele runden, raskere etterbehandling og forslag til neste steg
+- Første fulle kjøring: generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 164 av 167. De tre som feilet (byggeanimasjonen i del 14, Huldras sang i del 27 og effektene som dør ut i del 28), ventet en fast tid i sanntid på noe som skjer i spilltid. Alle tre gikk gjennom i forrige runde.
+- Målt i testnettleseren (programvaregrafikk, 2D, samme rom): main ga rundt 9 bilder i sekundet, denne grenen rundt 6,7. Dybde sto for omtrent halvparten. Resten kom av at etterbehandlingen regnet varmeflimmer for hver piksel, og vannet speilet seks lys, også når ingen kilder var i nærheten.
+- Rettet: begge løkkene i shaderne hoppes over når første plass er tom (kildene kommer sortert, med de tomme sist). Etter det ga denne grenen rundt 7,8 bilder i sekundet, mot 9,1 for main. Dybde koster fortsatt rundt 7 prosent med programvaregrafikk, mest fordi det tegnes flere gjennomsiktige flater. På et ekte skjermkort blir det langt mindre.
+- De tre testene venter nå på spilltid, som de andre vi rettet forrige runde. Del 31 antok at løpet startet i Eget rom, men innleggelsen tilbyr tre tilfeldige oppvåkninger, så testen setter oppvåkningen selv. Del 14, 27, 28, 30 og 31 går gjennom, og gjennomspillingen er kjørt på nytt uten feil. Historien er også sjekket med 3D på.
+- Tom spurte hva neste steg bør være. Forslaget står øverst i todo.md: spille i stedet for å bygge mer. Først en liten testmodus med bilder i sekundet og en rapport etter hvert løp, så tre eller fire løp på PC og mobil, og deretter balanse ut fra rapportene. Grafikken i denne rekkefølgen: liste 10, 5, 1 og 4.
+- En siste full kjøring av test_ekstra går nå, før PR-en lages.
