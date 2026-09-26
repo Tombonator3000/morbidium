@@ -33,7 +33,7 @@ const Paint = {
   /* hele gulvet males som ett lerret: fliser med skjeve blekkfuger, malte flekker,
      tegnet skygge langs veggene, rusk og en tykk blekkant der gulvet møter veggen */
   floorCanvas(F, th) {
-    const W = F.W, H = F.H, T = R.lowTex ? 16 : W * H > 1800 ? (R.coarse ? 24 : 32) : 64, rng = mulberry32((F.seed || 1) * 31 + 7);
+    const W = F.W, H = F.H, T = R.lowTex ? 16 : W * H > 1800 ? (R.coarse || R.tv ? 24 : 32) : 64, rng = mulberry32((F.seed || 1) * 31 + 7);
     const c = document.createElement('canvas'); c.width = W * T; c.height = H * T; const g = c.getContext('2d');
     const isF = (x, z) => x >= 0 && z >= 0 && x < W && z < H && F.tiles[z * W + x] > 0, isC = (x, z) => isF(x, z) && F.tiles[z * W + x] === T_COR;
     g.lineCap = 'round'; g.lineJoin = 'round';

@@ -202,7 +202,7 @@ function startFloor(depth, first) {
     const g = propSprite(null, c.x, c.z + .3, { P: corpseArt(ld.look) }); R.level.add(g); G.corpses.push({ x: c.x, z: c.z, g, ld });
     if (!ld.looted) Items.splat(c.x, c.z + .2, '#6a0a0a', 1.1, .7);
   }
-  Spor.onFloor(); Bygg.onFloor(); D3.onFloor(); if (!G.drom) { Tips.vis('gaa', 1500); Tips.vis('kort', 10500); }
+  Spor.onFloor(); Bygg.onFloor(); D3.onFloor(); if (!G.drom) { Tips.vis('gaa', 1500); Tips.vis('kort', 10500); if (depth >= 2) Tips.vis('kart', 19500); }
   Sound.startAmbience(depth); Musikk.spill(G.drom ? G.drom.musikk : stykkeFor(depth)); G.paT = G.drom ? 1e9 : rnd(18, 30);
   $('floorName').textContent = G.th.name; hudCardsKey = ''; drawWeaponCard();
   show('hud', true); show('title', false); G.state = 'play';
@@ -274,7 +274,7 @@ function finishCombat() {
   Items.onRoomClear(r); Aktiv.onRoomClear(r); Lomme.onRoomClear();
   if (r.role === 'risk') dropTeeth(r.x + r.w / 2, r.z + r.h / 2, 12);
   else if (Math.random() < .35) dropPickup(G.player.x, G.player.z, 'heart');
-  if (G.player.points > 0) setTimeout(() => toast('Du har poeng å fordele', 'Åpne journalen (Tab)'), 1200);
+  if (G.player.points > 0) setTimeout(() => toast('Du har poeng å fordele', 'Åpne journalen' + Input.parentes('journal')), 1200);
 }
 function updateBarriers(dt) {
   for (let i = G.barriers.length - 1; i >= 0; i--) {
@@ -385,7 +385,7 @@ function openService(svc, npc) {
     openPanel(`<div class="shop"><div class="who paper"><span id="svcP"></span><div class="line">${esc(pick(NPC_LINES[svc] || ['...']))}</div><div style="font-weight:800;margin-top:6px">${esc(S.npc || '')}</div></div>
       <div class="list paper"><div class="ribbon2"><span>${esc(S.name)}</span><span>${P.teeth} gulltenner</span></div>
       <div class="offers">${offers.map((o, i) => { const pr = price(o.p); return `<button class="offer ${o.sold ? 'sold' : ''} ${pr > P.teeth ? 'poor' : ''}" data-of="${i}" ${o.sold ? 'disabled' : ''}><span data-oa="${i}"></span><b>${esc(o.name)}</b>${esc(o.desc)}<br><span class="price">${o.sold ? 'Solgt' : o.p ? pr + ' gulltenner' : 'Gratis'}</span></button>`; }).join('')}</div>
-      <div class="btnrow"><button class="btn" data-close>Gå (Esc)</button></div></div></div>`);
+      <div class="btnrow"><button class="btn" data-close>Gå${Input.parentes('tilbake')}</button></div></div></div>`);
     let pc; try { pc = SVC_WHO[svc] ? portraitCanvas(SVC_WHO[svc]) : cardArtCanvas(svc === 'journal' ? 'skyggehand' : 'ukjent', 128); } catch (e) { pc = cardArtCanvas('ukjent', 128); }
     $('svcP').replaceWith(pc);
     offers.forEach((o, i) => { document.querySelector(`[data-oa="${i}"]`).replaceWith(artFor(o.art[0], o.art[1])); const b = document.querySelector(`[data-of="${i}"]`); b.onclick = () => {
@@ -405,11 +405,13 @@ function openPanel(html, o = {}) {
   // Det samme panelet tegnet på nytt (butikken etter et kjøp, innstillingene etter et valg) beholder rullingen.
   // Rullingen nullstilles etter at panelet vises: mens det er skjult, husker nettleseren den gamle og legger den tilbake
   const el = $('panel'), hvem = f => f ? f.className + '#' + f.id : '', for0 = G.state === 'panel' && !el.classList.contains('hidden') ? hvem(el.firstElementChild) : '';
+  // et panel som byttes ut uten closePanel (drømmen som begynner mens kartet er oppe), rydder etter seg likevel
+  if (G.state === 'panel' && G.panelO && G.panelO.onClose && G.panelO !== o) G.panelO.onClose();
   el.innerHTML = html; show('panel', true); if (!for0 || for0 !== hvem(el.firstElementChild)) el.scrollTop = 0; G.prevState = G.state === 'panel' ? G.prevState : G.state; G.state = 'panel'; G.panelO = o;
   el.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closePanel());
 }
 function closePanel() {
-  show('panel', false); const o = G.panelO || {};
+  show('panel', false); const o = G.panelO || {}; if (o.onClose) o.onClose();
   if (o.onBack) { G.panelO = null; o.onBack(); return; }
   G.state = G.prevState === 'title' ? 'title' : (G.player && G.player.alive ? 'play' : G.prevState || 'title');
   if (G.state === 'title') show('title', true);
@@ -494,9 +496,9 @@ function renderJournal() {
   let right = '';
   if (tab === 'ferdigheter') {
     right = `<div class="jtitle">PSYKISK KARTLEGGING</div><div class="jsub">FIRE OMRÅDER. ÉN PASIENT. UENDELIGE MULIGHETER.</div><div class="quote">«Sunne hoder gjør en renere verden.»<br>M.</div>
-      <div class="map"><canvas id="jHead" width="1000" height="1000"></canvas>${[0, 1, 2, 3].map(i => `<div class="slot ${run.slots[i] ? '' : 'empty'}" data-slot="${i}" style="left:${HEADMAP.cx[i] * 100}%;top:${HEADMAP.cy[i] * 100}%">${jCardHtml(run.slots[i], 's', i)}</div>`).join('')}</div>
+      <div class="map"><canvas id="jHead" width="1000" height="1000"></canvas>${[0, 1, 2, 3].map(i => `<div class="slot ${run.slots[i] ? '' : 'empty'}" data-slot="${i}" ${run.slots[i] ? '' : 'tabindex="0" '}style="left:${HEADMAP.cx[i] * 100}%;top:${HEADMAP.cy[i] * 100}%">${jCardHtml(run.slots[i], 's', i)}</div>`).join('')}</div>
       <div class="hint">Klikk et kort og så en plass, eller dra det. Kort i sitt eget område får gullprikk og kortere nedkjøling.</div>
-      <div class="pocket" data-pocket="1">${run.reserve.map((c, i) => `<span class="pc">${jCardHtml(c, 'r', i)}</span>`).join('')}<span class="pc"><div class="jcard" style="cursor:default;opacity:.7"><span data-jart="ukjent"></span><div class="nm">?</div></div></span><div class="lbl">RESERVERT FOR FRAMTIDIGE FREMSKRITT</div></div>`;
+      <div class="pocket" data-pocket="1">${run.reserve.map((c, i) => `<span class="pc">${jCardHtml(c, 'r', i)}</span>`).join('')}<span class="pc"><div class="jcard" data-lomme="1" tabindex="0" aria-label="Legg i lomma" style="cursor:default;opacity:.7"><span data-jart="ukjent"></span><div class="nm">?</div></div></span><div class="lbl">RESERVERT FOR FRAMTIDIGE FREMSKRITT</div></div>`;
   } else if (tab === 'kuriositeter') {
     const r = G.run, tf = Object.keys(TRANSFORMS).map(t => { const n = (r.items || []).filter(id => (ITEMS[id].tags || []).includes(t)).length; return `<div class="drow ${(r.transforms || []).includes(t) ? '' : 'unk'}"><b>${esc(TRANSFORMS[t].name)}</b> (${Math.min(3, n)} av 3)<br>${esc(TRANSFORMS[t].desc)}</div>`; }).join('');
     const pills = Object.keys(PILL_COL).filter(id => r.pillKnown && r.pillKnown[id]).map(id => `<span class="dlabel">${esc(PILL_COL[id][0])}: ${esc(PILLS[r.pillKnown[id]][0])}</span>`).join('');
@@ -514,7 +516,7 @@ function renderJournal() {
     right = `<div class="jtitle">DIAGNOSER</div><div class="jsub">ALLTID EN FORDEL, ALLTID ET PROBLEM</div><div class="dlist">${Object.entries(DIAGNOSES).map(([k, d]) => P.diag.includes(k) ? `<div class="drow"><b>${esc(d.name)}</b><br>Fordel: ${esc(d.good)}<br>Problem: ${esc(d.bad)}</div>` : `<div class="drow unk"><b>Ikke stilt</b><br>${esc(d.note || 'Oppstår av hvordan du oppfører deg.')}</div>`).join('')}</div>`;
   }
   const single = innerWidth < 760 || innerHeight > innerWidth * 1.1; G.jside = G.jside || 'r';
-  $('journal').innerHTML = `<div class="jwrap"><div class="book ${single ? 'single side-' + G.jside : ''}">${left}<div class="page r">${tabs}${right}<div class="hint" style="margin-top:8px">ET ROLIGERE SINN FOR EN RENERE VERDEN</div></div></div><div class="btnrow">${single ? `<button class="btn" id="jFlip">${G.jside === 'r' ? 'Til pasientjournalen' : 'Til kartleggingen'}</button>` : ''}<button class="btn big" id="jClose">Lukk journalen (Tab)</button></div></div>`;
+  $('journal').innerHTML = `<div class="jwrap"><div class="book ${single ? 'single side-' + G.jside : ''}">${left}<div class="page r">${tabs}${right}<div class="hint" style="margin-top:8px">ET ROLIGERE SINN FOR EN RENERE VERDEN</div></div></div><div class="btnrow">${single ? `<button class="btn" id="jFlip">${G.jside === 'r' ? 'Til pasientjournalen' : 'Til kartleggingen'}</button>` : ''}<button class="btn big" id="jClose">Lukk journalen${Input.parentes('lukkJ')}</button></div></div>`;
   // tegninger
   const emb = $('jEmb').getContext('2d'); emb.translate(64, 64); emb.lineWidth = 5; emb.strokeStyle = INK; emb.fillStyle = '#c8b890';
   emb.beginPath(); for (let i = 0; i < 24; i++) { const a = i / 24 * TAU, r = i % 2 ? 54 : 60; emb.lineTo(Math.cos(a) * r, Math.sin(a) * r); } emb.closePath(); emb.fill(); emb.stroke();
@@ -541,7 +543,7 @@ function renderJournal() {
 function fitJournal() {
   const w = document.querySelector('#journal .jwrap'); if (!w || G.state !== 'journal') return;
   w.style.transform = 'translate(-50%,-50%)'; const W = w.offsetWidth, H = w.offsetHeight;
-  const s = Math.min(1.2, (innerWidth - 12) / W, (innerHeight - 12) / H); w.style.transform = `translate(-50%,-50%) scale(${s.toFixed(4)})`;
+  const m = R.tv ? .9 : 1, s = Math.min(R.tv ? 1.6 : 1.2, (innerWidth * m - 12) / W, (innerHeight * m - 12) / H); w.style.transform = `translate(-50%,-50%) scale(${s.toFixed(4)})`; // TV: større, innenfor margene
 }
 addEventListener('resize', () => { if (G.state === 'journal') renderJournal(); });
 function jGet(r) { return r.t === 's' ? G.run.slots[r.i] : G.run.reserve[r.i]; }
@@ -578,7 +580,11 @@ function bindCards() {
     };
     el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const from = refOf(el); if (G.jsel) jMove(G.jsel, from); else { G.jsel = from; el.classList.add('sel'); } } };
   });
-  document.querySelectorAll('.slot.empty,[data-pocket]').forEach(el => el.onclick = e => { if (G.jsel && !e.target.closest('.jcard[data-ref]')) jMove(G.jsel, refOf(el)); });
+  document.querySelectorAll('.slot.empty,[data-pocket]').forEach(el => {
+    el.onclick = e => { if (G.jsel && !e.target.closest('.jcard[data-ref]')) jMove(G.jsel, refOf(el)); };
+    // tastatur: Enter på en tom plass, eller på det tomme kortet i lomma (et ekte kort i lomma tar Enter selv)
+    el.onkeydown = e => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.jcard[data-ref]')) { e.preventDefault(); if (G.jsel) jMove(G.jsel, refOf(el)); } };
+  });
 }
 
 /* ---------- HUD ---------- */
@@ -605,10 +611,10 @@ function hudUpdate() {
   }
   const ik = (G.run.items || []).join() + '|' + (G.run.trinket || '');
   if (ik !== Items.itemsKey) { Items.itemsKey = ik; const box = $('items'); box.innerHTML = ''; if (G.run.trinket) { const c = partCanvas(lommeIcon(G.run.trinket), 44, 44, 1); c.className = 'lomme'; c.title = 'Lommerusk: ' + LOMMERUSK[G.run.trinket].name + ': ' + LOMMERUSK[G.run.trinket].desc; box.appendChild(c); } for (const id of G.run.items || []) { const c = partCanvas(itemIcon(id), 44, 44, 1); c.title = ITEMS[id].name + ': ' + ITEMS[id].desc; box.appendChild(c); } }
-  const ck = G.run.slots.map((c, i) => c ? c.id + c.lvl + (c.up || '') : '-').join();
+  const ck = G.run.slots.map((c, i) => c ? c.id + c.lvl + (c.up || '') : '-').join() + (Input.lastDevice === 'pad' ? 'p' : '');
   if (ck !== hudCardsKey) {
     hudCardsKey = ck;
-    $('cards').innerHTML = G.run.slots.map((c, i) => { if (!c) return `<div class="acard empty" id="ac${i}"><div class="nm">${REGIONS[i].name}</div><div class="k">${i + 1}</div><div class="cd hidden"></div></div>`; const m = AFFINITY[c.id] === REGIONS[i].id; return `<div class="acard ${m ? 'match' : ''}" id="ac${i}" title="${esc(ABILITIES[c.id].desc)}"><div class="dots">${[0, 1, 2, 3].map(k => `<i class="${k < c.lvl + (m ? 1 : 0) ? '' : 'off'}"></i>`).join('')}</div><span data-hart="${c.id}"></span><div class="nm">${esc(ABILITIES[c.id].name)}</div><div class="k">${i + 1}</div><div class="cd hidden"></div></div>`; }).join('');
+    $('cards').innerHTML = G.run.slots.map((c, i) => { if (!c) return `<div class="acard empty" id="ac${i}"><div class="nm">${REGIONS[i].name}</div><div class="k">${Input.tast('kort', i)}</div><div class="cd hidden"></div></div>`; const m = AFFINITY[c.id] === REGIONS[i].id; return `<div class="acard ${m ? 'match' : ''}" id="ac${i}" title="${esc(ABILITIES[c.id].desc)}"><div class="dots">${[0, 1, 2, 3].map(k => `<i class="${k < c.lvl + (m ? 1 : 0) ? '' : 'off'}"></i>`).join('')}</div><span data-hart="${c.id}"></span><div class="nm">${esc(ABILITIES[c.id].name)}</div><div class="k">${Input.tast('kort', i)}</div><div class="cd hidden"></div></div>`; }).join('');
     document.querySelectorAll('[data-hart]').forEach(el => el.replaceWith(cardArtCanvas(el.dataset.hart, 96)));
   }
   for (let i = 0; i < 4; i++) { const el = $('ac' + i); if (!el) continue; const cd = el.querySelector('.cd'), c = P.cds[i]; cd.classList.toggle('hidden', !(c > 0)); if (c > 0) { cd.textContent = Math.ceil(c) + 's'; cd.style.setProperty('--p', clamp(c / ((P.cdMax && P.cdMax[i]) || c), 0, 1).toFixed(3)); } }
@@ -684,7 +690,7 @@ function loop(now) {
   Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); Effekter.tick(dt); Vaatt.tick(dt); Testmodus.tick();
   if (G.state === 'play') {
     const P = G.player;
-    if (A.pauseP) openPause(); else if (A.journalP) openJournal();
+    if (A.pauseP) openPause(); else if (A.journalP) openJournal(); else if (A.kartP) Kart.apne();
     let ts = 1; if (G.hitstop > 0) { G.hitstop -= dt; ts = .06; }
     if (G.slow.t > 0) { G.slow.t -= dt; ts = Math.min(ts, G.slow.s); } else G.slow.s = 1;
     const sdt = dt * ts; G.time += sdt; if (R.water) R.water.u.uTime.value += sdt; D3.maal(dt);
@@ -715,13 +721,14 @@ function loop(now) {
     G.titleT += dt; if (R.water) R.water.u.uTime.value += dt;
     const r = G.F.rooms[G.F.startId]; R.updateCamera(r.x + r.w / 2 + Math.sin(G.titleT * .15) * 3, r.z + r.h / 2 + Math.cos(G.titleT * .11) * 1.5, dt);
     if (G.titleDolls) G.titleDolls.forEach((d, i) => d.update(dt, { raise: i === 0 && Math.sin(G.titleT) > .3, headTilt: i === 0 ? .25 : 0 }));
-    Particles.update(dt); FX.update(dt);
+    Particles.update(dt); FX.update(dt); MenyNav.tick(dt, A);
   } else if (G.state === 'panel') {
-    if (A.pauseP) closePanel();
+    // B lukker som Esc. M lukker kartet igjen; pil høyre på håndkontrollen åpner det bare, for den blar i menyene (MenyNav)
+    if (!MenyNav.tick(dt, A) && (A.pauseP || A.tilbakeP || (A.kartP && !A.pad && Kart.aapen()))) closePanel();
     FX.update(dt);
   } else if (G.state === 'journal') {
-    if (A.pauseP || A.journalP) closeJournal();
-  }
+    if (!MenyNav.tick(dt, A) && (A.pauseP || A.journalP)) closeJournal();
+  } else MenyNav.tick(dt, A); // døden og utskrivningen
   // lysene, månen, lykteskyggene og gloriene etter at alt har flyttet seg, så de følger figurene og lykta i samme bilde og ikke ett bilde etter
   D3.tick(dt); Dybde.tick(dt); Glorie.tick(dt);
   R.render(dt);
@@ -747,12 +754,13 @@ function boot() {
   R.onSafe = why => { G.meta.settings.simple = true; saveMeta(); toast('Enkel grafikk', 'Skjermkortet ga ' + why + ', så etterbehandlingen er slått av'); };
   $('vignette').style.display = 'none';
   addEventListener('pointerdown', () => { Sound.init(); applySettings(); }, { once: true }); addEventListener('keydown', () => { Sound.init(); applySettings(); }, { once: true });
-  $('bJournal').onclick = () => openJournal(); $('bPause').onclick = () => openPause();
+  $('bJournal').onclick = () => openJournal(); $('bPause').onclick = () => openPause(); Kart.init();
   window.MORBIDIUM = G; Object.assign(window, { Items, ITEMS, spawnEnemy, itemIcon, jarPart, pillPart, addonPart, shotPart, LOOKS, PILL_COL, BLOBS, R, hurt, descend, finishCombat, openService, killEntity, Art, RIG, PROPS, CARD_ART, WEAPONS, THEMES, charPart, propArt, weaponPart, shoePart, cardArtCanvas, generateFloor, CONSUMABLES, heartPart, morbPart, bottlePart, cardPart, pigeonPart, stampDecal, handPart, toothPart, starPart, puffPart, barrierArt });
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };
   Object.assign(window, { Testmodus, MENING, MENING_FANER, Vaatt, SKALA, midiHz, hzMidi, Lydbank, Stemning, LYD_KART, LYD_INNSLAG, LYD_STEMT, LYD_DUKK, BESETNING, ROM_BESETNING, MUS_INS, FOTGULV, STEMNING_ETASJE, STEMNING_ROM, FIENDESTEMME, LYD_META, Historie, HISTORIE_ART, Kjeder, HENDELSER_HISTORIE, JOURNALSIDER, SJEF_EPITAF, SISTE_SIDE, NPC_DYP, OYE_SER, PA, LINES, NPC_LINES, LORE, bossOnHurt, Dybde, Kombo, KOMBO_NIVA, FLERDRAP, Glod, GLOD_TYPER, Lyn, Uvaer, Regnringer, Effekter, meleeHit, stampBig, runStats, FIENDE_INFO, FIENDE_REKKE, SJEF_REKKE, Drom, DROM_KAP, DROM_HJEM, DROM_SLUTT, DROM_ART, DROM_TEGN, DROM_SKYLD, Samtale, Hendelse, HENDELSER, Folge, HEND_ART, hendBilde, innhold, rolig, SPRITES, hbSider, saveMeta, MAX_DEPTH, THEMES, UTGANGER, gulvUnder, Vaer, Landskap, GULV, VEGG, ROMSTIL, ROMTYPER, openTrapdoor, findInteract, stykkeFor, brukUIsett, UI_SETT, hjerteHtml, portierHode, skarPart, speilbilde, ordPart, WEAPON_ART, kastKlump, sendOrd, D3, Anim, ANIM, POSER, posStat, Blod, Monstre, Lagdukke, LAGDUKKE, MONSTER_ART, ENEMIES, BOSSES, fiendeBilde, Mini, SJEF_DATA, SJEF_PULJE, sjefFor, trekkSjefer, STREK, Paint, aktIcon, lommeIcon, lommePart, thornArt, Spor, Bygg, Tips, unlocked, Merknad, MERKNADER, showWin, Musikk, STYKKER, Sound, Pasient, PAS_KLAER, PAS_PYNT, FIRST_K, FIRST_M, showIntake, openPause, openSettings, openHandbook, showArchive, applySettings, HANDBOK, drawDollPortrait, portraitCanvas, corpseArt, Doll, spawnEnemyBareTest: (t, x, z) => spawnEnemyBare(t, x, z, false, G.depth), LOOKS, addonPart, Oppskrift, MESTER, takePickupTest: takePickup, finishCombat, Aktiv, Lomme, AKTIVE, LOMMERUSK, Spesial, startSwing, bossAttackTest: (B, k) => { const P = G.player; bossAttack(B, k, Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)); }, freeSpot, solid, los, losWide, addPuddle, gainXp, showTitle, openJournal, closeJournal, giveCard, owned, continueRun, saveRun, savedRun, startFloor, spawnBoss, dropPickup, openChest, lockRoom, playerDie, healPlayer, recalcPlayer, useAbility, openPanel, closePanel, flashLight, updateFx });
+  Object.assign(window, { Kart, drawMap, KONTROLLER, TIPS, Input, SERVICES, MenyNav, Fullskjerm, TvTilbake, TV_UA, kontrollTekst, fitJournal });
   step('Pakker ut bilder');
   Art.preload().then(() => { try { brukUIsett(); } catch (e) { } step('Bygger tittelrommet'); setTimeout(() => { showTitle(); step('Tegner første bilde'); G.okFrames = 0; requestAnimationFrame(loop); }, 40); });
 }

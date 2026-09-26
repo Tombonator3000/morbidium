@@ -8,7 +8,7 @@
    enkel grafikk slår det alltid av. Alt legges oppå den vanlige etasjen og
    kan tas bort igjen uten å bygge etasjen på nytt.
    Kvalitet: høy, middels eller lav, valgt i innstillingene eller automatisk.
-   Automatisk starter på høy (middels på berøringsskjerm) og går ned et trinn
+   Automatisk starter på høy (middels på berøringsskjerm og TV) og går ned et trinn
    når bildefrekvensen holder seg lav, til slutt slås 3D av.
    ============================================================ */
 const D3 = {
@@ -20,7 +20,7 @@ const D3 = {
     lav: { navn: 'lav', skygge: 512, lys: 4, glod: false, stov: 0, straaler: false, taake: false, tilt: 0, kant: false, dpr: 1 }
   }, // tilt: hvor uskarpt det blir over og under pasienten (04_render.js), også på telefon (middels)
   /* valgt nivå: fast i innstillingene (1 lav, 2 middels, 3 høy) eller automatisk (0) */
-  kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse ? 'middels' : 'hoy'); },
+  kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse || R.tv ? 'middels' : 'hoy'); },
   /* «Lys og skygge» av (R.lightsOn) gir et jevnt opplyst rom: ingen punktlys, skygger, lysstråler eller kantlys.
      Telefoner og TV får høyst 1024 i skyggekartet, også på høy: 2048 med dybdebuffer tar rundt 24 MB mer grafikkminne, og telefoner har mistet WebGL av mindre */
   Q() { let q = this.NIVA[this.kval()] || this.NIVA.hoy; if ((R.coarse || R.tv) && q.skygge > 1024) q = Object.assign({}, q, { skygge: 1024 }); return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },

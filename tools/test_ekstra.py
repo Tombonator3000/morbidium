@@ -293,7 +293,7 @@ async def main():
             for side in range(await pg.evaluate("(k) => hbSider(HANDBOK[k])", k)):
                 if side: await pg.click('#hNext'); await pg.wait_for_timeout(150)
                 kap.append(await pg.evaluate(HB_PLASS))
-        sjekk('pasienthåndboka har ti kapitler med fiendeindeks, og alle sidene får plass', nkap == 10 and len(kap) == 17 and all(kap), kap)
+        sjekk('pasienthåndboka har ti kapitler med fiendeindeks, og alle sidene får plass', nkap == 10 and len(kap) == 18 and all(kap), kap)
         await pg.click('[data-close]'); await pg.wait_for_timeout(300)
         await pg.click('#tArch'); await pg.wait_for_timeout(400)
         a = await pg.evaluate("() => ({ mapper: document.querySelectorAll('.mappe').length, portrett: document.querySelectorAll('.mappe canvas').length })")
@@ -1581,6 +1581,360 @@ async def main():
         sjekk('telefon: middels med tilt-shift (0,45) i mål uten dybdebuffer, og høyst 20 glorier', st['coarse'] and st['kval'] == 'middels' and st['tilt'] == .45 and st['us'] == [False, False] and 0 < st['n'] <= 20 and st['tak'] == 20, st)
         sjekk('telefon: det skarpe båndet følger pasienten, smalere stående (0,14) enn liggende (0,2)', abs(st['fokus'][0] - st['fokus'][1]) < 1e-3 and st['fokus'][2] == .14 and abs(lg['fokus'][0] - lg['fokus'][1]) < 1e-3 and lg['fokus'][2] == .2, [st['fokus'], lg['fokus']])
         sjekk('ingen konsollfeil (diorama på telefon)', not pg.errs, pg.errs[:6])
+        # 40) Stort kart: ringen, M, pausen og håndkontrollen åpner det, M, Esc, B og Lukk lukker det, i kamp slår et klikk på ringen,
+        #     tegnforklaringen viser det du har sett, lerretene frigjøres, og det får plass stående og liggende på telefon, i 3D og i alle slags etasjer
+        ramme = "const ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });"
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg)
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        ring = await pg.evaluate("() => { const r = document.getElementById('mapring'); return { rolle: r.getAttribute('role'), pe: getComputedStyle(r).pointerEvents, navn: r.getAttribute('aria-label'), rad: KONTROLLER.some(k => k[0] === 'Kartet'), tips: !!TIPS.kart }; }")
+        sjekk('kartringen er en knapp (rolle, navn og pekerhendelser), og kartet står i kontrollene og tipsene', ring == {'rolle': 'button', 'pe': 'auto', 'navn': 'Kartet (M)', 'rad': True, 'tips': True}, ring)
+        await pg.evaluate("() => rolig()")  # noen oppvåkninger begynner i kamp, og da er et klikk på ringen et slag
+        await pg.click('#mapring')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=10000)
+        k1 = await pg.evaluate("""() => { const c = document.getElementById('kCan'), p = document.getElementById('kPil'), l = parseFloat(p.style.left), t = parseFloat(p.style.top);
+          return { w: c.width, h: c.height, pil: l >= 3 && t >= 3 && l <= parseFloat(c.style.width) + 3 && t <= parseFloat(c.style.height) + 3, fokus: document.activeElement.id, forste: Math.round(Kart.ms), gulv: !!Kart.gulvBilde() }; }""")
+        await pg.screenshot(path='/tmp/e_kart_pc.png')
+        await pg.keyboard.press('m')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        k1['frigjort'] = await pg.evaluate("() => { const c = document.getElementById('kCan'); return !!c && c.width === 0 && c.height === 0; }")
+        sjekk('et klikk på ringen åpner kartet over det malte gulvet, med pila på pasienten, og M lukker det og frigjør lerretet', k1['w'] >= 360 and k1['h'] > 300 and k1['pil'] and k1['fokus'] == 'kLukk' and k1['gulv'] and k1['frigjort'], k1)
+        await pg.keyboard.press('m')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=20000)
+        await pg.keyboard.press('Escape')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        # tegnetiden: det beste av tre nye tegninger, så en annen nettleser som går samtidig ikke gir falsk feil
+        tid = await pg.evaluate("() => { Kart.apne(); const ms = []; for (let i = 0; i < 3; i++) { Kart.tegn(); ms.push(Kart.ms); } closePanel(); return { beste: Math.round(Math.min(...ms)), forste: " + str(k1['forste']) + " }; }")
+        sjekk('M åpner kartet, Esc lukker det, og kartet tegnes på under 60 ms', tid['beste'] < 60, tid)
+        # i kamp: et klikk på ringen er et slag, og musa sikter gjennom den
+        kamp = await pg.evaluate("() => { const G = MORBIDIUM; window.__md = 0; document.getElementById('game').addEventListener('mousedown', () => window.__md++); G.combat = { r: G.F.rooms[G.F.startId], wave: 0, t: 999 }; const r = document.getElementById('mapring').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }")
+        await pg.click('#mapring'); await pg.wait_for_timeout(300)
+        kamp.update(await pg.evaluate("() => { const G = MORBIDIUM, ut = { state: G.state, md: window.__md, mx: Input.mouse.x, my: Input.mouse.y }; G.combat = null; return ut; }"))
+        sjekk('i kamp på PC åpner ikke et klikk på ringen kartet: det blir et slag, og musa sikter videre', kamp['state'] == 'play' and kamp['md'] == 1 and abs(kamp['mx'] - kamp['x']) < 3 and abs(kamp['my'] - kamp['y']) < 3, kamp)
+        # fiender fra en hendelse låser ingen dører (G.combat er tom), men et klikk på ringen er et slag da også
+        await pg.evaluate("() => { const P = MORBIDIUM.player; spawnEnemyBareTest('rotte', P.x + 2, P.z); }")
+        await pg.click('#mapring'); await pg.wait_for_timeout(300)
+        hf = await pg.evaluate("() => { const G = MORBIDIUM, ut = { state: G.state, md: window.__md, combat: !!G.combat }; if (G.state === 'panel') closePanel(); rolig(); return ut; }")
+        sjekk('fiender fra en hendelse rundt pasienten: et klikk på ringen er et slag og ikke kartet', hf == {'state': 'play', 'md': 2, 'combat': False}, hf)
+        # et annet panel som tar over mens kartet er oppe (drømmen begynner), frigjør lerretet også
+        byttet = await pg.evaluate("() => { Kart.apne(); const c = document.getElementById('kCan'), for_ = c.width; openPause(); const ut = { for: for_, etter: c.width, pause: !!document.getElementById('pK') }; closePanel(); return ut; }")
+        sjekk('kartet som byttes ut med et annet panel, frigjør lerretet', byttet['for'] >= 360 and byttet['etter'] == 0 and byttet['pause'], byttet)
+        # fra pausen og tilbake
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.getElementById('pK')", timeout=20000)
+        await pg.click('#pK'); await pg.wait_for_timeout(200)
+        pa = await pg.evaluate("() => !!document.querySelector('#panel .kartark')")
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => !!document.querySelector('#panel .clip')", timeout=20000)
+        await pg.click('#panel [data-close]'); await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        sjekk('Kartet i pausen åpner kartet, og Esc går tilbake til pausen', pa, pa)
+        # håndkontroll: pil høyre (15) åpner, pil høyre igjen lukker ikke (den skal bla i menyene), B (1) lukker
+        pad = await pg.evaluate("""async () => { """ + ramme + """ const G = MORBIDIUM, ut = {};
+          const p = { id: 'testpad', index: 0, connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [p] });
+          const trykk = async i => { p.buttons[i].pressed = true; p.buttons[i].value = 1; await ramme(4); p.buttons[i].pressed = false; p.buttons[i].value = 0; await ramme(4); };
+          await ramme(3); await trykk(15); ut.apnet = G.state === 'panel' && Kart.aapen(); ut.hint = (document.querySelector('.khint') || {}).textContent;
+          await trykk(15); ut.blir = Kart.aapen(); await trykk(1); ut.lukket = G.state === 'play';
+          await trykk(9); ut.pause = G.state === 'panel' && !!document.querySelector('#panel .clip'); await trykk(1); ut.pauseB = G.state === 'play';
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [] }); await ramme(3); return ut; }""")
+        sjekk('håndkontrollen: pil høyre åpner kartet, B lukker det (og pausen), og pil høyre lukker det ikke', pad == {'apnet': True, 'hint': 'B eller Start lukker kartet', 'blir': True, 'lukket': True, 'pause': True, 'pauseB': True}, pad)
+        # journalen bytter ut alt med data-kart med bilder av kuriositeter; ringen og minikartet skal overleve den
+        jr = await pg.evaluate("() => { openJournal('kuriositeter'); closeJournal(); openJournal(); closeJournal(); const m = document.getElementById('map'); return !!m && m.parentElement.id === 'mapring' && document.getElementById('mapring').parentElement.id === 'hud'; }")
+        sjekk('minikartet og ringen står igjen etter journalen', jr, jr)
+        # tegnforklaringen viser det du har sett: tjenestene med navn, overlegen uten navn før du har vært der
+        leg = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F; Folge.kart('alt'); Kart.apne(); const L = [...document.querySelectorAll('.kleg li')].map(l => l.textContent), tj = F.rooms.filter(r => r.role === 'service');
+          const ut = { tjenester: tj.every(r => L.some(t => t.startsWith(SERVICES[r.service].name))), sjef: L.some(t => t.startsWith('Overlegen')), du: L[0] === 'Du er her', ikoner: document.querySelectorAll('.kleg canvas').length === L.length, tall: document.querySelector('.ktall').textContent };
+          closePanel(); return ut; }""")
+        sjekk('tegnforklaringen: tjenestene med navn, overlegen uten navn før du har vært der, og hvor mye som er utforsket', leg['tjenester'] and leg['sjef'] and leg['du'] and leg['ikoner'] and 'utforsket' in leg['tall'], leg)
+        # alle slags etasjer: Parken, Nattskogen, en drøm, «Enkel grafikk» og uten det malte gulvet
+        et = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const prov = navn => { Kart.apne(); ut[navn] = !!document.querySelector('#panel .kartark') && Kart.merker().L.length >= 1 && document.getElementById('kCan').width >= 360; closePanel(); };
+          for (const d of [1, 5]) { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); prov('etasje' + d); }
+          G.run.dromVent = 3; startFloor(3, false); await vent(300); ut.drom = !!G.drom; G.seen.fill(1); Kart.apne(); ut.dor = [...document.querySelectorAll('.kleg li')].some(l => l.textContent.startsWith('Døra')) && document.querySelector('.kund').textContent.startsWith('Drømmen'); closePanel();
+          for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
+          G.meta.settings.simple = true; applySettings(); startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); ut.safe = R.safe; prov('enkel');
+          G.meta.settings.simple = false; applySettings();
+          const gb = Kart.gulvBilde; Kart.gulvBilde = () => null; prov('flatt'); Kart.gulvBilde = gb;
+          return ut; }""")
+        sjekk('kartet virker i Parken, Nattskogen, drømmen (med døra), med «Enkel grafikk» og uten det malte gulvet', et == {'etasje1': True, 'etasje5': True, 'drom': True, 'dor': True, 'safe': True, 'enkel': True, 'flatt': True}, et)
+        sjekk('ingen konsollfeil (stort kart på PC)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: det malte gulvet ligger under et annet materiale, men kartet finner det
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL3D); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg, url=URL3D)
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=60000)
+        d3 = await pg.evaluate("() => { Folge.kart('alt'); Kart.apne(); const ut = { d3: D3.on && D3.bygd, kart: !!document.querySelector('#panel .kartark'), gulv: !!Kart.gulvBilde() }; return ut; }")
+        await pg.wait_for_timeout(300); await pg.screenshot(path='/tmp/e_kart_3d.png')
+        await pg.evaluate("() => closePanel()")
+        sjekk('kartet i 3D bruker det malte gulvet', d3 == {'d3': True, 'kart': True, 'gulv': True}, d3)
+        sjekk('ingen konsollfeil (stort kart i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # telefon: trykk på ringen stående og liggende, snu telefonen med kartet oppe, og ingenting ruller
+        UA_K = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        ctx = await b.new_context(viewport={'width': 390, 'height': 844}, has_touch=True, is_mobile=True, device_scale_factor=2, user_agent=UA_K)
+        pg = await ctx.new_page()
+        if THREE:
+            await pg.route('**/three.min.js', lambda r: r.fulfill(path=THREE, content_type='application/javascript'))
+            await pg.route('https://fonts.googleapis.com/**', lambda r: r.fulfill(body='', content_type='text/css'))
+        pg.errs = []
+        pg.on('pageerror', lambda e: pg.errs.append('PAGEERROR: ' + str(e)))
+        pg.on('console', lambda m: pg.errs.append(m.type + ': ' + m.text) if m.type == 'error' else None)
+        await pg.goto(URL); await pg.wait_for_timeout(2500); await pg.evaluate("() => localStorage.clear()")
+        await pg.goto(URL); await pg.wait_for_timeout(2500)
+        await pg.tap('#tNew'); await pg.wait_for_timeout(600); await pg.tap('[data-awk]')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        await pg.evaluate("() => { rolig(); Folge.kart('alt'); }")
+        plass = """() => { const p = document.getElementById('panel'), a = document.getElementById('kartark'), r = a.getBoundingClientRect(), l = document.getElementById('kLukk').getBoundingClientRect();
+          return { lag: a.className.replace('fit kartark paper', '').trim() || 'bred', rull: p.scrollHeight > p.clientHeight + 2 || p.scrollWidth > p.clientWidth + 2, inne: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1, lukk: l.bottom <= innerHeight && l.width > 30, zoom: +a.style.zoom, lup: getComputedStyle(document.querySelector('#mapring .kluppe')).display, hint: !!document.querySelector('.khint') }; }"""
+        await pg.tap('#mapring')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=10000); await pg.wait_for_timeout(300)
+        st = await pg.evaluate(plass)
+        await pg.screenshot(path='/tmp/e_kart_staende.png')
+        sjekk('stående telefon: et trykk på ringen åpner kartet i smalt oppsett, alt får plass uten rulling, og uten tastehint', st['lag'] == 'smal' and not st['rull'] and st['inne'] and st['lukk'] and st['zoom'] >= .75 and st['lup'] == 'block' and not st['hint'], st)
+        await pg.set_viewport_size({'width': 844, 'height': 390})
+        await pg.wait_for_function("() => { const a = document.getElementById('kartark'); return !!a && a.classList.contains('lig'); }", timeout=20000); await pg.wait_for_timeout(300)
+        lg = await pg.evaluate(plass)
+        await pg.screenshot(path='/tmp/e_kart_liggende.png')
+        await pg.tap('#kLukk')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        lg['frigjort'] = await pg.evaluate("() => document.getElementById('kCan').width === 0")
+        await pg.tap('#mapring')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .kartark')", timeout=10000); await pg.wait_for_timeout(300)
+        lg['igjen'] = await pg.evaluate(plass)
+        await pg.tap('#kLukk'); await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        sjekk('telefonen snus med kartet oppe: liggende oppsett uten rulling, Lukk frigjør lerretet, og ringen kan trykkes på liggende også', lg['lag'] == 'lig' and not lg['rull'] and lg['inne'] and lg['lukk'] and not lg['hint'] and lg['frigjort'] and lg['igjen']['lag'] == 'lig' and not lg['igjen']['rull'], lg)
+        sjekk('ingen konsollfeil (stort kart på telefon)', not pg.errs, pg.errs[:6])
+        await ctx.close()
+
+        # 41) Kontroller i menyene: A, B, retningene, LB og RB på tittelen, i innleggelsen, pausen, innstillingene, journalen, butikken
+        #     og dødsskjermen, piltastene i menyene, tastene i tekstene etter enheten, berøringsknappene skjules, og kontrollen på plass 1 styrer
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.add_init_script("""(() => {
+          window.__pad = { id: 'Testkontroll (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+          window.__pads = () => [window.__pad];
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => window.__pads() });
+          window.__ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });
+          window.__trykk = async (i, ned = 3, opp = 3) => { const k = window.__pad.buttons[i]; k.pressed = true; k.value = 1; await window.__ramme(ned); k.pressed = false; k.value = 0; await window.__ramme(opp); };
+        })()""")
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await pg.goto(URL)
+        await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title' && document.activeElement && document.activeElement.id === 'tNew'", timeout=30000)
+        t1 = await pg.evaluate("""async () => { await __trykk(0); await __ramme(2); const f = document.activeElement, cs = getComputedStyle(f);
+          return { inntak: MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .intake'), fokus: f.hasAttribute('data-awk'), ring: cs.outlineStyle === 'solid' && parseFloat(cs.outlineWidth) >= 2.5, pad: document.body.classList.contains('pad'), enhet: Input.lastDevice }; }""")
+        sjekk('håndkontrollen på tittelen: A trykker Ny pasient, og innleggelsen har fokus med synlig ring', t1 == {'inntak': True, 'fokus': True, 'ring': True, 'pad': True, 'enhet': 'pad'}, t1)
+        await pg.evaluate("() => __trykk(0)")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        hud = await pg.evaluate("async () => { rolig(); await __ramme(3); return [...document.querySelectorAll('#cards .acard .k')].map(e => e.textContent).join(' '); }")
+        sjekk('A i innleggelsen legger inn pasienten, og evnekortene viser LB RB LT RT', hud == 'LB RB LT RT', hud)
+        # pausen og innstillingene: Start, pil ned til Innstillinger, A, RB bytter fane, pil ned til spaken, pil høyre og venstre endrer den
+        ps = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; await __trykk(9); await __ramme(2);
+          ut.pause = G.state === 'panel' && !!document.querySelector('#panel .clip'); ut.forste = document.activeElement.hasAttribute('data-close');
+          await __trykk(13); ut.ned = document.activeElement.id;
+          for (let i = 0; i < 8 && document.activeElement.id !== 'pS'; i++) await __trykk(13);
+          await __trykk(0); await __ramme(2); ut.inn = !!document.getElementById('settings') && document.activeElement.dataset.tab === 'lyd';
+          await __trykk(5); await __ramme(2); const on = document.querySelector('.ktab.on'); ut.fane = on.dataset.tab; ut.fanefokus = document.activeElement === on;
+          await __trykk(13); const sp = document.activeElement, k = sp.dataset.s, v0 = G.meta.settings[k]; ut.spak = k;
+          await __trykk(15); ut.opp = +(G.meta.settings[k] - v0).toFixed(3);
+          await __trykk(14); ut.ned2 = +(G.meta.settings[k] - v0).toFixed(3);
+          await __trykk(13); ut.neste = document.activeElement.dataset.s; await __trykk(12); await __trykk(12); ut.oppTilFane = document.activeElement.dataset.tab;
+          return ut; }""")
+        await pg.screenshot(path='/tmp/e_pad_meny.png')
+        ps.update(await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; await __trykk(4); await __ramme(2); ut.lb = document.querySelector('.ktab.on').dataset.tab;
+          await __trykk(1); await __ramme(2); ut.tilbake = !!document.querySelector('#panel .clip'); await __trykk(1); await __ramme(2); ut.ute = G.state; return ut; }"""))
+        sjekk('pausen og innstillingene med håndkontroll: pil ned, A, RB og LB bytter fane, spaken endres med pil høyre og venstre, B går tilbake',
+              ps == {'pause': True, 'forste': True, 'ned': 'pJ', 'inn': True, 'fane': 'bilde', 'fanefokus': True, 'spak': 'kamera', 'opp': .05, 'ned2': 0, 'neste': 'shake', 'oppTilFane': 'bilde', 'lb': 'lyd', 'tilbake': True, 'ute': 'play'}, ps)
+        # journalen: Select åpner, A velger et kort, retningene flytter fokus, A på en tom plass flytter kortet dit og så til lomma, RB og LB bytter fane, B slipper kortet og lukker
+        jr = await pg.evaluate("""async () => { const G = MORBIDIUM, run = G.run, ut = {};
+          run.slots = [null, null, null, null]; run.reserve = []; giveCard('due', true); const fra = run.slots.findIndex(Boolean), til = run.slots.findIndex(c => !c);
+          await __trykk(8); await __ramme(2); ut.aapen = G.state === 'journal' && document.activeElement.matches('.jcard[data-ref]');
+          document.querySelector('.jcard[data-ref="s"][data-i="' + fra + '"]').focus(); await __trykk(0); ut.valgt = !!G.jsel && !!document.querySelector('#journal .jcard.sel');
+          const sett = new Set(); for (const d of [15, 13, 14, 12]) { await __trykk(d); if (document.getElementById('journal').contains(document.activeElement)) sett.add(document.activeElement); }
+          ut.flyttet = sett.size >= 2;
+          document.querySelector('.slot.empty[data-slot="' + til + '"]').focus(); await __trykk(0);
+          const f = document.activeElement; ut.flytt = !run.slots[fra] && !!run.slots[til] && run.slots[til].id === 'due'; ut.fokus = f.classList.contains('jcard') && f.dataset.ref === 's' && +f.dataset.i === til;
+          f.focus(); await __trykk(0); document.querySelector('.pocket [data-lomme]').focus(); await __trykk(0);
+          ut.lomme = run.reserve.length === 1 && run.reserve[0].id === 'due' && !run.slots.some(Boolean) && !!document.activeElement.dataset.lomme;
+          await __trykk(5); ut.rb = G.jtab; await __trykk(4); await __trykk(4); ut.lb = G.jtab; await __trykk(5);
+          document.querySelector('.jcard[data-ref]').focus(); await __trykk(0); const v = !!G.jsel; await __trykk(1); ut.slipp = v && !G.jsel && G.state === 'journal';
+          ut.knapp = document.getElementById('jClose').textContent; await __trykk(1); await __ramme(2); ut.lukket = G.state === 'play'; return ut; }""")
+        sjekk('journalen med håndkontroll: A og A flytter et kort til en tom plass, retningene, RB og LB, og B slipper kortet og lukker',
+              jr == {'aapen': True, 'valgt': True, 'flyttet': True, 'flytt': True, 'fokus': True, 'lomme': True, 'rb': 'diagnoser', 'lb': 'utstyr', 'slipp': True, 'knapp': 'Lukk journalen (B)', 'lukket': True}, jr)
+        # butikken: knappen sier B, og B lukker
+        sh = await pg.evaluate("""async () => { const G = MORBIDIUM; openService('kafeteria'); await __ramme(2); const ut = { knapp: document.querySelector('#panel [data-close]').textContent, fokus: document.activeElement.classList.contains('offer') };
+          await __trykk(1); await __ramme(2); ut.ute = G.state; return ut; }""")
+        sjekk('butikken med håndkontroll: Gå (B), første vare har fokus, og B lukker', sh == {'knapp': 'Gå (B)', 'fokus': True, 'ute': 'play'}, sh)
+        # piltastene i pausen, og tekstene går tilbake til tastaturet
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .clip')", timeout=20000)
+        await pg.wait_for_timeout(200)
+        await pg.keyboard.press('ArrowDown'); await pg.keyboard.press('ArrowDown')
+        kb = await pg.evaluate("() => ({ fokus: document.activeElement.id, pad: document.body.classList.contains('pad') })")
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        kb['kort'] = await pg.evaluate("async () => { await __ramme(3); return [...document.querySelectorAll('#cards .acard .k')].map(e => e.textContent).join(' '); }")
+        sjekk('piltastene flytter fokus i pausen, og tastaturet tar bort ringen og gir tallene tilbake', kb == {'fokus': 'pJ', 'pad': False, 'kort': '1 2 3 4'}, kb)
+        # berøringsknappene skjules når håndkontrollen brukes (telefon speilet til TV med kontroll), og en kontroll på plass 1 styrer pasienten
+        mv = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, ut = {};
+          Input.touch.active = true; document.getElementById('touch').classList.remove('hidden'); document.body.classList.add('touch'); Input.enhet('touch');
+          __pad.axes[0] = .9; await __ramme(2); __pad.axes[0] = 0; await __ramme(2);
+          ut.touch = { skjult: document.getElementById('touch').classList.contains('hidden'), body: document.body.classList.contains('touch'), aktiv: Input.touch.active, pad: document.body.classList.contains('pad') };
+          const r = G.F.rooms[G.F.startId]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; __pad.index = 1; window.__pads = () => [null, __pad]; __pad.axes[0] = 1;
+          const x0 = P.x, t0 = G.time; for (let i = 0; i < 600 && G.time < t0 + .4; i++) await __ramme(1); __pad.axes[0] = 0;
+          ut.dx = P.x - x0 > .5; ut.index = Input.gp.index;
+          window.__pads = () => [{ id: 'noe annet', index: 0, connected: true, mapping: '', timestamp: 0, axes: [0, 0], buttons: [] }, __pad]; await __ramme(2); ut.standard = Input.gp.index === 1 && Input.gp.mapping === 'standard';
+          window.__pads = () => []; dispatchEvent(new Event('gamepaddisconnected')); await __ramme(2);
+          ut.frakoblet = !Input.gp.connected && Input.lastDevice === 'kb' && !document.body.classList.contains('pad');
+          __pad.index = 0; window.__pads = () => [__pad]; return ut; }""")
+        sjekk('håndkontrollen skjuler berøringsknappene, en kontroll på plass 1 styrer pasienten, standardoppsettet velges, og frakobling rydder',
+              mv == {'touch': {'skjult': True, 'body': False, 'aktiv': False, 'pad': True}, 'dx': True, 'index': 1, 'standard': True, 'frakoblet': True}, mv)
+        # døden: en A som holdes gjennom dødsfallet trykker ikke på Ny pasient det første halve sekundet, så gjør A det
+        await pg.evaluate("() => { __pad.buttons[0].pressed = true; __pad.buttons[0].value = 1; const P = MORBIDIUM.player; P.invuln = 0; P.iframe = 0; hurt(P, 9999, { type: 'kultist' }); }")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'dead' && !!document.getElementById('dNew')", timeout=30000)
+        dd = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = { vakt: MenyNav.ro > 0, fokus: document.activeElement.id };
+          __pad.buttons[0].pressed = false; __pad.buttons[0].value = 0; await __ramme(1); await __trykk(0, 1, 1); ut.blokkert = G.state === 'dead';
+          await __trykk(15); ut.hoyre = document.activeElement.id; await __trykk(14); ut.venstre = document.activeElement.id;
+          for (let i = 0; i < 400 && MenyNav.ro > 0; i++) await __ramme(1);
+          await __trykk(0); await __ramme(2); ut.inntak = G.state === 'panel' && !!document.querySelector('#panel .intake'); return ut; }""")
+        await pg.evaluate("() => __trykk(0)")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .2", timeout=30000)
+        dd['nytt'] = await pg.evaluate("() => MORBIDIUM.player.alive && MORBIDIUM.player.hp > 0")
+        sjekk('døden med håndkontroll: A holdt gjennom dødsfallet trykker ikke, retningene flytter, og A på Ny pasient legger inn en ny pasient',
+              dd == {'vakt': True, 'fokus': 'dNew', 'blokkert': True, 'hoyre': 'dTitle', 'venstre': 'dNew', 'inntak': True, 'nytt': True}, dd)
+        sjekk('ingen konsollfeil (kontroller i menyene)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 42) TV-modus: nettleseren i en Samsung-TV kjennes igjen, HUD-en holder seg innenfor margene uten overlapp og står midt på,
+        #     middels kvalitet, tilbaketasten på fjernkontrollen og historikken, fullskjerm, håndboka, linja om kontrolleren, rapporten og innstillingen
+        TVUA = 'Mozilla/5.0 (SMART-TV; LINUX; Tizen 8.0) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/7.0 Chrome/120.0.6099.5 TV Safari/537.36'
+        TV_INIT = """(() => {
+          window.__pad = { id: 'Testkontroll (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+          window.__pads = () => [];
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => window.__pads() });
+          window.__ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });
+          window.__vent = async (f, n = 400) => { for (let i = 0; i < n && !f(); i++) await window.__ramme(1); return !!f(); };
+          // fullskjerm uten ekte fullskjerm: nettleseren i testen kan ikke, men knappen skal be om det og teksten følge med
+          window.__fs = null; const bytt = el => { window.__fs = el; setTimeout(() => document.dispatchEvent(new Event('fullscreenchange', { bubbles: true })), 0); return Promise.resolve(); };
+          Object.defineProperty(Document.prototype, 'fullscreenEnabled', { configurable: true, get: () => true });
+          Object.defineProperty(Document.prototype, 'fullscreenElement', { configurable: true, get: () => window.__fs });
+          Element.prototype.requestFullscreen = function () { return bytt(this); }; Document.prototype.exitFullscreen = function () { return bytt(null); };
+          // tilbaketasten på fjernkontrollen: Samsung sender keyCode 10009 og key XF86Back, uten code
+          window.__tilbake = () => { for (const t of ['keydown', 'keyup']) { const e = new KeyboardEvent(t, { key: 'XF86Back', bubbles: true, cancelable: true }); Object.defineProperty(e, 'keyCode', { get: () => 10009 }); document.body.dispatchEvent(e); } };
+        })()"""
+        HUD_TV = """() => { const W = innerWidth, H = innerHeight, r = id => { const e = document.getElementById(id); if (!e || getComputedStyle(e).display === 'none') return null; const b = e.getBoundingClientRect(); return b.width ? [b.left, b.top, b.right, b.bottom] : null; };
+          const navn = ['badge', 'roomsign', 'tools', 'cards', 'weapon', 'cons', 'mapring', 'tips'], k = navn.map(r), ute = [], par = [];
+          const over = (a, c) => a[0] < c[2] - 1 && c[0] < a[2] - 1 && a[1] < c[3] - 1 && c[1] < a[3] - 1;
+          k.forEach((a, i) => { if (a && (a[0] < W * .045 - 1 || a[1] < H * .045 - 1 || a[2] > W * .955 + 1 || a[3] > H * .955 + 1)) ute.push(navn[i]); });
+          for (let i = 0; i < k.length; i++) for (let j = i + 1; j < k.length; j++) if (k[i] && k[j] && over(k[i], k[j])) par.push(navn[i] + '-' + navn[j]);
+          const c = k[3], s = k[1]; return { ute, par, alle: k.filter(Boolean).length, kortMidt: Math.round((c[0] + c[2]) / 2 - W / 2), skiltMidt: Math.round((s[0] + s[2]) / 2 - W / 2), ui: getComputedStyle(document.documentElement).getPropertyValue('--ui').trim() }; }"""
+        pg = await ny_side(b, viewport={'width': 1920, 'height': 1080}, user_agent=TVUA)
+        await pg.add_init_script(TV_INIT)
+        await pg.goto(URL)
+        await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title' && document.activeElement && document.activeElement.id === 'tNew'", timeout=30000)
+        t = await pg.evaluate("""async () => { const cs = getComputedStyle(document.documentElement), ut = { tv: R.tv, body: document.body.classList.contains('tv'), ui: cs.getPropertyValue('--ui').trim(), kval: D3.kval(), zoom: getComputedStyle(document.querySelector('#title .tmenu')).zoom };
+          await new Promise(r => setTimeout(r, 700)); ut.tittelFelle = !!(history.state && history.state.morbidium);
+          // pilene på fjernkontrollen kan komme uten code, bare med key
+          document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true })); ut.pil = document.activeElement.id;
+          const f = document.querySelector('#title [data-fs]'); ut.fs = f ? f.textContent : ''; f.click(); ut.fsBedt = window.__fs === document.documentElement;
+          await __vent(() => f.textContent === 'Avslutt fullskjerm', 100); ut.fsTekst = f.textContent; f.click(); await __vent(() => f.textContent === 'Fullskjerm', 100); ut.fsAv = !window.__fs && f.textContent === 'Fullskjerm';
+          return ut; }""")
+        sjekk('TV-modus: nettleseren i Samsung-TV-en kjennes igjen, større HUD og tittel, middels kvalitet, og ingen felle i historikken på tittelen',
+              t['tv'] and t['body'] and t['ui'] == '1.4' and t['kval'] == 'middels' and abs(float(t['zoom']) - 1.4) < .01 and not t['tittelFelle'], t)
+        sjekk('TV-modus: pilene på fjernkontrollen uten code flytter i menyen, og Fullskjerm på tittelen slås av og på med teksten etter',
+              t['pil'] == 'tHelp' and t['fs'] == 'Fullskjerm' and t['fsBedt'] and t['fsTekst'] == 'Avslutt fullskjerm' and t['fsAv'], t)
+        await pg.click('#tNew'); await pg.wait_for_timeout(500); await pg.click('[data-awk]')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        await pg.evaluate("() => { rolig(); MORBIDIUM.run.patient.name = 'Alf Nygaard'; MORBIDIUM.meta.tips = {}; MORBIDIUM.meta.settings.tips = true; Tips.vis('sjef'); }")
+        await pg.wait_for_function("() => { const t = document.getElementById('tips'); return t && t.classList.contains('inn') && getComputedStyle(t).opacity === '1'; }", timeout=20000)
+        h = await pg.evaluate(HUD_TV)
+        await pg.screenshot(path='/tmp/e_tv_hud.png')
+        # berøringsknappene vises ikke på TV, selv om noe skulle sende en berøring
+        h['touch'] = await pg.evaluate("() => { Input.touch.active = true; const t = document.getElementById('touch'); t.classList.remove('hidden'); const d = getComputedStyle(t).display; t.classList.add('hidden'); Input.touch.active = false; return d; }")
+        # største skjermtekst: taket på 1,6 holder kortene klar av apparatet
+        await pg.evaluate("() => { const s = MORBIDIUM.meta.settings; s.ui = 1.3; applySettings(); }"); await pg.wait_for_timeout(300)
+        h2 = await pg.evaluate(HUD_TV)
+        await pg.evaluate("() => { const s = MORBIDIUM.meta.settings; s.ui = 1; applySettings(); }")
+        sjekk('TV-modus: HUD-en holder seg innenfor 4,5 prosent av kanten uten overlapp, kort og skilt står midt på, og berøringsknappene er skjult',
+              not h['ute'] and not h['par'] and h['alle'] == 8 and abs(h['kortMidt']) <= 3 and abs(h['skiltMidt']) <= 3 and h['touch'] == 'none' and h['ui'] == '1.4', h)
+        sjekk('TV-modus med største skjermtekst: taket på 1,6, og fortsatt innenfor margene uten overlapp', h2['ui'] == '1.6' and not h2['ute'] and not h2['par'], h2)
+        # tilbaketasten og historikken: et ekstra steg i spillet, tilbake åpner og lukker pausen, og tasten og steget sammen gjør det bare én gang
+        tb = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}, felle = () => !!(history.state && history.state.morbidium);
+          ut.felle = await __vent(felle, 200);
+          __tilbake(); ut.tastPause = await __vent(() => G.state === 'panel' && !!document.getElementById('pS')); ut.fsPause = !!document.querySelector('#panel .pmenu [data-fs]');
+          ut.zoom = +document.querySelector('#panel .fit').style.zoom;
+          __tilbake(); ut.tastLukk = await __vent(() => G.state === 'play');
+          // en nettleser som bare går tilbake i historikken, uten tastetrykk: tiden siden forrige tast nullstilles, ellers ville en rask maskin
+          // tatt steget for en del av tasten over (samme trykk)
+          Input.tilbakeT = -1e9; history.back(); ut.histPause = await __vent(() => G.state === 'panel' && !!document.getElementById('pS')); ut.igjen = await __vent(felle, 200);
+          Input.tilbakeT = -1e9; history.back(); ut.histLukk = await __vent(() => G.state === 'play'); ut.igjen2 = await __vent(felle, 200);
+          // Samsung kan sende både tastetrykket og steget tilbake i historikken for samme trykk: da skal pausen åpnes, ikke åpnes og lukkes
+          const n0 = TvTilbake.n; __tilbake(); history.back(); ut.tatt = await __vent(() => TvTilbake.n > n0 && G.state === 'panel', 600); await __ramme(10);
+          ut.begge = G.state === 'panel' && !!document.getElementById('pS'); ut.igjen3 = await __vent(felle, 200);
+          return ut; }""")
+        sjekk('TV-modus: tilbake på fjernkontrollen åpner og lukker pausen, også som steg i historikken, og steget legges inn igjen',
+              tb == {'felle': True, 'tastPause': True, 'fsPause': True, 'zoom': tb['zoom'], 'tastLukk': True, 'histPause': True, 'igjen': True, 'histLukk': True, 'igjen2': True, 'tatt': True, 'begge': True, 'igjen3': True} and tb['zoom'] > 1.15, tb)
+        # testpanelet over pausen (?testmodus på TV-en): ett trykk på tilbake, som tast og som steg i historikken, lukker bare testpanelet
+        tp = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; Testmodus.apne('lyd'); await __ramme(3); ut.apen = Testmodus.apen;
+          const n0 = TvTilbake.n; __tilbake(); history.back(); ut.tatt = await __vent(() => TvTilbake.n > n0, 600); await __ramme(10);
+          ut.lukket = !Testmodus.apen; ut.pause = G.state === 'panel' && !!document.getElementById('pS'); ut.igjen = await __vent(() => !!(history.state && history.state.morbidium), 200); return ut; }""")
+        sjekk('TV-modus: tilbake med testpanelet over pausen lukker bare testpanelet, også når steget i historikken kommer i tillegg',
+              tp == {'apen': True, 'tatt': True, 'lukket': True, 'pause': True, 'igjen': True}, tp)
+        # rapporten og linja om kontrolleren i Innstillinger, Styring (kontrolleren dukker først opp etter et knappetrykk)
+        rp = await pg.evaluate("""async () => { const ut = {}; ut.uten = Testmodus.enhet(); openSettings(false, null, 'styring'); await __ramme(2); ut.ingen = document.getElementById('kStatus').textContent;
+          window.__pads = () => [window.__pad]; __pad.buttons[3].pressed = true; await __ramme(3); __pad.buttons[3].pressed = false; await __vent(() => document.getElementById('kStatus').textContent.startsWith('Kontroller funnet'), 100);
+          ut.funnet = document.getElementById('kStatus').textContent; ut.med = Testmodus.enhet(); closePanel(); await __ramme(2);
+          openSettings(false, null, 'spill'); await __ramme(2); ut.fane = document.querySelector('[data-s="tv"]').parentNode.querySelector('em').textContent; closePanel();
+          openHandbook({}, 1, 1); await __ramme(2); ut.sider = hbSider(HANDBOK[1]); ut.side = document.querySelector('.hpage h2').textContent + ': ' + (document.querySelector('.htext .hunder') || {}).textContent; return ut; }""")
+        rp['plass'] = await pg.evaluate(HB_PLASS)
+        await pg.screenshot(path='/tmp/e_tv_handbok.png')
+        sjekk('TV-modus: testrapporten nevner Samsung-TV-en, kontrolleren, TV-modus og fullskjerm, og Styring sier om kontrolleren er funnet',
+              'Samsung-TV (Tizen 8.0, Chromium 120)' in rp['uten'] and 'ingen kontroller funnet' in rp['uten'] and 'TV-modus på' in rp['uten'] and 'fullskjerm nei' in rp['uten']
+              and rp['ingen'].startswith('Ingen kontroller funnet') and rp['funnet'] == 'Kontroller funnet: Testkontroll (STANDARD GAMEPAD).' and 'kontroller Testkontroll (STANDARD GAMEPAD) (standard oppsett, 17 knapper, 4 akser)' in rp['med'] and rp['fane'] == 'automatisk (på)', rp)
+        sjekk('håndboka: Styring har en side til, «Spille på TV», som får plass', rp['sider'] == 2 and rp['side'] == 'Styring: Spille på TV' and rp['plass'], rp)
+        # journalen er større på TV, men innenfor margene
+        await pg.evaluate("() => { closePanel(); openJournal(); }"); await pg.wait_for_timeout(600)
+        jr = await pg.evaluate("() => { const r = document.querySelector('#journal .jwrap').getBoundingClientRect(), m = /scale\\(([\\d.]+)\\)/.exec(document.querySelector('#journal .jwrap').style.transform); closeJournal(); return { s: m ? +m[1] : 0, inne: r.left >= innerWidth * .045 - 1 && r.top >= innerHeight * .045 - 1 && r.right <= innerWidth * .955 + 1 && r.bottom <= innerHeight * .955 + 1 }; }")
+        # innstillingen: av (2) slår TV-modus av også i TV-en, og automatisk (0) slår den på igjen
+        av = await pg.evaluate("() => { const s = MORBIDIUM.meta.settings; s.tv = 2; applySettings(); const ut = { tv: R.tv, body: document.body.classList.contains('tv'), ui: getComputedStyle(document.documentElement).getPropertyValue('--ui').trim(), kval: D3.kval() }; s.tv = 0; applySettings(); ut.igjen = R.tv && document.body.classList.contains('tv'); return ut; }")
+        sjekk('TV-modus: journalen skaleres innenfor margene, og innstillingen «av» slår TV-modus av (automatisk på igjen)',
+              jr['inne'] and jr['s'] > 1 and av == {'tv': False, 'body': False, 'ui': '1', 'kval': 'hoy', 'igjen': True}, [jr, av])
+        # tilbake til tittelen: steget som er igjen, tar tilbake med seg ut av spillet, slik tilbake på tittelen skal,
+        # også når tasten kommer fram i tillegg (Samsung). Uten tastetrykk sjekkes det i 3D-delen under
+        await pg.evaluate("() => showTitle()"); await pg.wait_for_timeout(300)
+        sjekk('ingen konsollfeil (TV-modus)', not pg.errs, pg.errs[:6])
+        await pg.evaluate("() => { __tilbake(); history.back(); }")
+        for i in range(100):
+            if pg.url == 'about:blank': break
+            await pg.wait_for_timeout(100)
+        sjekk('TV-modus: tilbake på tittelen går ut av spillet, også når steget fra spillet er igjen og tasten kommer fram', pg.url == 'about:blank', pg.url)
+        await pg.close()
+        # vanlig nettleser: TV-modus er av, ingen felle i historikken, lappen om TV-modus med håndkontroll på stor skjerm, og «på» slår den på
+        pg = await ny_side(b, viewport={'width': 1920, 'height': 1080})
+        await pg.add_init_script(TV_INIT)
+        await start_lop(pg)
+        pc = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = { tv: R.tv, body: document.body.classList.contains('tv'), kval: D3.kval() }; await new Promise(r => setTimeout(r, 700)); ut.felle = !!(history.state && history.state.morbidium);
+          rolig(); G.meta.tips = {}; G.meta.settings.tips = true; Input.enhet('pad'); const t0 = G.time; await __vent(() => G.meta.tips.tv || G.time > t0 + 2, 600); ut.tips = !!G.meta.tips.tv;
+          Input.enhet('kb'); G.meta.settings.tv = 1; applySettings(); ut.paa = R.tv && document.body.classList.contains('tv') && D3.kval() === 'middels'; G.meta.settings.tv = 0; applySettings(); return ut; }""")
+        sjekk('vanlig nettleser: TV-modus er av uten felle i historikken, lappen om TV-modus kommer med håndkontroll på stor skjerm, og «på» slår den på',
+              pc == {'tv': False, 'body': False, 'kval': 'hoy', 'felle': False, 'tips': True, 'paa': True}, pc)
+        sjekk('ingen konsollfeil (TV-modus av)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D og «Enkel grafikk» på TV-en: 3D starter på middels, og enkel grafikk slår det av uten feil
+        pg = await ny_side(b, viewport={'width': 1920, 'height': 1080}, user_agent=TVUA)
+        await pg.add_init_script(TV_INIT)
+        await pg.goto(URL3D); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=30000)
+        # klikk i siden i stedet for med musa: 3D i 1920 x 1080 med programvaregrafikk tegner så sakte at et museklikk kan gå ut på tid når maskinen har mye å gjøre
+        await pg.evaluate("() => document.getElementById('tNew').click()"); await pg.wait_for_selector('[data-awk]', timeout=30000); await pg.evaluate("() => document.querySelector('[data-awk]').click()")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .2", timeout=60000)
+        d3 = await pg.evaluate("""async () => { const ut = { on: D3.on, bygd: D3.bygd, kval: D3.kval(), skygge: D3.Q().skygge };
+          const s = MORBIDIUM.meta.settings; s.simple = true; applySettings(); await __ramme(5); ut.enkel = !D3.on && R.safe && document.body.classList.contains('tv'); return ut; }""")
+        await pg.screenshot(path='/tmp/e_tv_enkel.png')
+        sjekk('TV-modus i 3D: starter på middels, og «Enkel grafikk» virker', d3 == {'on': True, 'bygd': True, 'kval': 'middels', 'skygge': 1024, 'enkel': True}, d3)
+        sjekk('ingen konsollfeil (TV-modus i 3D)', not pg.errs, pg.errs[:6])
+        # nettleserens egen tilbakeknapp (ingen tast): på tittelen tar steget fra spillet tilbake med seg ut av spillet
+        await pg.wait_for_function("() => TvTilbake.fanget", timeout=10000)
+        await pg.evaluate("() => { showTitle(); history.back(); }")
+        for i in range(100):
+            if pg.url == 'about:blank': break
+            await pg.wait_for_timeout(100)
+        sjekk('TV-modus: tilbake uten tastetrykk på tittelen går ut av spillet, også når steget fra spillet er igjen', pg.url == 'about:blank', pg.url)
         await pg.close()
 
         await b.close()
