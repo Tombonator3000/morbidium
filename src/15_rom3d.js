@@ -73,7 +73,7 @@ const D3 = {
     if (F.ute) { mane.intensity = .78; mane.color.set('#a8bce8'); } // ute lyser månen sterkere
     this.maneI = mane.intensity; // lynet (38_effekter.js) løfter månelyset et øyeblikk, så alt kaster skarp skygge
     sc.add(amb, hemi, mane, mane.target); this.mane = mane; this.ting.push(amb, hemi, mane, mane.target);
-    this.pool = []; for (let i = 0; i < Q.lys; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); }
+    this.pool = []; this.nyPool = true; for (let i = 0; i < Q.lys; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); } // i en ny etasje tennes lysene med en gang (fordel)
     // nivået: materialene byttes til tegneseriebelyste varianter
     const bytt = (mesh, ny) => { this.byttet.push([mesh, mesh.material]); mesh.material = ny; };
     const PM = Paint.mesh || {};
@@ -322,6 +322,39 @@ const D3 = {
      til de blir borte. Grensen .6 holder den gjennomsiktige mesteren (.08 til .52) ute hele tiden i stedet for at skyggen blinker */
   dukkeVis(d) { const vis = d.U.uDissolve.value < .5 && d.U.uAlpha.value > .6; if (vis === d.d3vis) return; d.d3vis = vis; for (const m of d.d3k) m.castShadow = vis; },
   /* ---------- hvert bilde ---------- */
+  /* punktlysene deles ut uten at lyset hopper av og på rundt pasienten. Lykta har det første for seg selv. Resten går til de nærmeste
+     kildene, men en kilde som har et punktlys, beholder det så lenge den er blant de N+2 nærmeste og ingen kilde uten lys er 1,5 nærmere
+     enn den lengst unna. Den som mister lyset, blekner bort på 0,2 sekunder, og først da tennes den neste, på 0,25. Et lysglimt (blink) får
+     lyset med en gang, fra den som er lengst unna, men bare ett om gangen. Svarte kilder (en lampe som har falt ned) får aldri punktlys, og
+     en som blir svart, beholder sitt i to sekunder, så lampene har lyset sitt igjen når mørket etter sjefene er over. Kilder som er borte,
+     slukner med en gang. FYLL_SIST setter romlyset midt i hvert rom (fyll) sist i køen, så lampene får lysene i stedet */
+  FYLL_SIST: false, INN: .25, UT: .2,
+  fordel(dt, cx, cz, P) {
+    const pool = this.pool, S = pool.map(l => l.userData), LY = P && P.lantern && P.lantern.parent ? P.lantern : null, f0 = LY ? 1 : 0, N = pool.length - f0, ny = this.nyPool;
+    this.nyPool = false; if (!pool.length) return;
+    if (LY) Object.assign(S[0], { kilde: LY, w: 1, vil: true, lykt: true, svart: 0 });
+    const eie = new Map(); for (let i = f0; i < pool.length; i++) { S[i].lykt = false; if (S[i].kilde) eie.set(S[i].kilde, S[i]); }
+    const d2 = m => (m.position.x - cx) ** 2 + (m.position.z - cz) ** 2 + (this.FYLL_SIST && m.userData.fyll ? 1e4 : 0), blink = m => !!m.userData.blink;
+    const C = []; for (const m of this.kilder()) { if (m === LY) continue; const s = eie.get(m), c = m.material.color; if (s ? s.svart > 2 : c.r + c.g + c.b < .05) continue; m.userData.d2 = d2(m); C.push(m); }
+    C.sort((a, b) => a.userData.d2 - b.userData.d2);
+    // bare ett lysglimt i køen: det som har lys, ellers det nærmeste
+    let harB = C.some(m => blink(m) && eie.has(m)); const K = C.filter(m => !blink(m) || eie.has(m) || (!harB && (harB = true)));
+    K.forEach((m, i) => { m.userData.rang = i; });
+    // de som har lys: kilder som er borte, slukner, og de som har kommet for langt unna, blekner
+    let verst = null;
+    for (let i = f0; i < pool.length; i++) { const s = S[i], m = s.kilde; if (!m) continue; if (K[m.userData.rang] !== m) { s.kilde = null; s.w = 0; continue; } s.vil = m.userData.rang < N + 2; if (s.vil && !blink(m) && (!verst || m.userData.d2 > verst.kilde.userData.d2)) verst = s; }
+    const venter = K.filter((m, i) => i < N && !eie.has(m)), vl = venter.find(m => !blink(m)), vb = venter.find(blink);
+    if (verst && vl && Math.sqrt(vl.userData.d2) + 1.5 < Math.sqrt(verst.kilde.userData.d2)) verst.vil = false;
+    // lysglimtet tar en ledig plass, ellers den som er på vei ut, ellers den lengst unna, og tennes med en gang
+    if (vb) { let s = null, sd = -1; for (let i = f0; i < pool.length; i++) { const t = S[i], d = !t.kilde ? 1e9 : (t.vil ? 0 : 1e8) + t.kilde.userData.d2; if (!(t.kilde && blink(t.kilde)) && d > sd) { sd = d; s = t; } }
+      if (s) { Object.assign(s, { kilde: vb, w: 1, vil: true, svart: 0 }); venter.splice(venter.indexOf(vb), 1); } }
+    for (let i = f0; i < pool.length; i++) {
+      const s = S[i];
+      if (s.kilde) { s.w = s.vil ? Math.min(1, s.w + dt / this.INN) : Math.max(0, s.w - dt / this.UT); if (!s.vil && s.w <= 0) s.kilde = null; }
+      if (!s.kilde) { const m = venter.find(m => !blink(m)); if (m) { venter.splice(venter.indexOf(m), 1); Object.assign(s, { kilde: m, w: ny ? 1 : 0, vil: true, svart: 0 }); } else s.w = 0; }
+      if (s.kilde) { const c = s.kilde.material.color; s.svart = c.r + c.g + c.b < .05 ? s.svart + dt : 0; }
+    }
+  },
   kilder() { return (R.kilder || []).filter(m => m.parent && (m.parent === R.lscene || m.parent === R.levelL) && (m.parent !== R.levelL || R.levelL.parent)); },
   /* lyset ved et punkt: en farge å gange tegningen med, og (valgfritt i K) den sterkeste lampen, som gir kantlys */
   lysVed(x, z, y = .9, K) {
@@ -359,14 +392,13 @@ const D3 = {
       if (L.flimrer) { L.t -= dt; if (L.burst > 0) { L.burst -= dt; f = Math.random() < .55 ? .12 + Math.random() * .3 : 1; if (L.burst <= 0) L.t = rnd(2, 9); } else if (L.t <= 0) L.burst = rnd(.25, 1.1); }
       f *= mf; R.setLight(L.lp, L.base * f); L.pm.color.copy(L.farge).multiplyScalar(.2 + .8 * f); if (L.kj) L.kj.material.uniforms.uStyrke.value = .22 * f;
     }
-    // de nærmeste lyskildene får punktlysene; spillerens lykt først
-    const K = this.kilder();
-    K.sort((a, b) => (a === (P && P.lantern) ? -1 : b === (P && P.lantern) ? 1 : 0) || ((a.position.x - cx) ** 2 + (a.position.z - cz) ** 2) - ((b.position.x - cx) ** 2 + (b.position.z - cz) ** 2));
+    // punktlysene går til spillerens lykt og de nærmeste lyskildene, uten at lyset hopper (se fordel), og følger kilden sin
+    this.fordel(dt, cx, cz, P);
     for (let i = 0; i < this.pool.length; i++) {
-      const l = this.pool[i], m = K[i];
-      if (!m) { l.intensity = 0; continue; }
-      const base = m.userData.col, cur = m.material.color, k = Math.max(cur.r, cur.g, cur.b) / Math.max(.001, Math.max(base.r, base.g, base.b)), lykt = m === (P && P.lantern);
-      l.color.copy(base); l.intensity = k * (lykt ? 1.2 : 1.5) * (lykt ? Math.max(.6, mf) : mf); l.distance = m.scale.x * .55 + 1;
+      const l = this.pool[i], s = l.userData, m = s.kilde;
+      if (!m) { l.intensity = 0; continue; } // en ny kilde får lyset flyttet til seg mens det er slukket (w 0), så det ikke hopper
+      const base = m.userData.col, cur = m.material.color, k = Math.max(cur.r, cur.g, cur.b) / Math.max(.001, Math.max(base.r, base.g, base.b)), lykt = s.lykt;
+      l.color.copy(base); l.intensity = k * (lykt ? 1.2 : 1.5) * (lykt ? Math.max(.6, mf) : mf) * s.w; l.distance = m.scale.x * .55 + 1;
       l.position.set(m.position.x, m.userData.y || (lykt ? 1.8 : 1.6), m.position.z - .3);
     }
     // tåka får vite hvor lyset er, så den gløder rundt lampene

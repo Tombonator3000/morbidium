@@ -1433,6 +1433,69 @@ async def main():
         sjekk('ingen konsollfeil (skygger i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 38) Lyspuljen
+        # 3D: punktlysene hopper ikke av og på når pasienten går, lykta har det første, bare ett lysglimt får lys om gangen, svarte kilder
+        # får ingenting, en lampe som er mørk en kort stund beholder lyset sitt, romlyset kan settes sist i køen, og antallet følger kvaliteten.
+        # D3.tick kjøres for hånd i faste steg (1/60) inne i én evaluate, så spillet ikke går imellom og maskinens fart ikke betyr noe
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        lp = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, ut = {};
+          startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; await spill(.3);
+          ut.d3 = D3.on && D3.bygd; const pool = D3.pool, N = pool.length, lys = m => { const c = m.material.color; return c.r + c.g + c.b >= .05; };
+          // ingen flimring, intet mørke og ingen Morbidium, så bare fordelingen kan endre lysene
+          const ro = () => { for (const L of D3.lamper) L.flimrer = false; D3.morkeT = 0; P.morb = 0; };
+          const flytt = (x, z) => { P.x = x; P.z = z; P.lantern.position.x = x; P.lantern.position.z = z; R.camT.x = x; R.camT.z = z; };
+          const steg = (n, f) => { const L = []; for (let k = 0; k < n; k++) { if (f) f(k); D3.tick(1 / 60); L.push(pool.map(l => [l.position.x, l.position.z, l.intensity])); } return L; };
+          // et hopp: lyset flytter seg mer enn en halv rute mens det lyser (etter flyttet, eller mer enn ett steg i blekningen før)
+          const hopp = L => { let pop = 0, maks = 0; for (let k = 1; k < L.length; k++) for (let i = 1; i < N; i++) { const [x0, z0, a] = L[k - 1][i], [x1, z1, b] = L[k][i]; maks = Math.max(maks, Math.abs(b - a)); if (Math.hypot(x1 - x0, z1 - z0) > .5 && (b > .01 || a > .2)) pop++; } return { pop, maks: +maks.toFixed(3) }; };
+          const paa = m => pool.findIndex((l, i) => i > 0 && l.intensity > 0 && Math.abs(l.position.x - m.position.x) < 1e-6 && Math.abs(l.position.z - m.position.z + .3) < 1e-6);
+          const kand = () => D3.kilder().filter(m => m !== P.lantern && lys(m)).length, tent = () => pool.filter((l, i) => i > 0 && l.intensity > 0).length;
+          // pasienten går 12 ruter i 60 steg, fra midten av et rom og den veien flest lyskilder kommer inn blant de nærmeste
+          const K0 = D3.kilder().filter(m => m !== P.lantern && lys(m)), naer = (x, z) => K0.map(m => [(m.position.x - x) ** 2 + (m.position.z - z) ** 2, m]).sort((a, b) => a[0] - b[0]).slice(0, N - 1).map(a => a[1]);
+          let x0 = P.x, z0 = P.z, dir = [1, 0], mulige = -1;
+          for (const r of G.F.rooms) for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ax = r.x + r.w / 2, az = r.z + r.h / 2, S = new Set(); for (let t = 0; t <= 12; t += 1) for (const m of naer(ax + dx * t, az + dz * t)) S.add(m); if (S.size > mulige) { mulige = S.size; x0 = ax; z0 = az; dir = [dx, dz]; } }
+          ro(); flytt(x0, z0); steg(90);
+          const sett = new Set(), nest = new Set(), L = steg(60, k => { flytt(x0 + dir[0] * .2 * (k + 1), z0 + dir[1] * .2 * (k + 1)); for (const m of naer(R.camT.x, R.camT.z)) nest.add(m); for (const l of pool.slice(1)) if (l.intensity > 0) sett.add(Math.round(l.position.x * 100) + ',' + Math.round(l.position.z * 100)); });
+          ut.gange = Object.assign(hopp(L), { kilder: sett.size, naermeste: nest.size, n: N, mulige });
+          steg(90); ut.hvile = { tent: tent(), kand: kand(), lykt: pool[0].userData.lykt === true && Math.abs(pool[0].position.x - P.x) < 1e-6 && Math.abs(pool[0].position.z + .3 - P.z) < 1e-6 && pool[0].intensity > 0 };
+          // fem lysglimt rundt kameraet samtidig: bare ett får et punktlys, og det tennes med en gang. Når de er over, får lampene lyset tilbake
+          { const cx = R.camT.x, cz = R.camT.z, fl = [], f0 = tent(); for (let k = 0; k < 5; k++) { flashLight(cx + .37 * (k - 2) + .011, cz + .23 * (k - 2) + .013, 3, '#ffd0a0', .3); fl.push(G.fxl[G.fxl.length - 1].obj); }
+            D3.tick(1 / 60); const i = fl.map(paa).find(i => i > 0), maks = { n: 0 };
+            ut.glimt = { lys: fl.filter(m => paa(m) > 0).length, sterk: i > 0 ? +pool[i].intensity.toFixed(3) : 0, blink: i > 0 && !!(pool[i].userData.kilde && pool[i].userData.kilde.userData.blink) };
+            steg(40, () => { updateFx(1 / 60); maks.n = Math.max(maks.n, fl.filter(m => paa(m) > 0).length); });
+            ut.glimt.maks = maks.n; ut.glimt.borte = fl.every(m => !m.parent) && fl.every(m => paa(m) < 0); steg(60); ut.glimt.for = f0; ut.glimt.etter = tent(); }
+          // en svart kilde rett ved kameraet får aldri lys
+          { const sv = R.light(R.camT.x + .123, R.camT.z + .077, 3, '#ffd89a', 0, R.levelL); steg(30); ut.svart = pool.some(l => Math.abs(l.position.x - sv.position.x) < 1e-6 && Math.abs(l.position.z - sv.position.z + .3) < 1e-6); R.remove(sv); }
+          // en lampe som blir mørk ett sekund (som i mørket etter en sjef), beholder lyset og lyser med en gang den tennes igjen. Mørk i 2,5 sekunder mister den det
+          { const i1 = pool.findIndex((l, i) => i > 0 && l.userData.kilde && l.userData.w === 1 && !l.userData.kilde.userData.blink && !D3.lamper.some(L => L.lp === l.userData.kilde));
+            if (i1 > 0) { const m1 = pool[i1].userData.kilde, k1 = m1.material.color.clone();
+              m1.material.color.setRGB(0, 0, 0); steg(60); const kort = pool[i1].userData.kilde === m1; m1.material.color.copy(k1); steg(1); const igjen = pool[i1].intensity > 0 && pool[i1].userData.w === 1;
+              m1.material.color.setRGB(0, 0, 0); steg(150); const lang = pool.every(l => l.userData.kilde !== m1); m1.material.color.copy(k1); steg(30); ut.morkt = { kort, igjen, lang }; } }
+          // romlyset (fyll) er merket i hvert rom, og med FYLL_SIST går punktlysene til lampene så lenge det er nok av dem
+          { const fylte = D3.kilder().filter(m => m.userData.fyll), andre = D3.kilder().filter(m => !m.userData.fyll && m !== P.lantern && lys(m)).length;
+            D3.FYLL_SIST = true; steg(120); ut.fyll = { n: fylte.length, rom: G.F.rooms.length, andre, sist: pool.filter(l => l.userData.kilde && l.userData.kilde.userData.fyll).length, n1: N - 1 }; D3.FYLL_SIST = false; steg(30); }
+          // antallet punktlys følger kvaliteten (8, 6 og 4), og uten lys og skygge er det ingen
+          { const s = G.meta.settings, k0 = s.kvalitet; ut.niva = {};
+            for (const [k, n] of [[1, 'lav'], [2, 'middels'], [3, 'hoy']]) { s.kvalitet = k; applySettings(); ro(); for (let j = 0; j < 20; j++) D3.tick(1 / 60); ut.niva[n] = [D3.pool.length, D3.pool.filter(l => l.intensity > 0).length]; }
+            s.lights = false; applySettings(); for (let j = 0; j < 5; j++) D3.tick(1 / 60); ut.niva.av = D3.pool.length; s.lights = true; s.kvalitet = k0; applySettings(); }
+          await spill(.6); ut.spill = D3.pool.filter(l => l.intensity > 0).length;
+          return ut; }""")
+        ga = lp['gange']
+        sjekk('punktlysene hopper ikke av og på når pasienten går 12 ruter, og de blekner jevnt', lp['d3'] and ga['naermeste'] >= ga['n'] + 2 and ga['pop'] == 0 and ga['maks'] <= .3 and ga['kilder'] >= ga['n'] + 1, ga)
+        hv = lp['hvile']
+        sjekk('lykta har det første punktlyset, og står pasienten stille, er ingen punktlys ledige så lenge det er kilder nok', hv['lykt'] and hv['tent'] == min(lp['gange']['n'] - 1, hv['kand']), hv)
+        gl = lp['glimt']
+        sjekk('fem lysglimt samtidig gir bare ett punktlys, det tennes med en gang, og lampene får lyset tilbake etterpå', gl['lys'] == 1 and gl['sterk'] > 1 and gl['blink'] and gl['maks'] == 1 and gl['borte'] and gl['etter'] == gl['for'], gl)
+        sjekk('en svart lyskilde får aldri punktlys', lp['svart'] is False, lp['svart'])
+        mo = lp.get('morkt')
+        sjekk('en lampe som er mørk et sekund, beholder punktlyset og lyser med en gang, men mister det etter 2,5 sekunder', mo == {'kort': True, 'igjen': True, 'lang': True}, mo)
+        fy = lp['fyll']
+        sjekk('romlyset er merket i hvert rom, og med FYLL_SIST får lampene punktlysene', fy['n'] == fy['rom'] and fy['andre'] >= fy['n1'] and fy['sist'] == 0, fy)
+        nv = lp['niva']
+        sjekk('antallet punktlys følger kvaliteten, og uten lys og skygge er det ingen', nv['lav'][0] == 4 and nv['middels'][0] == 6 and nv['hoy'][0] == 8 and all(nv[k][1] >= 2 for k in ('lav', 'middels', 'hoy')) and nv['av'] == 0 and lp['spill'] >= 2, nv)
+        sjekk('ingen konsollfeil (lyspuljen)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
