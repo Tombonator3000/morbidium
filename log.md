@@ -577,3 +577,10 @@ Alle tidspunkt er UTC.
 - PR #6 (mer 3D, historien som Hellraiser møter Twin Peaks med Lovecraft-stemning, og grafikklista til ChatGPT) er flettet inn i main som ad7634b. GitHub Actions bygget og publiserte til GitHub Pages uten feil (kjøring 40).
 - Den publiserte fila (4,2 MB, 314 innebygde bilder) er lastet ned og testet lokalt på PC og mobil: et nytt løp starter med 3D, kombotelleren virker, og historien, kjettingene, Venterommet, skrinet og Dybde er med. Ingen konsollfeil.
 - Grenen claude/practical-babbage-nc80bu er satt lik main igjen. Denne oppføringen flettes inn i main som en egen liten PR.
+
+## 2026-09-26 05:49 Frie lyder hentet og lagt i assets/lyd (del 1 av lydrunden)
+- Tom ba om mer og bedre lyd, gratis lyder og effekter, musikk som glir over i lyd slik iMUSE gjorde hos LucasArts, og blod og vann som renner nedover skjermen. Denne oppføringen gjelder bare lydfilene.
+- Nytt verktøy tools/lag_lyd.py henter lydene, klipper, normaliserer og lager MP3. Det sjekker lisensen på hver lydside før nedlasting og skriver assets/lyd/lyd.json (gruppe, type, lengde, løkkepunkter, grunntone, kilde) og assets/lyd/KILDER.md med navn på alle som har spilt inn.
+- 102 lydeffekter og stemningslyder fra Freesound, alle CC0 1.0: fottrinn på stein, tre, gress og vann, dører, kjettinger, glass, blodsprut, slag, skrik, hunder, kråker, torden, regn, vind, bål, drypp, hav, summing i rørene og mer.
+- 63 instrumenttoner fra Versilian Community Sample Library (VCSL, CC0): orgel, orgelbass, piano, glockenspiel, vibrafon, rørklokker, harpe, cembalo, vinglass, psalter, saksofon, pauker, bekken, skarptromme, stortromme, gong, håndbjeller, triangel og treblokk. Grunntonene er sjekket med frekvensanalyse, og holdetoner har løkkepunkter på hele perioder.
+- Alt er 1,55 MB (instrumenter 0,83, effekter 0,49, stemning 0,23). Nedlastingene ligger i .lydcache/, som git ignorerer.
