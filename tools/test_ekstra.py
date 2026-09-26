@@ -1341,6 +1341,101 @@ async def main():
         sjekk('ingen konsollfeil (stort kart på telefon)', not pg.errs, pg.errs[:6])
         await ctx.close()
 
+        # 41) Kontroller i menyene: A, B, retningene, LB og RB på tittelen, i innleggelsen, pausen, innstillingene, journalen, butikken
+        #     og dødsskjermen, piltastene i menyene, tastene i tekstene etter enheten, berøringsknappene skjules, og kontrollen på plass 1 styrer
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.add_init_script("""(() => {
+          window.__pad = { id: 'Testkontroll (STANDARD GAMEPAD)', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) };
+          window.__pads = () => [window.__pad];
+          Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => window.__pads() });
+          window.__ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); });
+          window.__trykk = async (i, ned = 3, opp = 3) => { const k = window.__pad.buttons[i]; k.pressed = true; k.value = 1; await window.__ramme(ned); k.pressed = false; k.value = 0; await window.__ramme(opp); };
+        })()""")
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await pg.goto(URL)
+        await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title' && document.activeElement && document.activeElement.id === 'tNew'", timeout=30000)
+        t1 = await pg.evaluate("""async () => { await __trykk(0); await __ramme(2); const f = document.activeElement, cs = getComputedStyle(f);
+          return { inntak: MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .intake'), fokus: f.hasAttribute('data-awk'), ring: cs.outlineStyle === 'solid' && parseFloat(cs.outlineWidth) >= 2.5, pad: document.body.classList.contains('pad'), enhet: Input.lastDevice }; }""")
+        sjekk('håndkontrollen på tittelen: A trykker Ny pasient, og innleggelsen har fokus med synlig ring', t1 == {'inntak': True, 'fokus': True, 'ring': True, 'pad': True, 'enhet': 'pad'}, t1)
+        await pg.evaluate("() => __trykk(0)")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
+        hud = await pg.evaluate("async () => { rolig(); await __ramme(3); return [...document.querySelectorAll('#cards .acard .k')].map(e => e.textContent).join(' '); }")
+        sjekk('A i innleggelsen legger inn pasienten, og evnekortene viser LB RB LT RT', hud == 'LB RB LT RT', hud)
+        # pausen og innstillingene: Start, pil ned til Innstillinger, A, RB bytter fane, pil ned til spaken, pil høyre og venstre endrer den
+        ps = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; await __trykk(9); await __ramme(2);
+          ut.pause = G.state === 'panel' && !!document.querySelector('#panel .clip'); ut.forste = document.activeElement.hasAttribute('data-close');
+          await __trykk(13); ut.ned = document.activeElement.id;
+          for (let i = 0; i < 8 && document.activeElement.id !== 'pS'; i++) await __trykk(13);
+          await __trykk(0); await __ramme(2); ut.inn = !!document.getElementById('settings') && document.activeElement.dataset.tab === 'lyd';
+          await __trykk(5); await __ramme(2); const on = document.querySelector('.ktab.on'); ut.fane = on.dataset.tab; ut.fanefokus = document.activeElement === on;
+          await __trykk(13); const sp = document.activeElement, k = sp.dataset.s, v0 = G.meta.settings[k]; ut.spak = k;
+          await __trykk(15); ut.opp = +(G.meta.settings[k] - v0).toFixed(3);
+          await __trykk(14); ut.ned2 = +(G.meta.settings[k] - v0).toFixed(3);
+          await __trykk(13); ut.neste = document.activeElement.dataset.s; await __trykk(12); await __trykk(12); ut.oppTilFane = document.activeElement.dataset.tab;
+          return ut; }""")
+        await pg.screenshot(path='/tmp/e_pad_meny.png')
+        ps.update(await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; await __trykk(4); await __ramme(2); ut.lb = document.querySelector('.ktab.on').dataset.tab;
+          await __trykk(1); await __ramme(2); ut.tilbake = !!document.querySelector('#panel .clip'); await __trykk(1); await __ramme(2); ut.ute = G.state; return ut; }"""))
+        sjekk('pausen og innstillingene med håndkontroll: pil ned, A, RB og LB bytter fane, spaken endres med pil høyre og venstre, B går tilbake',
+              ps == {'pause': True, 'forste': True, 'ned': 'pJ', 'inn': True, 'fane': 'bilde', 'fanefokus': True, 'spak': 'kamera', 'opp': .05, 'ned2': 0, 'neste': 'shake', 'oppTilFane': 'bilde', 'lb': 'lyd', 'tilbake': True, 'ute': 'play'}, ps)
+        # journalen: Select åpner, A velger et kort, retningene flytter fokus, A på en tom plass flytter kortet dit og så til lomma, RB og LB bytter fane, B slipper kortet og lukker
+        jr = await pg.evaluate("""async () => { const G = MORBIDIUM, run = G.run, ut = {};
+          run.slots = [null, null, null, null]; run.reserve = []; giveCard('due', true); const fra = run.slots.findIndex(Boolean), til = run.slots.findIndex(c => !c);
+          await __trykk(8); await __ramme(2); ut.aapen = G.state === 'journal' && document.activeElement.matches('.jcard[data-ref]');
+          document.querySelector('.jcard[data-ref="s"][data-i="' + fra + '"]').focus(); await __trykk(0); ut.valgt = !!G.jsel && !!document.querySelector('#journal .jcard.sel');
+          const sett = new Set(); for (const d of [15, 13, 14, 12]) { await __trykk(d); if (document.getElementById('journal').contains(document.activeElement)) sett.add(document.activeElement); }
+          ut.flyttet = sett.size >= 2;
+          document.querySelector('.slot.empty[data-slot="' + til + '"]').focus(); await __trykk(0);
+          const f = document.activeElement; ut.flytt = !run.slots[fra] && !!run.slots[til] && run.slots[til].id === 'due'; ut.fokus = f.classList.contains('jcard') && f.dataset.ref === 's' && +f.dataset.i === til;
+          f.focus(); await __trykk(0); document.querySelector('.pocket [data-lomme]').focus(); await __trykk(0);
+          ut.lomme = run.reserve.length === 1 && run.reserve[0].id === 'due' && !run.slots.some(Boolean) && !!document.activeElement.dataset.lomme;
+          await __trykk(5); ut.rb = G.jtab; await __trykk(4); await __trykk(4); ut.lb = G.jtab; await __trykk(5);
+          document.querySelector('.jcard[data-ref]').focus(); await __trykk(0); const v = !!G.jsel; await __trykk(1); ut.slipp = v && !G.jsel && G.state === 'journal';
+          ut.knapp = document.getElementById('jClose').textContent; await __trykk(1); await __ramme(2); ut.lukket = G.state === 'play'; return ut; }""")
+        sjekk('journalen med håndkontroll: A og A flytter et kort til en tom plass, retningene, RB og LB, og B slipper kortet og lukker',
+              jr == {'aapen': True, 'valgt': True, 'flyttet': True, 'flytt': True, 'fokus': True, 'lomme': True, 'rb': 'diagnoser', 'lb': 'utstyr', 'slipp': True, 'knapp': 'Lukk journalen (B)', 'lukket': True}, jr)
+        # butikken: knappen sier B, og B lukker
+        sh = await pg.evaluate("""async () => { const G = MORBIDIUM; openService('kafeteria'); await __ramme(2); const ut = { knapp: document.querySelector('#panel [data-close]').textContent, fokus: document.activeElement.classList.contains('offer') };
+          await __trykk(1); await __ramme(2); ut.ute = G.state; return ut; }""")
+        sjekk('butikken med håndkontroll: Gå (B), første vare har fokus, og B lukker', sh == {'knapp': 'Gå (B)', 'fokus': True, 'ute': 'play'}, sh)
+        # piltastene i pausen, og tekstene går tilbake til tastaturet
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => MORBIDIUM.state === 'panel' && !!document.querySelector('#panel .clip')", timeout=20000)
+        await pg.wait_for_timeout(200)
+        await pg.keyboard.press('ArrowDown'); await pg.keyboard.press('ArrowDown')
+        kb = await pg.evaluate("() => ({ fokus: document.activeElement.id, pad: document.body.classList.contains('pad') })")
+        await pg.keyboard.press('Escape'); await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=20000)
+        kb['kort'] = await pg.evaluate("async () => { await __ramme(3); return [...document.querySelectorAll('#cards .acard .k')].map(e => e.textContent).join(' '); }")
+        sjekk('piltastene flytter fokus i pausen, og tastaturet tar bort ringen og gir tallene tilbake', kb == {'fokus': 'pJ', 'pad': False, 'kort': '1 2 3 4'}, kb)
+        # berøringsknappene skjules når håndkontrollen brukes (telefon speilet til TV med kontroll), og en kontroll på plass 1 styrer pasienten
+        mv = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, ut = {};
+          Input.touch.active = true; document.getElementById('touch').classList.remove('hidden'); document.body.classList.add('touch'); Input.enhet('touch');
+          __pad.axes[0] = .9; await __ramme(2); __pad.axes[0] = 0; await __ramme(2);
+          ut.touch = { skjult: document.getElementById('touch').classList.contains('hidden'), body: document.body.classList.contains('touch'), aktiv: Input.touch.active, pad: document.body.classList.contains('pad') };
+          const r = G.F.rooms[G.F.startId]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; __pad.index = 1; window.__pads = () => [null, __pad]; __pad.axes[0] = 1;
+          const x0 = P.x, t0 = G.time; for (let i = 0; i < 600 && G.time < t0 + .4; i++) await __ramme(1); __pad.axes[0] = 0;
+          ut.dx = P.x - x0 > .5; ut.index = Input.gp.index;
+          window.__pads = () => [{ id: 'noe annet', index: 0, connected: true, mapping: '', timestamp: 0, axes: [0, 0], buttons: [] }, __pad]; await __ramme(2); ut.standard = Input.gp.index === 1 && Input.gp.mapping === 'standard';
+          window.__pads = () => []; dispatchEvent(new Event('gamepaddisconnected')); await __ramme(2);
+          ut.frakoblet = !Input.gp.connected && Input.lastDevice === 'kb' && !document.body.classList.contains('pad');
+          __pad.index = 0; window.__pads = () => [__pad]; return ut; }""")
+        sjekk('håndkontrollen skjuler berøringsknappene, en kontroll på plass 1 styrer pasienten, standardoppsettet velges, og frakobling rydder',
+              mv == {'touch': {'skjult': True, 'body': False, 'aktiv': False, 'pad': True}, 'dx': True, 'index': 1, 'standard': True, 'frakoblet': True}, mv)
+        # døden: en A som holdes gjennom dødsfallet trykker ikke på Ny pasient det første halve sekundet, så gjør A det
+        await pg.evaluate("() => { __pad.buttons[0].pressed = true; __pad.buttons[0].value = 1; const P = MORBIDIUM.player; P.invuln = 0; P.iframe = 0; hurt(P, 9999, { type: 'kultist' }); }")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'dead' && !!document.getElementById('dNew')", timeout=30000)
+        dd = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = { vakt: MenyNav.ro > 0, fokus: document.activeElement.id };
+          __pad.buttons[0].pressed = false; __pad.buttons[0].value = 0; await __ramme(1); await __trykk(0, 1, 1); ut.blokkert = G.state === 'dead';
+          await __trykk(15); ut.hoyre = document.activeElement.id; await __trykk(14); ut.venstre = document.activeElement.id;
+          for (let i = 0; i < 400 && MenyNav.ro > 0; i++) await __ramme(1);
+          await __trykk(0); await __ramme(2); ut.inntak = G.state === 'panel' && !!document.querySelector('#panel .intake'); return ut; }""")
+        await pg.evaluate("() => __trykk(0)")
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .2", timeout=30000)
+        dd['nytt'] = await pg.evaluate("() => MORBIDIUM.player.alive && MORBIDIUM.player.hp > 0")
+        sjekk('døden med håndkontroll: A holdt gjennom dødsfallet trykker ikke, retningene flytter, og A på Ny pasient legger inn en ny pasient',
+              dd == {'vakt': True, 'fokus': 'dNew', 'blokkert': True, 'hoyre': 'dTitle', 'venstre': 'dNew', 'inntak': True, 'nytt': True}, dd)
+        sjekk('ingen konsollfeil (kontroller i menyene)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

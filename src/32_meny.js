@@ -288,6 +288,106 @@ function showArchive(skuff = 'mapper', side = 0) {
   fitPanel();
 }
 
+/* ---------- menyene med håndkontroll og piltaster ----------
+   Én navigator for tittelen, panelene, journalen, døden og testpanelet. Pil, D-pad eller venstre spak flytter fokus til
+   nærmeste knapp i den retningen (ingen runde: kanten er kanten), A trykker, B går tilbake, LB og RB blar i faner og sider,
+   og høyre spak ruller panelet. Løkka kaller tick bare utenfor spillet, så styringen i spillet er som før.
+   Nettleseren viser ikke :focus-visible når skriptet flytter fokus etter en håndkontroll, så body.pad gir fokusringen. */
+const MENY_SEL = 'button:not([disabled]),input:not([disabled]),textarea,select,a[href],[tabindex="0"]';
+const MenyNav = {
+  r: '', rT: 0, stum: false, ro: 0, gt: null, padT: -1e9,
+  rot() {
+    if (typeof Testmodus === 'object' && Testmodus.apen) return $('testpanel');
+    const s = G.state, id = s === 'journal' ? 'journal' : s === 'panel' || s === 'dead' ? 'panel' : s === 'title' ? 'title' : '', el = id && $(id);
+    return el && !el.classList.contains('hidden') ? el : null;
+  },
+  synlig(el) { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; },
+  valg(rot) { return [...rot.querySelectorAll(MENY_SEL)].filter(el => this.synlig(el)); },
+  inne(rot) { const f = document.activeElement; return !!f && f !== rot && rot.contains(f); },
+  // første knapp (i journalen det første kortet), men aldri et tekstfelt: det ville åpnet tastaturet på telefonen
+  forste(rot) { const L = this.valg(rot).filter(e => e.tagName !== 'TEXTAREA' && !(e.tagName === 'INPUT' && !/range|checkbox|radio/.test(e.type))), el = L.find(e => e.matches('.jcard[data-ref]')) || L[0]; if (el) el.focus({ preventScroll: true }); },
+  // en knapp som tegnes på nytt (fanen, Neste, kortet som ble flyttet), finnes igjen på id eller data-feltene sine
+  nokkel(el) {
+    if (el.id) return '#' + CSS.escape(el.id);
+    const a = [...el.attributes].filter(x => x.name.startsWith('data-') && x.name !== 'data-bound');
+    return a.length ? el.tagName.toLowerCase() + a.map(x => `[${x.name}="${CSS.escape(x.value)}"]`).join('') : null;
+  },
+  igjen(k) {
+    const rot = this.rot(); if (!rot || !k || this.inne(rot)) return;
+    const el = rot.querySelector(k), m = el && (el.matches(MENY_SEL) ? el : el.querySelector(MENY_SEL)); if (m && this.synlig(m)) m.focus({ preventScroll: true });
+  },
+  retning() {
+    const g = Input.gp; if (!g.connected) return '';
+    if (g.cur[12]) return 'u'; if (g.cur[13]) return 'd'; if (g.cur[14]) return 'l'; if (g.cur[15]) return 'r';
+    const x = g.lx, y = g.ly; if (Math.max(Math.abs(x), Math.abs(y)) < .6) return '';
+    return Math.abs(x) > Math.abs(y) ? (x > 0 ? 'r' : 'l') : (y > 0 ? 'd' : 'u');
+  },
+  /* nærmeste knapp i retningen: avstanden fram til kanten, pluss hvor langt den ligger ved siden av (0 når de overlapper).
+     Den må nå lenger enn denne i den retningen, så en fane som er litt lavere enn den valgte, ikke regnes som «ned».
+     Et kryss eller en spak i en rad regnes som hele raden, så opp og ned går rad for rad i innstillingene */
+  flytt(rot, r, pad) {
+    if (pad) this.padT = performance.now();
+    const f = document.activeElement; if (!this.inne(rot)) { this.forste(rot); return; }
+    if (f.matches('input[type=range]') && (r === 'l' || r === 'r')) { r === 'r' ? f.stepUp() : f.stepDown(); f.dispatchEvent(new Event('input', { bubbles: true })); Sound.play('ui', .3); return; }
+    const flate = el => ((el.tagName === 'INPUT' && el.closest('label')) || el).getBoundingClientRect();
+    const a = flate(f), dx = r === 'l' ? -1 : r === 'r' ? 1 : 0, dy = r === 'u' ? -1 : r === 'd' ? 1 : 0, ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    let best = null, bs = 1e9;
+    for (const el of this.valg(rot)) {
+      if (el === f || el.contains(f)) continue;
+      const b = flate(el), bx = b.left + b.width / 2, by = b.top + b.height / 2;
+      if ((bx - ax) * dx + (by - ay) * dy <= 1 || (dx > 0 ? b.right - a.right : dx < 0 ? a.left - b.left : dy > 0 ? b.bottom - a.bottom : a.top - b.top) <= 1) continue;
+      const fram = dx ? Math.max(0, dx > 0 ? b.left - a.right : a.left - b.right) : Math.max(0, dy > 0 ? b.top - a.bottom : a.top - b.bottom);
+      const tvers = dx ? Math.max(0, b.top - a.bottom, a.top - b.bottom) : Math.max(0, b.left - a.right, a.left - b.right);
+      const on = el.classList.contains('on'), sk = fram + tvers * (dx ? 4 : 2) + (on ? -2 : Math.abs(dx ? by - ay : bx - ax) * .05); // tilbake til faneraden: den valgte fanen
+      if (sk < bs) { bs = sk; best = el; }
+    }
+    if (!best) return;
+    best.focus({ preventScroll: true }); best.scrollIntoView({ block: 'nearest', inline: 'nearest' }); Sound.play('ui', .4);
+  },
+  trykk(rot) {
+    if (!this.inne(rot)) { this.forste(rot); return; }
+    const el = document.activeElement, k = this.nokkel(el); Sound.init();
+    if (el.matches('input[type=range]')) return;
+    // journalkortene velges med Enter (bindCards). Hendelsen bobler ikke, så Input tror ikke at det var tastaturet
+    if (el.matches('.jcard[data-ref]')) el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', cancelable: true }));
+    else el.click();
+    this.igjen(k);
+  },
+  // LB og RB: sidene i håndboka, ellers fanene i innstillingene, skuffene i arkivet og fanene i journalen
+  fane(rot, d) {
+    let el = rot.querySelector(d > 0 ? '#hNext' : '#hPrev'); if (el && el.disabled) return;
+    if (!el) for (const s of ['.ktab', '.skuff', '#journal .tab']) { const L = [...rot.querySelectorAll(s)]; if (!L.length) continue; el = L[L.findIndex(b => b.classList.contains('on')) + d]; break; }
+    if (!el) return; Sound.init(); const k = this.nokkel(el); el.click(); this.igjen(k);
+  },
+  /* true når menyen tok imot trykket, så løkka ikke lukker panelet i tillegg */
+  tick(dt, A) {
+    const rot = this.rot(); if (!rot) return false;
+    const P = Input, g = P.gp, pad = g.connected, test = rot.id === 'testpanel';
+    // rett fra spillet: en A som ble holdt eller hamret på i kampen, trykker ikke på noe før det har gått et halvt sekund,
+    // og en retning som holdes inne, må slippes først (G.time går bare i spillet)
+    if (G.time !== this.gt) { this.gt = G.time; this.ro = P.gpDown(0) || performance.now() - g.aT < 450 ? .5 : 0; this.stum = true; }
+    this.ro -= dt;
+    if (P.lastDevice === 'pad' && !this.inne(rot)) this.forste(rot);
+    if (!pad) return test;
+    const r = this.retning(); if (!r) this.stum = false;
+    if (r !== this.r) { this.r = r; this.rT = 0; if (r && !this.stum) this.flytt(rot, r, true); }
+    else if (r && !this.stum) { this.rT += dt; if (this.rT >= .35) { this.rT -= .12; this.flytt(rot, r, true); } }
+    if (Math.abs(g.ry) > .25 && rot.scrollHeight > rot.clientHeight) rot.scrollTop += g.ry * 900 * dt;
+    if (P.gpPressed(4) || P.gpPressed(5)) this.fane(rot, P.gpPressed(5) ? 1 : -1);
+    if (P.gpPressed(0)) { if (this.ro <= 0) this.trykk(rot); return true; }
+    if (test && (P.gpPressed(1) || P.gpPressed(9))) { Testmodus.lukk(); return true; }
+    if (G.state === 'journal' && P.gpPressed(1)) { if (G.jsel) { G.jsel = null; document.querySelectorAll('#journal .jcard.sel').forEach(c => c.classList.remove('sel')); } else closeJournal(); return true; }
+    return test;
+  }
+};
+// piltastene i menyene. Tekstfelt og spakene (venstre og høyre) beholder dem, og testpanelet stopper alle taster selv
+addEventListener('keydown', e => {
+  const r = { ArrowUp: 'u', ArrowDown: 'd', ArrowLeft: 'l', ArrowRight: 'r' }[e.code]; if (!r || G.state === 'play' || performance.now() - MenyNav.padT < 150) return;
+  const rot = MenyNav.rot(), f = document.activeElement, t = f && f.tagName; if (!rot) return;
+  if (t === 'TEXTAREA' || t === 'SELECT' || (t === 'INPUT' && f.type !== 'checkbox' && (f.type !== 'range' || r === 'l' || r === 'r'))) return;
+  e.preventDefault(); MenyNav.flytt(rot, r, false);
+});
+
 /* ---------- UI-settet fra ChatGPT (DESIGN_BRIEF.md, del G) ----------
    Et bilde med en ui_-nøkkel i gpt-grafikk/ tas i bruk av seg selv når spillet starter. Mangler det, tegner CSS-en som før.
    Paneler, kort, knapper, skilt og utklippstavle er 9-delte bilder: hjørnene beholder størrelsen og sidene strekkes.
