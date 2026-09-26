@@ -47,12 +47,12 @@ const R = {
         uMorb: { value: 0 }, uHurt: { value: 0 }, uLow: { value: 0 }, uFlash: { value: 0 }, uDistort: { value: 1 }, uLights: { value: 1 }, uVig: { value: .55 }, tBloom: { value: null }, uBloom: { value: 0 },
         tBlod: { value: this.blodSkjerm() }, uBlod: { value: 0 }, uBlodFlip: { value: 0 }, uAarer: { value: 0 }, uPuls: { value: 3 },
         tUskarp: { value: null }, uTilt: { value: 0 }, uSplit: { value: 0 }, uFilm: { value: 0 },
-        uSjokk: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uZoom: { value: new THREE.Vector3() }, uCa: { value: 0 }, uNeg: { value: 0 }, uDrom: { value: 0 }, uLyn: { value: 0 }, uHete: { value: 0 } },
+        uSjokk: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uVarme: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uZoom: { value: new THREE.Vector3() }, uCa: { value: 0 }, uNeg: { value: 0 }, uDrom: { value: 0 }, uLyn: { value: 0 }, uHete: { value: 0 } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: `
         uniform sampler2D tScene, tLight, tBloom, tBlod, tUskarp; uniform vec2 uRes; uniform float uTime, uMorb, uHurt, uLow, uFlash, uDistort, uLights, uVig, uBloom, uBlod, uBlodFlip, uAarer, uPuls, uTilt, uSplit, uFilm;
         uniform vec3 uAmbient, uLift, uGain; varying vec2 vUv;
-        uniform vec4 uSjokk[4]; uniform vec3 uZoom; uniform float uCa, uNeg, uDrom, uLyn, uHete;
+        uniform vec4 uSjokk[4], uVarme[4]; uniform vec3 uZoom; uniform float uCa, uNeg, uDrom, uLyn, uHete;
         float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
         // årer: rygger i støyen gir tynne, forgreinede linjer
@@ -75,6 +75,15 @@ const R = {
               vec2 dv = (vUv - s.xy) * vec2(asp, 1.0); float dd = max(length(dv), 0.0001);
               float ring = exp(-pow((dd - s.z) * 13.0, 2.0));
               uv -= dv / dd / vec2(asp, 1.0) * ring * s.w * 0.04; sj += ring * s.w;
+            }
+          }
+          // varmeflimmer over bål, ovner og kjeler (40_dybde.js): lufta dirrer i en søyle over flammen
+          for (int i = 0; i < 4; i++) {
+            vec4 v = uVarme[i];
+            if (v.w > 0.0) {
+              vec2 dv = (vUv - v.xy) * vec2(asp, 1.0); float r = length(vec2(dv.x * 1.6, (dv.y - v.z * 0.8) * 0.55));
+              float k = max(0.0, 1.0 - r / v.z) * v.w * smoothstep(-0.03, 0.04, dv.y) * uDistort;
+              uv += vec2(sin(vUv.y * 95.0 - uTime * 7.0 + float(i) * 1.7), cos(vUv.x * 71.0 + uTime * 5.3)) * 0.0017 * k;
             }
           }
           float ca = (uHurt * 0.006 + m * 0.0015 + uCa * 0.009) * smoothstep(0.1, 0.8, d) + sj * 0.008;
@@ -200,6 +209,7 @@ const R = {
     for (let i = L.length - 1; i >= 0; i--) { L[i].t += dt; if (L[i].t >= L[i].life) L.splice(i, 1); }
     for (let i = 0; i < 4; i++) { const s = L[i]; if (!s || !this.distortOn) { sj[i].set(0, 0, 0, 0); continue; } const p = this.uvAv(s.x, s.y, s.z); sj[i].set(p.x, p.y, s.t * s.fart, s.s * Math.pow(1 - s.t / s.life, 1.5)); }
     const zp = this.uvAv(this.zoomP.x, this.zoomP.y, this.zoomP.z); u.uZoom.value.set(zp.x, zp.y, this.distortOn ? f.zoom : 0);
+    const V = this.varmeL || [], vv = u.uVarme.value; for (let i = 0; i < 4; i++) { const h = V[i]; if (!h || !this.distortOn) { vv[i].set(0, 0, 0, 0); continue; } const q = this.uvAv(h.x, h.y, h.z); vv[i].set(q.x, q.y, h.r, h.s); }
     u.uCa.value = this.distortOn ? Math.min(1.5, f.ca) : 0; u.uNeg.value = this.flashOn ? Math.min(1, f.neg) : 0; u.uLyn.value = this.flashOn ? Math.min(1, f.lyn) : 0;
     u.uDrom.value = f.drom; u.uHete.value = f.hete;
     f.zoom = Math.max(0, f.zoom - dt * 3.2); f.ca = Math.max(0, f.ca - dt * 2.6); f.neg = Math.max(0, f.neg - dt * 12); f.lyn = Math.max(0, f.lyn - dt * 3.5);
@@ -283,7 +293,8 @@ const R = {
   waterMat(kind, electric, full) {
     if (!this.water) {
       const centers = []; for (let i = 0; i < 8; i++) centers.push(new THREE.Vector2(-999, -999));
-      this.water = { cache: new Map(), next: 0, u: { uTime: { value: 0 }, uRippleCenters: { value: centers }, uRippleTimes: { value: new Array(8).fill(-100) }, uRippleCount: { value: 0 } } };
+      this.water = { cache: new Map(), next: 0, u: { uTime: { value: 0 }, uRippleCenters: { value: centers }, uRippleTimes: { value: new Array(8).fill(-100) }, uRippleCount: { value: 0 },
+        uLysP: { value: [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector3()) }, uLysF: { value: [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector3()) } } };
     }
     const key = kind + (electric ? '!' : '') + (full ? 'F' : '');
     if (this.water.cache.has(key)) return this.water.cache.get(key);
@@ -291,13 +302,13 @@ const R = {
     const u = this.water.u;
     const mat = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false,
-      uniforms: { uTime: u.uTime, uRippleCenters: u.uRippleCenters, uRippleTimes: u.uRippleTimes, uRippleCount: u.uRippleCount,
+      uniforms: { uTime: u.uTime, uRippleCenters: u.uRippleCenters, uRippleTimes: u.uRippleTimes, uRippleCount: u.uRippleCount, uLysP: u.uLysP, uLysF: u.uLysF,
         uDeep: { value: new THREE.Color(P[0]) }, uMid: { value: new THREE.Color(P[1]) }, uHigh: { value: new THREE.Color(P[2]) },
         uScale: { value: P[3] * 9 }, uSpeed: { value: P[4] }, uMask: { value: full ? this.tex.white : this.tex.puddle }, uElectric: { value: electric ? 1 : 0 } },
       vertexShader: 'varying vec2 vWorldPos; varying vec2 vUv; void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position,1.0); vWorldPos = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }',
       fragmentShader: `
         uniform float uTime, uScale, uSpeed, uElectric; uniform vec3 uDeep, uMid, uHigh; uniform sampler2D uMask;
-        uniform vec2 uRippleCenters[8]; uniform float uRippleTimes[8]; uniform int uRippleCount;
+        uniform vec2 uRippleCenters[8]; uniform float uRippleTimes[8]; uniform int uRippleCount; uniform vec3 uLysP[6], uLysF[6];
         varying vec2 vWorldPos; varying vec2 vUv;
         vec2 hash2(vec2 p){ p = vec2(dot(p, vec2(127.1,311.7)), dot(p, vec2(269.5,183.3))); return fract(sin(p)*43758.5453); }
         float smin(float a, float b, float k){ float h = max(k - abs(a-b), 0.0) / k; return min(a,b) - h*h*h*k/6.0; }
@@ -317,6 +328,10 @@ const R = {
             for (int r = 0; r < 2; r++) { float re = max(el - float(r) * 0.18, 0.0); float ring = 1.0 - smoothstep(0.0, 0.07, abs(d - re * 2.4)); acc += ring * exp(-re * 3.0) * on; }
           }
           col = mix(col, uHigh, clamp(acc * 1.4, 0.0, 1.0));
+          // speiling: lampene i nærheten glitrer i vannet, mest på bølgetoppene (xz er stedet, y er radius)
+          vec3 glans = vec3(0.0);
+          for (int i = 0; i < 6; i++) { float dl = length(vWorldPos - uLysP[i].xz); glans += uLysF[i] * pow(max(0.0, 1.0 - dl / max(uLysP[i].y, 0.001)), 3.0); }
+          col += glans * (0.3 + 0.7 * max(t, acc));
           float rim = 1.0 - smoothstep(0.1, 0.3, m);
           col = mix(col, uDeep * 0.45, rim * 0.85);
           if (uElectric > 0.5) { float fl = step(0.72, fract(sin(dot(floor(vWorldPos * 7.0) + floor(uTime * 24.0), vec2(12.9898, 78.233))) * 43758.5453)); col = mix(col, vec3(1.0, 1.0, 0.65), fl * 0.85); }
@@ -366,13 +381,22 @@ const R = {
   /* ---------- kamera ---------- */
   updateCamera(tx, tz, dt) {
     this.camT.x = lerp(this.camT.x, tx, 1 - Math.pow(.004, dt)); this.camT.z = lerp(this.camT.z, tz, 1 - Math.pow(.004, dt));
-    this.trauma = Math.max(0, this.trauma - dt * 1.9);
+    this.trauma = Math.max(0, this.trauma - dt * 1.9); this.kamTick(dt);
     const s = this.shakeOn ? this.trauma * this.trauma * .32 * (this.shakeK ?? 1) : 0, t = performance.now() * .05;
     const ox = s * (Math.sin(t * 1.3) + Math.sin(t * 2.9) * .5), oz = s * (Math.cos(t * 1.7) + Math.sin(t * 3.3) * .5), D = 60;
     this.camera.position.set(this.camT.x + ox, Math.sin(CAM_PITCH) * D, this.camT.z + oz + Math.cos(CAM_PITCH) * D);
     this.camera.lookAt(this.camT.x + ox, 0, this.camT.z + oz);
   },
   snapCamera(x, z) { this.camT.x = x; this.camT.z = z; this.updateCamera(x, z, .016); },
+  /* kameradykk (40_dybde.js): k er hvor mye nærmere (0,1 er ti prosent), t er hvor lenge det holder før det glir tilbake.
+     Følger skjermristingen i innstillingene. */
+  kam: { kick: 0, hold: 0, holdT: 0, z: 1 },
+  kamZoom(k, t = 0) { if (t > 0) { this.kam.hold = Math.max(this.kam.holdT > 0 ? this.kam.hold : 0, k); this.kam.holdT = Math.max(this.kam.holdT, t); } else this.kam.kick = Math.min(.3, Math.max(this.kam.kick, k)); },
+  kamTick(dt) {
+    const K = this.kam; K.kick *= Math.pow(.02, dt); if (K.holdT > 0) K.holdT -= dt; else K.hold *= Math.pow(.15, dt);
+    const mal = 1 + (K.kick + K.hold) * (this.shakeOn ? (this.shakeK ?? 1) : 0); K.z += (mal - K.z) * Math.min(1, dt * 9);
+    if (Math.abs(this.camera.zoom - K.z) > 1e-4) { this.camera.zoom = K.z; this.camera.updateProjectionMatrix(); }
+  },
   shake(a) { this.trauma = Math.min(1, this.trauma + a); },
   project(x, y, z) {
     const v = new THREE.Vector3(x, y, z).project(this.camera);

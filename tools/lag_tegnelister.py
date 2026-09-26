@@ -19,6 +19,8 @@ av verktøyene tar dem for et levert bilde om de havner i gpt-grafikk/ ved en fe
 
 Bruk:  python3 tools/lag_tegnelister.py
        python3 build.py && python3 tools/lag_tegnelister.py --bilder [--three STI]
+       python3 tools/lag_tegnelister.py --side STI.html   (én side med alle arkene og kopieringsknapper, til mobilen;
+                                                          referansebildene må ligge i referanse/ ved siden av siden)
 """
 import csv, json, re, sys
 from pathlib import Path
@@ -414,8 +416,142 @@ def lag_referanser(lister):
         if p.name not in gyldige: p.unlink()  # ark som er levert, trenger ikke referanse lenger
     print(f'referansebilder: {laget} laget i tegnelister/referanse/' + (f', uten kodetegning: {tomme}' if tomme else ''))
 
+# ---------- siden (til mobilen) ----------
+SIDE_HTML = r"""<title>Tegnelister</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Alegreya:ital,wght@0,400;0,700;0,800;1,400&family=Caveat:wght@600&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+/* spillets egne farger og skrifter: pergament på mørk bunn, blekk og røde stempler (én bevisst look, samme i lyst og mørkt tema) */
+:root{ --ink:#2a1a14; --parch:#ecd9a8; --parch-l:#f6ead0; --parch-d:#c9a86a; --red:#b3261e; --gold:#e8b93a; --mint:#3f6e5a; --bg:#140e0b; --bg2:#231812; --dim:#6b4a2c;
+  --display:"Alfa Slab One", Rockwell, Georgia, serif; --body:"Alegreya", Georgia, serif; --hand:"Caveat", "Comic Sans MS", cursive; --mono:"Courier Prime", "Courier New", monospace; color-scheme:dark; }
+body{ background:var(--bg); color:var(--parch-l); font-family:var(--body); font-size:17px; line-height:1.5; }
+.wrap{ max-width:880px; margin:0 auto; padding-inline:16px; padding-block:22px 64px; display:flex; flex-direction:column; gap:22px; }
+h1{ font-family:var(--display); font-weight:400; font-size:clamp(34px,7vw,52px); line-height:1; margin:0; color:var(--gold); letter-spacing:.5px; text-shadow:3px 3px 0 #000; text-wrap:balance; }
+.ingress{ margin:6px 0 0; color:var(--parch); max-width:62ch; }
+.tall{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.tall span{ background:var(--bg2); border:2px solid #3a2a20; border-radius:8px; padding:4px 10px; font-size:15px; font-variant-numeric:tabular-nums; }
+.tall b{ color:var(--gold); }
+.papir{ background:var(--parch); color:var(--ink); border:3px solid var(--ink); border-radius:10px; box-shadow:4px 4px 0 rgba(0,0,0,.55); padding:14px 16px; }
+.papir h2{ font-family:var(--display); font-weight:400; font-size:20px; margin:0 0 6px; }
+ol.steg{ margin:0; padding-left:22px; display:grid; gap:4px; }
+.knapp{ font:700 14px var(--body); background:var(--parch-l); color:var(--ink); border:2px solid var(--ink); border-radius:8px; padding:5px 11px; cursor:pointer; box-shadow:2px 2px 0 var(--ink); }
+.knapp:active{ transform:translate(1px,1px); box-shadow:1px 1px 0 var(--ink); }
+.knapp:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+.knapp.ok{ background:var(--mint); color:var(--parch-l); }
+pre{ margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font:14px/1.45 var(--mono); background:var(--parch-l); border:2px dashed var(--parch-d); border-radius:6px; padding:10px; max-height:360px; overflow:auto; }
+nav.faner{ position:sticky; top:env(safe-area-inset-top,0px); z-index:5; background:var(--bg); padding-block:8px; display:flex; gap:8px; overflow-x:auto; border-bottom:2px solid #3a2a20; }
+nav.faner a{ flex:none; font:700 15px var(--body); color:var(--parch); text-decoration:none; border:2px solid #4a3528; border-radius:18px; padding:4px 12px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+nav.faner a b{ color:var(--gold); }
+.valg{ display:flex; align-items:center; gap:8px; font-size:15px; color:var(--parch); }
+section.liste{ display:flex; flex-direction:column; gap:14px; scroll-margin-top:64px; }
+section.liste > header h2{ font-family:var(--display); font-weight:400; font-size:26px; margin:0; color:var(--parch-l); text-wrap:balance; }
+section.liste > header p{ margin:4px 0 0; color:var(--parch); max-width:68ch; }
+.ark{ display:grid; grid-template-columns:minmax(0,1fr); gap:10px; }
+.ark.ferdig{ opacity:.55; }
+.ark .topp{ display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px; }
+.ark .nr{ font-family:var(--display); font-size:15px; background:var(--ink); color:var(--parch); border-radius:6px; padding:1px 8px; font-variant-numeric:tabular-nums; }
+.ark h3{ font-family:var(--display); font-weight:400; font-size:19px; margin:0; }
+.merke{ font:700 12px var(--body); text-transform:uppercase; letter-spacing:.08em; color:var(--red); border:2px solid var(--red); border-radius:4px; padding:0 6px; }
+.fil{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.fil code{ font:700 14px var(--mono); background:var(--parch-l); border:1px solid var(--parch-d); border-radius:4px; padding:2px 6px; word-break:break-all; }
+.linje{ font-size:15px; color:#4a3222; }
+.linje b{ color:var(--ink); }
+.ref{ border:2px solid var(--ink); border-radius:6px; max-width:100%; width:360px; height:auto; background:#e8e0cc; display:block; }
+.ark .rad{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+label.levert{ display:flex; align-items:center; gap:6px; font:700 15px var(--body); cursor:pointer; }
+label.levert input{ width:20px; height:20px; accent-color:var(--red); }
+.hand{ font-family:var(--hand); font-size:22px; color:var(--red); }
+footer{ color:var(--parch-d); font-size:14px; }
+@media (min-width:760px){ .ark.med-ref{ grid-template-columns:minmax(0,1fr) 300px; } .ark.med-ref .bilde{ grid-row:1 / span 6; grid-column:2; } .ref{ width:100%; } }
+@media (prefers-reduced-motion: reduce){ *{ scroll-behavior:auto !important; } }
+</style>
+<div class="wrap">
+  <header>
+    <h1>Tegnelister</h1>
+    <p class="ingress">Alt Morbidium fortsatt mangler bilde til, samlet i ark som ChatGPT kan tegne i én vending. Hver liste er én samtale. Hvert ark er én PNG med ferdig filnavn.</p>
+    <div class="tall" id="tall"></div>
+  </header>
+  <div class="papir">
+    <h2>Slik gjør du det</h2>
+    <ol class="steg">
+      <li>Start en ny samtale i ChatGPT og lim inn stilblokken under. Bruk samme samtale for hele lista.</li>
+      <li>For hvert ark: last opp malen fra mappa <b>maler/</b> i repoet (står ved arket) og referansebildet hvis det står et, og lim inn prompten.</li>
+      <li>Last ned resultatet som PNG og gi det nøyaktig filnavnet som står ved arket.</li>
+      <li>Last fila opp til <b>gpt-grafikk/</b> i repoet og commit til main. Spillet klipper, renser og bygger det inn av seg selv.</li>
+    </ol>
+  </div>
+  <div class="papir">
+    <div class="rad" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Stilblokk (lim inn først)</h2><button class="knapp" data-kopier="stil" id="kopier-stil">Kopier stilblokken</button></div>
+    <pre id="stil"></pre>
+  </div>
+  <nav class="faner" id="faner" aria-label="Listene"></nav>
+  <label class="valg"><input type="checkbox" id="skjul"> Skjul ark jeg har krysset av som levert</label>
+  <div id="lister"></div>
+  <footer id="fot"></footer>
+</div>
+<script>
+const DATA = __DATA__;
+const $ = s => document.querySelector(s), el = (t, a = {}, ...b) => { const e = document.createElement(t); for (const [k, v] of Object.entries(a)) { if (k === 'text') e.textContent = v; else if (k === 'html') e.innerHTML = v; else e.setAttribute(k, v); } for (const x of b) if (x) e.append(x); return e; };
+let levert = {}; try { levert = JSON.parse(localStorage.getItem('tegnelister_levert') || '{}') || {}; } catch (e) { levert = {}; }
+const lagre = () => { try { localStorage.setItem('tegnelister_levert', JSON.stringify(levert)); } catch (e) { } };
+async function kopier(tekst, knapp, tilbake) {
+  try { await navigator.clipboard.writeText(tekst); knapp.textContent = 'Kopiert'; knapp.classList.add('ok'); }
+  catch (e) { const pre = knapp.closest('.papir, .ark').querySelector('pre, code'); if (pre) { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } knapp.textContent = 'Merket, kopier selv'; }
+  setTimeout(() => { knapp.textContent = tilbake; knapp.classList.remove('ok'); }, 1800);
+}
+$('#stil').textContent = DATA.stil;
+$('#kopier-stil').onclick = e => kopier(DATA.stil, e.currentTarget, 'Kopier stilblokken');
+const antallArk = DATA.lister.reduce((n, L) => n + L.ark.length, 0);
+$('#tall').append(el('span', { html: `<b>${DATA.levert}</b> av ${DATA.alle} bilder levert` }), el('span', { html: `<b>${DATA.mangler}</b> mangler` }), el('span', { html: `<b>${antallArk}</b> ark i ${DATA.lister.length} lister` }));
+for (const L of DATA.lister) $('#faner').append(el('a', { href: '#liste' + L.nr, html: `<b>${L.nr}</b> ${L.kort}` }));
+const lister = $('#lister');
+for (const L of DATA.lister) {
+  const sek = el('section', { class: 'liste', id: 'liste' + L.nr });
+  sek.append(el('header', {}, el('h2', { text: `${L.nr}. ${L.tittel}` }), el('p', { text: L.merk })));
+  for (const A of L.ark) {
+    const kort = el('article', { class: 'ark papir' + (A.ref ? ' med-ref' : ''), id: 'ark' + A.nr });
+    const cb = el('input', { type: 'checkbox', id: 'lev-' + A.nr });
+    cb.checked = !!levert[A.fil]; if (cb.checked) kort.classList.add('ferdig');
+    cb.onchange = () => { if (cb.checked) levert[A.fil] = 1; else delete levert[A.fil]; lagre(); kort.classList.toggle('ferdig', cb.checked); skjul(); };
+    const kopiFil = el('button', { class: 'knapp', type: 'button', text: 'Kopier filnavn' }); kopiFil.onclick = () => kopier(A.fil, kopiFil, 'Kopier filnavn');
+    const kopiP = el('button', { class: 'knapp', type: 'button', text: 'Kopier prompten' }); kopiP.onclick = () => kopier(A.prompt, kopiP, 'Kopier prompten');
+    kort.append(
+      el('div', { class: 'topp' }, el('span', { class: 'nr', text: A.nr }), el('h3', { text: A.tittel }), el('span', { class: 'merke', text: A.type })),
+      el('div', { class: 'fil' }, el('code', { text: A.fil }), kopiFil),
+      A.mal ? el('div', { class: 'linje', html: `Mal: <b>maler/${A.mal}</b>` }) : null,
+      el('div', { class: 'linje', text: 'Gir: ' + A.gir }),
+      A.ref ? el('div', { class: 'bilde' }, el('img', { class: 'ref', src: A.ref, alt: 'Dagens kodetegning for ' + A.tittel, loading: 'lazy' }), el('div', { class: 'linje', text: 'Referanse: last opp sammen med ' + (A.mal ? 'malen' : 'prompten') })) : null,
+      el('pre', { text: A.prompt }),
+      el('div', { class: 'rad' }, kopiP, el('label', { class: 'levert', for: 'lev-' + A.nr }, cb, el('span', { text: 'Levert' })))
+    );
+    sek.append(kort);
+  }
+  lister.append(sek);
+}
+function skjul() { const p = $('#skjul').checked; document.querySelectorAll('.ark').forEach(a => { a.hidden = p && a.classList.contains('ferdig'); }); }
+$('#skjul').onchange = skjul;
+$('#fot').textContent = 'Laget av tools/lag_tegnelister.py ' + DATA.dato + '. Avkryssingen lagres bare i denne nettleseren. Når bildene er levert og verktøyet kjøres på nytt, forsvinner de ferdige arkene fra lista.';
+</script>
+"""
+
+KORT = {1: 'Fiender', 2: 'Koret og Klumpen', 3: 'Spriteark', 4: 'HUD', 5: 'Parken og skogen', 6: 'Hendelsene', 7: 'Drømmene', 8: 'Møblene', 9: 'Delark'}
+def skriv_side(lister, sti):
+    """Én side til mobilen med alle arkene, kopieringsknapper og referansebildene (lagt ved som referanse/ref_*.png)."""
+    import datetime
+    data = {'stil': stilblokk(), 'levert': len(man) - len(MANGLER), 'alle': len(man), 'mangler': len(MANGLER), 'dato': datetime.date.today().isoformat(), 'lister': []}
+    for L in lister:
+        ark = []
+        for i, a in enumerate(L['ark']):
+            ref = ref_gyldig(a)
+            ark.append({'nr': f"{L['nr']}{chr(97 + i)}", 'tittel': tittel(a), 'type': TYPENAVN[a['type']], 'fil': filnavn(a), 'mal': mal(a) or '', 'gir': re.sub(r'`', '', gir(a)), 'prompt': prompt(a, ref), 'ref': f'referanse/{ref_navn(a)}' if ref else ''})
+        data['lister'].append({'nr': L['nr'], 'tittel': L['tittel'], 'kort': KORT.get(L['nr'], L['tittel']), 'merk': re.sub(r'`', '', L['merk']), 'ark': ark})
+    sti = Path(sti); sti.parent.mkdir(parents=True, exist_ok=True)
+    sti.write_text(SIDE_HTML.replace('__DATA__', json.dumps(data, ensure_ascii=False).replace('</', '<\\/')), encoding='utf-8')
+    return sti
+
 if __name__ == '__main__':
     lister = planlegg()
     if '--bilder' in sys.argv: lag_referanser(lister)
+    if '--side' in sys.argv: print('skrev', skriv_side(lister, sys.argv[sys.argv.index('--side') + 1]))
     n_ark, n_bilder, n_del = skriv(lister)
     print(f'skrev tegnelister/: {len(lister)} lister, {n_ark - n_del} ark og bilder med {n_bilder} av {len(MANGLER)} manglende bilder, og {n_del} delark')

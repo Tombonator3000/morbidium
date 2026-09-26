@@ -513,3 +513,14 @@ Alle tidspunkt er UTC.
 - GitHub Pages bygget og publiserte både PR #3 og PR #4 uten feil (kjøring 37 og 38).
 - Den publiserte fila (lastet ned fra tombonator3000.github.io/morbidium, 4,1 MB med 314 innebygde bilder) starter i testnettleseren på PC og mobil uten konsollfeil. Et nytt løp kommer i gang med 3D, glød fra tingene og kombotelleren (12 treff, nivå «Blodig»). Testnettleseren her stoler ikke på sertifikatet til nettverksproxyen, så fila ble testet lokalt i stedet for fra adressen.
 - Denne oppføringen flettes inn i main som en egen liten PR.
+
+## 2026-09-26 00:15 Mer 3D i den skrå ovenfra-visningen (del 1 av Toms nye bestilling)
+- Tom ba om mer 3D i den isometriske visningen, en bedre historie og en liste til ChatGPT over grafikk som mangler. Denne oppføringen gjelder 3D-delen. Historien og lista kommer i neste oppføring.
+- Ny fil src/40_dybde.js. Lykteskygger: fiender, sjefer, personale, figurer i hendelsene og høye ting nær pasienten kaster lange, myke skygger bort fra lykta, og skyggene flakker med lykta. Ekte punktlysskygger passer dårlig fordi tegningene er strukket i høyden for kameraets skyld, så skyggene er flate plater som snus og strekkes hvert bilde.
+- Kontaktskygger: gulvet mørkner inn mot veggene og i indre hjørner, mest under de høye veggene bak. Males én gang per etasje.
+- Takstøv: når skjermen rister kraftig inne, drysser stein og puss ned fra taket, og skyggen på gulvet vokser og skjerpes mens steinen faller.
+- Kameradykk (04_render.js, R.kamZoom): kameraet går nærmere når en sjef dukker opp, når pasienten dør, og på store kombo-øyeblikk. Følger skjermristingen i innstillingene.
+- Varmeflimmer over bål, vedovner, kjeler, komfyrer og gryter i etterbehandlingen. Følger forvrengningen.
+- Pytter og vann speiler lampene og lykta i nærheten (vannshaderen), og tåka lyser opp rundt punktlysene i 3D (15_rom3d.js).
+- tools/lag_tegnelister.py kan også lage én side med alle arkene og kopieringsknapper (--side), til mobilen.
+- Ny testdel 30 i test_ekstra (dybde). Den går gjennom i 2D; hele pakken kjøres når historien er på plass.

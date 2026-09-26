@@ -95,7 +95,7 @@ const D3 = {
     const utenKant = U => { if (U && U.uRimCol) U.uRimCol.value.setRGB(0, 0, 0); };
     for (const d of this.dukker) { if (d.U && d.U.tint0) d.U.uTint.value.copy(d.U.tint0); utenKant(d.U); } this.dukker.clear();
     if (G.props) for (const o of G.props) { o.d3 = false; if (o.U && o.U.tint0) o.U.uTint.value.copy(o.U.tint0); utenKant(o.U); }
-    this.lamper = []; this.morkeT = 0;
+    this.lamper = []; this.morkeT = 0; this.taakeLys = null;
     if (R.post) R.post.uniforms.uLights.value = R.lightsOn ? 1 : 0;
     this.bygd = false;
   },
@@ -202,16 +202,22 @@ const D3 = {
     if (F.vaer === 'taake') cfg[0] += .22;
     const data = new Uint8Array(F.W * F.H); for (let i = 0; i < data.length; i++) data[i] = F.tiles[i] > 0 ? 255 : 0;
     const mask = new THREE.DataTexture(data, F.W, F.H, THREE.LuminanceFormat); mask.magFilter = mask.minFilter = THREE.LinearFilter; mask.generateMipmaps = false; mask.needsUpdate = true; this.egne.push(mask);
+    // punktlysene lyser opp tåka rundt seg (settes hvert bilde i tick): xz og radius i p, farge ganget med styrke i f
+    const TL = this.taakeLys = { p: { value: [0, 1, 2, 3, 4, 5, 6, 7].map(() => new THREE.Vector4()) }, f: { value: [0, 1, 2, 3, 4, 5, 6, 7].map(() => new THREE.Vector3()) } };
     for (const [y, k, fart] of [[.16, 1, 1], [.48, .6, -.7]]) {
       const mat = new THREE.ShaderMaterial({
-        uniforms: { uTid: this.tidU, uMask: { value: mask }, uFarge: { value: new THREE.Color(cfg[1]) }, uStyrke: { value: cfg[0] * k }, uSize: { value: new THREE.Vector2(F.W, F.H) }, uFart: { value: fart } },
+        uniforms: { uTid: this.tidU, uMask: { value: mask }, uFarge: { value: new THREE.Color(cfg[1]) }, uStyrke: { value: cfg[0] * k }, uSize: { value: new THREE.Vector2(F.W, F.H) }, uFart: { value: fart }, uLysP: TL.p, uLysF: TL.f },
         vertexShader: 'varying vec2 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }',
-        fragmentShader: `uniform float uTid, uStyrke, uFart; uniform vec3 uFarge; uniform sampler2D uMask; uniform vec2 uSize; varying vec2 vW; ${SHADER_NOISE}
+        fragmentShader: `uniform float uTid, uStyrke, uFart; uniform vec3 uFarge; uniform sampler2D uMask; uniform vec2 uSize; uniform vec4 uLysP[8]; uniform vec3 uLysF[8]; varying vec2 vW; ${SHADER_NOISE}
           void main(){
             float m = texture2D(uMask, vW / uSize).r;
             vec2 p = vW * 0.33 + vec2(uTid * 0.05, uTid * 0.021) * uFart;
             float n = vn(p) * 0.55 + vn(p * 2.1 + 5.3) * 0.3 + vn(p * 4.3 - uTid * 0.04) * 0.15;
-            gl_FragColor = vec4(uFarge, m * uStyrke * smoothstep(0.32, 0.78, n));
+            // lampene, lykta og bålene lyser gjennom tåka: glorie rundt hver kilde
+            vec3 lys = vec3(0.0);
+            for (int i = 0; i < 8; i++) { float d = length(vW - uLysP[i].xz); lys += uLysF[i] * pow(max(0.0, 1.0 - d / max(uLysP[i].w, 0.001)), 2.0); }
+            float l = min(1.5, dot(lys, vec3(0.333)));
+            gl_FragColor = vec4(uFarge * (1.0 - l * 0.25) + lys * 0.85, m * uStyrke * smoothstep(0.32, 0.78, n) * (1.0 + l * 1.4));
           }`,
         transparent: true, depthWrite: false
       });
@@ -341,6 +347,8 @@ const D3 = {
       l.color.copy(base); l.intensity = k * (lykt ? 1.2 : 1.5) * (lykt ? Math.max(.6, mf) : mf); l.distance = m.scale.x * .55 + 1;
       l.position.set(m.position.x, m.userData.y || (lykt ? 1.8 : 1.6), m.position.z - .3);
     }
+    // tåka får vite hvor lyset er, så den gløder rundt lampene
+    if (this.taakeLys) { const TP = this.taakeLys.p.value, TF = this.taakeLys.f.value; for (let i = 0; i < 8; i++) { const l = this.pool[i]; if (!l || l.intensity <= 0) { TF[i].set(0, 0, 0); continue; } TP[i].set(l.position.x, 0, l.position.z, l.distance * .8); TF[i].set(l.color.r * l.intensity * .5, l.color.g * l.intensity * .5, l.color.b * l.intensity * .5); } }
     // tegnede figurer og plater lyses av de samme lampene, med kantlys fra den sterkeste
     const alle = []; if (P && P.doll) alle.push(P.doll); for (const e of G.enemies || []) if (e.doll) alle.push(e.doll);
     if (G.boss && G.boss.doll) alle.push(G.boss.doll); for (const n of G.npcs || []) if (n.doll) alle.push(n.doll); for (const d of G.titleDolls || []) alle.push(d); for (const d of G.ekstraDukker || []) if (d.root.parent) alle.push(d); // figurer i hendelser og drømmer
