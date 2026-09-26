@@ -64,7 +64,7 @@ function utskrivningsbrev(onDone) {
     Bv.avslutning
   ].filter(Boolean);
   const forste = !Merknad.har('utskrevet');
-  openPanel(`<div class="fit brev paper"><div class="bhode"><b>MORBIDIUM SANATORIUM</b><span>Avdeling for oppstyrret sinn. Grunnlagt 1887.</span></div>
+  openPanel(`<div class="fit brev paper${narrow() ? ' smal' : ''}"><div class="bhode"><b>MORBIDIUM SANATORIUM</b><span>Avdeling for oppstyrret sinn. Grunnlagt 1887.</span></div>
     <div class="bdato">24. september 1923</div><div class="btil">Til ${esc(p.name)}, pasient nr. ${p.nr}</div><h2>${esc(Bv.tittel)}</h2>
     ${avsnitt.map(a => `<p>${esc(a)}</p>`).join('')}
     <div class="bslutt"><div><div class="bhilsen">Med vennlig hilsen</div><div class="bsign">${esc(Bv.sign)}</div></div><div class="bstempel">${esc(Bv.stempel)}</div></div>

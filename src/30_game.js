@@ -105,7 +105,7 @@ function showIntake() {
     if (G.intakeValgt) return; G.intakeValgt = true; b.querySelector('.boks').textContent = 'X'; document.querySelector('.skjema').classList.add('stemplet'); Sound.play('stamp');
     setTimeout(() => { G.intakeValgt = false; G.panelO = null; show('panel', false); G.patient.gjen = !!(gj && gj.checked); newRun(b.dataset.awk); }, 650);
   });
-  const f = document.querySelector('[data-awk]'); f && f.focus(); fitPanel();
+  fitPanel(); const f = document.querySelector('[data-awk]'); f && f.focus({ preventScroll: true });
 }
 const CARD_POOL = ['due', 'lys', 'skyggehand', 'stempel', 'brekning', 'monolog', 'hydro', 'kappe', 'skjema', 'nokler', 'resept', 'benektelse'];
 function owned(id) { return G.run.slots.some(c => c && c.id === id) || G.run.reserve.some(c => c.id === id); }
@@ -326,7 +326,7 @@ function openChest(o) {
 function choicePanel(title, sub, opts) {
   openPanel(`<div class="hdr">${esc(title)}</div><div class="list paper" style="width:min(640px,94vw);padding:14px 16px 16px"><div class="hint">${esc(sub)}</div><div class="offers" style="margin-top:10px">${opts.map((o, i) => `<button class="offer" data-ch="${i}"><span data-art="${i}"></span><b>${esc(o.name)}</b>${esc(o.desc)}</button>`).join('')}</div></div>`);
   opts.forEach((o, i) => { document.querySelector(`[data-art="${i}"]`).replaceWith(artFor(o.art[0], o.art[1])); document.querySelector(`[data-ch="${i}"]`).onclick = () => { closePanel(); o.fn(); Sound.play('pickup'); }; });
-  document.querySelector('[data-ch="0"]').focus();
+  document.querySelector('[data-ch="0"]').focus({ preventScroll: true });
 }
 function readLore(o) {
   o.read = true; const m = G.meta, idx = LORE.findIndex((_, i) => !m.fragments.includes(i)), i = idx >= 0 ? idx : rndi(0, LORE.length - 1);
@@ -391,14 +391,16 @@ function openService(svc, npc) {
       if (!o.again) o.sold = true; if (o.group) offers.forEach(x => { if (x.group === o.group) x.sold = true; });
       if (G.state === 'panel') render();
     }; });
-    const f = document.querySelector('.offer:not(.sold)'); f && f.focus();
+    const f = document.querySelector('.offer:not(.sold)'); f && f.focus({ preventScroll: true });
   };
   render();
 }
 
 /* ---------- paneler ---------- */
 function openPanel(html, o = {}) {
-  const el = $('panel'); el.innerHTML = html; show('panel', true); G.prevState = G.state === 'panel' ? G.prevState : G.state; G.state = 'panel'; G.panelO = o;
+  // et nytt panel begynner øverst; et panel som tegnes på nytt (butikken etter et kjøp, en ny fane) beholder rullingen.
+  // Rullingen nullstilles etter at panelet vises: mens det er skjult, husker nettleseren den gamle og legger den tilbake
+  const el = $('panel'), ny = G.state !== 'panel'; el.innerHTML = html; show('panel', true); if (ny) el.scrollTop = 0; G.prevState = G.state === 'panel' ? G.prevState : G.state; G.state = 'panel'; G.panelO = o;
   el.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closePanel());
 }
 function closePanel() {
@@ -586,7 +588,8 @@ function drawWeaponCard() {
 function hudUpdate() {
   const P = G.player; if (!P) return;
   const nh = Math.ceil(P.maxHp / 10), h = [];
-  for (let i = 0; i < nh; i++) { const v = clamp((P.hp - i * 10) / 10, 0, 1); h.push(hjerteHtml(v, HEART)); }
+  for (let i = 0; i < Math.min(nh, 20); i++) { const v = clamp((P.hp - i * 10) / 10, 0, 1); h.push(hjerteHtml(v, HEART)); }
+  if (nh > 20) h.push(`<span class="hplus">+${nh - 20}</span>`); // flere enn to rader tar hele skjermen på mobil
   const need = 40 + (P.level - 1) * 55;
   const key = h.join('') + P.teeth + Math.round(P.morb) + P.level + Math.round(P.xp) + P.dodge + P.dodgeMax + G.run.patient.name;
   if (key !== hudKey) {
@@ -642,12 +645,12 @@ function showDeath() {
   m.historie = (m.historie || []).concat([{ name: G.run.patient.name, nr: G.run.patient.nr, age: G.run.patient.age, depth: G.depth, cause, kills: G.run.kills, rooms: G.run.rooms, awk: G.run.awk, look: G.run.look || null, utskrevet: false, drom: Drom.mappe(false) }]).slice(-40);
   saveMeta(); clearRun();
   G.state = 'dead'; show('hud', false); Sound.stopAmbience(); Musikk.stopp(.3); Musikk.stikk('dod');
-  $('panel').innerHTML = `<div class="hdr" style="font-size:clamp(44px,9vw,76px)">DU ER DØD.</div><div class="dcard"><div class="slab"><canvas id="deadc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Dødsårsak</dt><dd class="cause">${esc(cause)}</dd></dl>${Merknad.kortHtml()}<div class="stamp">AVDØD</div></div>
-    <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div>`;
-  show('panel', true);
+  $('panel').innerHTML = `<div class="fit dodskjerm"><div class="hdr" style="font-size:clamp(44px,9vw,76px)">DU ER DØD.</div><div class="dcard"><div class="slab"><canvas id="deadc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Dødsårsak</dt><dd class="cause">${esc(cause)}</dd></dl>${Merknad.kortHtml()}<div class="stamp">AVDØD</div></div>
+    <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div></div>`;
+  show('panel', true); $('panel').scrollTop = 0; fitPanel();
   const g = $('deadc').getContext('2d'); g.save(); g.translate(150, 58); g.rotate(-Math.PI / 2 + .06); drawDollPortrait(g, 'pasient', 0, 110, 92, G.run.look); g.restore();
   $('dNew').onclick = () => { show('panel', false); resetRun(); showIntake(); }; $('dTitle').onclick = () => { show('panel', false); resetRun(); showTitle(); };
-  $('dNew').focus();
+  $('dNew').focus({ preventScroll: true });
 }
 function resetRun() { Items.clearLook(); if (G.player) { G.player.doll.dispose(); R.remove(G.player.lantern); G.player = null; } }
 /* utskrivning: først brevet, så kortet */
@@ -657,9 +660,9 @@ function showWin() {
 }
 function visUtskrevet() {
   const P = G.player; Merknad.onWin(G.run); G.meta.wins++; G.meta.historie = (G.meta.historie || []).concat([{ name: G.run.patient.name, nr: G.run.patient.nr, age: G.run.patient.age, depth: G.depth, cause: 'Utskrevet. Frisk nok.', kills: G.run.kills, rooms: G.run.rooms, awk: G.run.awk, look: G.run.look || null, utskrevet: true, drom: Drom.mappe(true) }]).slice(-40); saveMeta(); clearRun(); G.state = 'dead'; show('hud', false); Sound.play('level'); Sound.stopAmbience();
-  $('panel').innerHTML = `<div class="hdr">UTSKREVET</div><div class="dcard"><div class="slab" style="background:linear-gradient(#b8c8a8,#8aa07a)"><canvas id="winc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Legens konklusjon</dt><dd class="cause">${esc(Historie.konklusjon())}</dd></dl>${Merknad.kortHtml()}<div class="stamp">${Historie.brev().sl === 'gjentakelse' ? 'INNKALT' : 'FRISK NOK'}</div></div>
-    <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div>`;
-  show('panel', true); G.state = 'dead'; drawDollPortrait($('winc').getContext('2d'), 'pasient', 150, 112, 58, G.run.look);
+  $('panel').innerHTML = `<div class="fit dodskjerm"><div class="hdr">UTSKREVET</div><div class="dcard"><div class="slab" style="background:linear-gradient(#b8c8a8,#8aa07a)"><canvas id="winc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Legens konklusjon</dt><dd class="cause">${esc(Historie.konklusjon())}</dd></dl>${Merknad.kortHtml()}<div class="stamp">${Historie.brev().sl === 'gjentakelse' ? 'INNKALT' : 'FRISK NOK'}</div></div>
+    <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div></div>`;
+  show('panel', true); $('panel').scrollTop = 0; G.state = 'dead'; fitPanel(); drawDollPortrait($('winc').getContext('2d'), 'pasient', 150, 112, 58, G.run.look);
   $('dNew').onclick = () => { show('panel', false); resetRun(); showIntake(); }; $('dTitle').onclick = () => { show('panel', false); resetRun(); showTitle(); };
 }
 

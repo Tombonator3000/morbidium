@@ -23,6 +23,7 @@ const R = {
     this.coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches); this.dpr = this.dprMax = Math.min(devicePixelRatio || 1, this.coarse ? 1.5 : 2); this.renderer.setPixelRatio(1);
     canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); this.mistet(); });
     canvas.addEventListener('webglcontextrestored', () => this.hentet());
+    document.addEventListener('visibilitychange', () => { if (this.tapt) this.tapKlokke(); });
     this.scene = new THREE.Scene(); this.lscene = new THREE.Scene();
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 300);
     this.dyn = new THREE.Group(); this.scene.add(this.dyn);
@@ -32,17 +33,23 @@ const R = {
   /* WebGL kan mistes på mobil: for lite minne, eller når nettleseren legges i bakgrunnen. Three.js bygger opp igjen
      det den eier når konteksten kommer tilbake. Spillet pauser, venter, går ned til lettere grafikk (lavere oppløsning
      og et trinn ned i 3D) og fortsetter. Kommer grafikken ikke tilbake på åtte sekunder, vises feilmeldingen med
-     «Prøv enkel grafikk» som før. */
+     «Prøv enkel grafikk» som før. Mistes den mens spillet ligger i bakgrunnen (bytte av app), telles de åtte sekundene
+     først når siden synes igjen, og grafikken settes ikke ned når den kommer tilbake: da var det ikke minnet. */
   mistet() {
     this.tapt = true; this.tapN = (this.tapN || 0) + 1;
     if (typeof Testmodus === 'object') Testmodus.feil.push({ t: performance.now(), m: 'WebGL mistet (' + this.tapN + '. gang)' });
-    try { if (G.state === 'play') openPause(); toast('Grafikken ble borte', 'Venter på at den kommer tilbake'); } catch (e) { }
-    clearTimeout(this.tapTimer);
-    this.tapTimer = setTimeout(() => { if (this.tapt && window.showErr) showErr('Grafikken gikk tom for minne eller krasjet (WebGL-konteksten ble mistet), og kom ikke tilbake.', true); }, 8000);
+    this.tapSkjult = document.hidden;
+    try { if (G.state === 'play') openPause(); if (!document.hidden) toast('Grafikken ble borte', 'Venter på at den kommer tilbake'); } catch (e) { }
+    this.tapKlokke();
+  },
+  tapKlokke() {
+    clearTimeout(this.tapTimer); if (document.hidden) return;
+    this.tapTimer = setTimeout(() => { if (this.tapt && !document.hidden && window.showErr) showErr('Grafikken gikk tom for minne eller krasjet (WebGL-konteksten ble mistet), og kom ikke tilbake.', true); }, 8000);
   },
   hentet() {
     this.tapt = false; clearTimeout(this.tapTimer); this.checkN = 3;
     if (typeof Testmodus === 'object') Testmodus.feil.push({ t: performance.now(), m: 'WebGL hentet tilbake' });
+    if (this.tapSkjult) { this.resize(); return; } // spillet står i pausemenyen når du kommer tilbake
     this.dprMax = Math.max(1, (this.dprMax || 1) - .5); this.dpr = Math.min(this.dpr, this.dprMax); this.resize();
     try { if (D3.on) D3.nedgrader(); else toast('Grafikken er tilbake', 'Oppløsningen er satt litt ned'); } catch (e) { }
   },
