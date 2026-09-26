@@ -96,8 +96,8 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Innstillingene har versjon (sv: 2). Eldre lagring får d3 slått på én gang; et nytt valg om å slå det av huskes.
 - Lys: vegglamper med egen lyskjegle og flimring (D3.lamper), lysstråler og lysflekk fra vinduene, bakketåke i to lag, mørke som slukker lysene og flimrer dem tilbake (D3.morke, brukt av sjefer, minisjefer og høy Morbidium). D3.lysVed(x, z) gir fargen fra de nærmeste lysene, brukt til kantlys på dukker og ting (settKant, uRimCol i SPRITE_FS) og til animasjoner.
 - Våte ting (userData.vaat: blod, pytter) blir Phong med litt egenglød i lysLag, så de ikke blir svarte i mørket.
-- D3.sett(på) fra applySettings (innstillingen d3; #2d slår av). D3.onFloor() etter hver etasje og på tittelen. D3.tick(dt) hvert bilde.
-- R.light registrerer lysplatene i R.kilder; D3 gir de åtte nærmeste et PointLight (spillerens lykt først). Månen er et DirectionalLight med skyggekart som følger kameraet.
+- D3.sett(på) fra applySettings (innstillingen d3; #2d slår av). D3.onFloor() etter hver etasje og på tittelen. D3.tick(dt) hvert bilde, rett før R.render.
+- R.light registrerer lysplatene i R.kilder; D3.fordel gir de nærmeste et PointLight (8, 6 og 4 etter kvaliteten, lykta først, uten at lyset hopper av og på, se «Skygger, lys og diorama»). Månen er et DirectionalLight med skyggekart som følger kameraet, låst til rutene i skyggekartet.
 - Paint.mesh { gulv, topp, vegg } får MeshToonMaterial (gradient i fire trinn) og normaler. Vanlige MeshBasic-materialer i nivået blir Lambert. Alt huskes i D3.byttet og settes tilbake.
 - Toms retning (24.9. kveld): figurer og ting forblir 2D-tegningene (så alle bildene fra ChatGPT brukes), bare rommene, gulvet og effektene er 3D. Lavpoly-møblene er fjernet.
 - D3.moble(o) gjør rekvisittens tegning til skyggekaster (skyggePlate: MeshDepthMaterial med alfatest, setPart oppdaterer kartet) og gjemmer den gamle skyggeflekken (D3.gjemt, vises igjen i riv).
@@ -289,4 +289,34 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - body har touch-action:none, men panelene med overflow:auto kan likevel rulles med fingeren (Blink slipper panorering til igjen for rullbare elementer). Synthesized scroll gesture i CDP virker ikke i testnettleseren; bruk Input.dispatchTouchEvent.
 - Testmodus-panelet stopper alle taster mens det er åpent (skriving i feltene virker), så P og Escape ikke lukker pausen under.
 - Testdel 36 i test_ekstra dekker dette, med en minnesjekk (renderer.info.memory over to runder med fire etasjer, og at skyggekartet til månen frigjøres direkte). Bygget fra før rettingene la igjen 16 teksturer og 67 geometrier per runde.
+
+## Skygger, lys og diorama (26.9. kveld, spor A)
+- Tom så at noen skygger står fast og andre følger spilleren. Tre skyggesystemer virker samtidig i 3D, og det er riktig fysikk: månen (retningslys med skyggekart, fast retning), lykta som pasienten bærer (flate plater som dreier bort fra lykta, 40_dybde.js) og flekken under hver figur. Det som var feil: månens skyggekart gled med kameraet uten å være låst til rutene sine, så kantene krøp. Nå låses det til hele ruter (D3.maneB i 15_rom3d.js). Retning og lengde er de samme.
+- D3.tick, Dybde.tick og Glorie.tick går rett før R.render, etter at alt har flyttet seg, så lykteskyggene og lyset følger i samme bilde. Lykteskyggene går ikke gjennom vegger (egen vegg-sjekk, ikke solid(), som også teller møbler), stopper ved veggen bak figuren, blekner jevnt nær lykta og følger uAlpha og oppløsningen.
+- Telefoner og TV får høyst 1024 i skyggekartet (D3.Q), og skyggekartet tegnes ikke på nytt mens spillet står i pause.
+- Flekken under figurene står på gulvet når figuren hopper eller svever: hopp og sveving løfter plane, ikke root, og Doll.bakke setter flekkens størrelse og styrke (shadowA er .45 i 3D og 1 ellers, ganger oppløsningen). Kråka og koret svever nå synlig, og rotter og klumpunger hopper synlig. Før satte updateEnemy roten tilbake på gulvet hvert bilde.
+- Figurene kaster måneskygge etter hele tegningen, også våpen og tillegg som kommer senere (D3.dukke lager skyggeplater for alt i plane). Halvt oppløste og gjennomsiktige figurer kaster ikke (D3.dukkeVis). Den åpne kista får riktig materiale, bakte skygger synes når «Lys og skygge» er av, og dekaler, plakater og dører er toon som gulvet.
+- Lyspuljen (D3.fordel): lykta har det første punktlyset. De andre går til de nærmeste kildene, men en kilde beholder lyset så lenge den er blant de N+2 nærmeste og ingen er 1,5 nærmere. Lys blekner ut på 0,2 og inn på 0,25 sekunder. Bare ett lysglimt (userData.blink) får lys om gangen, svarte kilder får aldri. D3.FYLL_SIST (av) kan sette romlyset midt i rommet sist i køen.
+- R.kilder tømmes for lysplatene fra forrige etasje når etasjen byttes (Paint.level), og materialene deres kastes.
+- Værvakta i Vaer.start (17_romtyper.js) var havnet inni en kommentar, så klarvær, tåke og innendørs etasjer fikk hvite prikker og vindlyd. Rettet.
+- Dioramaet (inspirert av Toms HD-2D-bilde): Glorie i 38_effekter.js lager glorier rundt lamper, lys, bål og ovner (GLORIE_KILDER), ett Points-objekt per etasje, høyst 32, 20 og 10 (høy, middels, lav og 2D), ingen under Enkel grafikk, R.lowTex eller uten lys. STYRKE 1,6 og UTEN_3D ,45. Tilt-shift (NIVA.tilt ,7 på høy og ,45 på middels, så også telefoner) har det skarpe båndet der pasienten står. Glød og tilt har ingen dybdebuffer og fire oppslag i nedskaleringen, og lysbufferen lrt lages ikke i 3D.
+
+## Det store kartet (45_kart.js, 26.9. kveld, spor B)
+- Trykk eller klikk på ringen med minikartet, M, eller pil høyre på håndkontrollen åpner hele etasjen som plantegning på papir. Pausemenyen har også «Kartet». Spillet står stille mens kartet er oppe (et vanlig panel). Lukkes med M, Esc, P, B, Start eller Lukk.
+- Tegnes én gang når det åpnes: det malte gulvet skalert ned, bare der pasienten har vært (G.seen), rollefarger, blekkstrek, ikoner og en pil for pasienten. Lerretene frigjøres når kartet lukkes (closePanel har fått o.onClose). Ingen WebGL, så det virker likt i 2D, 3D og med Enkel grafikk.
+- På PC er et klikk på ringen i kamp et slag, ikke kartet, og musa sendes videre til spillet. Ringen har ikke data-kart (journalen bytter ut alt med data-kart).
+- Hemmelige rom vises som før på kartene. Om de skal skjules til de er funnet, er Toms valg.
+
+## Kontroller i menyene (MenyNav i 32_meny.js, 26.9. kveld, spor B)
+- Hele spillet kan styres med bare en håndkontroll: pil eller venstre spak flytter mellom knappene (nærmeste i retningen), A trykker, B går tilbake, LB og RB blar i faner og sider, høyre spak ruller. Piltastene gjør det samme med tastatur og fjernkontroll. MenyNav.tick kalles fra løkka i alle tilstander unntatt play, også på døds- og utskrivningsskjermen.
+- Nye paneler må ha knapper som MENY_SEL finner (button, input, [tabindex="0"]), og en [data-close] for B. Journalkortene velges med en syntetisk Enter.
+- En A eller B som ble trykket i spillet de siste 450 ms, trykker ikke i et panel som dukker opp av seg selv (brevet, drømmen). B er også rull, så bare B-trykk i spillet teller.
+- Input bruker den første tilkoblede kontrollen med standard oppsett, også når plass 0 er tom, og kontrollen skjuler berøringsknappene. Input.tast gir knappenavn etter enheten (kortene, pausen, journalen, flaska og apparatet).
+
+## TV-modus (26.9. kveld, spor B)
+- R.tv slås på av seg selv i nettleseren på TV-en (TV_UA), eller med Innstillinger, Spill, TV-modus (0 automatisk, 1 på, 2 av). body.tv gir marger mot kanten (4,5 prosent), større HUD (--ui minst 1,4), større menyer (passInn opptil 1,6) og ingen berøringsknapper. TV starter på middels kvalitet og får malte teksturer som telefoner.
+- Tilbake på fjernkontrollen (keyCode 10009 og 461, GoBack, BrowserBack, XF86Back) virker som Esc. I TV-modus fanger TvTilbake også tilbake-steget i nettleserens historikk, og på tittelen går tilbake ut av spillet.
+- Fullskjerm-knapp på tittelen og i pausen når nettleseren tillater det (Fullskjerm). En A på håndkontrollen regnes ikke alltid som et ekte trykk, så nettleseren kan si nei.
+- Testrapporten sier om det er en Samsung-TV (Tizen og Chromium-versjon), hvilken kontroller som er funnet, om TV-modus er på og om spillet er i fullskjerm. Innstillinger, Styring viser om en kontroller er funnet.
+- Samsung lover Gamepad API bare for installerte Tizen-apper, ikke for nettleseren på TV-en. Det må prøves på Toms TV. Veiledningen står i TV.md og i håndboka under Styring.
 

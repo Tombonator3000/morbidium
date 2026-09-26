@@ -17,6 +17,23 @@ Lista har nå 19 åpne spørsmål til Tom (lyd, blod, mørke, vanskelighet, hist
 - [ ] Tom og ChatGPT, i denne rekkefølgen: liste 10 (historien, fire bestillinger), liste 5 og 1 (fiendene i parken og første etasje), hjertene og ringene i liste 4.
 - [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, og andre halvdel av UI-settet.
 
+## Grafikk, kart, skygger og TV, 2026-09-26 kveld
+Tom sendte et bilde av et HD-2D-spill og ba om å undersøke bedre grafikk med 2D og 3D sammen, et stort kart når minikartet trykkes på, en sjekk av skyggene (noen står fast og andre følger spilleren) og mulighet for å spille på Samsung-TV med kontroller.
+- [x] Skyggene: undersøkt av to agenter hver for seg. Faste måneskygger og lykteskygger som dreier med spilleren er riktig (to lyskilder). Rettet: måneskyggene krøp (nå låst til skyggekartet), lykteskyggene lå ett bilde etter og gikk gjennom vegger, flekkene løftet seg med figurer som hopper og svever, døende og gjennomsiktige figurer kastet full skygge, våpen og tillegg manglet skygge, den åpne kista, og mer.
+- [x] Lampene blinker ikke lenger av og på rundt pasienten (lyspuljen), og værvakta som havnet i en kommentar er rettet (hvite prikker og vindlyd på feil etasjer).
+- [x] Diorama-lys: glorier rundt lamper, lys, bål og ovner, tilt-shift også på middels (telefon) med det skarpe båndet der pasienten står, og billigere glød.
+- [x] Det store kartet: trykk på minikartet, M, pil høyre på kontrolleren, eller Kartet i pausen.
+- [x] Hele spillet kan styres med håndkontroll, også menyene. TV-modus med marger, større tekst, tilbaketasten og fullskjerm. Veiledning i TV.md og i håndboka under Styring.
+- [ ] Tom: prøv på Samsung-TV-en. Åpne appen Internett på TV-en, gå til tombonator3000.github.io/morbidium/?testmodus, trykk en knapp på kontrolleren og se under Innstillinger, Styring om den er funnet. Lim inn testrapporten. Virker det ikke, er PC med HDMI eller Cast fra Chrome veien (TV.md).
+- [ ] Tom: velg lysretning. Bildene (A som nå, B med månen fra samme kant som de malte skyggene og et svakt fyllys forfra) ble sendt i samtalen 26.9. kveld (lysretning, ark.png). B gjør at alle skyggene peker samme vei, men endrer stemningen.
+- [ ] Tom: skal romlyset midt i rommet komme sist i køen for punktlysene (D3.FYLL_SIST)? Da får lampene mer eget lys, men sjefsrommene mister det oransje skjæret. Bildene ble sendt i samtalen (fyll_ark.jpg).
+- [ ] Tom: er gloriene og tilt-shiften passe sterke? Før og etter ble sendt i samtalen (for_etter_pc.jpg og for_etter_mobil.jpg). Styrken står i Glorie.STYRKE og NIVA.tilt.
+- [ ] Tom: figurene kaster nå måneskygge etter hele tegningen, som tegningen er ment. Det koster noen ekstra tegnekall per figur på telefon. Si fra om det hakker på mobilen (testmodus viser bilder i sekundet).
+- [ ] Tom: kråka og koret svever nå synlig, og små fiender hopper. Før holdt en feil dem på gulvet. Si om det ser riktig ut.
+- [ ] Tom: skal hemmelige rom skjules på kartene til de er funnet?
+- [ ] Tom: skal «Enkel grafikk» også slå av regn, snø og ildfluer, og skal «Lys og skygge» av også slå av glød og tilt-shift? I dag gjør de ikke det.
+- [ ] Claude, senere: dukkene og tingene som ikke er i G.props (lik, sprekker, ting i hendelser) i 3D, billige lyspøler for lamper uten punktlys, glød fra malte flammer, og en egen Tizen-app bare hvis nettleseren på TV-en ikke slipper kontrolleren inn.
+
 ## Mobil, 2026-09-26 formiddag (Tom: «Noe gikk galt», WebGL mistet)
 - [x] Tre lekkasjer i grafikkminnet tettet (skyggekartet, strekbåndene til dukkene, flekker, plakater og dører). Minnet ligger flatt i stedet for å vokse rundt 12 MB per etasje.
 - [x] Mistet WebGL gir pause og kommer tilbake med lettere grafikk i stedet for «Noe gikk galt». Bytte av app gir ingen feilmelding og ingen nedgradering.
