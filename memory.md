@@ -17,7 +17,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 
 ## Teknikk
 - Én selvstendig HTML-fil, Three.js r128 fra cdnjs.
-- Kilder i src/, satt sammen av build.py til dist/morbidium.html. Rekkefølge: 00_head, 01_core, 02_data, 03_generator, 04_render, 05_world, 06_musikk, 10_art, 11_doll, 12_paint, 13_rom, 14_pasient, 15_rom3d, 16_anim, 17_romtyper, 20_actors, 22_sjefer, 25_items, 26_fiender, 27_utstyr, 28_oppskrift, 29_monstre, 31_sjefpulje, 34_blod, 35_hendelser, 36_drom, 32_meny, 33_merknader, 37_utefiender, 38_effekter, 39_kombo, 40_dybde, 41_historie, 30_game. 38 til 41 pakker inn funksjoner fra de fleste andre filene (hurt, hurtPlayer, meleeHit, useAbility, bossDie, bossOnHurt, updateBoss, spawnBoss, stampBig, spawnProps, addPuddle, gainXp, runStats, startFloor, Samtale.vis, Drom.lag, Drom.epilog), så de må ligge sist før 30_game. 37_utefiender ligger etter 32_meny og 33_merknader fordi den legger nye fiender inn i fiendeindeksen (FIENDE_REKKE, SJEF_REKKE, FIENDE_INFO). 32_meny og 33_merknader ligger før 30_game fordi konstantene der må finnes når 30_game starter.
+- Kilder i src/, satt sammen av build.py til dist/morbidium.html. Rekkefølge: 00_head, 01_core, 02_data, 03_generator, 04_render, 05_world, 06_musikk, 10_art, 11_doll, 12_paint, 13_rom, 14_pasient, 15_rom3d, 16_anim, 17_romtyper, 20_actors, 22_sjefer, 25_items, 26_fiender, 27_utstyr, 28_oppskrift, 29_monstre, 31_sjefpulje, 34_blod, 35_hendelser, 36_drom, 32_meny, 33_merknader, 37_utefiender, 38_effekter, 39_kombo, 40_dybde, 41_historie, 42_lyd, 43_vaatt, 30_game. Rett etter 01_core legger build.py inn LYDFILER (lydene som base64) og LYD_META. 38 til 43 pakker inn funksjoner fra de fleste andre filene (hurt, hurtPlayer, meleeHit, useAbility, bossDie, bossOnHurt, updateBoss, spawnBoss, stampBig, spawnProps, addPuddle, gainXp, runStats, startFloor, Samtale.vis, Drom.lag, Drom.epilog), så de må ligge sist før 30_game. 37_utefiender ligger etter 32_meny og 33_merknader fordi den legger nye fiender inn i fiendeindeksen (FIENDE_REKKE, SJEF_REKKE, FIENDE_INFO). 32_meny og 33_merknader ligger før 30_game fordi konstantene der må finnes når 30_game starter.
 - Seks etasjer (MAX_DEPTH 6, fra 25.9. kveld): 1 Parken (ute), 2 Mottak, 3 Underetasjen, 4 Kjelleren: Isolat og arkiv, 5 Nattskogen (ute, under grunnmuren), 6 Dypet. THEMES[d].ute markerer uteetasjene. Fiendenes styrke følger dybdeStyrke(d) (STYRKE i 02_data.js: 1, 1.4, 2, 2.8, 3.4, 4), så Dypet er like tungt som før. Sjefene i etasje 1 til 5 trekkes for hvert løp fra puljen (trekkSjefer(seed), lagret i G.run.sjefer, gjentar seg så lenge puljen har færre enn fem); Journalen står fast i etasje 6. Signaturangrepene står i BOSS_MOVES i 22_sjefer.js og 31_sjefpulje.js.
 - Render: ortografisk kamera, scenen tegnes til et mål, lys i eget lag (R.light), så ett etterbehandlingspass (gradering, papir, korn, vignett, blekkboiling, Morbidium, skade). Dukkene har egen shader (blink, kontur, oppløsning).
 - Spillflyt i 30_game.js: tilstander title, panel, play, journal, dead. G.run holder løpet (pasient, egenskaper, kort i slots og reserve), G.meta lagres i localStorage under morbidium_meta_v2.
@@ -32,6 +32,9 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - cortiz2894/stylized-components (MIT, Christian Ortiz): toon-vannshader.
 - scottstts/Threejs-Awesome-Graphics-Agent-Skills (MIT): partikkelpool med tett bytte, valideringsprotokoll.
 - Brogue CE og Shattered Pixel Dungeon: bare som idékilder (GPL, ingen kode kopiert).
+- Freesound: 102 lydeffekter og stemningslyder, bare CC0 1.0. tools/lag_lyd.py sjekker CC0-lenken på hver lydside før nedlasting. Navn på alle i assets/lyd/KILDER.md.
+- Versilian Community Sample Library (VCSL, github.com/sgossner/VCSL, CC0): 63 instrumenttoner.
+- iMUSE (LucasArts) er bare forbilde for musikksystemet.
 
 ## Ting å huske
 - prosjektbibliotek kunne klones uten innlogging, altså offentlig, selv om AGENTS.md sier privat.
@@ -108,7 +111,8 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - applySettings oppdaterer G.meta.settings på stedet (Object.assign), så panelet kan endre flere ting etter hverandre.
 
 ## Musikk og lyd (06_musikk.js, Sound i 01_core.js)
-- Musikk er et sekvenseringsverk i åttendeler med forhåndsplanlegging (0,22 s). Stykker i STYKKER: tittel (spilledåsevals), e1 (vals i d-moll), e2 (sakte orgel med drypp), e3 (frygisk marsj med cembalo og skrivemaskin), e4 (kor og klokker), tjeneste (grammofonvals i dur, filtrert som en gammel grammofon).
+- Fra 26.9. morgen er musikken et lite iMUSE (se egen del under). Det som står her, gjelder fortsatt.
+- Musikk er et sekvenseringsverk i åttendeler med forhåndsplanlegging (0,25 s). Stykker i STYKKER: tittel (spilledåsevals), e1 (vals i d-moll), e2 (sakte orgel med drypp), e3 (frygisk marsj med cembalo og skrivemaskin), e4 (kor og klokker), tjeneste (grammofonvals i dur, filtrert som en gammel grammofon).
 - Tre lag: grunn (alltid), kamp (trommer og sagbass) og sjef (messing og pauker). Musikk.settNiva(0/1/2) toner lagene inn og øker tempoet litt. Morbidium (Musikk.morb) drar tonene skjeve og gir halvtonefeil.
 - Lydbusser: sfx, amb (drone og stemningslyder), mus (musikken). Innstillinger: vol, sfx, mus, amb.
 - Sound.tick spiller nå tilfeldige stemningslyder per etasje (klokke, knirk, drypp, rør, skrivemaskin, rotte, skrik, hjerteslag). Tonerekka fra the-deep-ones er erstattet av musikken.
@@ -135,7 +139,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 
 ## Blod og skrekk (34_blod.js)
 - Blod: flekker i InstancedMesh-er per tekstur (ring, farge per flekk), sprut i slagretningen, blod på veggene med drypp som renner (Blod.vegg, veggVed), kjøttbiter ved tunge drap (Blod.biter, lista heter bitene), blodige fotspor, blodspor etter sårede, drypp fra taket, øyne i veggene ved Morbidium over 50. Innstillingen blod slår alt utover vanlige flekker av (Blod.sett).
-- Kroker: hurt setter e.hpFor og e.raaSkade før skaden, så dødseffekten vet om slaget var tungt. R.fx.blod (blod på skjermen), R.fx.aarer (årer ved lite helse) og uFilm/uSplit/uTilt i etterbehandlingen (04_render.js).
+- Kroker: hurt setter e.hpFor og e.raaSkade før skaden, så dødseffekten vet om slaget var tungt. R.fx.blod (det gamle, ferdigmalte blodet på skjermen, bare når «Blod og vann på skjermen» er av; ellers 43_vaatt.js), R.fx.aarer (årer ved lite helse) og uFilm/uSplit/uTilt i etterbehandlingen (04_render.js).
 
 ## Nye fiender og minisjefer (29_monstre.js)
 - Fra ChatGPTs forslag: kasteren, trille (sitter i rullestol, RIG.sete og hjul), speil (viser pasientens ansikt, sju års ulykke: G.run.buffs.ulykke, flaks minus 6 per stykk), klumpunge. Minisjefer (ENEMIES[t].mini, tittel): koret (Lagdukke), tannlege, portier (hodet er et eget tillegg som kastes, portierHode()).
@@ -242,3 +246,27 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Slutten: «Siste side» (SISTE_SIDE med a, morbeck og los) før etterordet. Historie.brev() gir tittel, stempel, avslutning og underskrift (pasienten med pennen, «tidligere forstander» når han er løst). Historie.konklusjon() står på kortet.
 - Ni nye journalfragmenter (auksjonen 1886, to notater fra 1887, byggmesteren 1901, Olsen 1918, styrmann G. J. 1921, universitetet 1922, siste notat, hele historien), merknadene Løsrevet, Villnis, Ansiktet tilbake, Pennen og Løslatelse.
 - Bildene (HISTORIE_ART): historie_1 til 5, historie_slutt_<slutt>, prop_forstander, prop_venterom og prop_skrin, med reservetegninger i koden. Liste 10 i tegnelister/ og runde 14 i ART_BRIEF.md.
+
+## Lydbanken (42_lyd.js, assets/lyd/, tools/lag_lyd.py)
+- 165 lyder, alle CC0: 102 fra Freesound (effekter og stemning) og 63 instrumenttoner fra VCSL. Mono-MP3, effektene i 32 kHz, stemningen i 24 kHz, 1,57 MB i alt (2,1 MB som base64 i fila).
+- tools/lag_lyd.py: lista FREESOUND (navn, id, bruker, tittel) og INSTRUMENTER (mappe i VCSL, filer, valg). Samme navn flere ganger gir varianter (navn, navn_2). Mellomlager i .lydcache/ (ignorert av git). --bare navn,ins_orgel lager bare noen på nytt. lyd.json har gruppe, type (sfx, amb, ins), sek, sloyfe ([start, slutt] i sekunder) og rot (MIDI) for instrumentene.
+- Sløyfene (amb_*, klokketikk, summ) har 0,15 s ekstra lyd på hver side, fordi nettleserne legger ulikt mye stillhet foran en MP3 (Chrome tar den stort sett bort). Holdetonene (orgel, orgelbass, vinglass, psalter, saks) har sløyfe på et helt antall perioder, seks desimaler.
+- Lydbanken pakker ut etter første trykk (Sound.init), fire om gangen, effektene først, i lydenes egen samplingsfrekvens via OfflineAudioContext (30 MB mot rundt 48). Stillheten foran måles per lyd (Lydbank.forsink).
+- LYD_KART: Sound.play(navn) -> opptak med styrke, tonehøyde og valg (lp, rv, pan), syn = hvor mye synth som ligger under. Tilfeldig variant, aldri samme to ganger på rad, høyst fem like på 80 ms. Navn som mangler i kartet, spilles som synth. Innstillingen «Innspilte lyder» (opptak) slår alt av.
+- Fottrinn (FOTGULV) etter gulvUnder og pytter, hvert 1,45 rute. Stemningen (Stemning): sløyfer per etasje (STEMNING_ETASJE), per romtype (STEMNING_ROM), vær (Sound.vaerType, regnet og vinden tar over for støyen), bål og ovner etter avstand, og havet i drømmene. Synthdronen går under med 55 prosent styrke (Sound.droneNiva). Fiender i FIENDESTEMME stønner, hvisker eller piper fra siden de kommer fra (Lydbank.ved).
+
+## Musikken som iMUSE (06_musikk.js)
+- Musikk.velg(dt) i hovedløkka er dirigenten: stykket (drømmen, grammofonen i tjenesterommene, ellers etasjen), besetningen etter romtype (ROM_BESETNING -> BESETNING), laget (kamp, sjef, blodrus) og roen.
+- spill(navn) bytter på neste taktstrek, med minst ett slag til broen (harpeløp opp dominanten i den nye tonearten og bass på den). Et bekken svulmer inn mot første slag, og paukene slår den nye grunntonen. Musikk.navn er stykket som spilles nå, Musikk.neste og Musikk.overgang det som venter.
+- Besetningen byttes på taktstreken (bNeste). Kamplaget kommer på neste slag med bekken og pauke og går ut på neste taktstrek. Tempoet følger laget.
+- Instrumentene (MUS_INS) er opptak fra lydbanken med nærmeste tone og tonehøyde, holdetoner med sløyfe, styrken k målt fra lydnivået. Synthstemmene er reserve og brukes fortsatt til kor, messing, sagbass, hatt og knitring.
+- Innslag (Musikk.innslag) på neste slag: ryddet (clear), niva (level), hel (heal) i stedet for synthlydene. Plingene i LYD_STEMT stemmes etter akkorden (Musikk.stem). Stemningslyder med kvant legges på neste åttendel (drypp, skrivemaskin), klokka (mus: klokke) på neste taktstrek på grunntonen (Musikk.pynt). LYD_DUKK: store smell får musikken til å dukke unna.
+- Roen: roT teller opp når det ikke er kamp, fiender innen åtte ruter eller nytt rom. Etter 20 s glir glid fra 1 til 0,35 over 12 s: færre melodinoter, lavere lag, og stemningen løftes (stemningK). Nytt rom setter roT til høyst 6.
+- Dronen i veggene stemmes etter grunntonen (Sound.stemDrone).
+- Rettet 26.9.: drømmemusikken ble byttet ut med etasjemusikken etter første bilde (30_game.js valgte stykke uten å se på G.drom).
+
+## Blod og vann på skjermen (43_vaatt.js, 04_render.js)
+- Dråper i et høydekart (lengste side 384 punkter, rødt vann, grønt blod), tegnet som kupler med «lighter». Spor som polylinjer som blir tynnere med alderen (blod 12 s, vann 3,5 s). Ingen varig lerretslag, fordi uttoning i 8 bit blir stående igjen som svake spor.
+- Fysikk: klistrer seg fast til radius over 3,0 (blod) eller 2,3 (vann) i 135-skala, glir med fart etter vekt (blod høyst 40, vann 115 punkter i sekundet), vingler, legger igjen perler, slås sammen (største tar over, høyst 6,5 og 5 i radius), tørker (blod raskere etter 8 s, vann etter 5 s). Høyst 110 dråper.
+- Etterbehandlingen: uv forskyves etter gradienten i høydekartet (brytning, 40 prosent selv uten «Forvrengning»), blod etter Beer-Lambert (tykt nesten svart, tynt rødt), skarpt lyspunkt fra øvre venstre, lys i bunnen, mørk kant. uVaatt er 0 når skjermen er tørr, så ingenting regnes da.
+- Kilder: Blod.treff på pasienten (fra siden slaget kom fra, store dråper ved hardere treff), Blod.dod og sjefDod tett ved (Vaatt.naert), Sound.play('splash'), pytter under fottrinn, regn ute og i gårdsrom. startFloor tørker skjermen. Innstillingen vaatt, og blodet følger også blod.
