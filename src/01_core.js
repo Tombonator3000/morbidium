@@ -40,40 +40,60 @@ const Store = {
 const Input = {
   keys: {}, pressed: {}, released: {},
   mouse: { x: 0, y: 0, l: false, r: false, lp: false, rp: false, lr: false, rr: false, moved: false, movedT: -1e9 },
-  gp: { connected: false, prev: [], cur: [], lx: 0, ly: 0, rx: 0, ry: 0 },
+  gp: { connected: false, prev: [], cur: [], lx: 0, ly: 0, rx: 0, ry: 0, id: '', mapping: '', index: -1, aT: -1e9 },
   touch: { active: false, mx: 0, mz: 0, btn: {}, pressed: {}, released: {} },
   lastDevice: 'kb',
+  /* siste enhet styrer tekstene (Esc eller B) og fokusringen i menyene (body.pad) */
+  enhet(d) { if (this.lastDevice === d) return; this.lastDevice = d; document.body.classList.toggle('pad', d === 'pad'); },
+  // tastatur eller håndkontroll: berøringsknappene skjules til neste berøring
+  skjulTouch() { if (this.touch.active) { this.touch.active = false; $('touch').classList.add('hidden'); document.body.classList.remove('touch'); } },
+  /* tastene som står i tekstene, etter enheten: tastatur, håndkontroll og berøring (tom: ingen tast å vise) */
+  TAST: { pause: ['Esc', 'Start', ''], journal: ['Tab', 'Select', ''], lukkJ: ['Tab', 'B', ''], tilbake: ['Esc', 'B', ''], kort: ['1 2 3 4', 'LB RB LT RT', '1 2 3 4'] },
+  tast(h, i) { const d = this.lastDevice === 'pad' ? 1 : this.lastDevice === 'touch' ? 2 : 0, t = (this.TAST[h] || [])[d] || ''; return i === undefined ? t : t.split(' ')[i] || ''; },
+  parentes(h) { const t = this.tast(h); return t ? ' (' + t + ')' : ''; },
+  /* tilbaketasten på fjernkontrollen er Esc: Samsung (10009), LG (461), Android TV og Fire TV (GoBack, BrowserBack).
+     Fjernkontroller sender ikke alltid code, så key brukes når code mangler (pilene og Enter heter det samme) */
+  tilbakeT: -1e9, tilbakeS: '', // når tilbaketasten sist kom, og hva spillet holdt på med da (TvTilbake i 32_meny.js)
+  kode(e) { return e.keyCode === 10009 || e.keyCode === 461 || e.key === 'GoBack' || e.key === 'BrowserBack' || e.key === 'XF86Back' || e.code === 'BrowserBack' ? 'Escape' : e.code || e.key || ''; },
   init(canvas) {
     const block = ['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    // tilbake på fjernkontrollen: nettleseren skal ikke gå en side tilbake midt i spillet, men på tittelen går den ut som vanlig.
+    // Tasten huskes i fangfasen, før testpanelet stopper tastene, ellers gjør steget i historikken for samme trykk jobben en gang til
+    addEventListener('keydown', e => { if (this.kode(e) !== 'Escape' || e.code === 'Escape') return; this.tilbakeT = performance.now(); this.tilbakeS = window.MORBIDIUM ? MORBIDIUM.state : ''; if (window.MORBIDIUM && MORBIDIUM.state !== 'title') e.preventDefault(); }, true);
     addEventListener('keydown', e => {
-      if (block.includes(e.code) && !(e.target && e.target.tagName === 'INPUT')) e.preventDefault();
-      if (!this.keys[e.code]) this.pressed[e.code] = true;
-      this.keys[e.code] = true; this.lastDevice = 'kb';
+      const k = this.kode(e);
+      if (block.includes(k) && !(e.target && e.target.tagName === 'INPUT')) e.preventDefault();
+      if (!this.keys[k]) this.pressed[k] = true;
+      this.keys[k] = true; this.enhet('kb');
     });
-    addEventListener('keyup', e => { this.keys[e.code] = false; this.released[e.code] = true; });
+    addEventListener('keyup', e => { const k = this.kode(e); this.keys[k] = false; this.released[k] = true; });
     addEventListener('blur', () => { this.keys = {}; this.mouse.l = this.mouse.r = false; });
-    canvas.addEventListener('mousemove', e => { if (Math.hypot(e.clientX - this.mouse.x, e.clientY - this.mouse.y) > 2) this.mouse.movedT = performance.now(); this.mouse.x = e.clientX; this.mouse.y = e.clientY; this.mouse.moved = true; this.lastDevice = 'kb'; });
+    canvas.addEventListener('mousemove', e => { if (Math.hypot(e.clientX - this.mouse.x, e.clientY - this.mouse.y) > 2) this.mouse.movedT = performance.now(); this.mouse.x = e.clientX; this.mouse.y = e.clientY; this.mouse.moved = true; this.enhet('kb'); });
     canvas.addEventListener('mousedown', e => {
       canvas.focus();
       if (e.button === 0) { this.mouse.l = true; this.mouse.lp = true; }
       if (e.button === 2) { this.mouse.r = true; this.mouse.rp = true; }
-      this.lastDevice = 'kb';
+      this.enhet('kb');
     });
+    // musa i menyene (panelene ligger over lerretet) tar bort fokusringen for håndkontrollen
+    addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') this.enhet('kb'); });
     addEventListener('mouseup', e => {
       if (e.button === 0) { this.mouse.l = false; this.mouse.lr = true; }
       if (e.button === 2) { this.mouse.r = false; this.mouse.rr = true; }
     });
     canvas.addEventListener('contextmenu', e => e.preventDefault());
     addEventListener('gamepadconnected', () => { this.gp.connected = true; });
+    // koblet fra: ingen knapper blir hengende, og tekstene går tilbake til tastaturet
+    addEventListener('gamepaddisconnected', () => { const g = this.gp; g.cur = []; g.prev = []; g.lx = g.ly = g.rx = g.ry = 0; if (this.lastDevice === 'pad') this.enhet('kb'); });
     this.initTouch();
   },
   initTouch() {
     const stick = $('stick'), knob = stick.querySelector('i');
     let sid = null, cx = 0, cy = 0;
-    const show = () => { if (!this.touch.active) { this.touch.active = true; $('touch').classList.remove('hidden'); document.body.classList.add('touch'); } this.lastDevice = 'touch'; };
+    const show = () => { if (!this.touch.active) { this.touch.active = true; $('touch').classList.remove('hidden'); document.body.classList.add('touch'); } this.enhet('touch'); };
     addEventListener('touchstart', show, { passive: true });
     // et ekte tastetrykk betyr tastatur: da skjules berøringsknappene til neste berøring
-    addEventListener('keydown', () => { if (this.touch.active) { this.touch.active = false; $('touch').classList.add('hidden'); document.body.classList.remove('touch'); } });
+    addEventListener('keydown', () => this.skjulTouch());
     // evnekortene i HUD-en er selve knappene på berøringsskjerm
     $('cards').addEventListener('touchstart', e => { const c = e.target.closest('.acard'); if (!c) return; const i = +c.id.slice(2); this.touch.pressed['ab' + i] = true; c.classList.add('tap'); setTimeout(() => c.classList.remove('tap'), 120); e.preventDefault(); }, { passive: false });
     stick.addEventListener('touchstart', e => {
@@ -101,17 +121,19 @@ const Input = {
       b.addEventListener('touchend', e => { this.touch.btn[k] = false; this.touch.released[k] = true; e.preventDefault(); }, { passive: false });
     });
   },
+  /* den første håndkontrollen med standardoppsett, ellers den første som finnes. Etter en ny tilkobling
+     kan den ligge på plass 1 eller senere, og plass 0 kan være tom eller noe annet enn en håndkontroll */
   pollGamepad() {
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-    const p = pads && pads[0];
-    this.gp.prev = this.gp.cur;
-    if (!p) { this.gp.cur = []; this.gp.connected = false; return; }
-    this.gp.connected = true;
-    this.gp.cur = p.buttons.map(b => b.pressed || b.value > 0.5);
+    let p = null; try { const pads = navigator.getGamepads ? navigator.getGamepads() : []; for (let i = 0; i < (pads ? pads.length : 0); i++) { const q = pads[i]; if (q && q.connected !== false && (!p || (q.mapping === 'standard' && p.mapping !== 'standard'))) p = q; } } catch (e) { }
+    const g = this.gp; g.prev = g.cur;
+    if (!p) { g.cur = []; g.connected = false; g.lx = g.ly = g.rx = g.ry = 0; return; }
+    g.connected = true; g.id = p.id; g.mapping = p.mapping; g.index = p.index; g.nk = p.buttons.length; g.na = p.axes.length;
+    g.cur = p.buttons.map(b => b.pressed || b.value > 0.5);
     const dz = v => Math.abs(v) < 0.2 ? 0 : v;
-    this.gp.lx = dz(p.axes[0] || 0); this.gp.ly = dz(p.axes[1] || 0);
-    this.gp.rx = dz(p.axes[2] || 0); this.gp.ry = dz(p.axes[3] || 0);
-    if (this.gp.cur.some(Boolean) || this.gp.lx || this.gp.ly || this.gp.rx || this.gp.ry) this.lastDevice = 'pad';
+    g.lx = dz(p.axes[0] || 0); g.ly = dz(p.axes[1] || 0);
+    g.rx = dz(p.axes[2] || 0); g.ry = dz(p.axes[3] || 0);
+    if (g.cur[0] && !g.prev[0]) g.aT = performance.now(); // menyene trykker ikke på noe med en A som ble hamret på i kampen
+    if (g.cur.some(Boolean) || g.lx || g.ly || g.rx || g.ry) { this.enhet('pad'); this.skjulTouch(); }
   },
   gpDown(i) { return !!this.gp.cur[i]; },
   gpPressed(i) { return !!this.gp.cur[i] && !this.gp.prev[i]; },
@@ -120,7 +142,7 @@ const Input = {
   actions() {
     const K = this.keys, P = this.pressed, M = this.mouse, T = this.touch;
     const a = { mx: 0, mz: 0, attackP: false, attackD: false, heavyD: false, heavyP: false, heavyR: false,
-      dodgeP: false, interactP: false, abP: [false, false, false, false], useP: false, aktP: false, pauseP: false, journalP: false,
+      dodgeP: false, interactP: false, abP: [false, false, false, false], useP: false, aktP: false, pauseP: false, journalP: false, kartP: false, tilbakeP: false,
       aimStickX: 0, aimStickZ: 0, pad: false, touch: T.active && this.lastDevice === 'touch' };
     if (K.KeyW || K.ArrowUp) a.mz -= 1; if (K.KeyS || K.ArrowDown) a.mz += 1;
     if (K.KeyA || K.ArrowLeft) a.mx -= 1; if (K.KeyD || K.ArrowRight) a.mx += 1;
@@ -128,7 +150,7 @@ const Input = {
     a.heavyD = M.r || K.KeyK; a.heavyP = M.rp || P.KeyK; a.heavyR = M.rr || this.released.KeyK;
     a.dodgeP = P.Space || P.ShiftLeft; a.interactP = P.KeyE;
     a.abP = [!!(P.Digit1 || P.KeyQ), !!(P.Digit2 || P.KeyR), !!(P.Digit3 || P.KeyT), !!(P.Digit4 || P.KeyC)];
-    a.useP = P.KeyF || P.KeyG; a.aktP = !!(P.KeyV || P.KeyX); a.pauseP = P.Escape || P.KeyP; a.journalP = !!(P.Tab || P.KeyI);
+    a.useP = P.KeyF || P.KeyG; a.aktP = !!(P.KeyV || P.KeyX); a.pauseP = P.Escape || P.KeyP; a.journalP = !!(P.Tab || P.KeyI); a.kartP = !!P.KeyM;
     // håndkontroll
     if (this.gp.connected) {
       if (this.gp.lx || this.gp.ly) { a.mx += this.gp.lx; a.mz += this.gp.ly; }
@@ -139,6 +161,7 @@ const Input = {
       if (this.gpPressed(4)) a.abP[0] = true; if (this.gpPressed(5)) a.abP[1] = true;
       if (this.gpPressed(6)) a.abP[2] = true; if (this.gpPressed(7)) a.abP[3] = true;
       if (this.gpPressed(13)) a.useP = true; if (this.gpPressed(12)) a.aktP = true; if (this.gpPressed(9)) a.pauseP = true; if (this.gpPressed(8)) a.journalP = true;
+      if (this.gpPressed(15)) a.kartP = true; if (this.gpPressed(1)) a.tilbakeP = true; // pil høyre åpner kartet, B er tilbake i panelene
       a.pad = this.lastDevice === 'pad';
     }
     // touch

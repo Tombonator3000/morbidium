@@ -4,22 +4,31 @@
    hefte med kapittelfaner, arkivet et arkivskap med skuffer og mapper.
    Ingenting ruller: alt skaleres til skjermen, og det som ikke får plass, blas i.
    ============================================================ */
-const SET_DEF = { vol: .7, sfx: 1, amb: 1, mus: .8, kamera: 1, shake: 1, flash: true, distort: true, lights: true, simple: false, tall: true, bobler: true, skilt: true, ui: 1, tips: true, d3: true, kvalitet: 0, blod: true, lemmer: 'tynne', kombo: true, opptak: true, vaatt: true, sv: 2 };
+const SET_DEF = { vol: .7, sfx: 1, amb: 1, mus: .8, kamera: 1, shake: 1, flash: true, distort: true, lights: true, simple: false, tall: true, bobler: true, skilt: true, ui: 1, tips: true, d3: true, kvalitet: 0, blod: true, lemmer: 'tynne', kombo: true, opptak: true, vaatt: true, tv: 0, sv: 2 };
 function normSettings(s) {
   const o = Object.assign({}, SET_DEF, s || {});
   if (typeof o.shake === 'boolean') o.shake = o.shake ? 1 : 0; // eldre lagring hadde av/på
   // versjon 2 (25.9.): rom i 3D er standard. Eldre lagring hadde det av, så det slås på én gang
   if (s && !(s.sv >= 2)) o.d3 = true;
-  o.sv = 2; o.kvalitet = clamp(Math.round(+o.kvalitet || 0), 0, 3);
+  o.sv = 2; o.kvalitet = clamp(Math.round(+o.kvalitet || 0), 0, 3); o.tv = clamp(Math.round(+o.tv || 0), 0, 2);
   return o;
 }
+/* TV-modus (Innstillinger, Spill): 0 automatisk, 1 på, 2 av. Automatisk kjenner igjen nettleseren i TV-en (Samsung, LG, Android TV,
+   Fire TV og andre). En PC på HDMI eller en speilet mobil kan ikke kjennes igjen, så der slås det på for hånd */
+const TV_UA = /SMART-TV|SmartTV|Tizen|Web0S|webOS|NetCast|HbbTV|BRAVIA|VIDAA|GoogleTV|Android TV|AndroidTV|AFT[A-Z]|CrKey|Opera TV/;
+const tvAuto = () => TV_UA.test(navigator.userAgent || '');
+/* på TV er HUD-en og tittelen 40 prosent større, for sofaen. En TV viser 1920 x 1080 punkter; er bildet mindre, er alt allerede større.
+   Taket på 1,6 holder evnekortene klar av apparatet nede til venstre */
+const tvSkala = () => R.tv ? Math.max(1, 1.4 * Math.min(innerWidth / 1920, innerHeight / 1080)) : 1;
+function settUi(s) { const k = tvSkala(), r = document.documentElement.style; r.setProperty('--ui', R.tv ? Math.min(1.6, s.ui * k) : s.ui); r.setProperty('--tvk', k.toFixed(3)); }
+addEventListener('resize', () => { if (R.tv && G.meta && G.meta.settings) settUi(G.meta.settings); });
 function applySettings() {
   // samme objekt hele tiden: panelet holder på det mens du endrer flere ting etter hverandre
   const n = normSettings(G.meta.settings), s = G.meta.settings = G.meta.settings ? Object.assign(G.meta.settings, n) : n;
-  R.safe = !!s.simple; Sound.setVolume(s.vol); Sound.setMix(s.sfx, s.amb, s.mus);
+  R.safe = !!s.simple; R.tv = s.tv === 1 || (!s.tv && tvAuto()); document.body.classList.toggle('tv', R.tv); Sound.setVolume(s.vol); Sound.setMix(s.sfx, s.amb, s.mus);
   R.shakeOn = s.shake > 0; R.shakeK = s.shake; R.flashOn = s.flash; R.distortOn = s.distort; R.lightsOn = s.lights;
   const v = 11.5 * s.kamera; if (Math.abs(R.view - v) > .01) { R.view = v; R.resize(); }
-  document.documentElement.style.setProperty('--ui', s.ui);
+  settUi(s);
   D3.sett(s.d3 && !s.simple); D3.kvalitet(); STREK.tynn = s.lemmer !== 'tykke'; if (typeof Blod === 'object') Blod.sett(s.blod); if (typeof Lydbank === 'object') Lydbank.sett(s.opptak !== false); if (typeof Vaatt === 'object') Vaatt.sett(s.vaatt !== false);
   document.body.classList.toggle('uten-tall', !s.tall); document.body.classList.toggle('uten-bobler', !s.bobler); document.body.classList.toggle('uten-skilt', !s.skilt);
 }
@@ -35,7 +44,7 @@ function passInn(el, min = R.coarse ? .75 : 0) {
   const p = el.parentElement || document.body, cs = getComputedStyle(p), px = k => parseFloat(cs[k]) || 0;
   const aw = (p.clientWidth || innerWidth) - px('paddingLeft') - px('paddingRight') - 4, ah = (p.clientHeight || innerHeight) - px('paddingTop') - px('paddingBottom') - 4;
   el.style.zoom = 1; const W = el.offsetWidth, H = el.offsetHeight;
-  el.style.zoom = Math.max(Math.min(min, aw / W), Math.min(1.15, aw / W, ah / H)).toFixed(4);
+  el.style.zoom = Math.max(Math.min(min, aw / W), Math.min(R.tv ? 1.6 : 1.15, aw / W, ah / H)).toFixed(4); // på TV fyller menyene mer av skjermen
 }
 addEventListener('resize', () => { if (G.state === 'panel' && G.panelO && G.panelO.refit) G.panelO.refit(); else fitPanel(); });
 function canvasOf(P, w, h, pad = .06) {
@@ -46,6 +55,22 @@ function canvasOf(P, w, h, pad = .06) {
 function portraitOf(look, w = 110, h = 140) { const c = document.createElement('canvas'); c.width = w; c.height = h; try { drawDollPortrait(c.getContext('2d'), 'pasient', w / 2, h - 6, h * .47, look); } catch (e) { } return c; }
 function place(sel, node) { const el = document.querySelector(sel); if (el && node) el.replaceWith(node); }
 const depthName = d => (THEMES[d] || THEMES[1]).name.split(':')[0];
+
+/* ---------- fullskjerm: en knapp på tittelen og i pausen der nettleseren kan det (ikke iPhone). Et trykk med A eller Enter på
+   fjernkontrollen regnes som et klikk, så det virker med bare kontroll også ---------- */
+const Fullskjerm = {
+  kan() { return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled); },
+  paa() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
+  tekst() { return this.paa() ? 'Avslutt fullskjerm' : 'Fullskjerm'; },
+  bytt() {
+    const d = document, el = d.documentElement;
+    try { const r = this.paa() ? (d.exitFullscreen || d.webkitExitFullscreen).call(d) : (el.requestFullscreen || el.webkitRequestFullscreen).call(el); if (r && r.catch) r.catch(() => toast('Fikk ikke fullskjerm', 'Nettleseren sa nei. Prøv F11 eller menyen i nettleseren.')); } catch (e) { }
+  },
+  // knappene i menyene: data-fs, og teksten følger når fullskjerm slås av og på (også med Esc eller F11)
+  knapp(kl) { return this.kan() ? `<button class="${kl}" data-fs><b>${this.tekst()}</b></button>` : ''; },
+  bind() { document.querySelectorAll('[data-fs]').forEach(b => b.onclick = () => { Sound.init(); this.bytt(); }); }
+};
+for (const h of ['fullscreenchange', 'webkitfullscreenchange']) addEventListener(h, () => document.querySelectorAll('[data-fs] b').forEach(b => { b.textContent = Fullskjerm.tekst(); }));
 
 /* ---------- tittelen ---------- */
 function titleMenuHtml(sv) {
@@ -60,7 +85,7 @@ function titleMenuHtml(sv) {
       <button class="tbtn" id="tSet"><b>Innstillinger</b><small>Lyd, bilde og styring</small></button>
       <div class="tstamp">${m.wins ? 'UTSKREVET ' + m.wins : m.deaths ? 'AVDØDE ' + m.deaths : 'NY'}</div>
     </div>
-    <div class="meta">${m.deaths ? `${m.deaths} pasienter er skrevet ut på den ene eller andre måten. ${m.bossKills} overleger behandlet.` : 'Ingen pasienter har ennå forlatt bygningen.'}<br>Tastatur og mus, håndkontroll eller berøring.</div>`;
+    <div class="meta">${m.deaths ? `${m.deaths} pasienter er skrevet ut på den ene eller andre måten. ${m.bossKills} overleger behandlet.` : 'Ingen pasienter har ennå forlatt bygningen.'}<br>Tastatur og mus, håndkontroll eller berøring.${Fullskjerm.knapp('btn fsknapp')}</div>`;
 }
 function bindTitleMenu(sv) {
   $('tNew').onclick = () => { Sound.init(); applySettings(); showIntake(); };
@@ -68,6 +93,7 @@ function bindTitleMenu(sv) {
   $('tHelp').onclick = () => { Sound.init(); openHandbook({ onBack: showTitle }); };
   $('tArch').onclick = () => { Sound.init(); showArchive(); };
   $('tSet').onclick = () => { Sound.init(); openSettings(true); };
+  Fullskjerm.bind();
 }
 
 /* ---------- pause ---------- */
@@ -75,17 +101,20 @@ function openPause() {
   const r = G.run, p = r && r.patient;
   openPanel(`<div class="fit clip paper"><div class="clamp"></div><div class="ptitle">Pause</div>
     ${p ? `<div class="pwho"><span id="pPort"></span><div><b>${esc(p.name)}</b><br>Pasient ${p.nr}, ${esc(depthName(G.depth))}<br><span class="svak">${G.player ? G.player.teeth : 0} gulltenner, ${r.kills || 0} fiender slått</span></div></div>` : ''}
-    <div class="pmenu"><button class="tbtn gold" data-close><b>Fortsett</b></button><button class="tbtn" id="pJ"><b>Journalen</b></button><button class="tbtn" id="pH"><b>Pasienthåndboka</b></button><button class="tbtn" id="pS"><b>Innstillinger</b></button><button class="tbtn" id="pQ"><b>Avslutt til tittelen</b></button></div>
+    <div class="pmenu"><button class="tbtn gold" data-close><b>Fortsett</b></button><button class="tbtn" id="pJ"><b>Journalen</b></button>${G.player && G.seen ? '<button class="tbtn" id="pK"><b>Kartet</b></button>' : ''}<button class="tbtn" id="pH"><b>Pasienthåndboka</b></button><button class="tbtn" id="pS"><b>Innstillinger</b></button>${Fullskjerm.knapp('tbtn')}<button class="tbtn" id="pQ"><b>Avslutt til tittelen</b></button></div>
     <div class="hint">Løpet lagres ved starten av hver etasje.</div></div>`);
   if (p) { const c = portraitCanvas('pasient', r.look); c.className = 'pport'; place('#pPort', c); }
   $('pJ').onclick = () => { closePanel(); openJournal(); };
+  if ($('pK')) $('pK').onclick = () => Kart.apne({ onBack: openPause });
   $('pH').onclick = () => openHandbook({ onBack: openPause });
   $('pS').onclick = () => openSettings(false, openPause);
   $('pQ').onclick = () => { closePanel(); showTitle(); };
-  fitPanel();
+  Fullskjerm.bind(); fitPanel();
 }
 
 /* ---------- innstillinger: kartotekkort med faner ---------- */
+/* linja over kontrolltabellen: om nettleseren ser en håndkontroll. Den kommer ofte først etter et knappetrykk, så linja følger med (MenyNav.tick) */
+function kontrollTekst() { const g = Input.gp; return g.connected ? 'Kontroller funnet: ' + (g.id || 'uten navn') + (g.mapping === 'standard' ? '.' : '. Nettleseren kjenner ikke oppsettet, så knappene kan ligge feil.') : 'Ingen kontroller funnet. Trykk en knapp på kontrolleren.'; }
 const SET_TABS = { lyd: 'Lyd', bilde: 'Bilde', spill: 'Spill', styring: 'Styring', data: 'Data' };
 const KONTROLLER = [
   ['Gå', 'W A S D eller piltastene', 'Venstre spak', 'Spaken nede til venstre'],
@@ -97,6 +126,7 @@ const KONTROLLER = [
   ['Snakk, åpne, undersøk', 'E', 'Y', 'Snakk'],
   ['Drikk flaske', 'F eller G', 'Pil ned', 'Bruk'],
   ['Bruk apparat', 'V eller X', 'Pil opp', 'Aktiv'],
+  ['Kartet', 'M eller klikk på kartet', 'Pil høyre', 'Trykk på kartet'],
   ['Journalen', 'Tab eller I', 'Select', 'Journal oppe til høyre'],
   ['Pause', 'Esc eller P', 'Start', 'Pause oppe til høyre']
 ];
@@ -108,8 +138,8 @@ function settingsBody(tab) {
   if (tab === 'lyd') return sl('vol', 'Hovedvolum', 0, 1, .05, s.vol, pct) + sl('sfx', 'Effekter', 0, 1, .05, s.sfx, pct) + sl('mus', 'Musikk', 0, 1, .05, s.mus, pct) + sl('amb', 'Stemning', 0, 1, .05, s.amb, pct) + cb('kombo', 'Kunngjører og fanfarer', 'Orgel, kor, gong og en dyp stemme når du slår mange på rad, og applaus når det går vilt for seg') + cb('opptak', 'Innspilte lyder', 'Ekte opptak av slag, dører, fottrinn, regn og instrumenter. Slå av for bare synth, som bruker mindre minne') + '<p class="shint">Musikken spilles av orgel, piano, harpe, klokker og synth, og glir over i neste stykke på slaget når du går fra rom til rom. Lydene er innspilte og fri til bruk (CC0), med synthlyder som reserve. Stemning er suset i veggene, regnet og det som knirker og drypper.</p>';
   if (tab === 'bilde') return sl('kamera', 'Kameraavstand', .8, 1.25, .05, s.kamera, v => v < .95 ? 'nær' : v > 1.05 ? 'langt unna' : 'vanlig') + sl('shake', 'Skjermristing', 0, 1, .1, s.shake, v => v ? pct(v) : 'av')
     + cb('flash', 'Hvite glimt ved store treff') + cb('distort', 'Forvrengning', 'Blekkboiling, Morbidium-bølger og hallusinasjoner') + cb('lights', 'Lys og skygge') + `<label class="srow cb"><input type="checkbox" data-s="lemmer" ${s.lemmer !== 'tykke' ? 'checked' : ''}><span>Strekarmer og strekbein<small>Tynne blekkstreker i stedet for tykke armer og bein i klesfargen</small></span></label>` + cb('d3', 'Rom i 3D', 'Ekte lys fra lampene, måneskinn gjennom vinduene, skygger, tåke og glød. Figurene og tingene er de samme tegningene.') + sl('kvalitet', 'Grafikkvalitet', 0, 3, 1, s.kvalitet, v => v ? ['', 'lav', 'middels', 'høy'][v] : 'automatisk (' + D3.Q().navn + ')') + cb('blod', 'Blod og skrekkeffekter', 'Blodsprut på gulv og vegger, kjøttbiter, blod på skjermen og ting som ser på deg fra veggene') + cb('vaatt', 'Blod og vann på skjermen', 'Dråper som treffer glasset, klistrer seg fast og renner nedover: blod når du blir truffet eller noe dør tett ved, regn ute og plask fra pytter. Blodet følger også innstillingen over') + cb('simple', 'Enkel grafikk', 'Uten etterbehandling og uten 3D. For svake eller rare skjermkort.') + '<p class="shint">Automatisk kvalitet går ned et trinn av seg selv hvis bildet hakker, og slår til slutt av 3D.</p>';
-  if (tab === 'spill') return sl('ui', 'Størrelse på skjermtekst', .8, 1.3, .05, s.ui, pct) + cb('tall', 'Skadetall') + cb('bobler', 'Snakkebobler', 'Det fiendene og personalet sier') + cb('skilt', 'Navneskilt over mestere og personale') + cb('tips', 'Tips for nye pasienter', 'Små lapper som forklarer det viktigste første gang det skjer');
-  if (tab === 'styring') return `<table class="ktabell"><tr><th></th><th>Tastatur og mus</th><th>Håndkontroll</th><th>Berøring</th></tr>${KONTROLLER.map(r => `<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table>`;
+  if (tab === 'spill') return sl('ui', 'Størrelse på skjermtekst', .8, 1.3, .05, s.ui, pct) + sl('tv', 'TV-modus', 0, 2, 1, s.tv, v => ['automatisk (' + (tvAuto() ? 'på' : 'av') + ')', 'på', 'av'][v]) + cb('tall', 'Skadetall') + cb('bobler', 'Snakkebobler', 'Det fiendene og personalet sier') + cb('skilt', 'Navneskilt over mestere og personale') + cb('tips', 'Tips for nye pasienter', 'Små lapper som forklarer det viktigste første gang det skjer') + '<p class="shint">TV-modus gir større tekst og menyer, marger mot kanten av TV-en og ingen berøringsknapper. Den slås på av seg selv i nettleseren på TV-en. Spiller du fra en PC eller mobil koblet til TV-en, slår du den på her.</p>';
+  if (tab === 'styring') return `<p class="shint kstatus" id="kStatus">${esc(kontrollTekst())}</p><table class="ktabell"><tr><th></th><th>Tastatur og mus</th><th>Håndkontroll</th><th>Berøring</th></tr>${KONTROLLER.map(r => `<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table><p class="shint">Menyene med håndkontroll: pil eller venstre spak flytter, A velger, B går tilbake, LB og RB bytter fane. Tilbake på fjernkontrollen til TV-en er som Esc.</p>`;
   const sv = savedRun();
   return `<div class="datarad"><div><b>Lagret løp</b><small>${sv ? esc(sv.run.patient.name) + ', ' + esc(depthName(sv.depth)) : 'Ingen'}</small></div><button class="btn" id="dRun" ${sv ? '' : 'disabled'}>Slett løpet</button></div>
     <div class="datarad"><div><b>Arkivet</b><small>${G.meta.deaths} døde, ${G.meta.wins} utskrevet, ${G.meta.fragments.length} fragmenter, ${(G.meta.lik || []).length} lik i bygget</small></div><button class="btn" id="dMeta">Brenn arkivet</button></div>
@@ -126,7 +156,7 @@ function openSettings(fromTitle, back, tab = 'lyd') {
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { Sound.play('paper'); openSettings(false, onBack, b.dataset.tab); });
   document.querySelectorAll('#settings [data-s]').forEach(inp => {
     const k = inp.dataset.s;
-    if (inp.type === 'range') inp.oninput = () => { s[k] = +inp.value; inp.parentNode.querySelector('em').textContent = SET_FMT[k](s[k]); up(); };
+    if (inp.type === 'range') inp.oninput = () => { s[k] = +inp.value; inp.parentNode.querySelector('em').textContent = SET_FMT[k](s[k]); up(); if (k === 'tv') fitPanel(); };
     else inp.onchange = () => { s[k] = k === 'lemmer' ? (inp.checked ? 'tynne' : 'tykke') : inp.checked; up(); };
   });
   const dr = $('dRun'); if (dr) dr.onclick = () => { if (dr.dataset.ok) { clearRun(); Sound.play('slam'); openSettings(false, onBack, 'data'); } else { dr.dataset.ok = 1; dr.textContent = 'Sikker? Trykk igjen'; } };
@@ -142,8 +172,14 @@ const HANDBOK = [
       <p>Det er <b>seks etasjer</b>, fra parken utenfor og ned. I hver av dem holder en <b>overlege</b> til bak en låst dør. Behandle overlegen, så åpner det seg en vei ut: en port, et vindu, en kloakk. Den fører alltid lenger inn. Overlegene bytter plass fra pasient til pasient, så du vet aldri hvem som venter. Nederst, under skogen som ikke finnes, venter alltid noe som kaller seg Journalen.</p>
       <p>Dør du, er pasienten borte for godt. Neste pasient våkner et annet sted i bygget, men liket blir liggende. Løpet lagres ved starten av hver etasje, så du kan ta en pause og fortsette fra tittelen.</p>
       <p>Hver pasient er ny: annet navn, andre klær, andre evner. Du våkner aldri to ganger på samme sted.</p>` },
+  // to sider: tabellen, og hvordan spillet kommer opp på TV-en (den lange utgaven står i README)
   { id: 'styring', t: 'Styring', note: 'Mellomrom redder liv. Ikke mitt, men likevel.',
-    b: () => `<table class="ktabell small"><tr><th></th><th>Tastatur og mus</th><th>Håndkontroll</th><th>Berøring</th></tr>${KONTROLLER.map(r => `<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table>` },
+    b: [() => `<table class="ktabell small"><tr><th></th><th>Tastatur og mus</th><th>Håndkontroll</th><th>Berøring</th></tr>${KONTROLLER.map(r => `<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table>`,
+      `<p class="hunder">Spille på TV</p>
+      <p><b>Best, uten forsinkelse:</b> koble PC-en til TV-en med en HDMI-kabel og kontrolleren til PC-en. Trykk Fullskjerm på tittelen (eller F11), og slå på TV-modus under Innstillinger, Spill. Slå gjerne på spillmodus på TV-en.</p>
+      <p><b>Rett i TV-en:</b> koble kontrolleren til TV-en med Bluetooth og åpne spillet i nettleseren på TV-en. Står det «Kontroller funnet» under Innstillinger, Styring, virker det. Det trengs en TV fra 2023 eller nyere.</p>
+      <p><b>Trådløst:</b> Windows-tasten og K, Cast i Chrome, skjermspeiling fra iPhone eller Smart View fra en Samsung-mobil. Kontrolleren kobles til maskinen spillet kjører på. Det gir litt forsinkelse.</p>
+      <p><b>I menyene:</b> pil eller venstre spak flytter, A velger, B går tilbake, og LB og RB blar. Tilbake på fjernkontrollen er som Esc.</p>`] },
   { id: 'kamp', t: 'Kamp', note: 'Tungt slag velter pleierne. De liker det ikke.', art: () => canvasOf(weaponPart('mopp'), 110, 170),
     b: `<p><b>Slag:</b> klikk eller J. Tre slag på rad blir en kombinasjon.</p>
       <p><b>Tungt slag:</b> hold inne for å lade, slipp for å slå. Det slår hardere og velter fiender.</p>
@@ -227,13 +263,13 @@ HANDBOK.push(
   { id: 'fiender', t: 'Fiendene', note: 'Kasteren sikter dårlig. Ikke dårlig nok.', indeks: FIENDE_REKKE },
   { id: 'sjefer', t: 'Overleger og minisjefer', note: 'Klumpen hilste på meg. Med sju hender.', indeks: SJEF_REKKE }
 );
-const hbSider = K => K.indeks ? Math.ceil(K.indeks.length / indeksPer()) : 1;
+const hbSider = K => K.indeks ? Math.ceil(K.indeks.length / indeksPer()) : Array.isArray(K.b) ? K.b.length : 1;
 function openHandbook(o = {}, kap = 0, side = 0) {
   show('title', false);
-  const K = HANDBOK[kap], smal = narrow(), n = hbSider(K); side = clamp(side, 0, n - 1);
+  const K = HANDBOK[kap], smal = narrow(), n = hbSider(K); side = clamp(side, 0, n - 1); const B = Array.isArray(K.b) ? K.b[side] : K.b; // et kapittel kan ha flere sider
   const alle = HANDBOK.reduce((a, h) => a + hbSider(h), 0), nr = HANDBOK.slice(0, kap).reduce((a, h) => a + hbSider(h), 0) + side + 1;
   const body = K.indeks ? `<div class="findeks">${K.indeks.slice(side * indeksPer(), side * indeksPer() + indeksPer()).map(fiendeKort).join('')}</div>`
-    : `<div class="hcols"><div class="htext">${typeof K.b === 'function' ? K.b() : K.b}</div>${K.art ? '<div class="hart"><span id="hArt"></span><div class="hnote">' + esc(K.note) + '</div></div>' : ''}</div>${K.art ? '' : '<div class="hnote solo">' + esc(K.note) + '</div>'}`;
+    : `<div class="hcols"><div class="htext">${typeof B === 'function' ? B() : B}</div>${K.art ? '<div class="hart"><span id="hArt"></span><div class="hnote">' + esc(K.note) + '</div></div>' : ''}</div>${K.art ? '' : '<div class="hnote solo">' + esc(K.note) + '</div>'}`;
   openPanel(`<div class="fit hefte${smal ? ' smal' : ''}"><div class="hside"><div class="htitle">Pasient&shy;håndbok</div><div class="hsub">for innlagte ved Morbidium sanatorium<br>utgave 1923</div>
       <div class="htabs">${HANDBOK.map((h, i) => `<button class="htab${i === kap ? ' on' : ''}" data-kap="${i}"><i>${i + 1}</i>${h.t}</button>`).join('')}</div>${K.indeks && !smal ? '<div class="hnote hsidenote">' + esc(K.note) + '</div>' : ''}</div>
     <div class="hpage"><div class="hkap">Kapittel ${kap + 1}${n > 1 ? ', ' + (side + 1) + ' av ' + n : ''}</div><h2>${K.t}</h2>${body}
@@ -285,6 +321,139 @@ function showArchive(skuff = 'mapper', side = 0) {
   if ($('aPrev')) { $('aPrev').onclick = () => go(skuff, side - 1); $('aNext').onclick = () => go(skuff, side + 1); }
   fitPanel();
 }
+
+/* ---------- menyene med håndkontroll og piltaster ----------
+   Én navigator for tittelen, panelene, journalen, døden og testpanelet. Pil, D-pad eller venstre spak flytter fokus til
+   nærmeste knapp i den retningen (ingen runde: kanten er kanten), A trykker, B går tilbake, LB og RB blar i faner og sider,
+   og høyre spak ruller panelet. Løkka kaller tick bare utenfor spillet, så styringen i spillet er som før.
+   Nettleseren viser ikke :focus-visible når skriptet flytter fokus etter en håndkontroll, så body.pad gir fokusringen. */
+const MENY_SEL = 'button:not([disabled]),input:not([disabled]),textarea,select,a[href],[tabindex="0"]';
+const MenyNav = {
+  r: '', rT: 0, stum: false, ro: 0, gt: null, padT: -1e9,
+  rot() {
+    if (typeof Testmodus === 'object' && Testmodus.apen) return $('testpanel');
+    const s = G.state, id = s === 'journal' ? 'journal' : s === 'panel' || s === 'dead' ? 'panel' : s === 'title' ? 'title' : '', el = id && $(id);
+    return el && !el.classList.contains('hidden') ? el : null;
+  },
+  synlig(el) { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; },
+  valg(rot) { return [...rot.querySelectorAll(MENY_SEL)].filter(el => this.synlig(el)); },
+  inne(rot) { const f = document.activeElement; return !!f && f !== rot && rot.contains(f); },
+  // første knapp (i journalen det første kortet), men aldri et tekstfelt: det ville åpnet tastaturet på telefonen
+  forste(rot) { const L = this.valg(rot).filter(e => e.tagName !== 'TEXTAREA' && !(e.tagName === 'INPUT' && !/range|checkbox|radio/.test(e.type))), el = L.find(e => e.matches('.jcard[data-ref]')) || L[0]; if (el) el.focus({ preventScroll: true }); },
+  // en knapp som tegnes på nytt (fanen, Neste, kortet som ble flyttet), finnes igjen på id eller data-feltene sine
+  nokkel(el) {
+    if (el.id) return '#' + CSS.escape(el.id);
+    const a = [...el.attributes].filter(x => x.name.startsWith('data-') && x.name !== 'data-bound');
+    return a.length ? el.tagName.toLowerCase() + a.map(x => `[${x.name}="${CSS.escape(x.value)}"]`).join('') : null;
+  },
+  igjen(k) {
+    const rot = this.rot(); if (!rot || !k || this.inne(rot)) return;
+    const el = rot.querySelector(k), m = el && (el.matches(MENY_SEL) ? el : el.querySelector(MENY_SEL)); if (m && this.synlig(m)) m.focus({ preventScroll: true });
+  },
+  retning() {
+    const g = Input.gp; if (!g.connected) return '';
+    if (g.cur[12]) return 'u'; if (g.cur[13]) return 'd'; if (g.cur[14]) return 'l'; if (g.cur[15]) return 'r';
+    const x = g.lx, y = g.ly; if (Math.max(Math.abs(x), Math.abs(y)) < .6) return '';
+    return Math.abs(x) > Math.abs(y) ? (x > 0 ? 'r' : 'l') : (y > 0 ? 'd' : 'u');
+  },
+  /* nærmeste knapp i retningen: avstanden fram til kanten, pluss hvor langt den ligger ved siden av (0 når de overlapper).
+     Den må nå lenger enn denne i den retningen, så en fane som er litt lavere enn den valgte, ikke regnes som «ned».
+     Et kryss eller en spak i en rad regnes som hele raden, så opp og ned går rad for rad i innstillingene */
+  flytt(rot, r, pad) {
+    if (pad) this.padT = performance.now();
+    const f = document.activeElement; if (!this.inne(rot)) { this.forste(rot); return; }
+    if (f.matches('input[type=range]') && (r === 'l' || r === 'r')) { r === 'r' ? f.stepUp() : f.stepDown(); f.dispatchEvent(new Event('input', { bubbles: true })); Sound.play('ui', .3); return; }
+    const flate = el => ((el.tagName === 'INPUT' && el.closest('label')) || el).getBoundingClientRect();
+    const a = flate(f), dx = r === 'l' ? -1 : r === 'r' ? 1 : 0, dy = r === 'u' ? -1 : r === 'd' ? 1 : 0, ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    let best = null, bs = 1e9;
+    for (const el of this.valg(rot)) {
+      if (el === f || el.contains(f)) continue;
+      const b = flate(el), bx = b.left + b.width / 2, by = b.top + b.height / 2;
+      if ((bx - ax) * dx + (by - ay) * dy <= 1 || (dx > 0 ? b.right - a.right : dx < 0 ? a.left - b.left : dy > 0 ? b.bottom - a.bottom : a.top - b.top) <= 1) continue;
+      const fram = dx ? Math.max(0, dx > 0 ? b.left - a.right : a.left - b.right) : Math.max(0, dy > 0 ? b.top - a.bottom : a.top - b.bottom);
+      const tvers = dx ? Math.max(0, b.top - a.bottom, a.top - b.bottom) : Math.max(0, b.left - a.right, a.left - b.right);
+      const on = el.classList.contains('on'), sk = fram + tvers * (dx ? 4 : 2) + (on ? -2 : Math.abs(dx ? by - ay : bx - ax) * .05); // tilbake til faneraden: den valgte fanen
+      if (sk < bs) { bs = sk; best = el; }
+    }
+    if (!best) return;
+    best.focus({ preventScroll: true }); best.scrollIntoView({ block: 'nearest', inline: 'nearest' }); Sound.play('ui', .4);
+  },
+  trykk(rot) {
+    if (!this.inne(rot)) { this.forste(rot); return; }
+    const el = document.activeElement, k = this.nokkel(el); Sound.init();
+    if (el.matches('input[type=range]')) return;
+    // journalkortene velges med Enter (bindCards). Hendelsen bobler ikke, så Input tror ikke at det var tastaturet
+    if (el.matches('.jcard[data-ref]')) el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', cancelable: true }));
+    else el.click();
+    this.igjen(k);
+  },
+  // LB og RB: sidene i håndboka, ellers fanene i innstillingene, skuffene i arkivet og fanene i journalen
+  fane(rot, d) {
+    let el = rot.querySelector(d > 0 ? '#hNext' : '#hPrev'); if (el && el.disabled) return;
+    if (!el) for (const s of ['.ktab', '.skuff', '#journal .tab']) { const L = [...rot.querySelectorAll(s)]; if (!L.length) continue; el = L[L.findIndex(b => b.classList.contains('on')) + d]; break; }
+    if (!el) return; Sound.init(); const k = this.nokkel(el); el.click(); this.igjen(k);
+  },
+  /* true når menyen tok imot trykket, så løkka ikke lukker panelet i tillegg */
+  tick(dt, A) {
+    const ks = $('kStatus'); if (ks) { const t = kontrollTekst(); if (ks.textContent !== t) ks.textContent = t; }
+    const rot = this.rot(); if (!rot) return false;
+    const P = Input, g = P.gp, pad = g.connected, test = rot.id === 'testpanel';
+    // rett fra spillet: en A som ble holdt eller hamret på i kampen, trykker ikke på noe før det har gått et halvt sekund,
+    // og en retning som holdes inne, må slippes først (G.time går bare i spillet)
+    if (G.time !== this.gt) { this.gt = G.time; this.ro = P.gpDown(0) || performance.now() - g.aT < 450 ? .5 : 0; this.stum = true; }
+    this.ro -= dt;
+    if (P.lastDevice === 'pad' && !this.inne(rot)) this.forste(rot);
+    if (!pad) return test;
+    const r = this.retning(); if (!r) this.stum = false;
+    if (r !== this.r) { this.r = r; this.rT = 0; if (r && !this.stum) this.flytt(rot, r, true); }
+    else if (r && !this.stum) { this.rT += dt; if (this.rT >= .35) { this.rT -= .12; this.flytt(rot, r, true); } }
+    if (Math.abs(g.ry) > .25 && rot.scrollHeight > rot.clientHeight) rot.scrollTop += g.ry * 900 * dt;
+    if (P.gpPressed(4) || P.gpPressed(5)) this.fane(rot, P.gpPressed(5) ? 1 : -1);
+    if (P.gpPressed(0)) { if (this.ro <= 0) this.trykk(rot); return true; }
+    if (test && (P.gpPressed(1) || P.gpPressed(9))) { Testmodus.lukk(); return true; }
+    if (G.state === 'journal' && P.gpPressed(1)) { if (G.jsel) { G.jsel = null; document.querySelectorAll('#journal .jcard.sel').forEach(c => c.classList.remove('sel')); } else closeJournal(); return true; }
+    return test;
+  }
+};
+// piltastene i menyene. Tekstfelt og spakene (venstre og høyre) beholder dem, og testpanelet stopper alle taster selv
+addEventListener('keydown', e => {
+  const r = { ArrowUp: 'u', ArrowDown: 'd', ArrowLeft: 'l', ArrowRight: 'r' }[Input.kode(e)]; if (!r || G.state === 'play' || performance.now() - MenyNav.padT < 150) return;
+  const rot = MenyNav.rot(), f = document.activeElement, t = f && f.tagName; if (!rot) return;
+  if (t === 'TEXTAREA' || t === 'SELECT' || (t === 'INPUT' && f.type !== 'checkbox' && (f.type !== 'range' || r === 'l' || r === 'r'))) return;
+  e.preventDefault(); MenyNav.flytt(rot, r, false);
+});
+
+/* ---------- tilbakeknappen på TV-en ----------
+   Nettleseren på TV-en tar ofte selv tilbaketasten på fjernkontrollen og går en side tilbake, ut av spillet. Bare i TV-modus
+   legges det derfor inn et ekstra steg i historikken når spillet er i gang. Tilbake tar det steget, og spillet gjør det Esc gjør:
+   pause i spillet, lukker panelet eller journalen. Så legges steget inn igjen. På tittelen er det ikke noe steg, så der går
+   tilbake ut av spillet som vanlig (slik Samsung vil ha det), og heller ikke mens spillet lastes. Kom tasten fram som et tastetrykk også,
+   har den alt gjort jobben. Steget i historikken kommer først etter bildet som tegnes, og det kan ta nesten et sekund når maskinen er treg, derfor 3 sekunder.
+   Er steget igjen fra spillet når spilleren står på tittelen, går tilbake ut av spillet der, også når tasten kom fram (den gjør ingenting på tittelen). */
+const TvTilbake = {
+  fanget: false, n: 0, // n: hvor mange steg tilbake som er tatt imot (til testene)
+  sjekk() {
+    if (!R.tv || this.fanget || !G.meta || !['play', 'panel', 'journal', 'dead'].includes(G.state)) return;
+    try { history.pushState({ morbidium: 1 }, ''); this.fanget = true; } catch (e) { }
+  },
+  tilbake() {
+    if (typeof Testmodus === 'object' && Testmodus.apen) Testmodus.lukk();
+    else if (G.state === 'play') openPause();
+    else if (G.state === 'panel') closePanel();
+    else if (G.state === 'journal') closeJournal();
+  },
+  popstate() {
+    if (!this.fanget) return; this.fanget = false; this.n++; if (!R.tv) return;
+    const tast = performance.now() - Input.tilbakeT <= 3000;
+    // steget var igjen fra før spilleren gikk til tittelen: da skal tilbake ut av spillet, som på tittelen ellers. Men lukket tasten
+    // et panel som ble åpnet fra tittelen (innstillingene, håndboka), er trykket brukt opp
+    if (G.state === 'title' && (!tast || Input.tilbakeS === 'title')) { history.back(); return; }
+    if (!tast) this.tilbake();
+    this.sjekk();
+  }
+};
+addEventListener('popstate', () => TvTilbake.popstate());
+setInterval(() => TvTilbake.sjekk(), 250);
 
 /* ---------- UI-settet fra ChatGPT (DESIGN_BRIEF.md, del G) ----------
    Et bilde med en ui_-nøkkel i gpt-grafikk/ tas i bruk av seg selv når spillet starter. Mangler det, tegner CSS-en som før.
