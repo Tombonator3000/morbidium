@@ -856,3 +856,11 @@ Alle tidspunkt er UTC.
   2. Merket på flaska og apparatet i HUD-en sa alltid F og V. Nå står det Ned og Opp med håndkontroll (Bruk på berøring).
   3. R.kilder (lyskildene) vokste for hver etasje, fordi platene i den gamle lysgruppa fortsatt hadde gruppa som forelder. Når etasjen byttes, tas de ut av lista og materialene deres kastes. Grensen på 400 luker også ut kilder i grupper som er tatt ut.
 - Ny testdel 43 for de tre rettingene. En første kjøring av testdelene 36 til 42 på det flettede bygget går nå. Den har funnet tre feil i skyggesjekkene i del 37 (nye fiender får ikke skyggeplate i 3D), som undersøkes når kjøringen er ferdig.
+
+## 2026-09-26 19:53 Dokumentasjon for sporene, og TV.md
+- memory.md: nye deler om skygger, lys og diorama (tre skyggesystemer og hvorfor, låsingen av måneskyggen, rekkefølgen i løkka, lykteskyggene, flekkene og hopp, D3.dukke, lyspuljen, R.kilder, værvakta, Glorie og tilt-shift), det store kartet, kontroller i menyene (MenyNav, vaktene for A og B) og TV-modus. To eldre linjer om D3.tick og punktlysene er oppdatert.
+- todo.md: ny del med det som er gjort og ni ting Tom må ta stilling til eller prøve: TV-en, lysretningen, romlyset sist, styrken på gloriene og tilt-shiften, skygger fra hele tegningen på telefon, kråka som svever, hemmelige rom på kartet, og hva Enkel grafikk og Lys av skal slå av.
+- README.md: kartet, håndkontroll i hele spillet og lenke til TV.md.
+- AGENTS.md: 45_kart.js i fillista, og en regel om håndkontroll og TV for nye paneler.
+- Ny fil TV.md: veiledningen for å spille på Samsung-TV (PC med HDMI, rett i TV-en med kontroller paret til TV-en og ?testmodus for å sjekke, trådløst fra PC eller mobil, menyene med håndkontroll).
+- Den fulle testkjøringen på det flettede bygget (6a97b44) og en gjennomgang med skeptikere går fortsatt.
