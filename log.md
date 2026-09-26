@@ -628,3 +628,8 @@ Alle tidspunkt er UTC.
 - De fire andre ventet en fast tid i sanntid på noe som skjer i spilltid: det tunge slaget mot den sprukne veggen og bølgene i bakholdet (del 6), og Kasteren som kaster (del 19). Del 9 (liket kan undersøkes) feilet fordi en gravstein på kirkegården sto nærmere enn liket. Samme testdeler kjørt mot main på denne maskinen: bakholdet og liket feiler der også, så de fantes fra før. Maskinen er mye tregere enn i forrige økt (main gir rundt 5 bilder i sekundet i testnettleseren, mot 9 da).
 - Målt: grenen går rundt 5 til 10 prosent tregere enn main i testnettleseren, men målingene spriker like mye (4,4 til 5,0 mot 4,9 til 5,6), og verken opptakene, musikkens klang eller dråpene står ut hver for seg.
 - Rettet: del 6 og 19 venter nå på spilltid, og del 9 prøver flere sider av liket til det er det nærmeste som kan undersøkes. Del 6, 9, 17, 18, 19 og 20 går gjennom. En ny full kjøring går nå.
+
+## 2026-09-26 07:32 Andre fulle testkjøring og klar for PR
+- Generatoren 1800 av 1800, gjennomspillingen uten feil, test_ekstra 190 av 191 på det endelige bygget. Del 6, 9, 18 og 19 går nå gjennom også her.
+- Den ene feilen var i del 25 (hendelsene): Tannfeen fikk ikke plass i etasje 2. Etasjen lages av løpets frø, så de seks forsøkene i testen fikk samme etasje hver gang, og i dette løpet manglet etasjen rommene Tannfeen kan bo i. Testen bytter nå frø mellom forsøkene for graven, Tannfeen og dansen. Del 25 er kjørt tre ganger på rad uten feil. Feilen hadde ingenting med lydrunden å gjøre.
+- Neste: PR til main og fletting.
