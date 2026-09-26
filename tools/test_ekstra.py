@@ -1508,7 +1508,7 @@ async def main():
             const mal = () => ({ tilt: +u.uTilt.value.toFixed(3), bl: R.bl ? [R.bl.a.depthBuffer, R.bl.b.depthBuffer] : null, us: R.us ? [R.us.a.depthBuffer, R.us.b.depthBuffer] : null, lrt: R.lrt ? R.lrt.depthBuffer : null, rt: R.rt.depthBuffer, lys: u.uLights.value });
             // etterbehandlingen per nivå: tilt-shift på høy og middels, glød og tilt i mål uten dybdebuffer som kastes når de slås av, ingen lysbuffer i 3D.
             // Antallet glorier følger taket, også mens kameraet glir over hele etasjen
-            ut.niva = {};
+            ut.niva = {}; const glc = R.renderer.getContext(); ut.maks = [(Glorie.maks || {}).value, glc.getParameter(glc.ALIASED_POINT_SIZE_RANGE)[1]];
             for (const [k, n] of [[3, 'hoy'], [2, 'middels'], [1, 'lav']]) {
               s.kvalitet = k; applySettings(); await bilder(3); tikk(30); const m = mal(); m.kval = D3.kval(); m.tak = Glorie.tak(); m.n = antall(); m.lyser = lyser();
               let maks = 0; const W = G.F.W, H = G.F.H; for (let i = 0; i <= 90; i++) { const t = i / 90; R.camT.x = W * (.1 + .8 * t); R.camT.z = H * (.2 + .6 * Math.abs(Math.sin(t * 5))); tikk(1); maks = Math.max(maks, antall()); }
@@ -1519,7 +1519,8 @@ async def main():
             s.d3 = false; applySettings(); await bilder(3); tikk(30); ut.uten3d = Object.assign(mal(), { d3: D3.on, tak: Glorie.tak(), n: antall() }); s.d3 = true; applySettings(); await bilder(3); tikk(30);
             // enkel grafikk, lette teksturer og uten lys og skygge: ingen glorier
             const av = () => [Glorie.tak(), Glorie.pts.visible, antall()];
-            R.safe = true; tikk(1); ut.safe = av(); R.safe = false; R.lowTex = true; tikk(1); ut.lowTex = av(); R.lowTex = false;
+            // enkel grafikk slått på midt i spillet kaster også hjelpemålene til glød, tilt-shift og lysbufferen
+            R.safe = true; tikk(1); R.render(0); ut.safe = av(); ut.safeMal = [!!R.bl, !!R.us, !!R.lrt]; R.safe = false; R.lowTex = true; tikk(1); ut.lowTex = av(); R.lowTex = false;
             s.lights = false; applySettings(); await bilder(2); tikk(1); ut.lysAv = av(); s.lights = true; applySettings(); await bilder(3); tikk(30); ut.igjen = av();
             // lyset i gloria ved et stearinlys nær pasienten. Bildet tegnes to ganger i samme øyeblikk, med og uten glorier, og blekkstrekene
             // (under 30 uten glorier) skal holde seg mørke
@@ -1551,6 +1552,8 @@ async def main():
         u3 = di['uten3d']
         sjekk('uten 3D: lysbufferen uten dybdebuffer, ingen glød eller tilt, og høyst ti glorier', not u3['d3'] and u3['lrt'] is False and u3['bl'] is None and u3['us'] is None and u3['tilt'] == 0 and u3['lys'] == 1 and 0 < u3['n'] <= 10 and u3['tak'] == 10, u3)
         sjekk('gloriene holder seg under taket (32, 20 og 10) også mens kameraet glir over etasjen, og taket fylles når det er kilder nok', all(x['n'] == min(x['tak'], x['lyser']) and x['maks'] <= x['tak'] for x in (h, m, l)) and [h['tak'], m['tak'], l['tak']] == [32, 20, 10], nv)
+        sjekk('enkel grafikk slått på underveis kaster målene til glød, tilt-shift og lysbufferen', di['safeMal'] == [False, False, False], di['safeMal'])
+        sjekk('gloriene kan bli så store som skjermkortet tillater (de vokser i de uskarpe båndene også på store skjermer)', di['maks'][0] == di['maks'][1] and (di['maks'][0] or 0) > 160, di['maks'])
         sjekk('ingen glorier med enkel grafikk, lette teksturer eller uten lys og skygge, og de kommer tilbake', di['safe'] == [0, False, 0] and di['lowTex'] == [0, False, 0] and di['lysAv'] == [0, False, 0] and di['igjen'][1] and di['igjen'][2] > 0, [di['safe'], di['lowTex'], di['lysAv'], di['igjen']])
         ly = di.get('lys', {})
         sjekk('gloria lyser opp rundt stearinlyset, blekkstrekene holder seg mørke, og den koster ett tegnekall', di.get('kand', 0) > 0 and ly.get('med', 0) - ly.get('uten', 0) >= 8 and ly.get('blekk', 0) >= 5 and ly.get('blekkMaks', 99) < 60 and ly['kall'][1] - ly['kall'][0] == 1, ly)
