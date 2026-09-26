@@ -2,7 +2,7 @@
 
 Laget av `tools/lag_tegnelister.py` fra `assets/manifest.json`. Ikke rediger for hånd; kjør skriptet på nytt når bilder er levert.
 
-Status: 287 av 542 bilder i manifestet er levert. De 255 som mangler, er samlet i 61 ark og bilder fordelt på 10 lister, én ChatGPT-samtale per liste. I tillegg kommer 11 delark til oppskriftssystemet.
+Status: 287 av 544 bilder i manifestet er levert. De 257 som mangler, er samlet i 63 ark og bilder fordelt på 10 lister, én ChatGPT-samtale per liste. I tillegg kommer 11 delark til oppskriftssystemet.
 
 Hvert ark er én PNG. Et figurark gir seks bilder (hode og kropp fra tre kanter), et «ni ting»-ark opptil ni. Store ting som trær, porter og sjefskropper tegnes som enkeltbilder, fordi en rute på malen blir for liten til dem. Referansebildene i `referanse/` viser dagens kodetegninger i samme rutenett som malen; last dem opp sammen med malen, så ser ChatGPT hva som skal i hver rute.
 
@@ -17,7 +17,7 @@ Hvert ark er én PNG. Et figurark gir seks bilder (hode og kropp fra tre kanter)
 | [7. Drømmene](07_drommene.md) | Mannen uten ansikt, Mannen med ansikt, Kvinnen uten ansikt, Kvinnen med ansikt, Vinduene og dørene, Tingene de etterlot seg, ... | 8 | 52 |
 | [8. Møblene i de nye rommene, parken og skogen](08_moblene.md) | Behandlingsrommene, Salongen og kapellet, Kjøkkenet og kjelleren, Drivhuset og hagen, Kirkegården, dammen og vinteren, Nattskogen, ... | 14 | 62 |
 | [9. Delark til oppskriftssystemet](09_delark.md) | Pasienthoder, Kultisthoder, Pasientklær, Kultistklær, Kultisthatter, Ansiktstilbehør, ... | 11 | delark |
-| [10. Historien](10_historien.md) | Journalsidene og sluttene, prop_forstander | 2 | 10 |
+| [10. Historien](10_historien.md) | Journalsidene og sluttene, prop_forstander, prop_venterom, prop_skrin | 4 | 12 |
 
 Rekkefølgen følger «Neste bestilling» i `DESIGN_BRIEF.md`: fiendene som synes mest først, møblene sist. Historien (liste 10) er ny og kort, bare to bestillinger, og kan tas når som helst. Det som ikke har bilde ennå, tegnes av koden som før, så spillet får aldri hull.
 
@@ -113,3 +113,5 @@ Samme oversikt finnes som regneark i `tegneliste.csv`.
 | 9k | `har_kultister.png` | mal_hatter_og_har.png |  |
 | 10a | `ark__historie_1__historie_2__historie_3__historie_4__his....png` | mal_ni_ting.png | 9 |
 | 10b | `prop_forstander.png` |  | 1 |
+| 10c | `prop_venterom.png` |  | 1 |
+| 10d | `prop_skrin.png` |  | 1 |

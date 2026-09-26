@@ -138,10 +138,12 @@ LISTER = [
            delark('har_pasienter', 'hairstyles for patients', ['wild uncombed hair sticking out in all directions', 'a patchy shaved head with stubble', 'long, greasy hair']),
            delark('har_kultister', 'hairstyles for gloomy teenage cultists', ['a long black fringe covering one eye', 'teased black hair with a white stripe', 'a greasy black ponytail'])]},
   {'nr': 10, 'fil': '10_historien.md', 'tittel': 'Historien',
-   'merk': 'Bildene til historien (src/41_historie.js): journalsidene før drømmene, de fire sluttene og forstanderen som sitter i Dypet og leser. Alt vises stort i samtalepanelet. Journalsidene er stilleben, ting og ikke folk, litt mørkere og mer høytidelige enn resten. Forstanderen står også i etasjen, så han tegnes forfra som møblene og som eget bilde.',
+   'merk': 'Bildene til historien (src/41_historie.js), som er Hellraiser møter Twin Peaks på et norsk sanatorium i 1923, med et Lovecraft-hav under huset: journalsidene før drømmene, de fire sluttene, forstanderen som er sydd fast til stolen i Dypet, Venterommet med de røde forhengene og instrumentskrinet. Alt vises stort i samtalepanelet. Journalsidene er stilleben, ting og ikke folk, mørkere og mer høytidelige enn resten. Kroker og kjettinger skal være elegante og kalde, ikke blodige.',
    'ark': [ark('historien', 'Journalsidene og sluttene', ['historie_1', 'historie_2', 'historie_3', 'historie_4', 'historie_5', 'historie_slutt_tilgivelse', 'historie_slutt_sannheten', 'historie_slutt_gjentakelse', 'historie_slutt_fornektelse'],
                ekstra='Cells 1 to 5 are still lifes of objects, no people, lit by warm candlelight from the upper left. Cells 6 to 9 are the four endings: small, quiet scenes with at most one tiny figure seen from far away.'),
-           enkelt('prop_forstander', ekstra='He is a quiet, tired old man, not a villain. The desk is far too big for him.')]},
+           enkelt('prop_forstander', ekstra='He is a quiet, tired old man, not a villain. The desk is far too big for him. The hooks are fine and silver, almost elegant.'),
+           enkelt('prop_venterom', ekstra='This stands against a wall in the game, like a doorway. Deep red velvet, a dreamlike and slightly wrong mood, never scary in an obvious way.'),
+           enkelt('prop_skrin', ekstra='A beautiful and slightly wrong object, like a jewel box made by a surgeon.')]},
 ]
 
 # ---------- hva som mangler ----------
