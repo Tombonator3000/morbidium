@@ -717,3 +717,11 @@ Alle tidspunkt er UTC.
 - memory.md: regelen for rulling i openPanel (samme panel beholder, alt annet begynner øverst), fast kvalitet ved mistet grafikk, tipslappen liggende, hjertene som +fulle/skjulte, !important på auto-margene, tastene i testpanelet, og minnesjekken i testdel 36.
 - todo.md: minnetesten og gjennomgangen er gjort.
 - Full testkjøring på 8777830 går i egen arbeidskopi.
+
+## 2026-09-26 17:38 Grafikken fra de ti tegnelistene levert
+- Leste hele Claude-artifacten CwTKtxx3rN65Es4PKpTPrW og kontrollerte alle 74 bestillinger mot den ferdige produksjonen. Alle er dekket.
+- La inn 268 nye PNG-kilder i gpt-grafikk/: 257 manglende manifestbilder og 11 delark med 97 synlige deler. Kasterens åtte filer er gjenbrukt fra prøven. De 311 eksisterende PNG-kildene er kontrollert uendret med SHA-256.
+- Tok utgangspunkt i gjeldende main, 1bc8561, med mobilrettingene. Bildeverktøy og manifest er de samme som ved produksjonsstart.
+- Kjørte den ordinære klippingen, bildebehandlingen og byggingen: 544 behandlet, 0 feil; 544 bilder, 124 synlige deler og 165 lyder i bygget. Ingen endringer i spillkode, manifest eller bildeverktøy.
+- Genererte ART_BRIEF.md og tegnelistene på nytt: 544 av 544 levert, 0 manglende bilder og 0 manglende delark. Ferdige bestillingslister fjernet av generatoren.
+- GRAFIKKLEVERANSE.md og grafikkleveranse.csv dokumenterer filene og overleveringen til Claude. Full visuell spilltest er ikke utført; hjortens kropp mot de animerte beina er en konkret gjenstående kontroll. Oppdatert memory.md og todo.md.
