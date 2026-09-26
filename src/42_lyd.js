@@ -50,6 +50,7 @@ const LYD_KART = {
   bjelle: { s: [['ins_handbjelle', .45, 1, { rv: .6 }], ['bjelle', .3, 1, { rv: .5 }]] },
   boss: { s: [['ins_gong', .5, 1, { rv: .4 }], ['ins_paukevirvel', .45]], syn: .6 },
   mo: { s: [['ku', .6]] },
+  tooth: { s: [['tooth', .3]], syn: .7 },
   // stemningslyder (Sound.tick) og dyr. kvant: 1 legges på neste åttendel, 2 på neste takt, og stemmes etter musikken
   drypp: { s: [['drypp', .45, 1, { rv: .45 }]], kvant: 1 },
   knirk: { s: [['knirk', .4, 1, { lp: 3000 }]] },
@@ -62,12 +63,17 @@ const LYD_KART = {
   kra: { s: [['kraake', .65]] },
   kvist: { s: [['kvist', .6]] },
   hund: { s: [['hund', .3, 1, { lp: 1500, rv: .5 }]] },
-  klokke: { s: [['ins_klokker', .28, 1, { rv: .75, lp: 2500 }]], kvant: 2 },
+  klokke: { s: [['ins_klokker', .28, 1, { rv: .75, lp: 2500 }]], mus: 'klokke' },
   hvisk: { s: [['hvisk', .5, 1, { rv: .45 }]] },
   korskrik: { s: [['skrik', .5, .85, { rv: .5 }], ['hvisk', .4]], syn: .5 },
   vinge: { s: [['dodge', .35, 1.4]] },
   flis: { s: [['kvist', .55, 1.25]] }
 };
+/* iMUSE (06_musikk.js): innslag i musikken i stedet for synthlyden, plinger som stemmes etter akkorden
+   (grunntonen i Hz står her), og store smell som får musikken til å dukke unna [hvor mye, hvor lenge] */
+const LYD_INNSLAG = { clear: 'ryddet', level: 'niva', heal: 'hel' };
+const LYD_STEMT = { pickup: 784, tooth: 1318, pa: 659, lokk: 523, fele: 659, kombo1: 523, kortkombo: 523 };
+const LYD_DUKK = { slam: [.45, .3], boss: [.5, .6], torden: [.5, .8], lynslag: [.55, .6], hurt: [.3, .25], hitHeavy: [.2, .15], overkill: [.4, .4], sjefdrap: [.6, 1.2], massakre: [.5, .8], die: [.25, .3] };
 /* fottrinn: gulvtype -> [lyd, styrke, tonehøyde, lavpass] */
 const FOTGULV = {
   tre: ['fot_tre', .32, 1], parkett: ['fot_tre', .3, 1.05], planker: ['fot_tre', .34, .95], sjakk: ['fot_stein', .3, 1.05], teppe: ['fot_tre', .16, .9, 900],
@@ -172,7 +178,7 @@ const Lydbank = {
     const v = o.vol ?? 1, a = o.a || 0;
     if (a > 0) { g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(Math.max(.0001, v), t + a); } else g.gain.setValueAtTime(v, t);
     let fra = fs + (o.fra || 0);
-    if (o.loop && sl) { src.loop = true; src.loopStart = fs + sl[0]; src.loopEnd = fs + sl[1]; if (o.fra === undefined) fra = fs + sl[0] + Math.random() * (sl[1] - sl[0]); }
+    if (o.loop && sl) { src.loop = true; src.loopStart = fs + sl[0]; src.loopEnd = fs + sl[1]; if (o.tilfeldig) fra = fs + sl[0] + Math.random() * (sl[1] - sl[0]); } // stemningen starter et tilfeldig sted i sløyfa
     else if (o.loop) src.loop = true;
     src.start(t, Math.min(fra, b.duration - .01));
     if (o.d) { const rel = Math.min(o.rel ?? .15, o.d * .5); g.gain.setValueAtTime(Math.max(.0001, v), t + Math.max(a, o.d - rel)); g.gain.linearRampToValueAtTime(.0001, t + o.d); src.stop(t + o.d + .03); }
@@ -256,11 +262,11 @@ const Stemning = {
   },
   tick(dt) {
     this.t -= dt; if (this.t > 0) return; this.t = .25;
-    const c = Sound.ctx, now = c.currentTime, M = Lydbank.paa ? this.maal() : {};
+    const c = Sound.ctx, now = c.currentTime, M = Lydbank.paa ? this.maal() : {}, mk = typeof Musikk === 'object' && Musikk.aktiv() ? Musikk.stemningK() : 1;
     for (const n in M) {
-      const [v, lp, pan] = M[n]; if (v <= .001) continue;
+      const [v0, lp, pan] = M[n], v = v0 * mk; if (v <= .001) continue;
       let L = this.lag[n];
-      if (!L) { if (!Lydbank.har(n)) continue; const h = Lydbank.spill(n, { loop: true, vol: .0001, ut: Sound.amb, lp: 20000, pan: 0 }); if (!h) continue; L = this.lag[n] = { h }; }
+      if (!L) { if (!Lydbank.har(n)) continue; const h = Lydbank.spill(n, { loop: true, tilfeldig: true, vol: .0001, ut: Sound.amb, lp: 20000, pan: 0 }); if (!h) continue; L = this.lag[n] = { h }; }
       L.h.g.gain.setTargetAtTime(v, now, 1.1); if (L.h.lp) L.h.lp.frequency.setTargetAtTime(lp, now, .8); if (L.h.pan) L.h.pan.pan.setTargetAtTime(pan, now, .5);
       L.av = 0;
     }
@@ -280,7 +286,12 @@ const Stemning = {
   Sound.init = function () { _init.call(Sound); if (Sound.ready) Lydbank.start(); };
   Sound.play = function (navn, vol = 1, pitch = 1) {
     if (!Sound.ready || Sound.volume <= 0) return;
+    const M = typeof Musikk === 'object' && Musikk.aktiv() ? Musikk : null;
+    if (M && LYD_INNSLAG[navn] && M.innslag(LYD_INNSLAG[navn])) return;
+    if (M && LYD_STEMT[navn]) pitch *= M.stem(LYD_STEMT[navn] * pitch);
+    if (M && LYD_DUKK[navn]) M.dukk(LYD_DUKK[navn][0] * Math.min(1, vol), LYD_DUKK[navn][1]);
     const K = LYD_KART[navn];
+    if (K && K.mus && M && Lydbank.har(K.s[0][0]) && M.pynt(K.mus, vol)) return;
     if (K && Lydbank.har(K.s[0][0])) { Lydbank.kart(K, navn, vol, pitch); if (K.syn) _play.call(Sound, navn, vol * K.syn, pitch); return; }
     _play.call(Sound, navn, vol, pitch);
   };
