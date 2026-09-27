@@ -990,3 +990,16 @@ Alle tidspunkt er UTC.
 - Ingen feil funnet som måtte rettes. Testdel 56 feiler på den gamle koden (dreiingen, hjorten, dekningen), så den er ikke tom.
 - Ikke rettet (fra før): eyeliner fra siden stikker foran ansiktet, fordi tegningen har to øyne. 28_oppskrift.js står ikke i noe spors liste, men er endret her (frisyrene og TILBEHOR_FESTE), så det må med i flettingen.
 - Del 9, 10, 11, 27, 36 og 56 grønne.
+
+## 2026-09-27 08:25 Snøfall som ligner snø (C2)
+- Det Tom så i 6.png: snøen som faller, var 220 harde firkanter på to til tre punkter i en fast boks som ikke fulgte kameraet. På stående telefon kom det aldri snø i den nederste femtedelen av skjermen, alle fnuggene slengte i takt, og det var ingen vind eller dybde.
+- Ny fil 47_sno.js (Sno): snøen faller i tre lag på skjermkortet. Fjerne, små fnugg nær bakken under bakketåka, vanlige fnugg midt i lufta (dette er Vaer.obj, så del 37 holder), og noen få store nær glasset som tegnes rett på skjermen, flytter seg 1,4 ganger så fort som bakken og viker unna pasienten. Alt regnes ut i vertex-shaderen fra tiden, som går med spilltiden, så pausen og treffstansen fryser snøen. Prosessoren gjør ingenting per fnugg.
+- Boksen følger kameraet hvert bilde (bredde, høyde, zoom og vinkelen) og brettes med mod(), så stående og liggende telefon og kameraavstand 1,25 blir dekket helt ut. Fnuggene ligger fast i verden og kommer tilbake et nytt sted for hver runde.
+- Utseendet er et atlas på 128 punkter tegnet i kode: en myk klump, en klump med cel-skygge og svak blekkant, en krystall med seks armer i blekk (bare de nære) og en uskarp skive. Aldri helt hvitt. En maske over uterommene holder snøen ute av paviljongene. I 3D får fnuggene lyset fra lampene, så de er varme under gasslyktene og blågrå i mørket.
+- Vind fra etasjens frø, med kast hvert 8. til 20. sekund der fnuggene slenger mer og vindsuset øker. Mengden går opp og ned over et par minutter. Høy 700, 380 og 120 fnugg, middels (telefon og TV) 420, 220 og 60, lav 240 og 110 og ingen nære, 2D 300, 160 og 40 (200, 110 og 40 på berøringsskjerm). Tre tegnekall.
+- Størrelsene er større enn i planen (fjern .07 til .1, midt .12 til .19, nær .3 til .46 enheter). Med planens tall ble fnuggene prikker på tre til fem punkter som knapt syntes mot den hvite bakken.
+- Gasslyktene får snø som faller i lyset i stedet for møll (GLOD_TYPER.lyssno), og sirissene tier mens det snør.
+- Enkel grafikk: ingen snø på skjermkortet. De gamle prikkene er runde (en myk prikk på 16 punkter i størrelse 4,5) og legges der de synes på skjermen, så 81 prosent av dem er i bildet (52 før). Lette teksturer har ingen snø, som før.
+- Ikke gjort (valgfritt i planen): vinden i bakketåka, snø på hodene og tingene, fotspor, knirkende fottrinn og frost på glasset.
+- Ny testdel 57 (Snøfall), i 2D med én runde i 3D på PC og stående telefon. Alle sjekkene unntatt de uten konsollfeil feiler på bygget fra før (1ff4a4f). Del 24, 36, 37, 39 og 57 er grønne. Del 28 feiler på at Morbidium-gløden ikke er borte etter pytten, også alene. Den feilet likt før denne endringen (kun_gammel_28.log), så det kommer ikke herfra.
+- Skjermbilder til Tom: 57_sno_for_1280.png og 57_sno_etter_1280.png (en snøetasje i Parken ved gasslyktene, 3D, samme frø og sted), 57_sno_for_390x844.png og 57_sno_etter_390x844.png, og 57_sno_etter_2d.png.
