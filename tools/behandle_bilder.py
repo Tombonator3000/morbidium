@@ -11,18 +11,22 @@ kort_due.png eller prop_lamp.png. For hvert bilde:
   4. Resultatet lagres som PNG i 128 piksler per spillenhet (det spillet tegner i, se PX i 10_art.js),
      med en palett på 256 farger. Det gjør fila rundt fire ganger mindre uten synlig forskjell.
      --full-farge hopper over paletten.
+Teksturer (gulv_, vegg_ og bakke_, med «flis» i manifestet) går en egen vei, se behandle_tekstur: ingen bakgrunn
+fjernes og ingenting beskjæres, sømmene rettes, og de lagres som WebP (PNG uten palett om Pillow mangler WebP).
 
 Krever Pillow:  pip install pillow
 Bruk:           python3 tools/behandle_bilder.py [--sjekk] [--full-farge]
 """
 import json, sys
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageChops, ImageStat, features
 
 ROT = Path(__file__).resolve().parent.parent
 INN, UT = ROT / 'gpt-grafikk', ROT / 'assets' / 'ferdig'
 PXU = 128  # piksler per spillenhet i ferdige bilder, samme som PX i spillet
 FYLL = {'hode': .9, 'kropp': .95, 'kort': .9, 'vaapen': .97, 'sko': .9, 'ui': 1.0}  # hvor mye av plassen tegningen får
+WEBP = features.check('webp')
+BAND = .12  # hvor langt inn fra kanten en søm blandes ut (andel av bredden eller høyden)
 
 def fjern_bakgrunn(im):
     """Gjør bakgrunnsfargen gjennomsiktig hvis bildet ikke har alfa fra før."""
@@ -117,7 +121,65 @@ def behandle_ui(sti, m):
     if not bbox: raise ValueError('bildet er helt gjennomsiktig')
     return im.crop(bbox).resize((max(1, round(m['w'] * PXU)), max(1, round(m['h'] * PXU))), Image.LANCZOS)
 
+# ---------- teksturer: vegger, gulv og bakken ute ----------
+def saum(im, akse):
+    """Hvor godt bildet går i ett med seg selv, i snittforskjell per kanal (0 til 255): (kant, nabo). kant er forskjellen
+    mellom siste og første kolonne (akse 'x') eller rad ('y'), altså sømmen når bildet legges ved siden av seg selv.
+    nabo er snittet mellom to nabokolonner eller naborader inne i bildet. En flis som går i ett, har omtrent like tall."""
+    im = im.convert('RGB'); w, h = im.size
+    if akse == 'x': kant, nabo = ImageChops.difference(im.crop((w - 1, 0, w, h)), im.crop((0, 0, 1, h))), ImageChops.difference(im.crop((1, 0, w, h)), im.crop((0, 0, w - 1, h)))
+    else: kant, nabo = ImageChops.difference(im.crop((0, h - 1, w, h)), im.crop((0, 0, w, 1))), ImageChops.difference(im.crop((0, 1, w, h)), im.crop((0, 0, w, h - 1)))
+    return sum(ImageStat.Stat(kant).mean) / 3, sum(ImageStat.Stat(nabo).mean) / 3
+
+def rett_som(im, akse):
+    """ChatGPT får sjelden kantene til å gå helt i ett. Da blandes en kopi som er forskjøvet et halvt bilde, inn i det ytterste
+    båndet (BAND) langs kantene: i kopien ligger midten av bildet ved kanten, og der henger bildet sammen med seg selv. Et halvt
+    bilde er to ruter på gulvet, så fugene havner på samme sted i begge og bare flekkene blandes. På veggene ligger listene i
+    samme høyde i begge. Overgangen er myk (smoothstep), så det ikke blir en ny kant der båndet slutter."""
+    w, h = im.size; n = w if akse == 'x' else h; b = max(2, round(n * BAND))
+    kopi = ImageChops.offset(im, w // 2, 0) if akse == 'x' else ImageChops.offset(im, 0, h // 2)
+    vekt = []
+    for i in range(n):
+        d = min(i, n - 1 - i) / b
+        vekt.append(0 if d >= 1 else round(255 * (1 - d * d * (3 - 2 * d))))
+    maske = Image.new('L', (n, 1) if akse == 'x' else (1, n)); maske.putdata(vekt)
+    return Image.composite(kopi, im, maske.resize((w, h), Image.NEAREST))
+
+def behandle_tekstur(sti, m):
+    """Teksturer (gulv_, vegg_ og bakke_): bildet skal dekke hele flata, så ingen bakgrunn fjernes og ingenting beskjæres.
+    1. Gjennomsiktighet som ikke er med vilje, legges på snittfargen (bare vegg_gjerde og vegg_ruin er utklipp, alfa i manifestet).
+    2. Skaleres til px i manifestet: gulv og bakke 512 x 512 (4 x 4 ruter), vegger 128 px per enhet og 1,5 ganger så brede som høye.
+    3. Sømmene rettes (rett_som) hvis kanten er mye verre enn naboene inne i bildet: bortover for vegger (flis 'vannrett'),
+       begge veier for gulv og bakke (flis 'begge').
+    4. Advarer om magenta (hjelpelinjer) og om kantene er mye mørkere eller lysere enn midten (vignett, lyskjegle)."""
+    im = Image.open(sti).convert('RGBA'); alfa = bool(m.get('alfa')); a = im.getchannel('A')
+    if not alfa and a.getextrema()[0] < 250:
+        if a.getextrema()[1] <= 128: raise ValueError('bildet er helt gjennomsiktig')
+        snitt = tuple(round(v) for v in ImageStat.Stat(im.convert('RGB'), a.point(lambda v: 255 if v > 128 else 0)).mean)
+        bunn = Image.new('RGBA', im.size, snitt + (255,)); bunn.alpha_composite(im); im = bunn
+        print('  obs: bildet hadde gjennomsiktighet og er lagt på snittfargen (en tekstur skal dekke hele bildet)')
+    W, H = m['px']; im = im.resize((W, H), Image.LANCZOS)
+    if not alfa: im = im.convert('RGB')
+    for akse in ('x', 'y') if m.get('flis') == 'begge' else ('x',):
+        kant, nabo = saum(im, akse)
+        if kant > 2 * nabo + 2:
+            im = rett_som(im, akse)
+            print(f"  søm {'til venstre og høyre' if akse == 'x' else 'oppe og nede'} rettet: {kant:.0f} før, {saum(im, akse)[0]:.0f} etter (naboene inne i bildet {nabo:.0f})")
+    rgb = im.convert('RGB'); r, g, b = rgb.split(); over = lambda k, t: k.point(lambda v: 255 if v > t else 0)
+    mag = ImageChops.darker(ImageChops.darker(over(r, 170), over(b, 170)), ImageChops.darker(over(ImageChops.subtract(r, g), 70), over(ImageChops.subtract(b, g), 70)))
+    andel = mag.histogram()[255] / (W * H)
+    if andel > .005: print(f'  obs: {andel * 100:.1f} % av bildet er magenta (hjelpelinjer?)')
+    if not alfa:
+        lys = lambda boks: ImageStat.Stat(rgb.convert('L').crop(boks)).mean[0]
+        bx, by = max(1, round(W * .08)), max(1, round(H * .08))
+        if m.get('flis') == 'begge': midt, kant = lys((W // 4, H // 4, 3 * W // 4, 3 * H // 4)), (lys((0, 0, W, by)) + lys((0, H - by, W, H)) + lys((0, 0, bx, H)) + lys((W - bx, 0, W, H))) / 4
+        else: midt, kant = lys((W // 4, 0, 3 * W // 4, H)), (lys((0, 0, bx, H)) + lys((W - bx, 0, W, H))) / 2  # veggene er mørkere nederst med vilje, så bare sidene sammenlignes
+        if midt > 0 and abs(kant - midt) / midt >= .15: print(f"  obs: kantene er {abs(kant - midt) / midt * 100:.0f} % {'mørkere' if kant < midt else 'lysere'} enn midten (vignett eller lyskjegle?)")
+    return im
+
 def behandle(sti, m):
+    if m.get('flis'):
+        return behandle_tekstur(sti, m)
     if 'ruter' in m and sti.stem.lower().startswith('anim_'):
         return behandle_ark(sti, m)
     if m.get('strekk'):
@@ -154,6 +216,13 @@ def main():
             print(f'UKJENT  {f.name}: filnavnet må være en nøkkel fra assets/manifest.json'); feil += 1; continue
         try:
             ut = behandle(f, man[k])
+            if man[k].get('flis'):  # teksturer: full farge som WebP, uten palett (flekkene og overgangene tåler ikke 256 farger)
+                ext = 'webp' if WEBP else 'png'
+                if '--sjekk' not in sys.argv:
+                    ut.save(UT / f'{k}.{ext}', **({'quality': 85, 'method': 6} if WEBP else {'optimize': True}))
+                    gammel = UT / f"{k}.{'png' if WEBP else 'webp'}"
+                    if gammel.exists(): gammel.unlink()  # build.py tar begge, så en gammel fil med den andre endelsen skal bort
+                print(f'OK      {f.name} -> assets/ferdig/{k}.{ext} ({ut.size[0]}x{ut.size[1]}, tekstur)'); ok += 1; continue
             if '--full-farge' not in sys.argv: ut = ut.quantize(colors=256, method=Image.Quantize.FASTOCTREE)
             if '--sjekk' not in sys.argv: ut.save(UT / f'{k}.png', optimize=True)
             print(f'OK      {f.name} -> assets/ferdig/{k}.png ({ut.size[0]}x{ut.size[1]})'); ok += 1
