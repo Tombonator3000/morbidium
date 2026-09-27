@@ -2179,7 +2179,8 @@ async def main():
           if (s0 === null) return null; G.run.seed = s0 * 7919; startFloor(2, false); await new Promise(r => setTimeout(r, 300));
           const F = G.F, c = Spesial.cracks[1], lister = (D3.sprekkDeler || []).length, synlig = (D3.sprekkDeler || []).filter(m => m.visible).length, pos = new THREE.Vector3(), mx = new THREE.Matrix4();
           const paaSprekk = (D3.sprekkDeler || []).every(im => { for (let k = 0; k < im.count; k++) { im.getMatrixAt(k, mx); pos.setFromMatrixPosition(mx); if (!F.crack.includes(Math.floor(pos.z - 1) * F.W + Math.floor(pos.x))) return false; } return true; });
-          Spesial.damage(c, 9); return { s0, lister, synlig, paaSprekk, etter: (D3.sprekkDeler || []).filter(m => m.visible).length, skjult: !!G.skjult }; }""")
+          Spesial.damage(c, 9); const skjult = !!G.skjult, g0 = G.time, t0 = performance.now(); while (Skjult.vis && G.time - g0 < 2 && performance.now() - t0 < 40000) await new Promise(r => setTimeout(r, 50)); // innbruddet senker listene med veggen (B4)
+          return { s0, lister, synlig, paaSprekk, etter: (D3.sprekkDeler || []).filter(m => m.visible).length, skjult }; }""")
         sjekk('det skjulte i 3D: listene på en sprukken nordvegg er egne, ligger bare på sprekken og forsvinner ved innbruddet', nord is not None and nord['lister'] > 0 and nord['synlig'] == nord['lister'] and nord['paaSprekk'] and nord['etter'] == 0 and not nord['skjult'], nord)
         sjekk('ingen konsollfeil (det skjulte, 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
