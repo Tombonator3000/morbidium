@@ -424,11 +424,7 @@ const R = {
   /* ---------- varsler på gulvet ---------- */
   telegraph(shape, o) {
     const g = new THREE.Group(); g.position.set(o.x, .035 + Math.random() * .01, o.z); g.rotation.y = o.a || 0;
-    const col = o.color || 0xff4a22;
-    const edge = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .95, depthWrite: false });
-    const ink = new THREE.MeshBasicMaterial({ color: 0x2a1a14, transparent: true, opacity: .8, depthWrite: false });
-    const fillM = new THREE.MeshBasicMaterial({ color: col, map: this.tex.hatch, transparent: true, opacity: .55, depthWrite: false }); fillM.map.repeat.set(3, 3);
-    const back = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .16, depthWrite: false });
+    const { edge, ink, fillM, back } = this.teleMat(o.color || 0xff4a22);
     const flat = m => { m.rotation.x = -Math.PI / 2; g.add(m); return m; };
     let fill;
     if (shape === 'circle') {
@@ -448,6 +444,25 @@ const R = {
       g.userData.update = p => fill.scale.setScalar(Math.max(.01, p));
     }
     g.userData.update(0); g.renderOrder = 3; this.dyn.add(g); return g;
+  },
+  /* materialene til varslene deles per farge og blir liggende (userData.delt). Ble de kastet med varselet, måtte skjermkortet bygge
+     shaderen på nytt for hvert varsel, fordi ingen andre bruker den (målt: én ny lenking per varsel) */
+  teleMat(col) {
+    const M = this.teleMats || (this.teleMats = new Map()), k = (this.teleC || (this.teleC = new THREE.Color())).set(col).getHex(); let m = M.get(k);
+    if (!m) {
+      const lag = (c, opacity, map) => { const x = new THREE.MeshBasicMaterial(Object.assign({ color: c, transparent: true, opacity, depthWrite: false }, map ? { map } : {})); x.userData.delt = true; return x; };
+      this.tex.hatch.repeat.set(3, 3); if (!this.teleInk) this.teleInk = lag(0x2a1a14, .8);
+      M.set(k, m = { edge: lag(k, .95), ink: this.teleInk, fillM: lag(k, .55, this.tex.hatch), back: lag(k, .16) });
+    }
+    return m;
+  },
+  /* varselet er ferdig: how er 'fyr' (angrepet går av), 'avbryt' (eieren ble stanset eller døde) eller 'rydd' (etasjen rives).
+     Tar det ut og frigjør geometrien, ellers blir bufrene liggende på skjermkortet (r128 slipper dem bare ved dispose). Materialer frigjøres
+     også, men ikke det som er merket userData.delt, og aldri teksturene (R.tex.hatch). Trygt å kalle to ganger. */
+  kastTele(g, how, t) {
+    if (!g || g.userData.kastet) return; g.userData.kastet = true; this.remove(g);
+    const delt = x => x.userData && x.userData.delt;
+    g.traverse(o => { if (delt(o)) return; if (o.geometry && !delt(o.geometry)) o.geometry.dispose(); if (o.material && !delt(o.material)) o.material.dispose(); });
   },
   /* ---------- kamera ---------- */
   updateCamera(tx, tz, dt) {

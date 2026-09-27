@@ -103,17 +103,18 @@ function addTele(shape, o, dur, fire, owner) {
   G.tele.push(t); if (owner) (owner.teles || (owner.teles = [])).push(t);
   Sound.play('tele', .6); return t;
 }
-function cancelTeles(owner) { if (!owner || !owner.teles) return; for (const t of owner.teles) { t.dead = true; R.remove(t.mesh); } owner.teles = []; }
+function cancelTeles(owner) { if (!owner || !owner.teles) return; for (const t of owner.teles) { t.dead = true; R.kastTele(t.mesh, 'avbryt', t); } owner.teles = []; }
 function updateTele(dt) {
   for (let i = G.tele.length - 1; i >= 0; i--) {
     const t = G.tele[i];
     if (t.dead) { G.tele.splice(i, 1); continue; }
     t.t -= dt; t.mesh.userData.update(1 - Math.max(0, t.t) / t.max);
     if (t.t <= 0) {
-      R.remove(t.mesh); G.tele.splice(i, 1);
+      G.tele.splice(i, 1);
       if (t.owner && t.owner.teles) t.owner.teles = t.owner.teles.filter(x => x !== t);
-      if (t.owner && (!t.owner.alive || t.owner.stun > 0 || t.owner.sleep > 0)) continue;
-      t.fire && t.fire(t.o);
+      const fyrer = !(t.owner && (!t.owner.alive || t.owner.stun > 0 || t.owner.sleep > 0));
+      R.kastTele(t.mesh, fyrer ? 'fyr' : 'avbryt', t);
+      if (fyrer && t.fire) t.fire(t.o);
     }
   }
 }
