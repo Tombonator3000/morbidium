@@ -144,7 +144,7 @@ function clearFloor() {
   if (G.boss) { killObj(G.boss); if (G.boss.glow) R.remove(G.boss.glow); G.boss = null; }
   show('bossBar', false); show('miniBar', false);
   for (const k of ['allies', 'projectiles', 'puddles', 'pickups', 'npcs', 'walls', 'halluc', 'zones']) { for (const o of G[k] || []) killObj(o); G[k] = []; }
-  for (const t of G.tele) R.remove(t.mesh); G.tele = [];
+  for (const t of G.tele) R.kastTele(t.mesh, 'rydd', t); G.tele = [];
   for (const f of G.fxl) R.remove(f.obj); G.fxl = [];
   for (const b of G.barriers) R.remove(b.g); G.barriers = [];
   if (G.titleDolls) { G.titleDolls.forEach(d => d.dispose()); G.titleDolls = null; }
