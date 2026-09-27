@@ -14,6 +14,7 @@ Verktøyene vet hva et bilde er bare ut fra filnavnet. Skriv det med små boksta
 | Hva | Filnavn | Eksempel |
 |---|---|---|
 | Ett enkelt bilde | en nøkkel fra `assets/manifest.json` | `kort_due.png`, `kur_bart.png`, `prop_bench.png` |
+| Uteflater som gjentas over gulv eller vegg | `gulv_<stil>.png`, `vegg_<stil>.png` | `gulv_gress.png`, `vegg_hekk.png` |
 | Figurark (forfra, bakfra, fra siden) laget på `mal_figur.png` | `figur_<navn>.png` | `figur_pasient.png` |
 | Ni ting på ett ark laget på `mal_ni_ting.png` | `ark__<nøkkel>__<nøkkel>...png`, ni nøkler med to understreker mellom, lest fra venstre mot høyre og ovenfra. `_` hopper over en rute | se under |
 | Delark til oppskriftssystemet | `hoder_<serie>.png`, `hatter_<serie>.png`, `har_<serie>.png`, `tilbehor_<serie>.png`, `kropper_<serie>.png` | `hoder_personale.png` |
@@ -34,6 +35,8 @@ Spilleren settes sammen på nytt ved hver innleggelse. `figur_pasient.png` er ma
 Utvidelsen høsten 2026 har fire nye runder i `ART_BRIEF.md`: runde 10 (møblene i de nye rommene, parken og skogen, og utgangene), runde 11 (hendelsene: øyet, kua, telefonen, heisen og de andre), runde 12 (drømmene: minnene, tegnene, døra og figurene uten ansikt) og runde 13 (gartnerne, kråkene, Huldra, Vedkubbemannen, Nøkken, Overgartneren og Den hvite hjorten). Figurene lages som figurark på `mal_figur.png` med navnet `figur_<type>.png`, for eksempel `figur_huldra.png`.
 
 ## Krav til bildene
+Flater med `tekstur: true` i manifestet er et unntak fra reglene om bakgrunn nedenfor: de skal fylle hele bildet og gjentas uten synlig skjøt. Gulv ses rett ovenfra og vegger rett forfra. Behandlingen beholder kantene og alfaen, uten beskjæring eller bakgrunnsfjerning. Se `UTEGRAFIKK.md` i rotmappa.
+
 - PNG, helst med gjennomsiktig bakgrunn. Hvit eller ensfarget bakgrunn går også, den fjernes fra kantene og innover.
 - Ingen skygge på bakken, ingen tekst, ingen ramme, ingen bakgrunn.
 - Magenta hjelpelinjer fra malene kan bli stående, de fjernes automatisk.

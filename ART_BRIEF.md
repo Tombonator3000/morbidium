@@ -10,7 +10,7 @@ Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke red
 4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).
 5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.
 
-Status: 544 av 544 bilder er levert. Kolonnen «Levert» viser hvilke.
+Status: 558 av 558 bilder er levert. Kolonnen «Levert» viser hvilke.
 
 ## Stilblokk (lim inn i ChatGPT)
 
@@ -24,6 +24,27 @@ Technical: PNG with a TRANSPARENT background. Exactly one object, centered, full
 - Samme stil i alle bilder er viktigere enn at hvert enkelt bilde er perfekt. Bruk samme ChatGPT-samtale for en hel runde.
 - Gjennomsiktig bakgrunn er best. Hvit eller ensfarget bakgrunn går også, verktøyet fjerner den fra kantene og innover.
 - Ikke tegn skygge på bakken. Spillet legger på skygge og lys selv.
+
+## Runde 15: uteflater og grantrær (14 bilder, 14 levert)
+
+Bakketeksturer er sett rett ovenfra, fyller hele bildet og dekker 4 x 4 spillruter. Vegger er sett rett forfra og gjentas vannrett. Flater beskjæres ikke og får ikke fjernet bakgrunn. Granen er en vanlig gjennomsiktig rekvisitt. Se UTEGRAFIKK.md for leveranse og kontroll.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
+| `gulv_brostein.png` | seamless overhead irregular warm grey cobblestones with dark narrow joints | kvadrat | ja |
+| `gulv_gress.png` | seamless overhead garden grass in muted olive green, scattered hand-inked grass tufts | kvadrat | ja |
+| `gulv_grus.png` | seamless overhead warm beige gravel with small irregular stones | kvadrat | ja |
+| `gulv_is.png` | seamless overhead pale blue-grey frozen pond ice with fine cracks | kvadrat | ja |
+| `gulv_jord.png` | seamless overhead dark warm garden soil, small stones and fine roots | kvadrat | ja |
+| `gulv_mose.png` | seamless overhead olive moss carpet with sparse spruce needles | kvadrat | ja |
+| `gulv_myr.png` | seamless overhead peat, damp moss and shallow dark pools | kvadrat | ja |
+| `gulv_sno.png` | seamless overhead connected powder snow with subtle grey-blue creases, no separate oval patches | kvadrat | ja |
+| `gulv_sti.png` | seamless overhead trampled brown forest trail with scattered spruce needles | kvadrat | ja |
+| `prop_gran.png` | one tall slightly crooked Norwegian spruce tree with drooping green branch tiers, short brown trunk and roots; transparent background, no ground shadow | stående | ja |
+| `vegg_hekk.png` | dense clipped olive-green hedge foliage, flat front view, tileable horizontally, fully opaque | kvadrat | ja |
+| `vegg_ruin.png` | low crumbling stone wall, irregular broken top edge and transparent sky above, flat front view, tileable horizontally | liggende | ja |
+| `vegg_skog.png` | dense dark forest of pale birch trunks and spruce foliage, flat front view, tileable horizontally | stående | ja |
+| `vegg_steinmur.png` | low old dry-stone garden wall with moss on top, flat front view, tileable horizontally | liggende | ja |
 
 ## Runde 14: historien (12 bilder, 12 levert)
 

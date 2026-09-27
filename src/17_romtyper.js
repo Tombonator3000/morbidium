@@ -15,6 +15,26 @@ function hRute(x, z, k = 0) {
 }
 const blandF = (a, b, k) => { const A1 = Col.rgb(a), B1 = Col.rgb(b); return Col.hex(A1[0] + (B1[0] - A1[0]) * k, A1[1] + (B1[1] - A1[1]) * k, A1[2] + (B1[2] - A1[2]) * k); };
 
+/* Bildene males inn i de eksisterende lerretene. Ingen nye sceneobjekter eller tegnekall.
+   Hele bakkeruta dekker 4 x 4 spillruter, med samme utsnitt i alle rom. */
+const UTE_FLATER = {
+  gulv_gress: [4, 4], gulv_grus: [4, 4], gulv_jord: [4, 4],
+  gulv_mose: [4, 4], gulv_myr: [4, 4], gulv_is: [4, 4],
+  gulv_sti: [4, 4], gulv_brostein: [4, 4], gulv_sno: [4, 4],
+  vegg_hekk: [2, 1.7], vegg_steinmur: [2, 1.2],
+  vegg_skog: [2, 2.8], vegg_ruin: [2, 1.1]
+};
+function uteBilde(key) {
+  const im = Art.img[key];
+  return im && im.complete && im.naturalWidth ? im : null;
+}
+function uteBakkeBilde(key, g, px, py, T, c) {
+  const im = uteBilde(key); if (!im) return false;
+  const n = 4, sx = ((c.x % n) + n) % n, sy = ((c.z % n) + n) % n;
+  g.drawImage(im, sx * im.width / n, sy * im.height / n, im.width / n, im.height / n, px, py, T, T);
+  return true;
+}
+
 /* ---------- gulv: GULV[stil](g, px, py, T, c), c = { x, z, th, rom, kant: { n, s, w, e }, ute } ---------- */
 const GULV = {
   tre(g, px, py, T, c) {
@@ -160,8 +180,16 @@ const GULV = {
     g.fillStyle = 'rgba(90,110,60,.35)'; if (hRute(c.x, c.z, 395) < .5) { g.beginPath(); g.arc(px + (hRute(c.x, c.z, 396) < .5 ? 0 : T), py + T * .5, T * .25, 0, TAU); g.fill(); }
   }
 };
+// Manglende eller uleselige bilder beholder den opprinnelige kodetegningen.
+for (const st of ['gress', 'grus', 'jord', 'mose', 'myr', 'is', 'sti', 'brostein']) {
+  const tegn = GULV[st];
+  GULV[st] = (g, px, py, T, c) => { if (!uteBakkeBilde('gulv_' + st, g, px, py, T, c)) tegn(g, px, py, T, c); };
+}
 /* snø ligger på bakken ute når det snør */
 function snoPaa(g, px, py, T, c) {
+  if (uteBilde('gulv_sno')) {
+    g.save(); g.globalAlpha = .88; uteBakkeBilde('gulv_sno', g, px, py, T, c); g.restore(); return;
+  }
   g.fillStyle = 'rgba(240,244,250,.78)';
   for (let k = 0; k < 4; k++) { g.beginPath(); g.ellipse(px + hRute(c.x, c.z, 400 + k) * T, py + hRute(c.z, c.x, 404 + k) * T, T * (.2 + hRute(c.x, c.z, 408 + k) * .25), T * .14, 0, 0, TAU); g.fill(); }
 }
@@ -381,7 +409,14 @@ const Landskap = {
   /* en stor flate under hele etasjen: gress i parken, mose og barnåler i skogen */
   bakke(F, th, L) {
     const skog = F.depth === 5, sno = F.vaer === 'sno';
-    const tex = R.canvasTex(256, 256, g => {
+    const im = uteBilde(skog ? 'gulv_mose' : 'gulv_gress'), vinter = sno && uteBilde('gulv_sno');
+    const tex = R.canvasTex(im ? 512 : 256, im ? 512 : 256, (g, w, h) => {
+      if (im) {
+        g.drawImage(im, 0, 0, w, h);
+        if (vinter) { g.globalAlpha = .88; g.drawImage(vinter, 0, 0, w, h); g.globalAlpha = 1; }
+        else if (sno) snoPaa(g, 0, 0, w, { x: 0, z: 0 });
+        return;
+      }
       const rng = mulberry32(skog ? 55 : 44);
       g.fillStyle = skog ? '#1a2216' : '#243a1c'; g.fillRect(0, 0, 256, 256);
       for (let k = 0; k < 90; k++) { g.fillStyle = rng() < .5 ? (skog ? '#10180e' : '#1a2c14') : (skog ? '#26301e' : '#2e4a24'); g.beginPath(); g.ellipse(rng() * 256, rng() * 256, 10 + rng() * 26, 6 + rng() * 14, rng() * 3, 0, TAU); g.fill(); }
@@ -389,7 +424,7 @@ const Landskap = {
       for (let k = 0; k < 160; k++) { const x = rng() * 256, y = rng() * 256; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rng() - .5) * 6, y - 5 - rng() * 5); g.stroke(); }
       if (sno) { g.fillStyle = 'rgba(236,242,250,.7)'; for (let k = 0; k < 40; k++) { g.beginPath(); g.ellipse(rng() * 256, rng() * 256, 14 + rng() * 30, 8 + rng() * 12, 0, 0, TAU); g.fill(); } }
     }, true);
-    const B = 24; tex.repeat.set((F.W + B * 2) / 5, (F.H + B * 2) / 5);
+    const B = 24, periode = im ? 4 : 5; tex.repeat.set((F.W + B * 2) / periode, (F.H + B * 2) / periode);
     const m = new THREE.Mesh(new THREE.PlaneGeometry(F.W + B * 2, F.H + B * 2), new THREE.MeshBasicMaterial({ map: tex, color: skog ? 0x8a94a4 : 0x9aa4b4 }));
     m.rotation.x = -Math.PI / 2; m.position.set(F.W / 2, -.03, F.H / 2); m.userData.d3 = true; L.add(m);
     Paint.mesh.bakke = m; Paint.owned.push(tex, m.material, m.geometry);
@@ -402,9 +437,11 @@ const Landskap = {
     const rng = mulberry32((F.seed || 3) * 17 + 5), skog = F.depth === 5, tetthet = skog ? .32 : .16, ut = [];
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
       const i = z * W + x; if (F.tiles[i] || wh[i] || avst[i] < 2 || avst[i] > 7 || rng() > tetthet) continue;
-      ut.push([x + .5 + (rng() - .5) * .6, z + .5 + (rng() - .5) * .6, rng()]);
+      ut.push([x + .5 + (rng() - .5) * .6, z + .5 + (rng() - .5) * .6, rng(), hRute(x, z, 51)]);
     }
-    ut.sort((a, b) => a[2] - b[2]);
+    // Utvalget må være uavhengig av treslaget. Laveste r først fjernet granene
+    // i parken (r >= .85) og bjørkene i skogen når taket på antall ble nådd.
+    ut.sort((a, b) => a[3] - b[3]);
     const tint = new THREE.Color(skog ? '#6a7898' : '#7a8aa8');
     for (const [x, z, r] of ut.slice(0, skog ? 140 : 90)) {
       const k = skog ? (r < .55 ? 'gran' : 'bjork') : (r < .45 ? 'tre' : r < .85 ? 'busk' : 'gran');

@@ -1,5 +1,12 @@
 # Morbidium: gjøremål
 
+## Utegrafikk 2026-09-27
+- [x] Finne grafikk som den gamle manifestkontrollen overså: gran og uteflater.
+- [x] Lage og koble inn 14 nye PNG-er til hage, Nattskogen og snødekke.
+- [x] Rette utvelgelsen som sorterte bort graner i parken ved dekorgrensen.
+- [x] Registrere landskapsdekor og teksturer, og oppdatere kunstbrief og tegnelister. 558 av 558 manifestbilder levert.
+- [x] Kontrollere innlasting, reservetegninger, 3D, enkel grafikk og gjennomspilling. Se UTEGRAFIKK.md.
+
 ## Grafikkleveranse 2026-09-26
 - [x] Alle bestillingene i de ti tegnelistene levert. 544 av 544 manifestbilder, ingen manglende delark.
 - [ ] Claude: kontroller Den hvite hjortens kropp mot hals og animerte bein i spillet. Se GRAFIKKLEVERANSE.md for konkret festepunkt og øvrig visuell kontroll.

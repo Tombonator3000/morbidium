@@ -759,6 +759,7 @@ function boot() {
   addEventListener('pointerdown', () => { Sound.init(); applySettings(); }, { once: true }); addEventListener('keydown', () => { Sound.init(); applySettings(); }, { once: true });
   $('bJournal').onclick = () => openJournal(); $('bPause').onclick = () => openPause(); Kart.init();
   window.MORBIDIUM = G; Object.assign(window, { Items, ITEMS, spawnEnemy, itemIcon, jarPart, pillPart, addonPart, shotPart, LOOKS, PILL_COL, BLOBS, R, hurt, descend, finishCombat, openService, killEntity, Art, RIG, PROPS, CARD_ART, WEAPONS, THEMES, charPart, propArt, weaponPart, shoePart, cardArtCanvas, generateFloor, CONSUMABLES, heartPart, morbPart, bottlePart, cardPart, pigeonPart, stampDecal, handPart, toothPart, starPart, puffPart, barrierArt });
+  Object.assign(window, { ROM_ART, UTE_FLATER }); // manifest og grafikkontroll tar også med landskapet
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };

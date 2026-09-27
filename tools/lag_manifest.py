@@ -25,6 +25,8 @@ JS = r"""() => {
   const maler = [null, 'eget', 'likhus', 'toalett', 'soppel', 'vask', 'operasjon', 'begravelse', 'kapell', 'vaktbod'];
   for (const tm of maler) for (let d = 1; d <= 6; d++) for (let s = 1; s <= 5; s++) { const F = generateFloor(s * 101 + d * 7 + (tm ? tm.length : 0), d, tm ? { startTemplate: tm, startCombat: true } : {}); for (const r of F.rooms) for (const p of r.props) if (p.k !== 'npc' && p.k !== 'puddle') { safe(() => propArt(p)); safe(() => propArt(Object.assign({}, p, { opened: true }))); } }
   for (const k of ['corpse', 'barrier', 'trapdoor']) safe(() => propArt({ k }));
+  // Også landskapsdekor som aldri legges i rommets props, for eksempel gran.
+  for (const f of Object.values(typeof ROM_ART === 'object' ? ROM_ART : {})) safe(() => f({}));
   // utvidelsen: utgangene, hendelsene, drømmene og flisa til Vedkubbemannen
   for (const U of Object.values(typeof UTGANGER === 'object' ? UTGANGER : {})) safe(() => propArt({ k: U.k }));
   for (const [k, f] of Object.entries(typeof HEND_ART === 'object' ? HEND_ART : {})) { safe(() => f()); if (k === 'lampemann') safe(() => f(true)); }
@@ -38,6 +40,8 @@ JS = r"""() => {
   for (const k of Object.keys(LOOKS)) safe(() => addonPart(k)); safe(() => shotPart('slim'));
   const skip = k => k.includes('~') || k.includes('undefined') || /^(lik_|likb|del_|lommeplukk_|glassakt_|glassbilde_|animr_|speilbilde_|ord_|stempelfall|skjemavegg|lokkedue|isolatvegg|pille$|klyse|nokler_p|prop_gravstein_)/.test(k) || (k.startsWith('glass_') && k !== 'glass_tomt') || (k.startsWith('kappe_') && !k.startsWith('kappe_kultist'));
   for (const [k, P] of Art.cache) if (!skip(k)) out[k] = { w: P.w, h: P.h, ax: P.ax, ay: P.ay, px: [P.canvas.width, P.canvas.height] };
+  for (const [k, [w, h]] of Object.entries(typeof UTE_FLATER === 'object' ? UTE_FLATER : {}))
+    out[k] = { w, h, ax: w / 2, ay: h / 2, px: [Math.round(w * 128), Math.round(h * 128)], tekstur: true };
   for (const v of ['f', 'b', 's']) if (out['kropp_trille_' + v]) out['kropp_trille_' + v].bunn = .52; // stolen går ned til gulvet under hofta
   // spriteark: én rute er w x h enheter, rutene ligger på én rad
   for (const [k, D] of Object.entries(typeof ANIM === 'object' ? ANIM : {})) out['anim_' + k] = { w: D.w, h: D.h, ax: D.ax, ay: D.ay, ruter: [D.n, 1], n: D.n, fps: D.fps, px: [Math.round(D.w * 128) * D.n, Math.round(D.h * 128)] };

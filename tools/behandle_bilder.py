@@ -118,6 +118,11 @@ def behandle_ui(sti, m):
     return im.crop(bbox).resize((max(1, round(m['w'] * PXU)), max(1, round(m['h'] * PXU))), Image.LANCZOS)
 
 def behandle(sti, m):
+    if m.get('tekstur'):
+        # Flater må beholde kantene og alfaen. Beskjæring og bakgrunnsfjerning
+        # ødelegger sømløs gjentakelse og hullene i ruinveggen.
+        im = Image.open(sti).convert('RGBA')
+        return im.resize(tuple(m['px']), Image.LANCZOS)
     if 'ruter' in m and sti.stem.lower().startswith('anim_'):
         return behandle_ark(sti, m)
     if m.get('strekk'):
