@@ -7,7 +7,8 @@
 /* ---------- grunnarbeid: under vann (e.dukket) ----------
    En fiende eller sjef med e.dukket ligger under vann og kan verken treffes eller siktes på. Nøkken (37_utefiender.js) var først,
    og Avløpsarmen og Krakens dykk skal bruke det samme. Fila ligger etter 39_kombo og 34_blod, så slag i vannet teller ikke i treffkjeden
-   og gir ikke blod. Nærkampslaget hopper over dem (20_actors.js), og lykta gir dem ingen skygge (Dybde.kastere, 40_dybde.js). */
+   og gir ikke blod. Nærkampslaget hopper over dem (20_actors.js), skudd og kast går over dem (Items.updateShots og updateProjectiles),
+   og lykta gir dem ingen skygge (Dybde.kastere, 40_dybde.js). */
 { const _h = hurt; hurt = function (e, dmg, src) { if (e && e.dukket && e.kind !== 'player') return 0; return _h(e, dmg, src); }; }
 // siktet på berøring og håndkontroll, evnene, duene og lynet i treffkjeden finner ikke den som ligger under
 { const _ne = nearestEnemy; nearestEnemy = function (x, z, maxD, filter) { return _ne(x, z, maxD, e => !e.dukket && (!filter || filter(e))); }; }
@@ -32,4 +33,4 @@ function statusOrd(e, ord, cd = 1.2) {
   return true;
 }
 
-Object.assign(window, { nearestEnemy, statusOrd, BOSS_MOVES, laanbareTrekk }); // til testene
+Object.assign(window, { nearestEnemy, statusOrd, BOSS_MOVES, laanbareTrekk, addProj, updateProjectiles }); // til testene
