@@ -940,3 +940,13 @@ Alle tidspunkt er UTC.
 - Sporene er startet på nytt. Agentene som kommer nå, ser gjennom det som ligger igjen, beholder det som er riktig og gjør ferdig. De committer også underveis, så et nytt avbrudd koster lite.
 - Et spor stopper nå med én gang hvis en agent faller ut, i stedet for å prøve resten av punktene og feile på hvert av dem.
 - Agentene tenker på «high» i stedet for «max», så runden bruker mindre av grensen.
+
+## 2026-09-27 06:23 Andre vindu: åtte punkter ferdige og sjekket, resten startet
+- Mellom 01:22 og omtrent 05:30 UTC ble åtte punkter ferdige og sjekket av hver sin skeptiker, før bruksgrensen stoppet sporene igjen:
+  1. Spor A: A1 (varsler og hugg frigjør geometrien) og A3 (Blekkvarsel, alle angrepsvarsler i én blekkshader).
+  2. Spor D: A2 (tekstene og stemplene legger seg ikke oppå hverandre) og A4 (blodet på glasset renner som blod).
+  3. Spor B: B1 (vegger og bakke fra ChatGPT, med tegnelistene 11 og 12) og B2 (det skjulte rommet er ikke der før man bryter seg inn).
+  4. Spor C: C3 (grunnarbeidet for nye fiender) og C4 (Skinnlauget av 1887: Lærlingen og Klokkeren).
+- Påbegynt og delvis committet: A5, C1, B3 og C5. Agentene som kommer nå, gjør dem ferdige.
+- Resten startet 06:22 UTC: A5 og A6, C1 og C2, B3, B4 og B6, C5, C6, C7 og C8.
+- B5 (gulv i full oppløsning med egne fliser) er tatt ut av denne runden. Det er en stor endring i hvordan gulvet tegnes, og den trengs først når Tom skal bestille gulv (liste 12). Veggprøven i liste 11 kommer først uansett.
