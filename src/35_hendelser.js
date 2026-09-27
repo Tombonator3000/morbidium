@@ -528,7 +528,7 @@ const Hendelse = {
     const kand = [];
     if (plass === 'vegg') {
       for (let z = 1; z < F.H; z++) for (let x = 1; x < W - 1; x++) {
-        if (!ledig(x, z) || !(wh[(z - 1) * W + x] > 2) || !D3.inneVegg((z - 1) * W + x) || (Paint.opptatt && Paint.opptatt.has(x + ',' + z))) continue;
+        if (!ledig(x, z) || !(wh[(z - 1) * W + x] > 2) || (G.skjult && G.skjult[(z - 1) * W + x]) || !D3.inneVegg((z - 1) * W + x) || (Paint.opptatt && Paint.opptatt.has(x + ',' + z))) continue; // ikke på sprekken, den faller
         if (!romOK(F.roomId[z * W + x]) || naerDor(x, z) || !langtFra(x + .5, z + .5)) continue;
         kand.push({ x: x + .5, z: z + .7, vz: z });
       }

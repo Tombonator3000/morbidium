@@ -118,7 +118,7 @@ const Aktiv = {
     duebur(P) { for (let k = 0; k < 4; k++) spawnAlly('due', P.x + rnd(-.8, .8), P.z + rnd(-.8, .8), { hp: 25, dmg: 6 * abilityPower(), life: 14 }); Sound.play('coo'); },
     meisel(P) {
       let best = null, bd = 64; for (const c of Spesial.cracks) if (!c.broken && d2(c.x, c.z, P.x, P.z) < bd) { bd = d2(c.x, c.z, P.x, P.z); best = c; }
-      if (best) Spesial.damage(best, 9); visHeleKartet(); // etter innbruddet, så et rom som ble åpnet kommer med toast('Plantegningen', 'Olsen tegnet alt, også det han ikke skulle'); Sound.play('paper');
+      if (best) Spesial.damage(best, 9); visHeleKartet(); toast('Plantegningen', 'Olsen tegnet alt, også det han ikke skulle'); Sound.play('paper'); // kartet etter innbruddet, så et rom som ble åpnet kommer med
     },
     grammofon(P) {
       Sound.mumble(10, 260); FX.bubble(P, pick(['♪ Ro, ro til fiskeskjær ♪', '♪ Byssan lull ♪']), 2.2);

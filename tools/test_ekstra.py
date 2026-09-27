@@ -841,7 +841,7 @@ async def main():
           addPuddle(P.x + .8, P.z, 'wet', 1.2, 60); await vent(500); ut.speil = R.water.u.uLysF.value.some(v => v.x + v.y + v.z > 0);
           ut.taake = !D3.on || !D3.q.taake || (!!D3.taakeLys && D3.taakeLys.f.value.some(v => v.x + v.y + v.z > 0));
           // takstøv inne når det smeller, og det lander og blir borte
-          Dybde.stovT = 0; R.shake(.8); ut.stov = Dybde.stov.length > 0; await spill(2.6); ut.stovBorte = Dybde.stov.length === 0;
+          Dybde.stovT = 0; R.shake(.8); ut.stov = Dybde.stov.length > 0; await spill(3.2); ut.stovBorte = Dybde.stov.length === 0;
           // kameradykk når sjefen kommer, og ikke uten skjermristing
           spawnBoss(G.depth, P.x + 3, P.z - 2); await vent(900); ut.dykk = R.camera.zoom > 1.04 && R.kam.holdT > 0;
           if (G.boss) killEntity(G.boss, {}); R.kam.hold = R.kam.kick = R.kam.holdT = 0; await vent(900); R.shakeOn = false; R.kamZoom(.2, 2); await vent(500); ut.dykkAv = Math.abs(R.camera.zoom - 1) < .01; R.shakeOn = true; R.kam.hold = R.kam.holdT = 0;
@@ -2128,10 +2128,11 @@ async def main():
           let n = 0; for (let i = 0; i < G.skjult.length; i++) if (G.skjult[i] && G.seen[i]) n++; let naer = 0; for (let i = 0; i < G.seen.length; i++) if (G.seen[i]) naer++; return { n, naer, tid: +(G.time - g0).toFixed(2) }; }""")
         sjekk('det skjulte: står du ved sprekken i to sekunder, kommer ingenting bak veggen på kartet', sett['n'] == 0 and sett['naer'] > 40 and sett['tid'] >= 2, sett)
         steder = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, S = G.skjult, ut = { gang: 0, vegg: 0, iSkjult: 0 }; const akt = Hendelse.aktive; Hendelse.aktive = [];
-          for (const pl of ['gang', 'vegg']) for (let k = 0; k < 50; k++) { const st = Hendelse.finnSted(pl, () => (k + .5) / 50); if (!st) continue; ut[pl]++; const tz = Math.floor(pl === 'vegg' ? st.vz : st.z), i = tz * F.W + Math.floor(st.x); if (S[i]) ut.iSkjult++; }
+          for (const pl of ['gang', 'vegg']) for (let k = 0; k < 50; k++) { const st = Hendelse.finnSted(pl, () => (k + .5) / 50); if (!st) continue; ut[pl]++; const tz = Math.floor(pl === 'vegg' ? st.vz : st.z), i = tz * F.W + Math.floor(st.x); if (S[i] || (pl === 'vegg' && S[i - F.W])) ut.iSkjult++; }
           Hendelse.aktive = akt; let lyn = 0; for (let k = 0; k < 400; k++) { const i = Math.floor(Math.random() * F.tiles.length); if (S[i] && gulvSynlig(i)) lyn++; }
-          return Object.assign(ut, { lyn, pytt: !!addPuddle(F.crack[0] % F.W + .5, (F.crack[0] / F.W | 0) + .5, 'wet', 1, 5) }); }""")
-        sjekk('det skjulte: hendelser, lyn og pytter havner ikke bak veggen', steder['gang'] + steder['vegg'] > 0 and steder['iSkjult'] == 0 and steder['lyn'] == 0 and not steder['pytt'], steder)
+          const st0 = Dybde.stov.length; Dybde.takstov(F.crack[0] % F.W + .5, (F.crack[0] / F.W | 0) + .5, 40, 4); const stov = Dybde.stov.slice(st0), stovSkjult = stov.filter(k => S[Math.floor(k.z) * F.W + Math.floor(k.x)]).length;
+          return Object.assign(ut, { lyn, stov: stov.length, stovSkjult, pytt: !!addPuddle(F.crack[0] % F.W + .5, (F.crack[0] / F.W | 0) + .5, 'wet', 1, 5) }); }""")
+        sjekk('det skjulte: hendelser (også ikke på sprekken), lyn, takstøv og pytter havner ikke bak veggen', steder['gang'] + steder['vegg'] > 0 and steder['iSkjult'] == 0 and steder['lyn'] == 0 and steder['stov'] > 0 and steder['stovSkjult'] == 0 and not steder['pytt'], steder)
         kart = await pg.evaluate("""() => { const G = MORBIDIUM; visHeleKartet(); const t = Kart.tall()[0][1]; let n = 0; for (let i = 0; i < G.skjult.length; i++) if (G.skjult[i] && G.seen[i]) n++; const a = G.kartAnelse; Kart.apne(); const leg = [...document.querySelectorAll('#kartark .kleg li')].map(l => l.textContent); closePanel(); G.seen.fill(0); return { t, n, a, leg }; }""")
         sjekk('det skjulte: hele kartet (kartpillen, plantegningen) gir 100 % uten rommet bak veggen, bare en anelse', kart['t'] == '100 %' and kart['n'] == 0 and kart['a'] and any('visket ut' in l for l in kart['leg']), kart)
         await pg.evaluate("() => { const G = MORBIDIUM; G.kartAnelse = false; R.snapCamera(G.player.x, G.player.z); }")

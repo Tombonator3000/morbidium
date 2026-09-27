@@ -120,7 +120,7 @@ const Dybde = {
     this.stovInit(); if (!this.stovMesh) return;
     for (let i = 0; i < n && this.stov.length < this.MAKS; i++) {
       const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * r, px = x + Math.sin(a) * d, pz = z + Math.cos(a) * d;
-      if (tIdx(px, pz) < 0 || !G.F.tiles[tIdx(px, pz)]) continue;
+      if (!gulvSynlig(tIdx(px, pz))) continue; // ikke ned i det skjulte rommet bak veggen
       this.stov.push({ x: px, z: pz, y: rnd(4.5, 7.5), vy: -rnd(0, 2), s: rnd(.6, 1.5), spin: rnd(-8, 8), a: Math.random() * TAU, landet: 0 });
     }
     Sound.play('knirk', .5, rnd(.7, .9));
