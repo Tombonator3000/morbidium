@@ -2351,6 +2351,151 @@ async def main():
         sjekk('ingen konsollfeil (Havet under huset i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 61) Draugen og Holdningssøsteren: begge går til angrep der de hører hjemme, draugen blir friskere bare i vann (høyst halve helsa,
+        #     ikke i strøm), froskehoppet lander på et fritt sted, bekkenet gjør deg VÅT, snøringen varer til du ruller deg løs,
+        #     lauget slår hardere mens du er snørt (og nøyaktig tilbake etterpå), og hun snører aldri en pasient som er slått ut
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ds = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} },
+            til = async (f, t = 4, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(40); return !!f(); },
+            spill = async (t, maks = 40000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(40); };
+          if (typeof Havet !== 'object' || typeof Laug !== 'object' || !ENEMIES.draug || !ENEMIES.holdning) return { mangler: true };
+          const skade = {}, _ht = Havet.treff, _lt = Laug.treff;
+          Havet.treff = function (shape, o, dmg, src) { const r = _ht.apply(Havet, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
+          Laug.treff = function (shape, o, dmg, src) { const r = _lt.apply(Laug, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
+          const rom = () => { const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 9 && r.h >= 9) || G.F.rooms.find(r => r.role === 'combat' && r.w >= 7 && r.h >= 7) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; return r; };
+          // et fritt sted d ruter fra pasienten, med fri sikt
+          const ved = d => { for (let i = 0; i < 32; i++) { const v = i / 32 * Math.PI * 2, x = P.x + Math.sin(v) * d, z = P.z + Math.cos(v) * d; if (!solid(Math.floor(x), Math.floor(z)) && !solid(Math.floor(x + .45), Math.floor(z)) && !solid(Math.floor(x - .45), Math.floor(z)) && !solid(Math.floor(x), Math.floor(z + .45)) && !solid(Math.floor(x), Math.floor(z - .45)) && los(P.x, P.z, x, z)) return { x, z }; } return freeSpot(P.x + d, P.z, 3); };
+          const mot = e => [Math.hypot(P.x - e.x, P.z - e.z), Math.atan2(P.x - e.x, P.z - e.z)], nullstill = () => { P.invuln = 0; P.iframe = 0; P.stunT = 0; P.snortT = 0; P.mokkT = 0; P.roll = 0; P.statusT = {}; };
+          try {
+            // hver type der den hører hjemme: legger an innen 6 sekunder spilltid og skader en pasient med 400 i helse innen 20
+            for (const [d, typer] of [[3, ['draug']], [4, ['holdning']], [5, ['draug']], [6, ['draug', 'holdning']]]) {
+              startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); rom(); P.hp = P.maxHp = 400; nullstill(); for (const k in skade) delete skade[k];
+              const fi = typer.map((t, i) => { const s = ved(i ? 5 : 3.5); return spawnEnemy(t, s.x, s.z, false, d); }), E = {}; typer.forEach(t => E[t] = {});
+              const g0 = G.time, t0 = performance.now();
+              while (G.time - g0 < 20 && performance.now() - t0 < 120000) { await vent(60); const t = G.time - g0; if (P.hp < 150) P.hp = 400;
+                fi.forEach((e, i) => { const T = typer[i]; if (e.state === 'wind' && E[T].wind === undefined) E[T].wind = t; if (skade[T] && E[T].skade === undefined) E[T].skade = t; });
+                if (typer.every(T => E[T].skade !== undefined)) break; }
+              ut.etasjer[d] = E; for (const e of fi) if (e.alive) killEntity(e, {}); await spill(.3);
+            }
+            rolig(); rom(); P.hp = P.maxHp = 1e6; nullstill();
+            // draugen i vann: ingenting på tørt gulv, to i sekundet i en pytt, ingenting når det går strøm i den, og aldri mer enn halve helsa per liv
+            const sd = ved(4.5), dr = spawnEnemy('draug', sd.x, sd.z, false, 6); await til(() => dr.state !== 'spawn'); dr.stun = 1e9; dr.cd = 1e9; dr.max = 1e4; // mye helse, så strømmen ikke tar livet av den
+            for (const p of G.puddles.slice()) if (Math.hypot(p.x - dr.x, p.z - dr.z) < p.r + 1.5) { R.remove(p.mesh); G.puddles.splice(G.puddles.indexOf(p), 1); }
+            dr.hp = 3000; let h0 = dr.hp; await spill(2); const torr = dr.hp - h0;
+            const pytt = addPuddle(dr.x, dr.z, 'wet', 1.3, 60); h0 = dr.hp; let g0 = G.time; await spill(2); const vaat = (dr.hp - h0) / (G.time - g0);
+            pytt.elec = 6; const helt0 = dr.helt; await spill(1.5); const strom = { helt: dr.helt - helt0, zapp: dr.hp < h0 + vaat * 2 }; pytt.elec = 0;
+            await spill(.3); dr.helt = dr.max * .5 - 1; dr.hp = 10; await spill(2.5); const tak = { etter: dr.hp - 10, helt: dr.helt / dr.max };
+            ut.lege = { torr, vaat, strom, tak, max: dr.max }; killEntity(dr, {}); await spill(.8);
+            // froskehoppet: ring på 1,3 ved pasienten, dukken letter, kroppen står stille i sammenkrøkingen og lander der ringen var, i et nytt tjern
+            rolig(); rom(); nullstill(); const sh = ved(5.5), dh = spawnEnemy('draug', sh.x, sh.z, false, 6); await til(() => dh.state !== 'spawn'); dh.cd = 1e9;
+            { dh.state = 'chase'; const [dist, a] = mot(dh); const x0 = dh.x, z0 = dh.z; skade.draug = 0; Havet.hopp(dh, P, a); const t = dh.teles[dh.teles.length - 1], mal = { x: t.o.x, z: t.o.z };
+              let maksY = 0, stilleVed = null; const g1 = G.time, t1 = performance.now();
+              while (G.tele.includes(t) && performance.now() - t1 < 60000) { await vent(25); maksY = Math.max(maksY, dh.doll.plane.position.y); if (G.time - g1 > .6 && stilleVed === null) stilleVed = Math.hypot(dh.x - x0, dh.z - z0); }
+              await spill(.1); const tj = G.puddles.find(p => p.kind === 'tjern' && Math.hypot(p.x - mal.x, p.z - mal.z) < .3);
+              ut.hopp = { sirkel: t.shape === 'circle' && t.o.r === 1.3, naerPas: Math.hypot(mal.x - P.x, mal.z - P.z) < 1.2, positur: true, maksY, stilleVed, fra: Math.hypot(dh.x - mal.x, dh.z - mal.z), start: Math.hypot(x0 - mal.x, z0 - mal.z), fritt: !solid(Math.floor(dh.x), Math.floor(dh.z)), tjern: !!tj && tj.r >= 1.2, traff: skade.draug > 0 }; }
+            // hoppet mot en vegg: draugen stopper ved veggen og står aldri inne i den
+            { await spill(.8); dh.state = 'chase'; dh.cd = 1e9; const r = rom(), vx = r.x + r.w; let zc = Math.floor(r.z + r.h / 2); for (let z = r.z + 1; z < r.z + r.h - 1; z++) if (solid(vx, z) && solid(vx, z - 1) && solid(vx, z + 1) && !solid(vx - 1, z) && !solid(vx - 3, z)) { zc = z; break; }
+              const T = { x: vx + 3, z: zc + .5 }; dh.x = vx - 2.5; dh.z = zc + .5; P.x = r.x + 1.5; P.z = zc + .5; P.invuln = 999;
+              Havet.hopp(dh, T, Math.atan2(T.x - dh.x, T.z - dh.z)); const t = dh.teles[dh.teles.length - 1]; await til(() => !G.tele.includes(t), 3); await spill(.1);
+              ut.vegg = { fritt: !solid(Math.floor(dh.x), Math.floor(dh.z)) && !solid(Math.floor(dh.x + dh.r * .9), Math.floor(dh.z)), x: dh.x - vx, mal: t.o.x - vx, veggFunnet: solid(vx, zc) }; }
+            // bekkenet: en kjegle som gjør pasienten VÅT (treg en stund) og legger en pytt der han står
+            { rom(); nullstill(); await spill(.8); const s = ved(3); dh.x = s.x; dh.z = s.z; dh.state = 'chase'; dh.stun = 0; await spill(.1); dh.x = s.x; dh.z = s.z; P.invuln = 0; skade.draug = 0;
+              const [dist, a] = mot(dh); Havet.skvett(dh, P, a); const t = dh.teles[dh.teles.length - 1]; await til(() => !G.tele.includes(t), 3);
+              ut.skvett = { kjegle: t.shape === 'cone' && t.o.r === 3.2, traff: skade.draug > 0, mokk: P.mokkT, ord: !!(P.statusT && P.statusT['VÅT'] !== undefined), pytt: G.puddles.some(p => p.kind === 'wet' && Math.hypot(p.x - P.x, p.z - P.z) < 1.5) }; }
+            killEntity(dh, {}); await spill(.8);
+            // Holdningssøsteren snører: SNØRT varer (selv om myra bare gir et øyeblikk), lauget slår 25 prosent hardere i fire sekunder og nøyaktig tilbake etterpå
+            rolig(); rom(); nullstill(); const s1 = ved(4.5), hs = spawnEnemy('holdning', s1.x, s1.z, false, 4), s2 = freeSpot(s1.x + 1.2, s1.z + .8, 2), la = spawnEnemy('laerling', s2.x, s2.z, false, 4), s3 = ved(-1), pl = spawnEnemy('pleier', P.x + 30, P.z + 30, false, 4);
+            await til(() => hs.state !== 'spawn' && la.state !== 'spawn'); la.stun = 1e9; pl.stun = 1e9; hs.cd = 1e9;
+            const d0 = { hs: hs.dmg, la: la.dmg, pl: pl.dmg }, sp = Sound.play; let reimer = 0; const _rm = Laug.reimer; Laug.reimer = function () { const n = _rm.apply(Laug, arguments); reimer += n; return n; };
+            { hs.state = 'chase'; const [dist, a] = mot(hs); Laug.snor(hs, P, a); const t = hs.teles[hs.teles.length - 1]; await til(() => !G.tele.includes(t), 3); await spill(.05);
+              ut.snor = { sirkel: t.shape === 'circle' && t.o.r === 1.25, snort: P.snortT, ord: !!(P.statusT && P.statusT['SNØRT'] !== undefined), la: la.dmg / d0.la, hs: hs.dmg / d0.hs, pl: pl.dmg / d0.pl, reimer, reimTegnet: Kjeder.liste.filter(K => K.reim).length };
+              await spill(1.2); ut.snor.varer = { snort: P.snortT, mokk: P.mokkT };
+              // en rulle løser snøret med en gang
+              P.roll = .34; P.rollA = 0; await spill(.05); ut.snor.rulle = { snort: P.snortT, mokk: P.mokkT, ord: !!P.statusT['LØS'] };
+              await til(() => !la.rettet && !hs.rettet, 5); await spill(.1); ut.snor.tilbake = { la: la.dmg - d0.la, hs: hs.dmg - d0.hs, flagg: !la.rettet && !hs.rettet }; }
+            // aldri på en pasient som er slått ut: ingen snøring når han er slått ut, og en som blir slått ut før ringen går av, blir ikke snørt
+            { nullstill(); P.stunT = 3; let brune = 0; for (let i = 0; i < 12; i++) { hs.state = 'chase'; hs.stun = 0; const n0 = hs.teles.length, [dist, a] = mot(hs); Grotesk.ai.holdning(hs, P, dist, a); brune += hs.teles.slice(n0).filter(t => t.shape === 'circle').length; cancelTeles(hs); hs.state = 'chase'; }
+              ut.slaatt = { brune, snort: P.snortT }; nullstill(); await spill(.3); hs.state = 'chase'; hs.stun = 0; const [dist, a] = mot(hs); Laug.snor(hs, P, a); const t = hs.teles[hs.teles.length - 1];
+              await spill(.6); P.stunT = 1; await til(() => !G.tele.includes(t), 3); await spill(.05); ut.slaatt.underveis = P.snortT; }
+            // tommestokken på kloss hold: en kjegle på 2,2 som treffer
+            { nullstill(); await spill(.8); const s = ved(1.5); hs.x = s.x; hs.z = s.z; hs.state = 'chase'; hs.stun = 0; skade.holdning = 0; const n0 = hs.teles.length, [dist, a] = mot(hs); Grotesk.ai.holdning(hs, P, dist, a);
+              const t = hs.teles[n0]; if (t) await til(() => !G.tele.includes(t), 3); await spill(.05); ut.linjal = { kjegle: !!t && t.shape === 'cone' && t.o.r === 2.2, traff: skade.holdning > 0 }; }
+            // Enkel grafikk: ingen reimer tegnes, men snøringen virker
+            { nullstill(); await spill(.8); R.safe = true; const s = ved(4.5); hs.x = s.x; hs.z = s.z; hs.state = 'chase'; hs.stun = 0; reimer = 0; const k0 = Kjeder.liste.length, [dist, a] = mot(hs); Laug.snor(hs, P, a); const t = hs.teles[hs.teles.length - 1];
+              let kj = 0; { const g2 = G.time, t2 = performance.now(); while (G.tele.includes(t) && performance.now() - t2 < 30000) { kj = Math.max(kj, Kjeder.liste.length - k0); await vent(30); } } await spill(.05);
+              ut.safe = { reimer, kjeder: kj, snort: P.snortT > 2 }; R.safe = false; }
+            Laug.reimer = _rm; for (const e of [hs, la, pl]) if (e.alive) killEntity(e, {});
+          } finally { Havet.treff = _ht; Laug.treff = _lt; R.safe = false; }
+          ut.info = ['draug', 'holdning'].every(t => (FIENDE_INFO[t] || [])[0] && FIENDE_INFO[t][1] && FIENDE_REKKE.includes(t) && MESTER_TITTEL[t] && FIENDESTEMME[t] && LINES[t] && DEATH_CAUSES[t]) && !ROLLER.draug && !ROLLER.holdning;
+          ut.bilde = ['draug', 'holdning'].map(t => { const c = fiendeBilde(t, 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); });
+          const tell = (d, t) => DEPTH_ENEMIES[d].filter(x => x === t).length;
+          ut.pulje = { draug: [3, 4, 5, 6].map(d => tell(d, 'draug')), holdning: [3, 4, 5, 6].map(d => tell(d, 'holdning')) };
+          return ut; }""")
+        sjekk('Draugpleieren og Holdningssøsteren finnes (ENEMIES, Havet og Laug)', not ds.get('mangler'), ds.get('mangler', ''))
+        if not ds.get('mangler'):
+            E = ds['etasjer']
+            sjekk('begge legger an innen 6 og skader innen 20 sekunder spilltid der de hører hjemme (draugen på 3, 5 og 6, søsteren på 4 og 6)', all(E[d][t].get('wind') is not None and E[d][t]['wind'] <= 6 and E[d][t].get('skade') is not None and E[d][t]['skade'] <= 20 for d in E for t in E[d]), E)
+            lg = ds['lege']
+            sjekk('draugen blir ikke friskere på tørt gulv, men omtrent to i sekundet i en pytt', abs(lg['torr']) < 1e-9 and 1.6 < lg['vaat'] < 2.4, lg)
+            sjekk('draugen blir ikke friskere når det går strøm i vannet', lg['strom']['helt'] == 0 and lg['strom']['zapp'], lg)
+            sjekk('draugen blir aldri friskere enn halve helsa per liv', 0 < lg['tak']['etter'] <= 1.0001 and abs(lg['tak']['helt'] - .5) < 1e-6, lg)
+            h = ds['hopp']
+            sjekk('froskehoppet: ring på 1,3 ved pasienten, dukken letter over en halv rute, og kroppen står stille mens den krøker seg sammen', h['sirkel'] and h['naerPas'] and h['maksY'] > .5 and h['stilleVed'] is not None and h['stilleVed'] < .5 and h['start'] > 3, h)
+            sjekk('froskehoppet lander der ringen var, på fritt gulv, i et nytt tjern, og treffer pasienten', h['fra'] < .6 and h['fritt'] and h['tjern'] and h['traff'], h)
+            sjekk('hopper draugen mot en vegg, stopper den ved veggen og står aldri inne i den', ds['vegg']['veggFunnet'] and ds['vegg']['fritt'] and ds['vegg']['x'] < .2 and ds['vegg']['mal'] > 1, ds['vegg'])
+            sk = ds['skvett']
+            sjekk('bekkenet (en kjegle på 3,2) gjør pasienten VÅT: treg en stund, med en pytt der han står', sk['kjegle'] and sk['traff'] and sk['mokk'] > .8 and sk['ord'] and sk['pytt'], sk)
+            sn = ds['snor']
+            sjekk('snøringen (ring på 1,25) gir SNØRT i 2,5 sekunder, og to lærreimer fra hendene hennes', sn['sirkel'] and 2.2 < sn['snort'] <= 2.5 and sn['ord'] and sn['reimer'] == 2 and sn['reimTegnet'] == 2, sn)
+            sjekk('mens pasienten er snørt, slår lauget innen åtte ruter 25 prosent hardere, men ikke pleieren utenfor lauget', abs(sn['la'] - 1.25) < 1e-9 and abs(sn['hs'] - 1.25) < 1e-9 and sn['pl'] == 1, sn)
+            sjekk('snøret varer: over et sekund senere er pasienten fortsatt treg', sn['varer']['snort'] > .8 and sn['varer']['mokk'] > 0, sn['varer'])
+            sjekk('en rulle løser snøret med en gang (LØS)', sn['rulle']['snort'] == 0 and sn['rulle']['mokk'] <= 0 and sn['rulle']['ord'], sn['rulle'])
+            sjekk('etter fire sekunder er laugets skade nøyaktig tilbake', abs(sn['tilbake']['la']) < 1e-9 and abs(sn['tilbake']['hs']) < 1e-9 and sn['tilbake']['flagg'], sn['tilbake'])
+            sjekk('hun snører aldri en pasient som er slått ut, heller ikke når han blir slått ut før ringen går av', ds['slaatt']['brune'] == 0 and not ds['slaatt']['snort'] and not ds['slaatt']['underveis'], ds['slaatt'])
+            sjekk('tommestokken på kloss hold: en kjegle på 2,2 som treffer', ds['linjal']['kjegle'] and ds['linjal']['traff'], ds['linjal'])
+            sjekk('i Enkel grafikk tegnes ingen reimer, men snøringen virker', ds['safe'] == {'reimer': 0, 'kjeder': 0, 'snort': True}, ds['safe'])
+            sjekk('fiendeindeksen, replikker, stemmer, dødsårsaker og mestertitler for begge, og ingen av dem i ROLLER', ds['info'], ds)
+            sjekk('fiendeBilde tegner begge', all(x > .06 for x in ds['bilde']), ds['bilde'])
+            sjekk('draugen i Underetasjen, Nattskogen og Dypet (to), søsteren i Kjelleren og Dypet', ds['pulje'] == {'draug': [1, 0, 1, 2], 'holdning': [0, 1, 0, 1]}, ds['pulje'])
+        await pg.screenshot(path='/tmp/e_61_draug_soster.png')
+        sjekk('ingen konsollfeil (Draugen og Holdningssøsteren)', not pg.errs, pg.errs[:6])
+        # håndbokssidene med begge: får plass, og kortene har bilde (vent på tittelen, ellers lukker den håndboka)
+        await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+        hbs = []
+        for t in ['draug', 'holdning']:
+            hb = await pg.evaluate("""t => { if (!FIENDE_REKKE.includes(t)) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'fiender'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(FIENDE_REKKE.indexOf(t) / per));
+              return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""", t)
+            await pg.wait_for_timeout(300)
+            hb['plass'] = await pg.evaluate(HB_PLASS) if not hb.get('mangler') else False
+            hbs.append(hb)
+            await pg.screenshot(path=f'/tmp/e_61_handbok_{t}.png')
+        sjekk('håndboka har Draugpleieren og Holdningssøsteren, og sidene får plass', 'Draugpleieren' in hbs[0].get('navn', []) and 'Holdningssøsteren' in hbs[1].get('navn', []) and hbs[0]['plass'] and hbs[1]['plass'], hbs)
+        sjekk('ingen konsollfeil (Draugen og Holdningssøsteren i håndboka)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: draugen hopper og søsteren snører med reimene, i samme øyeblikk (bildet til Tom)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          if (!ENEMIES.draug || !ENEMIES.holdning) return { mangler: true };
+          startFloor(6, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; ut.d3 = D3.on;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 9 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
+          const s1 = freeSpot(P.x + 4.5, P.z + .6, 2), dr = spawnEnemy('draug', s1.x, s1.z, false, 6), s2 = freeSpot(P.x - 4, P.z - .8, 2), hs = spawnEnemy('holdning', s2.x, s2.z, false, 6);
+          const s3 = freeSpot(P.x - 2.5, P.z + 1.6, 2), la = spawnEnemy('laerling', s3.x, s3.z, false, 6); dr.cd = hs.cd = la.cd = 1e9;
+          { const g0 = G.time, t0 = performance.now(); while ((dr.state === 'spawn' || hs.state === 'spawn' || la.state === 'spawn') && performance.now() - t0 < 60000) await vent(50); }
+          await vent(300); dr.state = hs.state = 'chase';
+          Havet.hopp(dr, P, Math.atan2(P.x - dr.x, P.z - dr.z)); Laug.snor(hs, P, Math.atan2(P.x - hs.x, P.z - hs.z));
+          const g0 = G.time, t0 = performance.now(); let maksY = 0, reimer = 0;
+          while (G.time - g0 < .98 && performance.now() - t0 < 60000) { await vent(15); maksY = Math.max(maksY, dr.doll.plane.position.y); reimer = Math.max(reimer, Kjeder.liste.filter(K => K.reim).length); }
+          G.hitstop = 30; // nesten stillstand mens bildet tas
+          ut.maksY = maksY; ut.reimer = Kjeder.liste.filter(K => K.reim && K.m.visible).length; ut.y = dr.doll.plane.position.y; return ut; }""")
+        await pg.wait_for_timeout(200)
+        await pg.screenshot(path='/tmp/e_61_draug_soster_3d.png')
+        sjekk('i 3D letter draugen i hoppet og søsterens to reimer er i lufta samtidig', not d3.get('mangler') and d3.get('d3') and d3['y'] > .5 and d3['reimer'] == 2, d3)
+        await pg.evaluate("() => { MORBIDIUM.hitstop = 0; }")
+        sjekk('ingen konsollfeil (Draugen og Holdningssøsteren i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

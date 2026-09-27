@@ -342,11 +342,236 @@ Object.assign(Grotesk.ai, {
   return e;
 }; }
 
+/* ============================================================
+   HOLDNINGSSØSTEREN
+   Laugets holdningssøster: eldre, rak som en linjal, med stram knute, lorgnett i kjede og en stivet lue med laugets sølvkrok.
+   Hun går med en høy nakkekrage i lær og en snøret ryggskinne over den svarte kjolen, og har en rull lærsnøre og en gul tommestokk.
+   - Snøring: en brun ring der pasienten står, to lærreimer fra hendene hennes, og så SNØRT: du går tregere til du ruller deg løs.
+     Mens pasienten er snørt, slår laugets folk innen åtte ruter 25 prosent hardere i fire sekunder («Rett ryggen!»).
+     Hun snører aldri en pasient som alt er slått ut eller snørt.
+   - Tommestokken: en kjegle på kloss hold.
+   Tregheten bruker P.mokkT denne runden (samme som myr), med en egen klokke (P.snortT) så en pytt ikke korter den ned.
+   ============================================================ */
+Object.assign(FIENDESTEMME, { holdning: ['knirk', 1.2] });
+Object.assign(ENEMIES, { holdning: { name: 'Holdningssøsteren', hp: 40, speed: 2.3, r: .44, dmg: 9, xp: 13, teeth: [1, 3], bubbleH: 3.3, weapon: 'tommestokk', blood: 0x8a1a1a } });
+Object.assign(LINES, { holdning: ['Rett ryggen!', 'Skuldrene tilbake, takk.', 'Holdningen Deres er et symptom.', 'Snørt. Pent.', 'Smerte er bare god holdning som ikke har kommet fram ennå.',
+  'Haka opp. Nei, ikke så langt.', 'Jeg har gått rett siden 1887. Det gjør vondt hver dag, og det er poenget.', 'Nakkekragen er oksehud. Tre spenner. Jeg strammer den til søndag.', 'Tommestokken lyver aldri, vennen.'] });
+Object.assign(DEATH_CAUSES, { holdning: ['Snørt så stramt at resten ikke fikk plass.', 'Døde med perfekt holdning.', 'Målt med tommestokk og funnet for kort.'] });
+DEPTH_ENEMIES[4].push('holdning'); DEPTH_ENEMIES[6].push('holdning');
+Object.assign(MESTER_TITTEL, { holdning: 'Søster' });
+PA[4].push('Laugets holdningssøster tar imot i korridoren. Rett ryggen før De går forbi, så slipper De å bli rettet.');
+Object.assign(POSER, {
+  // snøringen: hendene fram med reimene, og så et rykk bakover
+  snore: { hR: [[0, .1, -.3], [.45, .36, .24], [.8, .42, .3], [.9, .1, .1], [1, .06, -.24]], hL: [[0, -.1, -.3], [.45, -.3, .26], [.8, -.36, .32], [.9, -.06, .12], [1, -.06, -.26]],
+    lean: [[0, 0], [.8, .6], [.9, -1], [1, 0]], hode: [[0, 0], [.8, .1], [.9, -.2], [1, 0]] },
+  linjal: { hR: [[0, .2, .38], [.4, .3, .44], [.55, .5, -.1], [1, .24, -.3]], lean: [[0, -.3], [.5, .8], [1, 0]], hode: [[0, 0], [.5, .12], [1, 0]] }
+});
+
+const HOLD = { hud: '#ecd6c0', har: '#b8b2aa', harM: '#8a847c', kjole: '#1e1a22', kjoleL: '#3a3440', lue: '#f6f2e6', forkle: '#ece6d6' };
+RIG.holdning = { hip: .5, hipW: .1, neck: .8, shW: .22, shY: .7, armW: .1, legW: .09, handR: .075, arm: HOLD.kjole, leg: '#2a2228', hand: HOLD.hud, shoe: 'stovel', scale: .9, headLag: .5 };
+// en liten messingspenne på en reim
+const spenne = (g, x, y, s = 1) => { A.flat(g, A.rr(x - .03 * s, y - .025 * s, .06 * s, .05 * s, .008), null, .03 * s, INK); A.flat(g, A.rr(x - .03 * s, y - .025 * s, .06 * s, .05 * s, .008), null, .014 * s, LAUG.messing); A.line(g, [[x - .03 * s, y], [x + .03 * s, y]], .01 * s, LAUG.messing); };
+MONSTER_ART.holdning = {
+  box: { hode: [1.1, 1.2, .55, .1], kropp: [1.2, 1.4, .6, .44] },
+  hode: v => g => {
+    const S = HOLD.hud, H = HOLD.har, cy = -.52;
+    // den stivede lua med laugets sølvkrok
+    const lue = x => { A.cel(g, A.blob([[x - .24, cy - .2], [x - .2, cy - .38], [x - .1, cy - .44], [x + .1, cy - .44], [x + .2, cy - .38], [x + .24, cy - .2], [x, cy - .24]]), HOLD.lue, { sk: .88 }); A.line(g, [[x - .21, cy - .3], [x + .21, cy - .3]], .012, '#c8c0b0'); krokMerke(g, x + .1, cy - .36, .8); };
+    if (v === 'b') {
+      A.cel(g, A.ell(0, cy, .25, .32), H, { sk: .72 });
+      for (let i = 0; i < 5; i++) A.curve(g, [-.2 + i * .1, cy - .28], [-.18 + i * .09, cy - .08], [-.06 + i * .03, cy + .06], .012, Col.light(H, .25));
+      // den stramme knuten, med to hårnåler
+      A.cel(g, A.ell(0, cy + .08, .12, .1), H, { sk: .72 }); A.curve(g, [-.08, cy + .06], [0, cy + .14], [.08, cy + .06], .012, HOLD.harM); A.line(g, [[-.12, cy + .02], [.1, cy + .14]], .014, '#6a6a72'); A.line(g, [[.12, cy + .02], [-.08, cy + .15]], .014, '#6a6a72');
+      lue(0);
+      return;
+    }
+    if (v === 's') {
+      A.cel(g, A.ell(.02, cy, .23, .32), S);
+      A.cel(g, A.blob([[-.22, cy + .08], [-.24, cy - .14], [-.14, cy - .3], [.06, cy - .33], [.2, cy - .24], [.08, cy - .2], [-.04, cy - .14], [-.1, cy + .04]]), H, { sk: .72 });
+      A.cel(g, A.ell(-.24, cy + .02, .09, .09), H, { sk: .72 }); // knuten i nakken
+      A.flat(g, A.ell(.14, cy - .04, .05, .05), 'rgba(230,242,250,.55)', .018); A.dot(g, .15, cy - .04, .018); A.curve(g, [.1, cy - .02], [.02, cy + .16], [-.04, cy + .3], .008, '#a8acb4'); // lorgnetten i kjedet
+      A.curve(g, [.08, cy - .12], [.15, cy - .16], [.21, cy - .12], .018, H);
+      A.cel(g, A.blob([[.2, cy - .04], [.3, cy + .1], [.22, cy + .12]]), '#e0b8a0', { lw: .022 });
+      A.line(g, [[.14, cy + .2], [.22, cy + .19]], .02); // smale, pressede lepper
+      for (let i = 0; i < 2; i++) A.curve(g, [.04, cy + .06 + i * .05], [.08, cy + .08 + i * .05], [.1, cy + .06 + i * .05], .008, '#b89a88');
+      lue(-.02);
+      return;
+    }
+    A.cel(g, A.ell(0, cy, .23, .32), S);
+    A.cel(g, A.blob([[-.22, cy + .02], [-.24, cy - .16], [-.12, cy - .3], [0, cy - .32], [.12, cy - .3], [.24, cy - .16], [.22, cy + .02], [.16, cy - .14], [0, cy - .2], [-.16, cy - .14]]), H, { sk: .72 }); // strøket stramt bakover
+    for (const s of [-1, 1]) A.curve(g, [s * .04, cy - .28], [s * .14, cy - .24], [s * .2, cy - .1], .01, HOLD.harM);
+    // det ene brynet hevet: misbilligelse
+    A.curve(g, [-.16, cy - .08], [-.1, cy - .11], [-.04, cy - .08], .02, HOLD.harM); A.curve(g, [.04, cy - .12], [.1, cy - .17], [.16, cy - .13], .02, HOLD.harM);
+    for (const s of [-1, 1]) { A.flat(g, A.ell(s * .1, cy - .02, .055, .025), '#fbf6ea', .014); A.dot(g, s * .1, cy - .015, .018); }
+    // lorgnetten på nesen, med kjede ned til brystet
+    for (const s of [-1, 1]) A.flat(g, A.ell(s * .1, cy - .02, .07, .065), 'rgba(230,242,250,.45)', .016, '#8a8e98');
+    A.curve(g, [-.03, cy - .03], [0, cy - .06], [.03, cy - .03], .014, '#8a8e98'); A.curve(g, [.17, cy - .01], [.24, cy + .14], [.18, cy + .34], .008, '#a8acb4');
+    A.cel(g, A.blob([[-.03, cy + .02], [.03, cy + .02], [.05, cy + .12], [0, cy + .14], [-.05, cy + .12]]), '#e0b8a0', { lw: .022 });
+    A.line(g, [[-.07, cy + .21], [.07, cy + .21]], .02); // munnen: en rett strek
+    for (const s of [-1, 1]) { A.curve(g, [s * .1, cy + .14], [s * .12, cy + .19], [s * .1, cy + .24], .008, '#b89a88'); A.curve(g, [s * .15, cy - .02], [s * .19, cy], [s * .2, cy + .04], .008, '#b89a88'); }
+    lue(0);
+  },
+  kropp: v => g => {
+    const top = -.8, K = HOLD.kjole, L = LAUG.lar, LM = LAUG.larM;
+    // den høye nakkekragen i lær, med tre spenner på den synlige siden
+    const krage = (w, spenner) => { A.cel(g, A.rr(-w, top - .14, w * 2, .2, .03), L, { line: '#1a0c04', lw: .026, sk: .72 }); A.line(g, [[-w + .02, top - .12], [w - .02, top - .12]], .008, LAUG.traad); A.line(g, [[-w + .02, top + .04], [w - .02, top + .04]], .008, LAUG.traad); for (const x of spenner) spenne(g, x, top - .04, .9); larGlans(g, -w * .5, top - .12, .14); };
+    if (v === 'b') {
+      A.cel(g, A.blob([[-.28, .38], [.28, .38], [.22, 0], [.22, top + .16], [.14, top + .04], [0, top + .02], [-.14, top + .04], [-.22, top + .16], [-.22, 0]]), K, { line: '#0a080c', sk: .75 });
+      // ryggskinnen: to lærskinner langs ryggen, snøret i kryss fra skulderbladene ned til livet
+      A.cel(g, A.blob([[-.17, top + .14], [.17, top + .14], [.16, -.02], [-.16, -.02]]), L, { line: '#1a0c04', lw: .026, sk: .72 });
+      for (const s of [-1, 1]) { A.cel(g, A.rr(s * .06 - .025, top + .16, .05, .64, .015), LM, { lw: .018, hi: false }); for (let i = 0; i < 6; i++) A.dot(g, s * .06, top + .2 + i * .1, .012, LAUG.messing); }
+      for (let i = 0; i < 5; i++) { const y = top + .2 + i * .1; A.line(g, [[-.06, y], [.06, y + .1]], .012, LAUG.traad); A.line(g, [[.06, y], [-.06, y + .1]], .012, LAUG.traad); }
+      A.line(g, [[-.03, -.02], [-.07, .12]], .012, LAUG.traad); A.line(g, [[.03, -.02], [.08, .1]], .012, LAUG.traad); // sløyfa
+      krage(.13, []); A.line(g, [[0, top - .14], [0, top + .06]], .014, LM);
+      for (const s of [-1, 1]) A.line(g, [[s * .14, top + .12], [s * .19, top + .04]], .04, L);
+      A.line(g, [[-.2, .36], [0, .34], [.2, .36]], .012, HOLD.kjoleL);
+      return;
+    }
+    if (v === 's') {
+      A.cel(g, A.blob([[-.2, .38], [.22, .38], [.14, 0], [.14, top + .16], [.08, top + .03], [-.08, top + .02], [-.14, top + .14], [-.16, 0]]), K, { line: '#0a080c', sk: .75 });
+      A.cel(g, A.blob([[.06, -.02], [.18, -.02], [.22, .36], [.04, .36]]), HOLD.forkle, { lw: .02, hi: false });
+      A.cel(g, A.rr(-.16, top + .14, .3, .74, .02), L, { line: '#1a0c04', lw: .024, sk: .72 }); // skinnen fra siden
+      for (let i = 0; i < 3; i++) { A.line(g, [[-.16, top + .24 + i * .22], [.14, top + .24 + i * .22]], .03, LM); spenne(g, .1, top + .24 + i * .22, .8); }
+      krage(.1, [.06]);
+      // en rull lærsnøre i beltet
+      for (let i = 0; i < 3; i++) A.flat(g, A.ell(-.2, .02 + i * .012, .07 - i * .012, .05 - i * .008), null, .02, LM);
+      larGlans(g, -.12, top + .2, .4);
+      return;
+    }
+    A.cel(g, A.blob([[-.3, .38], [.3, .38], [.23, 0], [.23, top + .16], [.14, top + .04], [0, top + .02], [-.14, top + .04], [-.23, top + .16], [-.23, 0]]), K, { line: '#0a080c', sk: .75 });
+    // hvitt forkle nederst, og ryggskinnens reimer rundt livet og over skuldrene
+    A.cel(g, A.blob([[-.18, -.02], [.18, -.02], [.24, .36], [-.24, .36]]), HOLD.forkle, { lw: .022, hi: false });
+    A.line(g, [[-.2, .34], [0, .32], [.2, .34]], .01, '#c8c0b0');
+    for (const s of [-1, 1]) { A.line(g, [[s * .15, top + .06], [s * .13, -.06]], .055, '#1a0c04'); A.line(g, [[s * .15, top + .06], [s * .13, -.06]], .036, L); spenne(g, s * .14, top + .3, .8); }
+    A.cel(g, A.rr(-.24, -.1, .48, .09, .02), L, { line: '#1a0c04', lw: .024, hi: false }); spenne(g, 0, -.055, 1.1);
+    for (let i = 0; i < 4; i++) nagle(g, -.2 + i * .04 + (i > 1 ? .24 : 0), -.055, .012);
+    // pleierurets på brystet, og lorgnettkjedet som ender der
+    A.flat(g, A.ell(-.07, top + .22, .04, .04), '#e8e4d8', .016, '#8a8e98'); A.line(g, [[-.07, top + .2], [-.07, top + .22], [-.055, top + .22]], .008);
+    krage(.14, [-.08, 0, .08]);
+    // rullen med lærsnøre på hofta
+    for (let i = 0; i < 3; i++) A.flat(g, A.ell(-.26, .06 + i * .012, .07 - i * .012, .05 - i * .008), null, .02, LM);
+    A.curve(g, [-.26, .1], [-.3, .2], [-.24, .26], .014, LM);
+    larGlans(g, -.1, top + .1, .3); larGlans(g, .16, top + .1, .3, -1);
+  }
+};
+WEAPON_ART.tommestokk = [.4, 1.3, .2, .1];
+{ const _dw = drawWeapon; drawWeapon = id => id !== 'tommestokk' ? _dw(id) : g => {
+  // en gul tommestokk, halvveis brettet ut: fem ledd i sikksakk med svarte streker og messingledd
+  let x = 0, y = 0;
+  for (let i = 0; i < 5; i++) {
+    const a = (i % 2 ? .08 : -.08), L = .22, nx = x + Math.sin(a) * L, ny = y - Math.cos(a) * L;
+    g.save(); g.translate(x, y); g.rotate(a); A.cel(g, A.rr(-.035, -L, .07, L, .01), '#f0c83a', { line: '#3a2a08', lw: .022, hi: false });
+    for (let k = 1; k < 8; k++) A.line(g, [[-.035, -k * L / 8], [k % 4 ? -.012 : .005, -k * L / 8]], .008, '#1a1408');
+    if (i === 2) { g.fillStyle = '#b3261e'; g.font = 'bold .045px Georgia'; g.fillText('50', -.02, -.1); }
+    g.restore(); if (i) A.dot(g, x, y, .018, LAUG.messing);
+    x = nx; y = ny;
+  }
+  A.line(g, [[-.015, -.02], [-.02, -.18]], .01, 'rgba(255,250,220,.5)');
+}; }
+
+/* ---------- reimene hun kaster: Kjeder.slag med lær i stedet for kjetting, og en messingspenne i stedet for kroken ---------- */
+Object.assign(Laug, {
+  reimTex() {
+    if (!this._rt) this._rt = R.canvasTex(64, 16, g => {
+      g.fillStyle = '#1a0c04'; g.fillRect(0, 2, 64, 12); g.fillStyle = '#6a3a1a'; g.fillRect(0, 4, 64, 8);
+      g.fillStyle = 'rgba(255,230,200,.3)'; g.fillRect(0, 5, 64, 1.4);
+      g.fillStyle = '#e0c088'; for (let x = 2; x < 64; x += 6) { g.fillRect(x, 4.6, 3, .9); g.fillRect(x, 10.6, 3, .9); }
+      g.fillStyle = '#1a0c04'; for (const x of [16, 48]) { g.beginPath(); g.arc(x, 8, 1.4, 0, TAU); g.fill(); }
+    }, true);
+    return this._rt;
+  },
+  spenneTex() {
+    if (!this._st) this._st = R.canvasTex(64, 64, g => {
+      g.lineCap = 'round'; g.lineJoin = 'round';
+      for (const [w, c] of [[9, '#1a0c04'], [5, '#d4a83a']]) { g.strokeStyle = c; g.lineWidth = w; g.strokeRect(12, 20, 30, 24); g.beginPath(); g.moveTo(27, 20); g.lineTo(27, 44); g.stroke(); }
+      g.strokeStyle = 'rgba(255,244,200,.8)'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(14, 22); g.lineTo(40, 22); g.stroke();
+    });
+    return this._st;
+  },
+  /* to reimer fra hendene hennes til pasienten. Bare det tegnede: skaden kommer fra ringen. Ingen i Enkel grafikk, og ikke over taket */
+  reimer(e) {
+    if (R.safe || !R.scene || Kjeder.liste.length + 2 > this.KJEDER_MAKS) return 0;
+    const P = G.player; let n = 0;
+    for (const s of [-1, 1]) {
+      const a = e.face + s * .6, fra = { x: e.x + Math.sin(a) * .35, y: 1.25, z: e.z + Math.cos(a) * .35 };
+      const K = Kjeder.slag(fra, () => ({ x: P.x + s * .15, y: .95, z: P.z }), { inn: .2, hold: .45, ut: .28, bredde: .13 });
+      if (K) { K.m.material.map = this.reimTex(); K.krok.material.map = this.spenneTex(); K.krok.center.set(.3, .5); K.krok.scale.set(.5, .5, 1); K.reim = true; n++; }
+    }
+    return n;
+  },
+  /* snøringen: en brun ring der pasienten står. Treffer den, blir pasienten SNØRT, og lauget i nærheten slår hardere */
+  snor(e, T, toT) {
+    const tid = 1, o = { x: T.x, z: T.z, r: 1.25, color: 0x8a5a2a, type: 'fysisk' };
+    e.state = 'wind'; e.t = tid + .3; e.face = toT; e.positur = { navn: 'snore', t: 0, dur: tid + .15 };
+    FX.bubble(e, 'Rett ryggen!', 1.2); Sound.play('swing', .5, 1.5); Sound.play('knirk', .45, 1.2);
+    addTele('circle', o, tid, () => {
+      const P = G.player; Sound.play('spenne', .7, .8);
+      if (!this.treff('circle', o, e.dmg * .5, { type: 'holdning', x: o.x, z: o.z }) || P.stunT > 0) return;
+      this.snoer(P, this.SNORT); this.rett(e);
+    }, e);
+    bossLaterE(e, tid - .2, () => { if (e.state === 'wind' && !(e.stun > 0)) this.reimer(e); });
+    e.cd = rnd(2.6, 3.6);
+  },
+  SNORT: 2.5, RETT: 4, RETT_K: 1.25, MEDLEMMER: { laerling: 1, klokker: 1, holdning: 1, oldermann: 1 },
+  snoer(P, t) { P.snortT = Math.max(P.snortT || 0, t); P.mokkT = Math.max(P.mokkT || 0, .05); statusOrd(P, 'SNØRT'); },
+  /* rullet løs: snøret ryker */
+  los(P) { P.snortT = 0; P.mokkT = 0; statusOrd(P, 'LØS'); Sound.play('rive', .6, 1.4); },
+  /* «Rett ryggen!»: laugets folk innen åtte ruter slår 25 prosent hardere i fire sekunder. Skaden lagres og settes tilbake nøyaktig */
+  rett(e) {
+    let n = 0;
+    for (const f of G.enemies) if (f.alive && this.MEDLEMMER[f.type] && d2(f.x, f.z, e.x, e.z) < 64) {
+      if (!f.rettet) { f.rettet = { dmg: f.dmg, satt: f.dmg * this.RETT_K }; f.dmg = f.rettet.satt; }
+      f.rettetT = this.RETT; n++; Particles.spawn(f.x, 1.3, f.z, 5, 0x8a5a2a, { speed: 1, up: 2.5, g: 0, life: .7, size: .8 });
+      if (f !== e && Math.random() < .4) FX.bubble(f, pick(['Ja, søster!', 'Rett rygg!', 'Takk, søster.']), 1);
+    }
+    FX.bubble(e, pick(['Rett ryggen!', 'Snørt. Pent.', 'Skuldrene tilbake, takk.']), 1.2);
+    return n;
+  },
+  /* tommestokken på kloss hold */
+  linjal(e, toT) {
+    const tid = .55, o = { x: e.x, z: e.z, a: toT, r: 2.2, arc: 1.6, color: 0x8a5a2a, type: 'fysisk' };
+    e.state = 'wind'; e.t = tid + .35; e.face = toT; e.raise = true; if (Math.random() < .3) FX.bubble(e, pick(['Skuldrene tilbake, takk.', 'Tommestokken lyver aldri.', 'Rett. Deg.']), 1);
+    addTele('cone', o, tid, () => { e.raise = false; e.positur = { navn: 'linjal', t: 0, dur: .3 }; Sound.play('bonk', .8, 1.4); Sound.play('swing', .5, 1.4); this.treff('cone', o, e.dmg, { type: 'holdning', x: e.x, z: e.z, kb: 5 }); slashFx(e.x, e.z, o.a, 2.2, 1.6, false, 0xf0c83a); }, e);
+    e.cd = rnd(1.4, 2);
+  }
+});
+Object.assign(Grotesk.keep, { holdning: 3.2 });
+Object.assign(Grotesk.retreat, { holdning: 1 });
+Object.assign(Grotesk.talk, { holdning: 1 });
+Object.assign(Grotesk.hold, { holdning: 1 });
+Object.assign(Grotesk.ai, {
+  /* tommestokken nær, snøringen på avstand. Aldri på en pasient som er slått ut eller alt snørt */
+  holdning(e, T, dist, toT) {
+    const P = G.player;
+    if (dist < 2.4) { Laug.linjal(e, toT); return; }
+    if (T === P && dist <= 7 && !(P.stunT > 0) && !(P.snortT > 0) && los(e.x, e.z, T.x, T.z) && Math.random() < .6) { Laug.snor(e, T, toT); return; }
+    e.cd = .35;
+  }
+});
+/* snøret: pasienten går tregere (P.mokkT, som myr) så lenge P.snortT varer, og en rulle løser det med en gang */
+{ const _up = updatePlayer; updatePlayer = function (dt, A) {
+  const P = G.player;
+  if (P && P.snortT > 0) { P.snortT -= dt; if (P.snortT > 0 && P.alive) P.mokkT = Math.max(P.mokkT || 0, dt + .02); else P.snortT = 0; }
+  const r = _up(dt, A);
+  if (P && P.snortT > 0 && P.roll > 0) Laug.los(P);
+  return r;
+}; }
+/* «Rett ryggen!» går ut: skaden tilbake nøyaktig, eller faktoren tas ut av det som står hvis noe annet har endret den underveis */
+{ const _ue = updateEnemy; updateEnemy = function (e, dt) {
+  if (e.rettet) {
+    e.rettetT -= dt;
+    if (e.rettetT <= 0 || !e.alive) { const V = e.rettet; e.dmg = e.dmg === V.satt ? V.dmg : e.dmg / Laug.RETT_K; e.rettet = null; }
+    else if (Math.random() < dt * 2) Particles.spawn(e.x + rnd(-.3, .3), 1.5, e.z + rnd(-.3, .3), 1, 0x8a5a2a, { speed: .3, up: 1.2, g: 0, life: .6, size: .7 });
+  }
+  return _ue(e, dt);
+}; }
+
 /* ---------- fiendeindeksen ---------- */
-FIENDE_REKKE.push('laerling', 'klokker');
+FIENDE_REKKE.push('laerling', 'klokker', 'holdning');
 Object.assign(FIENDE_INFO, {
   laerling: ['Skinnlaugets yngste, i et lærforkle som knirker. Elsker reimer og nagler og vil vise deg alle. Bukker, slår med reima og spenner deg fast.', 'Bukket er varselet. Gå til siden når han bøyer seg, og slå mens han ber om unnskyldning.'],
-  klokker: ['Laugets klokker, med sølvbjella fra Avdeling Null. Slår aldri selv. Når bjella ringer, kommer krokene ut av mørket der du står.', 'Hører du bjella, gå ut av sølvringen. Ta ham først, ellers roper han på lærlingen.']
+  klokker: ['Laugets klokker, med sølvbjella fra Avdeling Null. Slår aldri selv. Når bjella ringer, kommer krokene ut av mørket der du står.', 'Hører du bjella, gå ut av sølvringen. Ta ham først, ellers roper han på lærlingen.'],
+  holdning: ['Laugets holdningssøster. Snører deg inn med lærreimer så du går sakte og rett, og slår med tommestokken når du kommer nær.', 'Rull deg løs med en gang, snøret ryker når du ruller.']
 });
 
 Object.assign(window, { Laug, Grotesk, ROLLER, MESTER_TITTEL, DEATH_CAUSES, DEPTH_ENEMIES }); // til testene
