@@ -942,3 +942,9 @@ Alle tidspunkt er UTC.
 - Huggene: ringen lages én gang per bue (rundet til 0,05, helt rundt som før) i R.geo og skaleres med rekkevidden, så størrelsen er den samme som før. Materialene legges i en liten pott og brukes om igjen, av samme grunn som over.
 - Test 44 (Varsler og slag uten lekkasje): 300 varsler som går av, 20 som avbrytes, 60 hugg, ingen nye shaderlenkinger, riktig grunn til R.kastTele og rydding ved etasjebytte, pluss én runde i 3D. På bygget fra før gir den +1500, +101 og +60 geometrier. Før og etter i r5_bilder/44_varsler_*.png er like.
 - Del 5, 28 og 29 ventet i sanntid og feilet på en maskin der programvaregrafikken gikk på en åttendedel av full fart (også på bygget fra før). Del 5 venter nå på spilletid eller første treff, og taket for spill() i 28 og 29 er hevet fra 20 til 60 sekunder. Del 4, 5, 19, 28, 29, 36 og 44 er grønne.
+
+## 2026-09-27 02:49 Spor A, A1 sjekket av skeptikeren
+- Gikk gjennom R.kastTele, updateTele (fyr og avbryt), cancelTeles, clearFloor og huggene: alle stedene som tar ut et varsel, går nå gjennom R.kastTele, ingen andre filer holder på varselet eller endrer materialene, fargene er faste tall (så lista over delte materialer vokser ikke), og ringene og materialene til huggene deles uten å bli kastet ved en feil. Treffene er som før: bare det som går av, treffer.
+- Test 44 er ikke tom: toppen er +1500 geometrier for 300 varsler og +101 for 20 avbrutte, og etterpå 0. Del 36 (grafikkminnet) holder seg innenfor. Bildene før og etter er like, som planen sier (A1 skal ikke endre utseendet; det gjør A3).
+- Del 28 feilet én gang av fire: fienden i lynprøven ble av og til en pansret mester (Oppskrift.mester, rustning 0,75) og tok 34 i stedet for 45. Ikke fra A1. Testen setter nå e.mArmor = 1.
+- Del 4, 5, 19, 28, 29, 36 og 44 er grønne.
