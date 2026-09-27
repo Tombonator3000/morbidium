@@ -2500,6 +2500,134 @@ async def main():
         sjekk('ingen konsollfeil (Draugen og Holdningssøsteren i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 62) Oldermann Nålepute: minisjefen leser opp dagsorden i boblen og gjør sakene i den rekkefølgen han sa, med klubbeslag mellom,
+        #     hver sak for seg (nåler, kjettinger som drar, klubba, votering med tak på lærlinger, eventuelt), årsmøtet ved halv helse,
+        #     aldri i parken, fiendeindeksen, Enkel grafikk og én runde i 3D
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        om = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
+            til = async (f, t = 4, maks = 40000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
+            spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); };
+          if (typeof Oldermann !== 'object' || !ENEMIES.oldermann) return { mangler: true };
+          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; P.invuln = 0;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 10 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0];
+          const midt = () => { P.x = r.x + r.w / 2 + .5; P.z = r.z + r.h / 2 + .5; }; midt();
+          // det som blir sagt: boblene hans (teksten slik den står), tall og ord over hodene (#fx .dmg), lydene, og varslene han legger
+          const bobler = [], tall = [], lyder = [], teleSett = new Set(); let samle = true;
+          const _b = Oldermann.boble; Oldermann.boble = function (e) { const el = _b.apply(Oldermann, arguments); bobler.push({ t: G.time, tekst: el ? [...el.children].map(d => d.textContent) : [], ref: e.referat.length }); return el; };
+          const mo = new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) if (n.classList && n.classList.contains('dmg')) tall.push(n.textContent); }); mo.observe(document.getElementById('fx'), { childList: true });
+          const _sp = Sound.play; Sound.play = function (n) { lyder.push(n); return _sp.apply(Sound, arguments); };
+          (async () => { while (samle) { for (const t of G.tele) if (t.owner && t.owner.type === 'oldermann') teleSett.add(t); await vent(15); } })();
+          const varsler = () => [...teleSett].map(t => ({ shape: t.shape, r: t.o.r, w: t.o.w, len: t.o.len, type: t.o.type }));
+          try {
+            // tre dagsordener i vanlig kamp: det han gjør, er det han sa, i samme rekkefølge
+            const s0 = freeSpot(P.x + 3, P.z, 3), o = spawnEnemy('oldermann', s0.x, s0.z, false, 4);
+            { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 70 && performance.now() - t0 < 240000) { await vent(80); P.hp = 1e6; o.hp = o.max; if ((o.referat || []).filter(a => a.ferdig).length >= 3) break; } }
+            ut.referat = (o.referat || []).filter(a => a.ferdig).slice(0, 3).map(a => ({ saker: a.saker, utfort: a.utfort }));
+            // den første boblen i hver dagsorden er hele dagsorden, i den rekkefølgen sakene ble gjort
+            ut.bobler = [1, 2, 3].map(n => { const b = bobler.find(x => x.ref === n); return b ? b.tekst : null; });
+            ut.bobleRekke = ut.referat.map((a, i) => { const b = ut.bobler[i] || [], navn = a.saker.map(k => Oldermann.NAVN[k]); return b[0] === 'Dagsorden:' && navn.every((nv, j) => (b[j + 1] || '').startsWith((j + 1) + '. ' + nv)); });
+            ut.tall = tall.filter(s => /Dagsorden|Sak |Knappenål|Kjetting|Klubba|Votering|Eventuelt/.test(s));
+            ut.klubbe = lyder.filter(n => n === 'klubbe').length; ut.bokslag = lyder.filter(n => n === 'bokslag').length;
+            ut.saker = ut.referat.reduce((s, a) => s + a.utfort.length, 0);
+            // hver sak for seg, satt opp for hånd
+            rolig(); midt(); await spill(.3);
+            const o2 = spawnEnemy('oldermann', freeSpot(P.x, P.z, 3).x, freeSpot(P.x, P.z, 3).z, false, 4); await til(() => o2.state !== 'spawn'); o2.cd = 1e9;
+            const plasser = d => { const s = freeSpot(o2.x + d, o2.z, 3); P.x = s.x; P.z = s.z; P.kvx = P.kvz = 0; P.stunT = 0; P.invuln = 0; P.iframe = 0; G.laugStunT = 0; };
+            const sak = async (saker, d, t = 1.8) => {
+              await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; o2.stun = 0; plasser(d); teleSett.clear();
+              o2.dagsorden = { saker, i: 0, cd: .35, ev: null, vent: null }; (o2.referat || (o2.referat = [])).push({ saker, utfort: [] });
+              const hp0 = P.hp, d0 = Math.hypot(P.x - o2.x, P.z - o2.z), n0 = Oldermann.skutt || 0; Oldermann.sak(o2, P, d0, Math.atan2(P.x - o2.x, P.z - o2.z)); o2.cd = 1e9;
+              await spill(t); const r = { tele: varsler(), skade: hp0 - P.hp, d0, d1: Math.hypot(P.x - o2.x, P.z - o2.z), proj: (Oldermann.skutt || 0) - n0, ev: o2.referat[o2.referat.length - 1].ev };
+              o2.dagsorden = null; P.hp = 1e6; return r; };
+            ut.naal = await sak(['naal'], 4);
+            ut.kjede = await sak(['kjede'], 5.5); ut.kjede.hektet = !!(P.statusT && P.statusT.HEKTET !== undefined);
+            ut.klubbe1 = await sak(['klubbe'], 1.6);
+            for (const e of G.enemies) if (e.alive && e.type === 'laerling') killEntity(e, {});
+            ut.vote = await sak(['votering'], 3, 2.2); ut.vote.lar = G.enemies.filter(e => e.alive && e.type === 'laerling').length;
+            { const s = freeSpot(o2.x - 3, o2.z + 2, 3); spawnEnemy('laerling', s.x, s.z, false, 4); } for (const e of G.enemies) if (e.alive && e.type === 'laerling') e.cd = 1e9;
+            ut.vote2 = await sak(['votering'], 1.6, 2.2); ut.vote2.lar = G.enemies.filter(e => e.alive && e.type === 'laerling').length;
+            for (const e of G.enemies) if (e.alive && e.type === 'laerling') killEntity(e, {});
+            ut.ev = await sak(['eventuelt'], 2);
+            // halv helse: ekstraordinært årsmøte, fire sølvringer rundt pasienten og klokkeren kommer. Etterpå er det tre saker og Eventuelt
+            await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; plasser(3); teleSett.clear(); for (const e of G.enemies) if (e.alive && e.type === 'klokker') killEntity(e, {});
+            o2.hp = o2.max * .45; Grotesk.ai.oldermann(o2, P, 3, 0); o2.cd = 1e9;
+            await vent(50); ut.aarsBoble = [...document.querySelectorAll('#fx .bubble')].map(e => e.textContent).join(' | ');
+            await spill(2.4); ut.aars = { ringer: varsler().filter(t => t.shape === 'circle' && t.type === 'lenke' && t.r === 1.3).length, klokker: G.enemies.filter(e => e.alive && e.type === 'klokker').length };
+            await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; Oldermann.les(o2, P, 0); ut.aars.saker = o2.dagsorden.saker.length; ut.aars.sist = o2.dagsorden.saker[3];
+            // Enkel grafikk: varslene og nålene kommer, men ingen kjettinger tegnes
+            o2.dagsorden = null; o2.cd = 1e9; for (const e of G.enemies) if (e.alive && e !== o2) killEntity(e, {});
+            await til(() => !Kjeder.liste.length, 4); R.safe = true; let kjS = 0; const kt = setInterval(() => { kjS = Math.max(kjS, Kjeder.liste.length); }, 20);
+            ut.safe = { kjede: await sak(['kjede'], 5), naal: await sak(['naal'], 4) }; clearInterval(kt); ut.safe.kjeder = kjS; ut.safe.for = Kjeder.liste.length; R.safe = false;
+            killEntity(o2, {}); await spill(.8);
+            // aldri i parken: 60 etasjefrø i Parken gir aldri Oldermannen, i Kjelleren kommer han
+            const F = G.F, frø = F.seed, d0 = G.depth, risk = F.rooms.find(r => r.role === 'risk') || F.rooms[0], rolle = risk.role; risk.role = 'risk';
+            const telle = d => { G.depth = d; let n = 0; for (let s = 1; s <= 60; s++) { F.seed = s * 7919; Mini.onFloor(); if (Object.values(Mini.rom).includes('oldermann')) n++; } return n; };
+            ut.park = telle(1); ut.kjeller = telle(4); F.seed = frø; G.depth = d0; risk.role = rolle; Mini.onFloor();
+          } finally { Oldermann.boble = _b; Sound.play = _sp; mo.disconnect(); samle = false; R.safe = false; }
+          ut.info = !!((FIENDE_INFO.oldermann || [])[0] && FIENDE_INFO.oldermann[1] && SJEF_REKKE.includes('oldermann') && MINISJEFER.includes('oldermann') && FIENDESTEMME.oldermann && LINES.oldermann && DEATH_CAUSES.oldermann) && !ROLLER.oldermann;
+          ut.bilde = (() => { const c = fiendeBilde('oldermann', 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); })();
+          return ut; }""")
+        sjekk('Oldermann Nålepute finnes (Oldermann i 50_skinnlauget.js)', not om.get('mangler'), om.get('mangler', ''))
+        if not om.get('mangler'):
+            R = om['referat']
+            sjekk('tre dagsordener er ferdige, og hver ender med Eventuelt etter to saker', len(R) == 3 and all(len(a['saker']) == 3 and a['saker'][-1] == 'eventuelt' for a in R), R)
+            sjekk('over tre dagsordener gjør han sakene i nøyaktig den rekkefølgen han sa', len(R) == 3 and all(a['utfort'] == a['saker'] for a in R), R)
+            sjekk('dagsorden står i boblen, med sakene i samme rekkefølge', len(om['bobleRekke']) == 3 and all(om['bobleRekke']), om['bobler'])
+            sjekk('dagsorden og sakene kommer aldri som tall eller ord over hodet', om['tall'] == [], om['tall'])
+            sjekk('bokslag for hver dagsorden og et klubbeslag for hver sak', om['bokslag'] >= 3 and om['klubbe'] >= om['saker'], {k: om[k] for k in ['bokslag', 'klubbe', 'saker']})
+            n = om['naal']
+            sjekk('knappenåler: et rektangel 2,2 bredt og 8 langt, så tre salver med fem nåler som treffer', any(t['shape'] == 'rect' and t['w'] == 2.2 and t['len'] == 8 for t in n['tele']) and n['proj'] == 15 and n['skade'] > 0, n)
+            k = om['kjede']
+            sjekk('kjettinger: en sølvring på 1,6 der pasienten står, som treffer, hekter og drar ham inn', any(t['shape'] == 'circle' and t['r'] == 1.6 and t['type'] == 'lenke' for t in k['tele']) and k['skade'] > 0 and k['hektet'] and k['d1'] < k['d0'] - 1, k)
+            kl = om['klubbe1']
+            sjekk('klubba: en ring på 2,6 rundt ham, som treffer og slår pasienten bakover', any(t['shape'] == 'circle' and t['r'] == 2.6 for t in kl['tele']) and kl['skade'] > 0 and kl['d1'] > kl['d0'] + 1, kl)
+            sjekk('votering: to lærlinger kommer', om['vote']['lar'] == 2, om['vote'])
+            sjekk('votering med tre lærlinger i live: ingen flere, og klubba i stedet', om['vote2']['lar'] == 3 and any(t['shape'] == 'circle' and t['r'] == 2.6 for t in om['vote2']['tele']), om['vote2'])
+            ev = om['ev']; forv = {'naal': ('rect', None), 'kjede': ('circle', 1.6), 'klubbe': ('circle', 2.6)}.get(ev['ev'])
+            sjekk('eventuelt: en av de tre første, og varselet passer til den', forv is not None and any(t['shape'] == forv[0] and (forv[1] is None or t['r'] == forv[1]) for t in ev['tele']), ev)
+            a = om['aars']
+            sjekk('halv helse: «Ekstraordinært årsmøte!», fire sølvringer, klokkeren kommer, og så tre saker og Eventuelt', 'Ekstraordinært årsmøte' in om['aarsBoble'] and a['ringer'] == 4 and a['klokker'] == 1 and a['saker'] == 4 and a['sist'] == 'eventuelt', [om['aarsBoble'], a])
+            s = om['safe']
+            sjekk('Enkel grafikk: sølvringen og nålene kommer og treffer, men ingen kjettinger tegnes', s['kjeder'] == 0 and s['kjede']['skade'] > 0 and s['naal']['proj'] == 15, s)
+            sjekk('aldri i parken, men han kommer i Kjelleren', om['park'] == 0 and om['kjeller'] > 0, [om['park'], om['kjeller']])
+            sjekk('fiendeindeksen (blant minisjefene), replikker, stemme og dødsårsaker, og ikke i ROLLER', om['info'], om['info'])
+            sjekk('fiendeBilde tegner ham', om['bilde'] > .08, om['bilde'])
+        await pg.screenshot(path='/tmp/e_62_oldermann.png')
+        sjekk('ingen konsollfeil (Oldermann Nålepute)', not pg.errs, pg.errs[:6])
+        # håndbokssiden med minisjefene: får plass på PC og telefon
+        hbs = []
+        for vp in [{'width': 1280, 'height': 720}, {'width': 390, 'height': 844}]:
+            await pg.set_viewport_size(vp)
+            await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+            hb = await pg.evaluate("""() => { if (!SJEF_REKKE.includes('oldermann')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'sjefer'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(SJEF_REKKE.indexOf('oldermann') / per));
+              return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
+            await pg.wait_for_timeout(300)
+            hb['plass'] = await pg.evaluate(HB_PLASS) if not hb.get('mangler') else False
+            hbs.append(hb)
+            await pg.screenshot(path=f"/tmp/e_62_handbok_{vp['width']}.png")
+        sjekk('håndboka har Oldermann Nålepute blant minisjefene, og siden får plass på PC og telefon', all('Oldermann Nålepute' in h.get('navn', []) and h['plass'] for h in hbs), hbs)
+        sjekk('ingen konsollfeil (Oldermann i håndboka)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: han leser dagsorden og gjør den første saken (én runde, 3D er tungt i programvaregrafikk)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          if (typeof Oldermann !== 'object') return { mangler: true };
+          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; ut.d3 = D3.on;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 10 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2 + .5; P.z = r.z + r.h / 2 + .5; R.snapCamera(P.x, P.z);
+          const s = freeSpot(P.x + 3.5, P.z - 1, 3), o = spawnEnemy('oldermann', s.x, s.z, false, 4);
+          const g0 = G.time, t0 = performance.now(); let sett = {};
+          while (G.time - g0 < 16 && performance.now() - t0 < 150000) { await vent(60); P.hp = 1e6; sett[o.state] = 1; if (o.dagsorden && o.dagsorden.i >= 1 && o.state === 'wind' && o.teles.length) break; }
+          G.hitstop = 30; // nesten stillstand mens bildet tas
+          ut.sett = sett; ut.boble = [...document.querySelectorAll('#fx .bubble')].map(e => e.textContent).join(' | '); ut.varsel = o.teles.length; return ut; }""")
+        await pg.wait_for_timeout(250)
+        await pg.screenshot(path='/tmp/e_62_oldermann_3d.png')
+        sjekk('i 3D leser han dagsorden og legger an til den første saken', not d3.get('mangler') and d3.get('d3') and 'Dagsorden' in d3.get('boble', '') and d3.get('varsel', 0) > 0, d3)
+        await pg.evaluate("() => { MORBIDIUM.hitstop = 0; }")
+        sjekk('ingen konsollfeil (Oldermann i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

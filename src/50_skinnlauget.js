@@ -6,6 +6,7 @@
    Ingenting seksuelt, og ingen navn, tegninger eller sitater fra filmene de parodierer.
    - Lærlingen bukker (varselet), slår med reima og spenner deg fast hvis du står for nær.
    - Klokkeren slår aldri selv. Han ringer med sølvbjella, og krokene kommer ut av mørket der du står.
+   - Oldermann Nålepute (minisjef) leser opp dagsorden og gjør sakene i den rekkefølgen han sa.
    Alle stans fra laugets folk deler én nedkjøling (G.laugStunT), så de ikke kan holde pasienten fast på rad.
    Tegningene kan byttes med bilder fra ChatGPT (hode_laerling_f, kropp_klokker_s, vaapen_reim, vaapen_bjelle ...).
    ============================================================ */
@@ -572,12 +573,310 @@ Object.assign(Grotesk.ai, {
   return _ue(e, dt);
 }; }
 
+/* ============================================================
+   OLDERMANN NÅLEPUTE  -  minisjef, laugets formann
+   En høy, verdig gammel herre i sort lærfrakk med vingekrage og et skjerf med laugets medaljer. Kinnskjegg,
+   hvalrossbart og lorgnett, og en rund nålepute i rød fløyel spent fast på den blanke issen, full av knappenåler
+   med glasshoder. Nålene sitter i puta, aldri i ham.
+   Han leder kampen som et møte: leser opp dagsorden i boblen (bokslag) og gjør sakene i nøyaktig den rekkefølgen,
+   med et klubbeslag mellom hver. Dagsorden blir stående i boblen, med sakene som er ferdige strøket over.
+   - Knappenåler: et rektangel (2,2 bredt og 8 langt), så tre salver med fem nåler i vifte.
+   - Kjettinger: en sølvring der pasienten står, krokene fra mørket, og et treff drar pasienten inn til ham («HEKTET»).
+   - Klubba: en ring rundt ham selv, 1,2 ganger skaden og et kraftig tilbakeslag.
+   - Votering: to lærlinger kommer og sier ja. Er det alt tre lærlinger i live, faller forslaget, og han bruker klubba.
+   - Eventuelt: en av de tre første, og boblen sier hvilken.
+   Ved halv helse, én gang: «Ekstraordinært årsmøte!» Han ringer selv, fire sølvringer rundt pasienten, og klokkeren kommer.
+   Aldri i parken (ENEMIES.oldermann.fraDybde, se Mini.onFloor).
+   ============================================================ */
+Object.assign(Sound.lib, {
+  bokslag: [{ n: 1, d: .12, f0: 1200, f1: 300, ft: 'lowpass', v: .5 }, { w: 'sine', f: 110, d: .1, pd: .5, v: .3 }],
+  klubbe: [{ w: 'triangle', f: 520, d: .07, pd: .7, v: .35 }, { n: 1, d: .05, f0: 2400, f1: 900, ft: 'bandpass', v: .3 }, { w: 'sine', f: 140, d: .12, pd: .5, v: .3 }],
+  naaler: [{ n: 1, d: .12, f0: 6000, f1: 2500, ft: 'bandpass', v: .18 }, { w: 'triangle', f: 2600, d: .04, v: .06 }]
+});
+Object.assign(LYD_KART, {
+  bokslag: { s: [['bokslag', .7]], syn: .2 },
+  klubbe: { s: [['stamp', .6, .85], ['ins_treblokk', .55, .9]], syn: .25 },
+  naaler: { s: [['swing', .35, 1.9], ['stikk', .2, 1.6]], syn: .4 }
+});
+Object.assign(FIENDESTEMME, { oldermann: ['knirk', .85] });
+Object.assign(ENEMIES, { oldermann: { name: 'Oldermann Nålepute', hp: 340, speed: 2.2, r: .55, dmg: 13, xp: 60, teeth: [22, 32], bubbleH: 4.3, mini: true, weapon: 'klubbe', skygge: .6, blood: 0x9a1a1a, tittel: 'Takk for tålmodigheten', fraDybde: 2 } });
+Object.assign(LINES, { oldermann: ['Møtet er satt.', 'Sak én: Deres smerte. Sak to: Eventuelt.', 'Forslaget er vedtatt mot én stemme. Deres.', 'Skinnlauget takker for tålmodigheten.', 'Overlege Krok er æresmedlem. Han kommer aldri på møtene.',
+  'Forstanderen? Vårt fineste arbeid. Dobbel søm, 1887.', 'Referatet sendes Journalen.', 'Puta? Rød fløyel og hundre og tolv nåler. Jeg teller dem hver morgen.', 'Frakken er hel oksehud. Den har vært på alle møtene siden 1887.'] });
+Object.assign(DEATH_CAUSES, { oldermann: ['Vedtatt behandlet, mot én stemme.', 'Ført i protokollen under «Eventuelt».', 'Stukket av en nålepute med stemmerett.', 'Møtet ble hevet. Det samme ble pasienten.'] });
+MINISJEFER.push('oldermann');
+Object.assign(POSER, {
+  // leser dagsorden: arket opp foran seg, hodet ned
+  lese: { hR: [[0, .12, -.34], [.2, .1, .12], [.9, .1, .12], [1, .12, -.3]], hL: [[0, -.1, -.34], [.2, -.14, .1], [.9, -.14, .1], [1, -.1, -.34]], hode: [[0, 0], [.2, .22], [.9, .22], [1, 0]] },
+  // klubbeslaget: opp, og ned i bordet som ikke er der
+  klubbeslag: { hR: [[0, .14, .3], [.3, .22, .52], [.55, .34, -.06], [.75, .32, -.1], [1, .14, -.3]], lean: [[0, -.2], [.3, -.5], [.55, .8], [1, 0]], hode: [[0, 0], [.55, .16], [1, 0]] }
+});
+
+const OLD = { hud: '#eed4bc', nese: '#e0a090', har: '#e6e2da', harM: '#a8a49c', frakk: '#1e1a1e', frakkL: '#3a3238', pute: '#a01c28', puteM: '#5a0a12', vest: '#4a4450', skjorte: '#f4efe4' };
+RIG.oldermann = { hip: .54, hipW: .15, neck: .86, shW: .33, shY: .76, armW: .14, legW: .13, handR: .1, arm: OLD.frakk, leg: '#1e1a1e', hand: OLD.hud, shoe: 'stovel', scale: 1.22, headLag: .6 };
+// nåleputa: rød fløyel, knappet i midten, spent fast med en lærreim, full av knappenåler med glasshoder
+const NAALEFARGER = ['#e8d040', '#f4f0e8', '#3a6ab0', '#c82a3a', '#4a9a5a', '#e8d040', '#f4f0e8', '#8a4ab0'];
+const naalepute = (g, x, y, s = 1, bak = false) => {
+  for (let i = 0; i < 9; i++) { // nålene som stikker opp bak og på sidene
+    const a = -1.25 + i * 2.5 / 8, L = (.15 + (i % 3) * .03) * s, x0 = x + Math.sin(a) * .12 * s, y0 = y - .02 * s - Math.cos(a) * .04 * s, x1 = x0 + Math.sin(a) * L, y1 = y0 - Math.cos(a) * L;
+    A.line(g, [[x0, y0], [x1, y1]], .014 * s, '#8a8e98'); A.dot(g, x1, y1, .034 * s, INK); A.dot(g, x1, y1, .024 * s, NAALEFARGER[i % 8]); A.dot(g, x1 - .008 * s, y1 - .008 * s, .007 * s, '#ffffff');
+  }
+  A.cel(g, A.ell(x, y, .27 * s, .13 * s), OLD.pute, { line: '#2a0406', lw: .03, sk: .7 });
+  A.flat(g, A.ell(x - .06 * s, y - .05 * s, .12 * s, .04 * s), 'rgba(255,190,190,.35)', 0); // fløyelsglansen
+  if (!bak) for (const [dx, dy] of [[-.16, .02], [-.08, .05], [.08, .05], [.16, .02]]) A.curve(g, [x, y], [x + dx * .6 * s, y + dy * .3 * s], [x + dx * s, y + dy * s], .01 * s, OLD.puteM); // knappingen
+  A.dot(g, x, y, .022 * s, OLD.puteM);
+  for (const [dx, dy, c] of [[-.14, -.02, 0], [.1, -.04, 3], [-.04, .06, 2], [.18, .04, 4], [.02, -.07, 7]]) { A.dot(g, x + dx * s, y + dy * s, .028 * s, INK); A.dot(g, x + dx * s, y + dy * s, .02 * s, NAALEFARGER[c]); } // hoder rett mot oss
+};
+// kinnskjegg, fra øret og ned
+const kinnskjegg = (g, s, cy, x0 = 0) => A.cel(g, A.blob([[x0 + s * .3, cy - .12], [x0 + s * .23, cy - .1], [x0 + s * .19, cy + .08], [x0 + s * .21, cy + .2], [x0 + s * .27, cy + .32], [x0 + s * .36, cy + .24], [x0 + s * .37, cy + .04]]), OLD.har, { sk: .75 });
+MONSTER_ART.oldermann = {
+  box: { hode: [1.3, 1.5, .65, .12], kropp: [1.3, 1.36, .65, .44] },
+  hode: v => g => {
+    const S = OLD.hud, H = OLD.har, cy = -.5;
+    const ore = (x, s) => { A.cel(g, A.ell(x, cy + .04, .07, .11), S); A.curve(g, [x - s * .01, cy], [x + s * .02, cy + .04], [x - s * .01, cy + .08], .012, '#b88a6a'); };
+    if (v === 'b') {
+      for (const s of [-1, 1]) ore(s * .31, s);
+      A.cel(g, A.ell(0, cy, .3, .36), S);
+      A.cel(g, A.blob([[-.3, cy - .02], [-.28, cy + .2], [-.14, cy + .3], [0, cy + .32], [.14, cy + .3], [.28, cy + .2], [.3, cy - .02], [.2, cy + .08], [0, cy + .12], [-.2, cy + .08]]), H, { sk: .75 }); // hestesko av hvitt hår
+      for (let i = 0; i < 7; i++) { const x = -.24 + i * .08; A.curve(g, [x, cy + .1 - Math.abs(x) * .3], [x * 1.05 + .02, cy + .18], [x * .95, cy + .28 - Math.abs(x) * .3], .01, OLD.harM); }
+      for (const s of [-1, 1]) A.line(g, [[s * .24, cy - .28], [s * .3, cy + .02], [s * .25, cy + .3]], .03, '#4a2a14'); // reima rundt haka
+      A.flat(g, A.ell(-.08, cy - .18, .1, .05), 'rgba(255,255,255,.4)', 0);
+      naalepute(g, 0, cy - .36, 1, true);
+      return;
+    }
+    if (v === 's') {
+      A.cel(g, A.ell(.03, cy, .29, .36), S); ore(-.1, -1);
+      kinnskjegg(g, -1, cy, .14);
+      A.flat(g, A.ell(-.04, cy - .2, .1, .05), 'rgba(255,255,255,.45)', 0);
+      A.cel(g, A.blob([[.08, cy - .12], [.2, cy - .15], [.25, cy - .09], [.14, cy - .08]]), H, { lw: .02, hi: false }); // bryn
+      A.dot(g, .19, cy - .02, .022); A.flat(g, A.ell(.2, cy - .02, .06, .06), 'rgba(230,242,250,.5)', .016, '#8a8e98'); // lorgnetten
+      A.curve(g, [.2, cy + .04], [.12, cy + .3], [.02, cy + .46], .008, '#a8acb4');
+      A.cel(g, A.blob([[.24, cy - .02], [.38, cy + .1], [.36, cy + .18], [.26, cy + .16]]), OLD.nese, { lw: .026 });
+      A.cel(g, A.blob([[.34, cy + .16], [.26, cy + .15], [.12, cy + .2], [.06, cy + .34], [.14, cy + .3], [.2, cy + .36], [.28, cy + .3], [.36, cy + .32]]), H, { sk: .75 }); // hvalrossbarten henger
+      A.line(g, [[-.06, cy - .28], [-.04, cy], [.02, cy + .32]], .03, '#4a2a14');
+      naalepute(g, -.01, cy - .36);
+      return;
+    }
+    for (const s of [-1, 1]) ore(s * .32, s);
+    A.cel(g, A.ell(0, cy, .3, .36), S);
+    A.flat(g, A.ell(-.1, cy - .2, .1, .05), 'rgba(255,255,255,.45)', 0); // den blanke issen
+    for (const s of [-1, 1]) kinnskjegg(g, s, cy);
+    // buskete, strenge bryn og små øyne bak lorgnetten
+    for (const s of [-1, 1]) {
+      A.cel(g, A.blob([[s * .03, cy - .08], [s * .1, cy - .14], [s * .21, cy - .13], [s * .23, cy - .07], [s * .12, cy - .09]]), H, { lw: .02, hi: false });
+      A.flat(g, A.ell(s * .11, cy - .02, .045, .025), '#fbf6ea', .016); A.dot(g, s * .11, cy - .015, .018);
+      A.flat(g, A.ell(s * .11, cy - .02, .075, .07), 'rgba(230,242,250,.45)', .016, '#8a8e98');
+    }
+    A.curve(g, [-.04, cy - .03], [0, cy - .06], [.04, cy - .03], .014, '#8a8e98'); A.curve(g, [.18, cy], [.26, cy + .2], [.18, cy + .46], .008, '#a8acb4'); // kjedet ned til frakken
+    A.cel(g, A.blob([[-.05, cy + .02], [.05, cy + .02], [.09, cy + .13], [0, cy + .17], [-.09, cy + .13]]), OLD.nese, { lw: .026 }); // rød nese
+    // hvalrossbarten, som dekker munnen helt
+    A.cel(g, A.blob([[0, cy + .14], [-.1, cy + .12], [-.22, cy + .16], [-.28, cy + .32], [-.2, cy + .28], [-.1, cy + .26], [0, cy + .28], [.1, cy + .26], [.2, cy + .28], [.28, cy + .32], [.22, cy + .16], [.1, cy + .12]]), H, { sk: .75 });
+    for (let i = 0; i < 6; i++) { const x = -.2 + i * .08; A.line(g, [[x, cy + .18], [x * 1.1, cy + .27]], .008, OLD.harM); }
+    // reima som holder puta, ned langs kinnet og under haka, med en messingspenne
+    for (const s of [-1, 1]) A.line(g, [[s * .25, cy - .3], [s * .31, cy - .08]], .03, '#4a2a14');
+    A.curve(g, [-.2, cy + .3], [0, cy + .42], [.2, cy + .3], .03, '#4a2a14'); spenne(g, .14, cy + .36, .8);
+    naalepute(g, 0, cy - .36);
+  },
+  kropp: v => g => {
+    const top = -.86, F = OLD.frakk, FL = OLD.frakkL;
+    // skjerfet på skrå med laugets medaljer: sølvkroker og en liten bjelle
+    const skjerf = (a, b, n) => {
+      A.line(g, [a, b], .1, INK); A.line(g, [a, b], .07, LAUG.okse);
+      for (let i = 0; i < n; i++) { const t = (i + 1) / (n + 1), x = lerp(a[0], b[0], t), y = lerp(a[1], b[1], t); if (i === n - 1) { A.cel(g, A.blob([[x - .03, y + .02], [x - .02, y - .03], [x + .02, y - .03], [x + .03, y + .02]]), LAUG.solv, { lw: .014, hi: false }); A.dot(g, x, y + .03, .01); } else krokMerke(g, x, y, .8); }
+    };
+    if (v === 'b') {
+      A.cel(g, A.blob([[-.36, .4], [-.04, .4], [0, .1], [.04, .4], [.36, .4], [.34, 0], [.33, top + .2], [.24, top + .04], [0, top + .01], [-.24, top + .04], [-.33, top + .2], [-.34, 0]]), F, { line: '#0a080a', sk: .72 });
+      A.line(g, [[0, top + .1], [0, .1]], .016, FL);
+      for (const s of [-1, 1]) nagle(g, s * .08, -.04, .02);
+      A.cel(g, A.rr(-.08, top - .02, .16, .08, .02), OLD.skjorte, { lw: .02, hi: false }); // kragen bak
+      larGlans(g, -.2, top + .16, .5); larGlans(g, .2, top + .2, .4, -1);
+      return;
+    }
+    if (v === 's') {
+      A.cel(g, A.blob([[-.34, .42], [-.2, .42], [-.14, .1], [-.1, .38], [.22, .38], [.26, 0], [.28, top + .4], [.2, top + .06], [0, top + .01], [-.18, top + .06], [-.22, top + .3], [-.2, 0]]), F, { line: '#0a080a', sk: .72 }); // frakkeskjøtene bak
+      A.cel(g, A.blob([[.14, top + .3], [.3, top + .36], [.33, -.06], [.2, -.02]]), OLD.vest, { lw: .022, hi: false }); // en velfødd formann
+      A.cel(g, A.poly([[.02, top + .02], [.2, top + .02], [.18, top + .12]]), OLD.skjorte, { lw: .018, hi: false });
+      skjerf([-.02, top + .08], [.28, -.1], 2);
+      A.curve(g, [.3, top + .5], [.24, top + .56], [.26, top + .62], .01, '#d4b048');
+      A.cel(g, A.rr(.08, -.12, .14, .08, .02), '#efe6d0', { lw: .014, hi: false }); // dagsorden i lomma
+      larGlans(g, -.12, top + .24, .5);
+      return;
+    }
+    // den lange lærfrakken, åpen foran over vest og skjorte
+    A.cel(g, A.blob([[-.38, .4], [-.08, .4], [-.1, 0], [.1, 0], [.08, .4], [.38, .4], [.35, 0], [.34, top + .2], [.25, top + .04], [0, top + .01], [-.25, top + .04], [-.34, top + .2], [-.35, 0]]), F, { line: '#0a080a', sk: .72 });
+    A.cel(g, A.blob([[-.13, top + .08], [.13, top + .08], [.16, top + .4], [.15, -.02], [-.15, -.02], [-.16, top + .4]]), OLD.vest, { lw: .022, hi: false });
+    A.cel(g, A.poly([[-.07, top + .06], [.07, top + .06], [0, top + .26]]), OLD.skjorte, { lw: .016, hi: false });
+    // vingekragen og en sort halsbind
+    for (const s of [-1, 1]) A.cel(g, A.poly([[s * .02, top + .02], [s * .13, top - .02], [s * .1, top + .08], [s * .04, top + .07]]), OLD.skjorte, { lw: .018, hi: false });
+    A.cel(g, A.blob([[0, top + .08], [-.06, top + .05], [-.05, top + .14], [0, top + .11], [.05, top + .14], [.06, top + .05]]), '#141014', { lw: .018, hi: false });
+    for (let i = 0; i < 4; i++) A.dot(g, 0, top + .3 + i * .1, .016, '#8a8e98'); // vestknappene
+    A.curve(g, [-.13, top + .52], [0, top + .6], [.12, top + .5], .01, '#d4b048'); // urkjedet
+    // slagene på frakken
+    for (const s of [-1, 1]) A.cel(g, A.poly([[s * .13, top + .06], [s * .22, top + .1], [s * .17, top + .42], [s * .14, top + .38]]), FL, { line: '#0a080a', lw: .02, hi: false });
+    skjerf([.28, top + .08], [-.24, -.02], 4);
+    A.cel(g, A.rr(-.3, -.14, .14, .08, .02), '#efe6d0', { lw: .014, hi: false }); A.line(g, [[-.28, -.12], [-.19, -.12]], .006, '#6a5a4a'); // dagsorden i lomma
+    for (const s of [-1, 1]) for (let i = 0; i < 2; i++) nagle(g, s * .2, -.2 + i * .16, .016);
+    larGlans(g, -.26, top + .2, .5); larGlans(g, .26, top + .2, .5, -1);
+  }
+};
+WEAPON_ART.klubbe = [.6, 1.0, .3, .12];
+{ const _dw = drawWeapon; drawWeapon = id => id !== 'klubbe' ? _dw(id) : g => {
+  // møteklubba: dreid skaft og et tungt hode med messingbånd
+  A.cel(g, A.rr(-.035, -.66, .07, .7, .03), '#6a3a1a', { lw: .026, hi: false });
+  A.line(g, [[-.012, -.6], [-.012, -.1]], .01, 'rgba(255,230,200,.35)');
+  A.cel(g, A.rr(-.22, -.86, .44, .2, .06), '#7a4a24', { line: '#1a0c04', lw: .03, sk: .7 });
+  for (const s of [-1, 1]) { A.line(g, [[s * .13, -.86], [s * .13, -.66]], .03, LAUG.messing); A.cel(g, A.ell(s * .22, -.76, .03, .1), '#5a3218', { lw: .02, hi: false }); }
+  A.line(g, [[-.16, -.82], [.1, -.82]], .016, 'rgba(255,230,200,.4)');
+}; }
+// en knappenål i fart: spissen fram, glasshodet bak
+const naalPart = () => Art.part('knappenaal', .24, .7, .12, .35, g => {
+  A.line(g, [[0, .2], [0, -.32]], .036, INK); A.line(g, [[0, .2], [0, -.32]], .018, '#d8dce4');
+  A.dot(g, 0, .22, .075, INK); A.dot(g, 0, .22, .058, '#c82a3a'); A.dot(g, -.02, .2, .018, '#ffffff');
+});
+
+const Oldermann = {
+  NAVN: { naal: 'Knappenåler', kjede: 'Kjettinger', klubbe: 'Klubba', votering: 'Votering', eventuelt: 'Eventuelt' },
+  /* dagsorden i boblen: det som er gjort, strøket over, det han gjør nå, i rødt. sitat er en linje under */
+  boble(e, naa, sitat) {
+    const D = e.dagsorden; if (!D) return;
+    FX.bubble(e, 'Dagsorden', 3.6); const it = FX.items[FX.items.length - 1]; if (!it || it.target !== e) return;
+    const el = it.el, rad = (t, st) => { const d = document.createElement('div'); d.textContent = t; if (st) Object.assign(d.style, st); el.appendChild(d); return d; };
+    el.textContent = ''; el.style.textAlign = 'left'; if (!document.body.classList.contains('touch')) el.style.maxWidth = '250px';
+    rad('Dagsorden:', { fontWeight: 'bold' });
+    D.saker.forEach((k, i) => rad((i + 1) + '. ' + this.navn(D, k, i < naa || i === naa), i < naa ? { textDecoration: 'line-through', opacity: .5 } : i === naa ? { color: '#8a1a1a', fontWeight: 'bold' } : null));
+    if (sitat) rad('«' + sitat + '»', { fontStyle: 'italic', marginTop: '2px' });
+    return el;
+  },
+  navn(D, k, vis) { return k === 'eventuelt' && vis && D.ev ? 'Eventuelt: ' + this.NAVN[D.ev].toLowerCase() : this.NAVN[k]; },
+  /* bokslag, og så leser han opp. To saker og Eventuelt, tre etter årsmøtet */
+  les(e, T, toT) {
+    const valg = ['naal', 'kjede', 'klubbe', 'votering'].filter(k => k !== 'votering' || G.time >= (e.voteT || 0)), saker = [];
+    while (saker.length < (e.aarsmote ? 3 : 2) && valg.length) saker.push(valg.splice(Math.floor(Math.random() * valg.length), 1)[0]);
+    if (saker.includes('votering')) e.voteT = G.time + 20;
+    saker.push('eventuelt');
+    e.dagsorden = { saker, i: 0, cd: e.aarsmote ? .15 : .35, ev: null, vent: null };
+    (e.referat || (e.referat = [])).push({ saker: saker.slice(), utfort: [], t: G.time });
+    e.state = 'wind'; e.t = 1.9; e.face = toT; e.positur = { navn: 'lese', t: 0, dur: 1.8 };
+    Sound.play('bokslag', .8); this.boble(e, -1, e.referat.length === 1 ? 'Møtet er satt.' : null);
+  },
+  /* én sak: klubbeslag, boblen, og så saken. Står pasienten feil for saken, venter han litt, men aldri lenger enn 2,5 sekunder */
+  sak(e, T, dist, toT) {
+    const D = e.dagsorden, k = D.saker[D.i], P = G.player, sikt = los(e.x, e.z, T.x, T.z);
+    if (k === 'eventuelt' && !D.ev) D.ev = pick(['naal', 'kjede', 'klubbe']);
+    let s = k === 'eventuelt' ? D.ev : k;
+    const klar = s === 'naal' ? dist <= 9 && sikt : s === 'kjede' ? dist <= 10 && sikt : s === 'klubbe' ? dist <= 3.4 : true;
+    if (!klar && (D.vent === null || G.time - D.vent < 2.5)) { if (D.vent === null) D.vent = G.time; e.cd = .25; return; }
+    D.vent = null; const nr = D.i++, ref = e.referat[e.referat.length - 1]; ref.utfort.push(k); if (k === 'eventuelt') ref.ev = D.ev;
+    Sound.play('klubbe', .85); e.face = toT;
+    let sitat = null;
+    if (s === 'votering') {
+      const lar = G.enemies.filter(f => f.alive && f.type === 'laerling').length, plass = Math.min(2, 3 - lar, 14 - G.enemies.filter(f => f.alive).length);
+      if (plass <= 0) { s = 'klubbe'; sitat = 'Forslaget faller. Til orden!'; } else { sitat = 'Votering! Alle som er for?'; this.votering(e, plass); }
+    }
+    if (s === 'klubbe' && !sitat) sitat = pick(['Til orden!', 'Orden i salen!', 'Klubba har ordet.']);
+    if (s === 'kjede' && !sitat && Math.random() < .5) sitat = pick(['Kroker, takk.', 'Laugets kjettinger, nypusset.']);
+    this.boble(e, nr, sitat);
+    if (s === 'naal') this.naaler(e, toT); else if (s === 'kjede') this.kjeder(e, T); else if (s === 'klubbe') this.klubba(e);
+  },
+  /* knappenåler: rektangelet, så tre salver med fem nåler i vifte */
+  naaler(e, toT) {
+    const tid = .6, o = { x: e.x, z: e.z, a: toT, w: 2.2, len: 8, color: 0x8a5a2a, type: 'fysisk' };
+    e.state = 'wind'; e.t = tid + .7; e.positur = { navn: 'kast', t: 0, dur: tid + .1 };
+    addTele('rect', o, tid, () => {
+      for (let v = 0; v < 3; v++) bossLaterE(e, v * .22, () => {
+        if (!e.alive || e.stun > 0 || e.sleep > 0) return;
+        for (const da of [-.12, -.06, 0, .06, .12]) this.naal(e, o, o.a + da + rnd(-.015, .015));
+        Sound.play('naaler', .7, 1 + v * .08);
+      });
+    }, e);
+  },
+  naal(e, o, a) {
+    this.skutt = (this.skutt || 0) + 1; // telles, til testene
+    const x = o.x + Math.sin(a) * .6, z = o.z + Math.cos(a) * .6, m = propSprite(null, x, z, { P: naalPart(), shadow: false, y: 1.2 });
+    const sx = Math.sin(a), sy = -Math.cos(a) * Math.sin(CAM_PITCH); m.userData.m.rotation.z = Math.atan2(-sx, sy); R.dyn.add(m);
+    return addProj({ type: 'naal', from: 'enemy', x, z, vx: Math.sin(a) * 14, vz: Math.cos(a) * 14, dmg: e.dmg * .4, life: .56, r: .2, y: 1.2, cause: 'oldermann', mesh: m });
+  },
+  /* kjettinger: sølvringen der pasienten står, krokene fra mørket, og treffet drar pasienten inn til ham */
+  kjeder(e, T) {
+    const tid = 1, o = { x: T.x, z: T.z, r: 1.6, color: 0xc8ccd8, type: 'lenke' };
+    e.state = 'wind'; e.t = tid + .15; e.positur = { navn: 'ringe', t: 0, dur: tid };
+    Sound.play('bjelle', .3, 1.05);
+    addTele('circle', o, tid, () => {
+      const P = G.player; Sound.play('kjetting', .6, 1.05); R.shake(.15);
+      if (!Laug.treff('circle', o, e.dmg * .8, { type: 'oldermann', x: o.x, z: o.z }, .35, 'HEKTET') || !P.alive) return;
+      const a = Math.atan2(e.x - P.x, e.z - P.z), d = Math.hypot(e.x - P.x, e.z - P.z); P.kvx = Math.sin(a) * Math.min(15, d * 2.3); P.kvz = Math.cos(a) * Math.min(15, d * 2.3);
+    }, e);
+    bossLaterE(e, tid - .16, () => { if (e.state === 'wind' && !(e.stun > 0)) Laug.kjeder(o, 4); });
+  },
+  /* klubba: en ring rundt ham selv */
+  klubba(e) {
+    const tid = .8, o = { x: e.x, z: e.z, r: 2.6, color: 0x8a5a2a, type: 'fysisk' };
+    e.state = 'wind'; e.t = tid + .25; e.raise = true;
+    addTele('circle', o, tid, () => {
+      e.raise = false; e.positur = { navn: 'klubbeslag', t: 0, dur: .35 }; Sound.play('klubbe', 1, .8); Sound.play('slam', .6, 1.2); R.shake(.35);
+      Laug.treff('circle', o, e.dmg * 1.2, { type: 'oldermann', x: e.x, z: e.z, kb: 10 }); puff(e.x, e.z, 5, 1.6);
+    }, e);
+  },
+  /* votering: to lærlinger kommer og sier ja */
+  votering(e, n) {
+    e.state = 'wind'; e.t = 1.2; e.positur = { navn: 'klubbeslag', t: 0, dur: .4 };
+    for (let i = 0; i < n; i++) {
+      const s = freeSpot(e.x + rnd(-2, 2), e.z + rnd(-2, 2), 2);
+      addTele('circle', { x: s.x, z: s.z, r: .6, color: 0x8a5a2a, type: 'fysisk', stille: true }, .7 + i * .2, () => {
+        if (G.enemies.filter(f => f.alive && f.type === 'laerling').length >= 3 || G.enemies.filter(f => f.alive).length >= 14) return;
+        const l = spawnEnemy('laerling', s.x, s.z, false, G.depth); l.face = Math.atan2(G.player.x - l.x, G.player.z - l.z); l.positur = { navn: 'bukk', t: 0, dur: .8 };
+        FX.bubble(l, pick(['Ja!', 'Ja, Oldermann!', 'For!']), 1.2); Sound.play('bukk', .6);
+      }, e);
+    }
+  },
+  /* ved halv helse, én gang: han ringer selv, fire sølvringer rundt pasienten, og klokkeren kommer hvis han ikke er her */
+  aarsmote(e) {
+    e.aarsmote = true; e.state = 'wind'; e.t = 2.2; e.positur = { navn: 'ringe', t: 0, dur: 1.4 };
+    FX.bubble(e, 'Ekstraordinært årsmøte!', 2.2); Sound.play('bjelle', .6, 1.1); R.shake(.2);
+    for (let k = 0; k < 4; k++) bossLaterE(e, .15 + k * .3, () => {
+      if (!e.alive || e.stun > 0 || e.sleep > 0) return;
+      const P = G.player, v = rnd(0, TAU), r = k ? rnd(.8, 2.2) : 0, s = freeSpot(P.x + Math.sin(v) * r, P.z + Math.cos(v) * r, 2), o = { x: s.x, z: s.z, r: 1.3, color: 0xc8ccd8, type: 'lenke' };
+      Sound.play('bjelle', .3, 1.2 + k * .08);
+      addTele('circle', o, 1, () => { Laug.treff('circle', o, e.dmg * .7, { type: 'oldermann', x: o.x, z: o.z, kb: 2 }, .35, 'HEKTET'); Sound.play('kjetting', .45, 1.2); R.shake(.1); }, e);
+      bossLaterE(e, .84, () => { if (e.alive && !(e.stun > 0)) Laug.kjeder(o, 2); });
+    });
+    if (!G.enemies.some(f => f.alive && f.type === 'klokker') && G.enemies.filter(f => f.alive).length < 14) bossLaterE(e, .6, () => {
+      const s = freeSpot(e.x + rnd(-2.5, 2.5), e.z + rnd(-2.5, 2.5), 2), k = spawnEnemy('klokker', s.x, s.z, false, G.depth);
+      if (k && k.type === 'klokker') FX.bubble(k, 'Unnskyld, jeg ble holdt igjen.', 1.6);
+    });
+  }
+};
+Object.assign(Grotesk.keep, { oldermann: 2.6 });
+Object.assign(Grotesk.talk, { oldermann: 1 });
+Object.assign(Grotesk.hold, { oldermann: 1 });
+Object.assign(Grotesk.ai, {
+  oldermann(e, T, dist, toT) {
+    if (e.hp < e.max * .5 && !e.aarsmote) { Oldermann.aarsmote(e); e.cd = .4; return; }
+    if (!e.dagsorden) { Oldermann.les(e, T, toT); return; }
+    Oldermann.sak(e, T, dist, toT);
+  }
+});
+/* mellom sakene: kort pause, og ingen løse replikker som skjuler dagsorden. Når siste sak er gjort, heves møtet */
+Object.assign(Grotesk.tick, {
+  oldermann(e) {
+    const D = e.dagsorden; if (!D || e.state === 'wind') return null;
+    if (D.i >= D.saker.length) {
+      e.dagsorden = null; e.referat[e.referat.length - 1].ferdig = true; e.cd = rnd(1.6, 2.4);
+      FX.bubble(e, pick(['Møtet er hevet.', 'Referatet sendes Journalen.', 'Takk for tålmodigheten. Møtet er hevet.']), 1.6); Sound.play('klubbe', .9); e.positur = { navn: 'klubbeslag', t: 0, dur: .35 };
+      return null;
+    }
+    e.cd = Math.min(e.cd, D.cd); e.speechT = Math.max(e.speechT, 1.5);
+    return null;
+  }
+});
+
 /* ---------- fiendeindeksen ---------- */
 FIENDE_REKKE.push('laerling', 'klokker', 'holdning');
 Object.assign(FIENDE_INFO, {
   laerling: ['Skinnlaugets yngste, i et lærforkle som knirker. Elsker reimer og nagler og vil vise deg alle. Bukker, slår med reima og spenner deg fast.', 'Bukket er varselet. Gå til siden når han bøyer seg, og slå mens han ber om unnskyldning.'],
   klokker: ['Laugets klokker med sølvbjella. Slår aldri selv, men når bjella ringer, kommer krokene ut av mørket der du står.', 'Gå ut av sølvringen når bjella ringer. Ta ham først, ellers roper han på lærlingen.'],
-  holdning: ['Laugets holdningssøster. Snører deg inn med lærreimer så du går sakte og rett, og slår med tommestokken når du kommer nær.', 'Rull deg løs med en gang, snøret ryker når du ruller.']
+  holdning: ['Laugets holdningssøster. Snører deg inn med lærreimer så du går sakte og rett, og slår med tommestokken når du kommer nær.', 'Rull deg løs med en gang, snøret ryker når du ruller.'],
+  oldermann: ['Oldermannen i Skinnlauget, med nålepute på hodet og klubbe i hånden. Leser opp dagsorden før han slår, og gjør alt i den rekkefølgen han sa.', 'Les dagsorden i boblen. Han følger den alltid, og ved «Votering» kommer lærlingene.']
 });
+SJEF_REKKE.splice(SJEF_REKKE.indexOf('portier') + 1, 0, 'oldermann');
 
-Object.assign(window, { Laug, Grotesk, ROLLER, MESTER_TITTEL, DEATH_CAUSES, DEPTH_ENEMIES }); // til testene
+Object.assign(window, { Laug, Oldermann, MINISJEFER, naalPart, Grotesk, ROLLER, MESTER_TITTEL, DEATH_CAUSES, DEPTH_ENEMIES }); // til testene
