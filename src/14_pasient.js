@@ -295,4 +295,4 @@ const Pasient = {
     d.setParts(D.hode, D.kropp); for (const p of D.pynt) d.addAddon(p.P, p.L); return d;
   }
 };
-Object.assign(window, { hodeTopp, drawPasientHead, partMesh }); // til testene (del 56)
+Object.assign(window, { hodeTopp, drawPasientHead, partMesh, spriteReady }); // til testene (del 56)

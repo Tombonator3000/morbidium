@@ -417,7 +417,9 @@ LAGDUKKE.hjort = {
       A.flat(g, A.blob([[-1.0, -1.0], [.9, -1.0], [.8, -.92], [-.9, -.9]]), HJORT.skygge, 0);
       A.cel(g, A.poly([[-1.3, -1.25], [-1.55, -1.4], [-1.42, -1.1]]), '#ffffff', { line: HJORT.L, lw: .03 });
       for (const [x, y] of [[-.4, -1.4], [.3, -1.5], [.7, -1.3]]) A.flat(g, A.ell(x, y, .12, .05), 'rgba(200,190,180,.4)', 0);
-    }), x: 0, y: 0, z: 0 },
+      // kroppen fra ChatGPT har bunnen på festepunktet (ay .1 i manifestet), mens den tegnede kroppen svever .85 over bakken: bildet løftes
+      // så buken ligger over beina (de starter på .95) og halsen møter hodet, i stedet for at kroppen ligger på bakken under et hode som svever
+    }), x: 0, get y() { return spriteReady('hjort_kropp') ? .8 : 0; }, z: 0 },
     { P: () => Art.part('hjort_hode', 2.2, 3.4, 1.1, 1.1, g => {
       // halsen og hodet, med et trist menneskeansikt der snuten skulle vært
       A.cel(g, A.blob([[-.35, .9], [.15, .95], [.35, .2], [.2, -.2], [-.2, -.2], [-.4, .3]]), HJORT.pels, { line: HJORT.L });
