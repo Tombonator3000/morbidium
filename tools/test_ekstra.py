@@ -2205,6 +2205,82 @@ async def main():
         sjekk('ingen konsollfeil (hår og pynt)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 57) Snøfall
+        #     Snøen faller i tre lag på skjermkortet i stedet for 220 harde firkanter i en fast boks (6.png): midtlaget er Vaer.obj med vindsus,
+        #     to lag på lav kvalitet, boksen dekker det som synes på PC, stående og liggende telefon og med kameraavstand 1,25, tiden følger
+        #     spilltiden, alt ryddes når været stopper, enkel grafikk gir runde prikker i stedet for firkanter, gasslyktene får snø i lyset i stedet
+        #     for møll, sirissene tier og vindsuset øker i kastene, og snøen koster høyst tre tegnekall.
+        HJELP57 = """const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }),
+            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(40); }, ut = {};
+          // det synlige rektangelet i høyden h, fra hjørnene av bildet langs kameraets retning (uavhengig av hvordan snøen regner boksen)
+          const synlig = h => { const c = R.camera, f = new THREE.Vector3(); c.getWorldDirection(f); const r = { x0: 1e9, x1: -1e9, z0: 1e9, z1: -1e9 };
+            for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const p = new THREE.Vector3(a, b, -1).unproject(c); p.addScaledVector(f, (h - p.y) / f.y); r.x0 = Math.min(r.x0, p.x); r.x1 = Math.max(r.x1, p.x); r.z0 = Math.min(r.z0, p.z); r.z1 = Math.max(r.z1, p.z); } return r; };
+          const dekker = () => { const B = window.Sno && Sno.boks(); if (!B) return { ok: false, B }; const a = synlig(0), b = synlig(B.ytop * .98), inn = r => r.x0 >= B.x0 && r.x1 <= B.x1 && r.z0 >= B.z0 && r.z1 <= B.z1;
+            return { ok: inn(a) && inn(b), rimelig: B.x1 - B.x0 <= a.x1 - a.x0 + 4 && B.z1 - B.z0 <= b.z1 - a.z0 + 4, B: [B.x0, B.x1, B.z0, B.z1].map(v => +v.toFixed(1)), bunn: [a.x0, a.x1, a.z0, a.z1].map(v => +v.toFixed(1)), topp: [b.z0, b.z1].map(v => +v.toFixed(1)) }; };
+          const snoEtasje = async () => { let s = 1; for (; s < 600; s++) { const F = generateFloor(s + 7919, 1, {}); if (F.vaer === 'sno' && F.rooms.some(r => r.ute && r.template === 'hage')) break; }
+            G.run.seed = s; startFloor(1, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); R.shakeOn = false; const P = G.player; P.hp = P.maxHp = 1e6; P.invuln = 999;
+            const L = G.props.find(o => o.kind === 'lyktestolpe'), c = L ? freeSpot(L.x + 2, L.z + 1, 3) : P; P.x = c.x; P.z = c.z; P.vx = P.vz = 0; R.snapCamera(P.x, P.z); await spill(.4); return s; };
+          const kall = () => { const info = R.renderer.info; info.autoReset = false; info.reset(); R.render(0); const n = info.render.calls; info.autoReset = true; return n; };"""
+        LOGIKK57 = """async () => { """ + HJELP57 + """
+          ut.frø = await snoEtasje(); const F = G.F, har = !!window.Sno;
+          ut.lag = { vaer: F.vaer, n: har ? Sno.lag.length : -1, midt: har && Sno.lag.length > 1 && Vaer.obj === Sno.lag[1].pts, points: !!(Vaer.obj && Vaer.obj.isPoints), shader: !!(Vaer.obj && Vaer.obj.material.isShaderMaterial), lyd: Sound.vaerType };
+          // tiden i shaderen følger spilltiden og står i pausen
+          if (har) { const t0 = Sno.U.uTid.value, g0 = G.time; await spill(.5); ut.tid = { spill: +(G.time - g0).toFixed(3), sno: +(Sno.U.uTid.value - t0).toFixed(3) }; G.state = 'panel'; const t1 = Sno.U.uTid.value; await vent(400); ut.tid.pause = Sno.U.uTid.value - t1; G.state = 'play'; }
+          // gasslyktene har snø i lyset og ingen møll
+          const E = Glod.liste.filter(E => E.eier && E.eier.kind === 'lyktestolpe'); ut.lykt = { lykter: G.props.filter(o => o.kind === 'lyktestolpe').length, sno: E.filter(E => E.type === 'lyssno').length, moll: E.filter(E => E.type === 'moll').length };
+          // ingen sirisser, og vindsuset øker i et kast
+          Stemning.etasje = G.depth; if (har) Sno.kast = 0; const M0 = Stemning.maal(); if (har) Sno.kast = 1; const M1 = Stemning.maal(); if (har) Sno.kast = 0;
+          ut.lyd = { natt: 'amb_natt' in M0, vind0: M0.amb_vind ? +M0.amb_vind[0].toFixed(3) : 0, vind1: M1.amb_vind ? +M1.amb_vind[0].toFixed(3) : 0 };
+          // tegnekall: snøen mot ingen snø
+          await ramme(2); const k1 = kall(); const lag = har ? Sno.lag.map(L => L.pts) : []; const info = R.renderer.info; await ramme(2); const g1 = info.memory.geometries, t1 = info.memory.textures;
+          Vaer.stopp(); await ramme(3); const k0 = kall(), g0 = info.memory.geometries, t0 = info.memory.textures;
+          ut.kall = { med: k1, uten: k0 }; ut.rydd = { g1, g0, t1, t0, iScenen: lag.filter(o => o.parent).length + R.scene.children.filter(o => o.userData && o.userData.sno).length, obj: Vaer.obj, type: Vaer.type, lyd: Sound.vaerType || null };
+          // en runde til: tilbake til det samme
+          Vaer.start(F); await ramme(3); const g2 = info.memory.geometries; Vaer.stopp(); await ramme(3); ut.rydd.igjen = [g2, info.memory.geometries];
+          // enkel grafikk: ingen lag på skjermkortet, de gamle prikkene er runde og holder seg i en boks som følger kameraet
+          R.safe = true; Vaer.start(F); const V = Vaer, m = V.obj && V.obj.material; await spill(.6);
+          let paa = 0, levende = 0; if (V.obj) for (let i = 0; i < V.n; i++) { const y = V.p[i * 3 + 1]; if (y < -40) continue; levende++; const q = R.project(V.p[i * 3], y, V.p[i * 3 + 2]); if (q.x >= 0 && q.x <= innerWidth && q.y >= 0 && q.y <= innerHeight) paa++; }
+          ut.enkel = { lag: har ? Sno.lag.length : -1, points: !!(V.obj && V.obj.isPoints), kart: !!(m && m.map), str: m ? m.size : 0, andel: +(paa / Math.max(1, levende)).toFixed(2), type: V.type };
+          R.safe = false; Vaer.start(F); await spill(.3);
+          return ut; }"""
+        DEKNING57 = """async (kamera) => { """ + HJELP57 + """
+          R.view = 11.5 * kamera; R.resize(); await spill(.3); await ramme(2); return dekker(); }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ut = await pg.evaluate(LOGIKK57)
+        la = ut['lag']
+        sjekk('snøen faller i tre lag på skjermkortet, og midtlaget er Vaer.obj med vindsus (del 37)', la['vaer'] == 'sno' and la['n'] == 3 and la['midt'] and la['points'] and la['shader'] and la['lyd'] == 'vind', la)
+        ti = ut.get('tid', {})
+        sjekk('fnuggene faller med spilltiden og står stille i pausen', ti and abs(ti['sno'] - ti['spill']) < 1e-3 and ti['spill'] > .4 and ti['pause'] == 0, ti)
+        sjekk('gasslyktene har snø i lyset og ingen møll når det snør', ut['lykt']['lykter'] > 0 and ut['lykt']['sno'] >= ut['lykt']['lykter'] and ut['lykt']['moll'] == 0, ut['lykt'])
+        sjekk('ingen sirisser mens det snør, og vindsuset øker i kastene', not ut['lyd']['natt'] and ut['lyd']['vind0'] > 0 and ut['lyd']['vind1'] >= 1.7 * ut['lyd']['vind0'], ut['lyd'])
+        sjekk('snøen koster høyst tre tegnekall (2D)', 2 <= ut['kall']['med'] - ut['kall']['uten'] <= 3, ut['kall'])
+        rd = ut['rydd']
+        sjekk('Vaer.stopp rydder snøen: geometriene tilbake, ingen lag i scenen, ingen lyd', rd['g0'] <= rd['g1'] - 3 and rd['igjen'][1] == rd['g0'] and rd['igjen'][0] == rd['g1'] and rd['t0'] < rd['t1'] and rd['iScenen'] == 0 and rd['obj'] is None and rd['type'] is None and rd['lyd'] is None, rd)
+        en = ut['enkel']
+        sjekk('enkel grafikk: ingen snø på skjermkortet, de gamle prikkene er runde, og de fleste synes', en['lag'] == 0 and en['points'] and en['kart'] and en['str'] >= 4 and en['andel'] >= .6 and en['type'] == 'sno', en)
+        for navn, vp, kam in (('PC 1280x720', (1280, 720), 1), ('stående telefon 390x844', (390, 844), 1), ('liggende telefon 844x390', (844, 390), 1), ('PC med kameraavstand 1,25', (1280, 720), 1.25), ('stående telefon med kameraavstand 1,25', (390, 844), 1.25)):
+            await pg.set_viewport_size({'width': vp[0], 'height': vp[1]}); await pg.wait_for_timeout(500)
+            d = await pg.evaluate(DEKNING57, kam)
+            sjekk(f'boksen snøen faller i dekker det som synes fra bakken til toppen ({navn}), og er ikke mye større', d['ok'] and d['rimelig'], d)
+        sjekk('ingen konsollfeil (snøfall)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        UA57 = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        # og i 3D: tre lag på høy, to på lav, lyset fra lampene og tegnekallene, med skjermbilder på PC og stående telefon
+        for navn, kw in (('1280', {'viewport': {'width': 1280, 'height': 720}}), ('390', {'viewport': {'width': 390, 'height': 844}, 'has_touch': True, 'is_mobile': True, 'device_scale_factor': 2, 'user_agent': UA57})):
+            pg = await ny_side(b, **kw)
+            await start_lop(pg, url=URL3D)
+            ut = await pg.evaluate("""async () => { """ + HJELP57 + """
+              ut.frø = await snoEtasje(); await spill(1.5); const har = !!window.Sno;
+              ut.d3 = D3.on && D3.bygd; ut.kval = D3.kval(); ut.lag = har ? Sno.lag.length : -1; ut.lys = har ? Sno.U.uLysF.value.filter(v => v.x + v.y + v.z > .05).length : 0; ut.dekker = dekker().ok;
+              const k1 = kall(); Vaer.stopp(); const k0 = kall(); ut.kall = k1 - k0;
+              G.meta.settings.kvalitet = 1; ut.lavKval = D3.kval(); Vaer.start(G.F); ut.lav = har ? Sno.lag.length : -1; G.meta.settings.kvalitet = 0; Vaer.start(G.F); await spill(1.5);
+              return ut; }""")
+            await pg.screenshot(path=f'/tmp/e_57_sno_{navn}.png')
+            sjekk(f'3D ({navn}): tre lag på {ut["kval"]}, to på lav, lyset fra lampene når fnuggene, boksen dekker bildet og høyst tre tegnekall', ut['d3'] and ut['lag'] == 3 and ut['lavKval'] == 'lav' and ut['lav'] == 2 and ut['lys'] >= 1 and ut['dekker'] and 2 <= ut['kall'] <= 3, ut)
+            sjekk(f'ingen konsollfeil (snøfall i 3D, {navn})', not pg.errs, pg.errs[:6])
+            await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
