@@ -1105,3 +1105,7 @@ Alle tidspunkt er UTC.
 - Skeptikeren på A6 så at Hviskekoret (en minisjef) skriker med små sirkler (radius 1,5) omtrent hvert tredje sekund, og at hvert skrik ga merke i gulvet, sjokkbølge og risting, fordi nedslaget regnet alle angrep fra minisjefer som store.
 - Nå teller bare angrep med radius 2,2 eller mer, og angrep fra sjefene, som store, slik planen sa. Minisjefenes store angrep får fortsatt hele nedslaget. Varselet selv (ringen med tegn og sprekkene) er som før.
 - Del 49 er grønn.
+
+## 2026-09-27 11:22 Tredje vindu: vinter, havet og Holdningssøsteren ferdige, resten startet
+- Mellom 06:22 og omtrent 10:30 UTC ble disse ferdige og sjekket: A5 og A6 (blekkpartikler og nedslag), C1 og C2 (papiljottene med kontrollene fra grafikkleveransen, og snøfallet), B3 (vinter i teksturene), C5 og C6 (Avløpsarmen og Kapellanen, Draugpleieren og Holdningssøsteren). Spor A og D er flettet inn i grenen.
+- Bruksgrensen stoppet spor B midt i B4 (hint og innbrudd) og spor C midt i C7 (Oldermann Nålepute). Begge er startet igjen 11:22 UTC med det som står igjen: B4 og B6 i spor B, C7 og C8 (Kraken) i spor C.
