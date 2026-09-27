@@ -556,7 +556,7 @@ Møblene står i 3/4-vinkel: du ser fronten og litt av toppen. Bunnen av møbele
 | `skapf11.png` | skapf11 | stående | ja |
 | `skaps11.png` | skaps11 | stående | ja |
 | `sperre.png` | a barricade of wooden planks with red and white warning stripes | kvadrat | ja |
-| `sprekkvegg.png` | a cracked section of wall with light shining through the crack | stående | ja |
+| `sprekkvegg.png` | a wall bursting open: plaster and bricks breaking apart with light shining through the crack, a split-second burst frame when the secret wall breaks | stående | ja |
 | `vaskemaskin2.png` | two old industrial washing machines side by side with round glass doors, front view | liggende | ja |
 | `vaskemaskin3.png` | old industrial washing machines side by side with round glass doors, 3 tiles wide, front view | liggende | ja |
 | `verktoytavle1.png` | a pegboard with hanging tools (hammers, saws, keys), 1 tiles wide, front view | stående | ja |

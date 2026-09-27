@@ -123,7 +123,8 @@ const TIPS = {
   morb: { alle: 'Morbidium stiger i blodet. Over 60 kommer hikken, over 75 ser du ting som ikke er der.' },
   luke: { alle: 'Luka ned er åpen. Gå ned når du er klar. Det er ingen vei tilbake.' },
   sjef: { alle: 'En overlege. Hold avstand og rull unna de store slagene. Et rødt felt på gulvet betyr at noe kommer.' },
-  tv: { alle: 'Spiller du på TV? Slå på TV-modus under Innstillinger, Spill. Da blir teksten større.' }
+  tv: { alle: 'Spiller du på TV? Slå på TV-modus under Innstillinger, Spill. Da blir teksten større.' },
+  sprekk: { kb: 'Noen vegger er murt igjen. Kjenner du trekk eller ser ny puss, hold høyre knapp for et tungt slag mot veggen.', pad: 'Noen vegger er murt igjen. Kjenner du trekk eller ser ny puss, hold X for et tungt slag mot veggen.', touch: 'Noen vegger er murt igjen. Kjenner du trekk eller ser ny puss, prøv Tungt mot veggen.' }
 };
 const Tips = {
   vis(id, forsink = 0) {

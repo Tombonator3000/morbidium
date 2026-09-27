@@ -105,10 +105,13 @@ function thornArt() {
   });
 }
 const Spesial = {
-  cracks: [], dustT: 0,
+  cracks: [], naerT: 0, sagt: false, hul: false, bankT: -9, sistProps: 0,
   onFloor() {
     const F = G.F; this.cracks = [];
-    for (const i of F.crack || []) { const x = i % F.W, z = (i / F.W) | 0, g = propSprite(null, x + .5, z + .96, { P: propArt({ k: 'sprekk' }) }); R.level.add(g); this.cracks.push({ i, x: x + .5, z: z + .5, g, hp: 3 }); }
+    // sprekken er en flekk nyere puss med en hårfin sprekk på den lukkede veggen (48_skjult.js). Uten det skjulte (når delingen feilet) står murkassen der som før
+    this.naerT = 0; this.sagt = false; this.hul = false; this.bankT = -9;
+    for (const i of F.crack || []) { const x = i % F.W, z = (i / F.W) | 0, g = G.skjult ? null : propSprite(null, x + .5, z + .96, { P: propArt({ k: 'sprekk' }) }); if (g) R.level.add(g); this.cracks.push({ i, x: x + .5, z: z + .5, g, hp: 3 }); }
+    if (G.skjult) try { Skjult.lagDekal(); } catch (e) { console.warn('flekken på sprekken feilet', e); }
     for (const r of F.rooms) if (r.role === 'cursed') for (const d of r.doors) { const x = d % F.W, z = (d / F.W) | 0; R.level.add(propSprite(null, x + .5, z + .5, { P: thornArt(), flat: true })); R.light(x + .5, z + .5, 1.3, '#ff3a2a', .4, R.levelL); }
     for (const r of F.rooms) if (r.role === 'secret' && !G.skjult) { const t = freeSpot(r.x + 1.5, r.z + 1.5, 2); for (let i = 0; i < 3; i++) dropPickup(t.x + i * .3, t.z, 'tooth', 1); dropPickup(t.x, t.z + .4, 'cons', pick(Object.keys(PILL_COL))); }
   },
@@ -120,20 +123,36 @@ const Spesial = {
       if (d > range + .6 || (d > .8 && Math.abs(angDiff(Math.atan2(dx, dz), face)) > arc / 2)) continue;
       this.damage(c, power); n++; break;
     }
+    if (!n) this.bank(x, z, face, range, arc);
     return n;
+  },
+  /* banking på en vanlig vegg: et dumpt, tett slag (høyst hvert 0,4 sekund), men bare når slaget ikke traff noen eller noe annet.
+     Sprekken svarer hult, med «Det knaker» */
+  bank(x, z, face, range, arc) {
+    const F = G.F; if (!F || !Paint.wallH || G.time - this.bankT < .4 || this.sistProps) return;
+    const tx = Math.floor(x + Math.sin(face) * 1.1), tz = Math.floor(z + Math.cos(face) * 1.1); if (tx < 0 || tz < 0 || tx >= F.W || tz >= F.H || !(Paint.wallH[tz * F.W + tx] > 0)) return;
+    const naer = (ox, oz, r) => { const dx = ox - x, dz = oz - z, d = Math.hypot(dx, dz); return d <= range + r && (d <= .8 || Math.abs(angDiff(Math.atan2(dx, dz), face)) <= arc / 2); };
+    for (const e of G.boss && !G.boss.gone ? G.enemies.concat([G.boss]) : G.enemies) if (!e.gone && e.state !== 'spawn' && naer(e.x, e.z, e.r || .4)) return; // også en som nettopp døde av slaget
+    this.bankT = G.time; Sound.play('veggbank', 1, .94 + Math.random() * .12);
+    const px = x + Math.sin(face) * .85, pz = z + Math.cos(face) * .85; puff(px, pz, 1, .45, '#8a7a66');
   },
   boom(x, z, r) { for (const c of this.cracks) if (!c.broken && d2(c.x, c.z, x, z) < (r + .8) ** 2) { this.damage(c, 3); break; } },
   damage(c, n) {
     c.hp -= n; puff(c.x, c.z + .3, 2, .8, '#b8a888'); Particles.spawn(c.x, 1, c.z + .3, 6, 0xb8a888, { speed: 3, up: 3, life: .6 }); Sound.play('bonk', .8, .6); R.shake(.12);
-    if (c.hp > 0) { numText(c.x, c.z, 'Det knaker', 'info', 1.9); return; }
-    for (const k of this.cracks) { if (k.broken) continue; k.broken = true; G.F.block[k.i] = 0; R.remove(k.g); puff(k.x, k.z, 4, 1.2, '#b8a888'); Particles.spawn(k.x, .8, k.z, 14, 0x8a7a5a, { speed: 5, up: 5, life: .9 }); }
-    Sound.play('door', 1, .7); Sound.play('clear', .6); R.shake(.4); toast('Et hemmelig rom', 'Veggen var bare kulisse'); G.run.secrets = (G.run.secrets || 0) + 1; G.flowT = 0;
+    if (c.hp > 0) { numText(c.x, c.z, 'Det knaker', 'info', 1.9); if (!this.hul) { this.hul = this.sagt = true; FX.bubble(G.player, 'Den er hul.', 1.4); Tips.vis('sprekk', 700); } return; }
+    // med det skjulte rommet tar innbruddet i 48_skjult.js over (støv, lys og møbler); uten det knuses murkassen som før
+    const gml = !G.skjult;
+    for (const k of this.cracks) { if (k.broken) continue; k.broken = true; G.F.block[k.i] = 0; if (k.g) R.remove(k.g); if (gml) { puff(k.x, k.z, 4, 1.2, '#b8a888'); Particles.spawn(k.x, .8, k.z, 14, 0x8a7a5a, { speed: 5, up: 5, life: .9 }); } }
+    if (gml) { Sound.play('door', 1, .7); R.shake(.4); }
+    Sound.play('clear', .6); toast('Et hemmelig rom', 'Veggen var bare kulisse'); G.run.secrets = (G.run.secrets || 0) + 1; G.flowT = 0;
   },
   update(dt) {
-    const P = G.player; if (!P) return; this.dustT -= dt;
+    const P = G.player; if (!P) return;
     // fluer rundt likene
     for (const C of G.corpses || []) if (d2(C.x, C.z, P.x, P.z) < 100 && Math.random() < dt * 2.5) Particles.spawn(C.x + rnd(-.6, .6), rnd(.4, 1), C.z + .2, 1, 0x1a1a14, { speed: 1.2, up: .6, g: -.5, life: .9, size: .45 });
-    if (this.dustT <= 0) { this.dustT = .6; for (const c of this.cracks) if (!c.broken && d2(c.x, c.z, P.x, P.z) < 30) { Particles.spawn(c.x + rnd(-.3, .3), 1.4, c.z + .4, 1, 0xd8ccb0, { speed: .6, up: .5, g: 1.5, life: 1.1, size: .6 }); if (Math.random() < .08) FX.bubble(P, pick(['Det trekker herfra.', 'Den veggen ser tynn ut.', 'Er det noen der inne?']), 1.6); break; } }
+    // én boble per etasje: etter to sekunder innen to og en halv rute fra sprekken (trekken, lyden og flekken står i 48_skjult.js)
+    if (!this.sagt && P.alive) { let naer = false; for (const c of this.cracks) if (!c.broken && d2(c.x, c.z, P.x, P.z) < 6.25) { naer = true; break; }
+      if (naer && (this.naerT += dt) >= 2) { this.sagt = true; FX.bubble(P, pick(Skjult.ord()), 1.8); Tips.vis('sprekk', 900); } }
   },
   interact(consider) {
     const P = G.player;
