@@ -982,3 +982,9 @@ Alle tidspunkt er UTC.
 - Byggetiden: det første forsøket kostet rundt 200 ms ekstra per etasje i testnettleseren. Hver klatt koster like mye å fylle, stor eller liten, så nå ligger klattene to per rute på skrå, ruter med dyp snø rundt seg blir rektangler (bare kanten har klatter), ruter i rad slås sammen, snøen klippes ikke til skyggen, og rillene og glitteret fylles i én sti hver. Nå er det rundt 35 ms, og etasjen bygges på 1,2 ganger tiden uten snø.
 - Test 52 «Vinter» (13 sjekker, 2D, 3D, telefon, lette teksturer og Enkel grafikk) er grønn og feiler på bygget fra før (1ff4a4f). Sjekken for kutt langs rutene teller bare par der minst ett punkt er snø; bar bakke har sine egne fuger langs rutene. Del 24, 36 og 37 er grønne, og test_gen.js likeså.
 - Skjermbilder til Tom i r5_bilder: 52_vinter_for og _etter i 1280 og 390x844 (samme etasje og sted, 3D) og 52_vinter_etter_2d.
+
+## 2026-09-27 09:52 Skeptikeren på vinteren i teksturene (B3)
+- Sjekket: snoDekke (støyen med eget frø, terskelen, sørpa, ilden, fonnene, isen, rillene og glitteret, lette teksturer), snoKant på vegger med og uten utklipp, snøtoppene, snøbakken, trærne, lyset, tåka og fargetonen, byggetiden, grafikkminnet og test 52. Skjermbildene i r5_bilder (52_vinter_*): snøen er ett lag med blå skygge og myk kant, ikke bobleplast, og den leses godt på telefon, i 2D og i 3D.
+- Rettet: en vegg fikk snøbånd og istapper på fronten når den hadde snø på en hvilken som helst side, også når fronten vender inn i en paviljong. På Parken med liggehall i test 52 var det åtte slike fronter inne i paviljongene. Nå får fronten snø bare når ruta foran den ikke er et innerom; toppen blir fortsatt hvit.
+- Test 52 sjekker nå at ingen snøfront vender inn i en paviljong (og at det finnes slike fronter å sjekke).
+- Del 52, 24, 37 og 36 er grønne (52: 58 fronter inn i paviljonger, ingen med snø; byggetiden 216 mot 177 ms, grafikkminnet +0 og +0). Bygget har 544 innebygde bilder.

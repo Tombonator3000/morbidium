@@ -2207,7 +2207,9 @@ async def main():
           const ca = Paint.mesh.topp.geometry.attributes.color.array; let snoTopp = 0; for (let k = 0; k < ca.length; k += 3) if (Math.abs(ca[k] - .875) < .05 && Math.abs(ca[k + 1] - .902) < .05 && Math.abs(ca[k + 2] - .937) < .05) snoTopp++;
           const bk = Paint.mesh.bakke.material.map, bi = bk.image, bd = bi.getContext ? bi.getContext('2d').getImageData(0, 0, bi.width, bi.height).data : null; let bl = 0; if (bd) { for (let k = 0; k < bd.length; k += 16) bl += (.2126 * bd[k] + .7152 * bd[k + 1] + .0722 * bd[k + 2]) / 255; bl /= bd.length / 16; }
           const amb = R.post.uniforms.uAmbient.value;
-          return { vaer: F.vaer, T, n, dekke: +(lys / Math.max(1, n)).toFixed(3), maks, snoFarge: sf, over: +(over / Math.max(1, nb)).toFixed(3), inne: +(inne / Math.max(1, nb)).toFixed(3), nb,
+          // fronter som vender inn i en paviljong (et innerom sør for veggen): ingen av dem har snøbånd og istapper
+          const inn = ms => ms.reduce((n, m) => { const p = m.geometry.attributes.position.array; for (let k = 0; k < p.length; k += 18) { const x = Math.floor(p[k] + 1e-4), z = Math.round(p[k + 2]), i = z * F.W + x; if (z < F.H && F.tiles[i] && !ute(i)) n++; } return n; }, 0);
+          return { vaer: F.vaer, T, n, innSno: inn(sv), innAlle: inn(Paint.mesh.vegger), dekke: +(lys / Math.max(1, n)).toFixed(3), maks, snoFarge: sf, over: +(over / Math.max(1, nb)).toFixed(3), inne: +(inne / Math.max(1, nb)).toFixed(3), nb,
             snoVegger: sv.length, stil: hk && hk.userData.veggStil, topp12: +topp12.toFixed(3), snoTopp, bakke: +bl.toFixed(3), bakkeRute: +((F.W + 48) / bk.repeat.x).toFixed(2), amb: '#' + amb.getHexString() }; }"""
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await start_lop(pg)
@@ -2231,6 +2233,7 @@ async def main():
         sjekk('vinter: snøen dekker minst 70 % av uterutene (lysstyrke over .72), og ingen punkter er helt hvite', s5['n'] == 400 and s5['dekke'] >= .7 and s5['maks'] < 250, s5)
         sjekk('vinter: ingen kutt langs rutene (forskjellen over 200 rutegrenser er høyst 1,5 ganger den midt i rutene)', s5['nb'] == 200 and s5['over'] <= 1.5 * s5['inne'], (s5['over'], s5['inne'], s5['nb']))
         sjekk('vinter: veggene mot snøen har snøbånd (øverste 12 punkter lyse) og hvit topp', s5['snoVegger'] > 0 and s5['topp12'] > .8 and s5['snoTopp'] > 0, (s5['snoVegger'], s5['stil'], s5['topp12'], s5['snoTopp']))
+        sjekk('vinter: fronter som vender inn i en paviljong har ikke snøbånd eller istapper', s5['innAlle'] > 0 and s5['innSno'] == 0, (s5['innAlle'], s5['innSno']))
         sjekk('vinter: bakken ute er snø, gjentatt hver tiende rute, og lyset er kaldere', s5['bakke'] > .7 and abs(s5['bakkeRute'] - 10) < .01 and s5['amb'] != r5['amb'], (s5['bakke'], s5['bakkeRute'], s5['amb'], r5['amb']))
         sjekk('vinter: en Parken uten snø har ingen snøfarger, snøvegger, snøtopper eller snøbakke', r5['snoFarge'] <= 2 and r5['snoVegger'] == 0 and r5['snoTopp'] == 0 and r5['bakke'] < .5 and abs(r5['bakkeRute'] - 5) < .01, r5)
         sjekk('vinter: lette teksturer og Enkel grafikk har også snøen', l5['T'] == 16 and l5['dekke'] >= .6 and l5['maks'] < 250 and e5['dekke'] >= .7 and e5['snoVegger'] > 0, (l5['T'], l5['dekke'], e5['dekke'], e5['snoVegger']))
