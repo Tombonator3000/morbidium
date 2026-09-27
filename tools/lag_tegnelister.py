@@ -613,7 +613,7 @@ for (const L of DATA.lister) {
     cb.onchange = () => { if (cb.checked) levert[A.fil] = 1; else delete levert[A.fil]; lagre(); kort.classList.toggle('ferdig', cb.checked); skjul(); };
     const kopiFil = el('button', { class: 'knapp', type: 'button', text: 'Kopier filnavn' }); kopiFil.onclick = () => kopier(A.fil, kopiFil, 'Kopier filnavn');
     const kopiP = el('button', { class: 'knapp', type: 'button', text: 'Kopier prompten' }); kopiP.onclick = () => kopier(A.prompt, kopiP, 'Kopier prompten');
-    kort.append(
+    kort.append(...[ // DOM-append skriver «null» for en tom plass, så de tomme tas ut
       el('div', { class: 'topp' }, el('span', { class: 'nr', text: A.nr }), el('h3', { text: A.tittel }), el('span', { class: 'merke', text: A.type })),
       el('div', { class: 'fil' }, el('code', { text: A.fil }), kopiFil),
       A.mal ? el('div', { class: 'linje', html: `Mal: <b>maler/${A.mal}</b>` }) : null,
@@ -622,7 +622,7 @@ for (const L of DATA.lister) {
       A.ref ? el('div', { class: 'bilde' }, el('img', { class: 'ref', src: A.ref, alt: 'Dagens kodetegning for ' + A.tittel, loading: 'lazy' }), el('div', { class: 'linje', text: 'Referanse: last opp sammen med ' + (A.mal ? 'malen' : 'prompten') })) : null,
       el('pre', { text: A.prompt }),
       el('div', { class: 'rad' }, kopiP, el('label', { class: 'levert', for: 'lev-' + A.nr }, cb, el('span', { text: 'Levert' })))
-    );
+    ].filter(Boolean));
     sek.append(kort);
   }
   lister.append(sek);

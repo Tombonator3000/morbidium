@@ -135,7 +135,7 @@ TEKSTUR = {
   'vegg_stein': 'Grey dressed stone blocks of uneven length, 3 to 4 courses per metre, #6a6660 to #848078, dark joints #2e2a26, chipped corners, old soot.',
   'vegg_polstret': 'Quilted padded canvas (#e2d8be), diagonal tufting forming diamonds about 25 cm wide, a cloth button at every crossing, a few brown stains, one torn seam with stuffing.',
   'vegg_tre': 'Vertical board-and-batten, boards about 17 cm wide, #6a4a2c to #86603a, dark gaps, a few knots and nail heads.',
-  'vegg_paviljong': 'Layout from the bottom: 0-10% a green-painted base (#5e7a4a) with a dark top edge; 10-100% white horizontal clapboard (#d8d0b8), boards about 14 cm high with a thin shadow under each; no corner posts.',
+  'vegg_paviljong': 'Layout from the bottom: 0-7% a green-painted base (#5e7a4a) with a dark top edge; 7-100% white horizontal clapboard (#d8d0b8), boards about 14 cm high with a thin shadow under each, crossed by a flat white-painted rail at 43-46% and a white cornice board at 94-100%; no corner posts.',
   'vegg_tommer': 'Round horizontal logs, about 4 per metre, lit on top (#8a6440) and dark underneath (#3e2814), pale chinking (#c8b48a) between them, cracks and knots, no log ends.',
   'vegg_skog': 'The edge of a dark night forest from the side: birch trunks (#d8d4c8 with black marks) and spruce trunks (#2a2018) of varied widths, dense needles (#10200e, #1a3014) in the upper half, almost black toward the ground; the top edge is canopy, no sky.',
   'vegg_steinmur': 'A low dry-stone wall of rounded field stones (#6e6a60 to #8a8676) in dark joints, green moss (#3e5a28) along the top.',
