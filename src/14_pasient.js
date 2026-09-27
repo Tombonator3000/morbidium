@@ -40,34 +40,36 @@ const PAS_KLAER = {
   serk: { navn: 'nattserk', vekt: [8, 24], farger: ['#efe6d2', '#f2f2ee', '#ead2da', '#d8e0ec'] }
 };
 const PAS_SKO = { tofler: ['tøfler', 35], hvit: ['sykehusklogger', 20], barfot: ['bare føtter', 18], sokk: ['ullsokker', 22], stovel: ['støvler', 5] };
-/* pynt på hodet: at hode, off per visning i forhold til hodets festepunkt, face = skjules bakfra */
+/* pynt på hodet: at hode, off per visning i forhold til hodets festepunkt, face = skjules bakfra, skala krymper bildet.
+   Tallene gjelder hodene fra ChatGPT, der den tette issen når .78 over festepunktet (hårtustene .90). deler() flytter pynten
+   som ikke sitter i ansiktet, etter hvor høyt hodet faktisk er (hodeTopp), så det tegnede reservehodet (.88) også passer */
 const PAS_PYNT = {
-  nattlue: { navn: 'nattlue', w: .9, h: .72, off: { f: [.02, .86], s: [-.06, .86], b: [.02, .86] }, vekt: [10, 8], draw: col => g => {
+  nattlue: { navn: 'nattlue', w: .9, h: .72, off: { f: [.02, .84], s: [-.05, .84], b: [.02, .84] }, vekt: [10, 8], draw: col => g => {
     const hat = A.blob([[-.36, .16], [-.3, -.08], [-.06, -.2], [.2, -.16], [.34, -.02], [.4, .16], [.34, .2], [.3, .06], [.2, .02], [0, .06], [-.2, .1]]);
     A.cel(g, hat, col, { lw: .035 }); g.save(); hat(g); g.clip(); for (let i = -4; i < 5; i++) A.line(g, [[i * .1 - .05, .3], [i * .1 + .12, -.3]], .045, '#f4f0e6'); g.restore(); A.ink(g, hat, .035);
     A.cel(g, A.rr(-.4, .1, .8, .1, .04), '#f4f0e6', { lw: .03, hi: false }); A.cel(g, A.ell(.38, .24, .07, .07), '#f4f0e6', { lw: .03 });
   }, farger: ['#b3261e', '#3a5a9a', '#4a7a4a'] },
-  papiljotter: { navn: 'papiljotter', w: .9, h: .4, off: { f: [0, .88], s: [-.06, .86], b: [0, .88] }, vekt: [2, 12], draw: () => g => {
+  papiljotter: { navn: 'papiljotter', w: .9, h: .4, skala: .75, off: { f: [0, .70], s: [.02, .71], b: [0, .69] }, vekt: [2, 12], draw: () => g => {
     const C = ['#f2a8c8', '#9ac8e8', '#f0d878', '#f2a8c8', '#9ac8e8'];
     for (let i = 0; i < 5; i++) { const x = -.3 + i * .15, y = Math.abs(i - 2) * .05 - .02; g.save(); g.translate(x, y); g.rotate((i - 2) * .25); A.cel(g, A.rr(-.06, -.09, .12, .18, .05), C[i], { lw: .03, hi: false }); A.line(g, [[-.05, 0], [.05, 0]], .015, Col.dark(C[i], .7)); g.restore(); }
   } },
-  harnett: { navn: 'hårnett', w: .9, h: .56, off: { f: [0, .8], s: [-.04, .8], b: [0, .8] }, vekt: [1, 8], draw: () => g => {
+  harnett: { navn: 'hårnett', w: .9, h: .56, skala: .9, off: { f: [0, .72], s: [-.02, .72], b: [0, .72] }, vekt: [1, 8], draw: () => g => {
     const dome = A.blob([[-.4, .2], [-.36, -.08], [-.16, -.24], [.16, -.24], [.36, -.08], [.4, .2], [0, .12]]);
     g.save(); dome(g); g.clip(); g.globalAlpha = .7; for (let i = -6; i < 7; i++) { A.line(g, [[i * .08 - .3, .3], [i * .08 + .3, -.3]], .012, '#2a2a30'); A.line(g, [[i * .08 + .3, .3], [i * .08 - .3, -.3]], .012, '#2a2a30'); } g.restore();
     A.line(g, [[-.4, .18], [0, .12], [.4, .18]], .025, '#2a2a30');
   } },
-  hjelm: { navn: 'beskyttelseshjelm', w: .96, h: .66, off: { f: [0, .8], s: [-.03, .8], b: [0, .8] }, vekt: [7, 5], draw: () => g => {
+  hjelm: { navn: 'beskyttelseshjelm', w: .96, h: .66, skala: .92, off: { f: [0, .76], s: [-.03, .76], b: [0, .76] }, vekt: [7, 5], draw: () => g => {
     const L = '#7a5234', dome = A.blob([[-.42, .16], [-.4, -.06], [-.2, -.2], [.2, -.2], [.4, -.06], [.42, .16], [0, .12]]);
     A.cel(g, dome, L, { lw: .04 }); g.save(); dome(g); g.clip(); for (const x of [-.2, 0, .2]) A.curve(g, [x * 1.4, .16], [x * 1.2, -.05], [x * .6, -.24], .025, Col.dark(L, .6)); g.restore();
     A.cel(g, A.rr(-.44, .08, .88, .1, .04), Col.dark(L, .8), { lw: .03, hi: false }); for (const x of [-.3, -.1, .1, .3]) A.dot(g, x, .13, .018, '#c8a040');
   } },
-  rosett: { navn: 'sløyfe', w: .4, h: .28, off: { f: [.27, .8], s: [-.2, .8], b: [-.27, .8] }, vekt: [0, 12], draw: col => g => {
+  rosett: { navn: 'sløyfe', w: .4, h: .28, off: { f: [.2, .70], s: [-.2, .68], b: [-.2, .68] }, vekt: [0, 12], draw: col => g => {
     for (const s of [-1, 1]) A.cel(g, A.poly([[0, 0], [s * .16, -.1], [s * .17, .1]]), col, { lw: .03, hi: false }); A.cel(g, A.ell(0, 0, .05, .05), Col.dark(col, .8), { lw: .03, hi: false });
   }, farger: ['#c8322a', '#3a6ab0', '#e8a0c0', '#1f1714'] },
-  plaster: { navn: 'plaster', w: .24, h: .24, face: true, off: { f: [-.15, .66], s: [.16, .66] }, vekt: [6, 5], draw: () => g => {
+  plaster: { navn: 'plaster', w: .24, h: .24, face: true, off: { f: [-.15, .6], s: [.16, .6] }, vekt: [6, 5], draw: () => g => {
     for (const r of [.7, -.7]) { g.save(); g.rotate(r); A.cel(g, A.rr(-.1, -.03, .2, .06, .02), '#e8c08a', { lw: .018, hi: false }); g.restore(); }
   } },
-  sting: { navn: 'sting', w: .4, h: .16, face: true, off: { f: [.06, .7], s: [.14, .72] }, vekt: [5, 3], draw: () => g => {
+  sting: { navn: 'sting', w: .4, h: .16, face: true, off: { f: [.06, .6], s: [.14, .62] }, vekt: [5, 3], draw: () => g => {
     A.curve(g, [-.15, .02], [0, -.03], [.15, .02], .025, '#8a2a2a'); for (let i = 0; i < 5; i++) { const x = -.12 + i * .06; A.line(g, [[x, -.04], [x + .01, .05]], .014, '#1f1714'); }
   } }
 };
@@ -76,6 +78,14 @@ const PAS_PYNT = {
 function pasTorso(v, bunn = 0, bred = .34) {
   const w = v === 's' ? bred * .8 : bred;
   return A.blob([[-w, bunn], [-w * .5, bunn + .02], [w * .5, bunn + .02], [w, bunn], [w * .9, -.62], [w * .92, -.74], [.12, -.84], [-.12, -.84], [-w * .92, -.74], [-w * .9, -.62]]);
+}
+/* hvor høyt hodets tette isse når over festepunktet, målt én gang per hodetegning: blokker på 4 x 12 punkter midt på hodet
+   som er minst tre fjerdedeler dekket, så tynne hårtuster ikke teller. Hodene fra ChatGPT gir .78, det tegnede reservehodet omtrent .88 */
+function hodeTopp(P) {
+  if (!P || !P.canvas) return .78; if (P.topp !== undefined) return P.topp;
+  let t = .78;
+  try { const W = P.canvas.width, H = P.canvas.height, a = P.canvas.getContext('2d').getImageData(0, 0, W, H).data, x0 = Math.round(P.ax * PX); for (let y = 0; y + 4 <= H; y += 4) { let n = 0; for (let yy = y; yy < y + 4; yy++) for (let x = x0 - 6; x < x0 + 6; x++) if (a[(yy * W + x) * 4 + 3] > 128) n++; if (n >= 36) { t = P.h - P.ay - y / PX; break; } } } catch (e) { }
+  return (P.topp = t);
 }
 function clipDraw(g, path, fn) { g.save(); path(g); g.clip(); fn(); g.restore(); }
 function drawTvang(v, C) {
@@ -257,9 +267,9 @@ const Pasient = {
     return shoePart('barfot:' + this.hudHex(L));
   },
   pyntPart(k) {
-    const [id, col] = k.split(':'), D = PAS_PYNT[id], key = 'pynt_' + id;
-    if (spriteReady(key)) { const P = Art.part(key, D.w, D.h, D.w / 2, D.h / 2, () => { }); return col && SPR_FARGE[id] && D.farger && col !== D.farger[0] ? omfargPart(P, key + '~' + col.replace('#', ''), sprMap(SPR_FARGE[id], col)) : P; }
-    return Art.part(key + (col ? '~' + col.replace('#', '') : ''), D.w, D.h, D.w / 2, D.h / 2, D.draw(col || (D.farger && D.farger[0])));
+    const [id, col] = k.split(':'), D = PAS_PYNT[id], key = 'pynt_' + id, s = D.skala || 1, w = D.w * s, h = D.h * s;
+    if (spriteReady(key)) { const P = Art.part(key, w, h, w / 2, h / 2, () => { }); return col && SPR_FARGE[id] && D.farger && col !== D.farger[0] ? omfargPart(P, key + '~' + col.replace('#', ''), sprMap(SPR_FARGE[id], col)) : P; }
+    const tegn = D.draw(col || (D.farger && D.farger[0])); return Art.part(key + (col ? '~' + col.replace('#', '') : ''), w, h, w / 2, h / 2, g => { g.scale(s, s); tegn(g); });
   },
   /* alt som trengs for å tegne pasienten: deler per visning, farger på lemmer, sko og pynt */
   deler(look) {
@@ -268,7 +278,8 @@ const Pasient = {
     const hud = this.hudHex(L), arm = { kape: L.klaer === 'kape' && PAS_KAPE[L.farge] ? hexMap('#e0a33a', klaerMap(PAS_KAPE[L.farge])) : '#e0a33a', tvang: L.farge, skjorte: hud, pyjamas: L.farge, serk: L.farge }[L.klaer];
     const D = { key, look: L, hode: {}, kropp: {}, rig: { arm, leg: L.klaer === 'pyjamas' ? L.farge : hud, hand: L.klaer === 'tvang' ? Col.dark(L.farge, .92) : hud, shoe: L.sko }, sko: this.sko(L), pynt: [] };
     for (const v of ['f', 'b', 's']) { D.hode[v] = this.hode(L, v); D.kropp[v] = this.kropp(L, v); }
-    for (const k of L.pynt) { const P0 = PAS_PYNT[k.split(':')[0]]; D.pynt.push({ P: this.pyntPart(k), L: { at: 'head', off: P0.off, face: !!P0.face } }); }
+    // pynten som ikke sitter i ansiktet, flyttes like mye som hodet er høyere eller lavere enn hodene fra ChatGPT (issen på .78)
+    for (const k of L.pynt) { const P0 = PAS_PYNT[k.split(':')[0]], off = {}; for (const v in P0.off) { const H = D.hode[v] || D.hode.f; off[v] = [P0.off[v][0], P0.off[v][1] + (P0.face ? 0 : hodeTopp(H) - .78)]; } D.pynt.push({ P: this.pyntPart(k), L: { at: 'head', off, face: !!P0.face } }); }
     if (L.klaer === 'tvang' || L.klaer === 'serk') D.rig.armW = RIG.pasient.armW + .02;
     this.cache.set(key, D); return D;
   },
@@ -284,3 +295,4 @@ const Pasient = {
     d.setParts(D.hode, D.kropp); for (const p of D.pynt) d.addAddon(p.P, p.L); return d;
   }
 };
+Object.assign(window, { hodeTopp, drawPasientHead, partMesh }); // til testene (del 56)

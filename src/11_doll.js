@@ -141,7 +141,9 @@ class Doll {
       const base = a.L.at === 'body' || !this.head ? this.body : this.head, off = a.L.off[v] || a.L.off.f;
       if (a.L.views) { const P = a.L.views[v] || a.L.views.f; if (P) setPart(a.m, P); a.m.visible = !!(a.L.views[v] || (v !== 'b' && a.L.views.f)); } else a.m.visible = !(a.L.face && v === 'b');
       if (a.m.userData.skjult || (a.L.bare && !a.L.bare.includes(v))) a.m.visible = false; // skjult av spillet, eller bare synlig i noen visninger
-      a.m.position.set(base.position.x + off[0], base.position.y + off[1], base.position.z + (a.L.behind ? -.004 : .004)); a.m.rotation.z = base.rotation.z;
+      // forskyvningen dreies med hodet, så pynten følger et hode som vipper i stedet for å gli av det
+      const r = base.rotation.z, c = Math.cos(r), s = Math.sin(r);
+      a.m.position.set(base.position.x + off[0] * c - off[1] * s, base.position.y + off[0] * s + off[1] * c, base.position.z + (a.L.behind ? -.004 : .004)); a.m.rotation.z = r;
     }
   }
   flash(t = .09) { this.flashT = t; }

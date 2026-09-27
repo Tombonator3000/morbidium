@@ -2137,6 +2137,49 @@ async def main():
         sjekk('ingen konsollfeil (blod som renner i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 56) Hår og pynt på hodet
+        #     Papiljottene og den andre pynten sitter på hodet og svever ikke over det (8.png): minst 15 prosent av pynten ligger over hodet
+        #     for begge kjønn i alle tre retninger, hornene og svulsten minst 10 prosent. Issen måles på hodebildet (hodeTopp), pynten dreies
+        #     med et hode som vipper, og HUD-portrettet krymper ikke hodet for pynt som ikke stikker over kanten.
+        PYNT56 = """() => { const ut = { lav: [], min: {}, topp: [], kode: 0 };
+          const dekning = (H, Q, ox, oy) => { const S = 128, W = 420, cx = 210, cy = 330, c = document.createElement('canvas'); c.width = c.height = W; const g = c.getContext('2d'),
+              img = (P, x, y) => g.drawImage(P.canvas, cx + (x - P.ax) * S, cy - (y + P.h - P.ay) * S, P.w * S, P.h * S);
+            img(H, 0, 0); const h = g.getImageData(0, 0, W, W).data; g.clearRect(0, 0, W, W); img(Q, ox, oy); const q = g.getImageData(0, 0, W, W).data;
+            let n = 0, over = 0; for (let i = 3; i < q.length; i += 4) if (q[i] > 128) { n++; if (h[i] > 128) over++; } return n ? over / n : 0; };
+          for (const kjonn of ['m', 'k']) {
+            for (const id in PAS_PYNT) { if (PAS_PYNT[id].face) continue; const D = Pasient.deler({ v: 1, kjonn, pynt: [id] }), p = D.pynt[0];
+              for (const v of ['f', 's', 'b']) { const a = dekning(D.hode[v], p.P, p.L.off[v][0], p.L.off[v][1]); ut.min[id] = Math.min(ut.min[id] ?? 1, +a.toFixed(3)); if (a < .15) ut.lav.push([id, kjonn, v, +a.toFixed(3)]); } }
+            const D = Pasient.deler({ v: 1, kjonn });
+            for (const k of ['horn', 'svulst']) for (const v of ['f', 's', 'b']) { const H = D.hode[v], o = LOOKS[k].off[v] || LOOKS[k].off.f, a = dekning(H, addonPart(k), o[0], o[1] + hodeTopp(H) - .78); ut.min[k] = Math.min(ut.min[k] ?? 1, +a.toFixed(3)); if (a < .1) ut.lav.push([k, kjonn, v, +a.toFixed(3)]); }
+            for (const v of ['f', 's', 'b']) ut.topp.push(+hodeTopp(D.hode[v]).toFixed(3));
+          }
+          ut.kode = +hodeTopp(Art.part('test56_kodehode', 1.2, 1.1, .6, .1, drawPasientHead('f', {}))).toFixed(3);
+          // HUD-portrettet: med papiljotter står hodet like stort som uten pynt (nederste del av bildet er lik), med nattlue krymper det
+          const rader = look => { const c = portraitCanvas('pasient', look); return c.getContext('2d').getImageData(0, 72, 128, 56).data; }, ulik = (a, b) => { let n = 0; for (let i = 3; i < a.length; i += 4) if (Math.abs(a[i] - b[i]) > 40) n++; return n; };
+          const u = rader({ v: 1, kjonn: 'm' }); ut.hud = { papiljotter: ulik(u, rader({ v: 1, kjonn: 'm', pynt: ['papiljotter'] })), nattlue: ulik(u, rader({ v: 1, kjonn: 'm', pynt: ['nattlue:#b3261e'] })) };
+          return ut; }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ut = await pg.evaluate(PYNT56)
+        sjekk('papiljotter og annen pynt ligger minst 15 prosent over hodet for begge kjønn forfra, fra siden og bakfra (horn og svulst minst 10)', not ut['lav'], ut)
+        sjekk('issen på hodene fra ChatGPT måles til .78, det tegnede reservehodet høyere (.84 til .96)', all(abs(t - .78) <= .02 for t in ut['topp']) and .84 <= ut['kode'] <= .96, [ut['topp'], ut['kode']])
+        sjekk('HUD-portrettet krymper hodet for nattlua, men ikke for papiljottene', ut['hud']['papiljotter'] == 0 and ut['hud']['nattlue'] > 50, ut['hud'])
+        rot = await pg.evaluate("""() => { const G = MORBIDIUM, ut = {}, r = .3, c = Math.cos(r), s = Math.sin(r), fasit = (base, o) => [base.position.x + o[0] * c - o[1] * s, base.position.y + o[0] * s + o[1] * c];
+          const d = Pasient.dukke({ v: 1, kjonn: 'k', pynt: ['papiljotter', 'plaster'] }); d.update(.016, {});
+          ut.dukke = ['f', 's', 'b'].map(v => { d.head.rotation.z = r; d.placeAddons(v); const a = d.addons[0], f = fasit(d.head, a.L.off[v]); return +Math.max(Math.abs(a.m.position.x - f[0]), Math.abs(a.m.position.y - f[1]), Math.abs(a.m.rotation.z - r)).toFixed(4); });
+          d.dispose();
+          // pasientens tillegg fra gjenstandene (placeLook) følger også hodet
+          const P = G.player, pd = P.doll; Items.clearLook(); const m = partMesh(addonPart('horn'), pd.U); pd.plane.add(m); Items.addons.horn = m;
+          pd.head.rotation.z = r; Items.placeLook(); const v = pd.view || 'f', o = LOOKS.horn.off[v] || LOOKS.horn.off.f, f = fasit(pd.head, [o[0], o[1] + hodeTopp(pd.head.userData.P) - .78]);
+          ut.look = +Math.max(Math.abs(m.position.x - f[0]), Math.abs(m.position.y - f[1])).toFixed(4); Items.clearLook(); return ut; }""")
+        sjekk('pynten og tilleggene dreies med hodet når det vipper (0,3 radianer)', all(x <= .001 for x in rot['dukke']) and rot['look'] <= .001, rot)
+        # dødskortet med papiljotter
+        await pg.evaluate("() => { const G = MORBIDIUM; G.run.look = { v: 1, kjonn: 'm', har: 'brun', hud: 0, klaer: 'kape', farge: 'sennep', sko: 'tofler', pynt: ['papiljotter'] }; G.player.invuln = 0; playerDie(); }")
+        el = await pg.wait_for_selector('#deadc', timeout=60000); await pg.wait_for_timeout(300)
+        await el.screenshot(path='/tmp/e_56_papiljotter.png')
+        sjekk('ingen konsollfeil (hår og pynt)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

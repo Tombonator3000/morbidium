@@ -437,7 +437,8 @@ function propPart(k) { const d = PROPS[k]; return Art.part('prop_' + k, d[0], d[
 /* portrett til HUD: hodet i front-visning, beskåret */
 function portraitCanvas(type, look) {
   const D = type === 'pasient' ? Pasient.deler(look) : null, P = D ? D.hode.f : charPart(type, 'hode', 'f'), c = document.createElement('canvas'); c.width = c.height = 128;
-  const hatt = D && D.pynt.some(p => !p.L.face), s = hatt ? .8 : .94, y0 = hatt ? 24 : 8, g = c.getContext('2d'), w = P.canvas.width * s, h = P.canvas.height * s, x0 = (128 - w) / 2; g.drawImage(P.canvas, x0, y0, w, h);
+  // hodet krymper bare når pynten stikker over kanten (nattlua, hjelmen), ellers får ansiktet plassen
+  const hatt = D && D.pynt.some(p => !p.L.face && p.L.off.f[1] + p.P.h - p.P.ay > 1), s = hatt ? .8 : .94, y0 = hatt ? 24 : 8, g = c.getContext('2d'), w = P.canvas.width * s, h = P.canvas.height * s, x0 = (128 - w) / 2; g.drawImage(P.canvas, x0, y0, w, h);
   // pynt i samme skala: hodet er P.w enheter bredt, festepunktet ligger P.ay over bunnen
   if (D) { const u = w / P.w, ax = x0 + P.ax * u, ay = y0 + (P.h - P.ay) * u; for (const p of D.pynt) { const Q = p.P, o = p.L.off.f; g.drawImage(Q.canvas, ax + (o[0] - Q.ax) * u, ay - (o[1] + Q.h - Q.ay) * u, Q.w * u, Q.h * u); } }
   return c;
