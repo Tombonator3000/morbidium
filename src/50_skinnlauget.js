@@ -349,4 +349,4 @@ Object.assign(FIENDE_INFO, {
   klokker: ['Laugets klokker, med sølvbjella fra Avdeling Null. Slår aldri selv. Når bjella ringer, kommer krokene ut av mørket der du står.', 'Hører du bjella, gå ut av sølvringen. Ta ham først, ellers roper han på lærlingen.']
 });
 
-Object.assign(window, { Laug }); // til testene
+Object.assign(window, { Laug, Grotesk, ROLLER, MESTER_TITTEL, DEATH_CAUSES, DEPTH_ENEMIES }); // til testene
