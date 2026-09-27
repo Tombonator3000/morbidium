@@ -167,8 +167,10 @@ const Mini = {
   onFloor() {
     const F = G.F; this.rom = {}; if (!F) return;
     const rng = new RNG(((F.seed || 1) >>> 0) * 13 + 71), risk = F.rooms.find(r => r.role === 'risk');
-    if (risk) this.rom[risk.id] = rng.pick(MINISJEFER);
-    if (G.depth >= 2 && rng.chance(.35)) { const k = F.rooms.filter(r => r.role === 'combat' && r.waves && r.waves.length && (!F.dist || F.dist[r.id] >= 2)); if (k.length) this.rom[rng.pick(k).id] = rng.pick(MINISJEFER); }
+    // noen minisjefer hører ikke hjemme i parken (ENEMIES[t].fraDybde), som Oldermann Nålepute
+    const pulje = MINISJEFER.filter(t => !(ENEMIES[t] && ENEMIES[t].fraDybde > G.depth));
+    if (risk) this.rom[risk.id] = rng.pick(pulje);
+    if (G.depth >= 2 && rng.chance(.35)) { const k = F.rooms.filter(r => r.role === 'combat' && r.waves && r.waves.length && (!F.dist || F.dist[r.id] >= 2)); if (k.length) this.rom[rng.pick(k).id] = rng.pick(pulje); }
     this.vis(null);
   },
   kom(C) {
