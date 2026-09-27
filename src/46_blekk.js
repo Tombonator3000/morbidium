@@ -475,7 +475,8 @@ const Nedslag = {
     const o = t.o, sh = t.shape, eier = t.owner, P = G.player; if (!o || o.x == null) return;
     this.tall.land++;
     const typ = teleType(o, eier), D = NED_TYPE[typ] || NED_TYPE.fysisk, kv = this.kan() ? Glod.kvote() : 0, T = TELE_TYPE[typ];
-    const stor = (o.r || 0) >= 2.2 || !!(eier && (eier.kind === 'boss' || eier.mini)), a = o.a || 0, fx = Math.sin(a), fz = Math.cos(a);
+    // minisjefer teller bare med store angrep: koret skriker med små sirkler hvert tredje sekund, og hvert skrik ga merke, sjokkbølge og risting
+    const stor = (o.r || 0) >= 2.2 || !!(eier && eier.kind === 'boss'), a = o.a || 0, fx = Math.sin(a), fz = Math.cos(a);
     const lop = sh === 'rect' && eier && eier.state === 'charge', bane = sh === 'rect' && !lop && o.w < .6;
     const n0 = Particles.n;
     if (bane) { // en prosjektilbane: bare et lite blaff der skuddet går ut
