@@ -2402,7 +2402,8 @@ async def main():
             // bekkenet: en kjegle som gjør pasienten VÅT (treg en stund) og legger en pytt der han står
             { rom(); nullstill(); await spill(.8); const s = ved(3); dh.x = s.x; dh.z = s.z; dh.state = 'chase'; dh.stun = 0; await spill(.1); dh.x = s.x; dh.z = s.z; P.invuln = 0; skade.draug = 0;
               const [dist, a] = mot(dh); Havet.skvett(dh, P, a); const t = dh.teles[dh.teles.length - 1]; await til(() => !G.tele.includes(t), 3);
-              ut.skvett = { kjegle: t.shape === 'cone' && t.o.r === 3.2, traff: skade.draug > 0, mokk: P.mokkT, ord: !!(P.statusT && P.statusT['VÅT'] !== undefined), pytt: G.puddles.some(p => p.kind === 'wet' && Math.hypot(p.x - P.x, p.z - P.z) < 1.5) }; }
+              ut.skvett = { kjegle: t.shape === 'cone' && t.o.r === 3.2, traff: skade.draug > 0, vaat: P.vaatT, ord: !!(P.statusT && P.statusT['VÅT'] !== undefined), pytt: G.puddles.some(p => p.kind === 'wet' && Math.hypot(p.x - P.x, p.z - P.z) < 1.5) };
+              await spill(.7); ut.skvett.varer = { vaat: P.vaatT, mokk: P.mokkT }; }
             killEntity(dh, {}); await spill(.8);
             // Holdningssøsteren snører: SNØRT varer (selv om myra bare gir et øyeblikk), lauget slår 25 prosent hardere i fire sekunder og nøyaktig tilbake etterpå
             rolig(); rom(); nullstill(); const s1 = ved(4.5), hs = spawnEnemy('holdning', s1.x, s1.z, false, 4), s2 = freeSpot(s1.x + 1.2, s1.z + .8, 2), la = spawnEnemy('laerling', s2.x, s2.z, false, 4), s3 = ved(-1), pl = spawnEnemy('pleier', P.x + 30, P.z + 30, false, 4);
@@ -2415,7 +2416,7 @@ async def main():
               P.roll = .34; P.rollA = 0; await spill(.05); ut.snor.rulle = { snort: P.snortT, mokk: P.mokkT, ord: !!P.statusT['LØS'] };
               await til(() => !la.rettet && !hs.rettet, 5); await spill(.1); ut.snor.tilbake = { la: la.dmg - d0.la, hs: hs.dmg - d0.hs, flagg: !la.rettet && !hs.rettet }; }
             // aldri på en pasient som er slått ut: ingen snøring når han er slått ut, og en som blir slått ut før ringen går av, blir ikke snørt
-            { nullstill(); P.stunT = 3; let brune = 0; for (let i = 0; i < 12; i++) { hs.state = 'chase'; hs.stun = 0; const n0 = hs.teles.length, [dist, a] = mot(hs); Grotesk.ai.holdning(hs, P, dist, a); brune += hs.teles.slice(n0).filter(t => t.shape === 'circle').length; cancelTeles(hs); hs.state = 'chase'; }
+            { nullstill(); P.stunT = 3; let brune = 0; for (let i = 0; i < 12; i++) { hs.state = 'chase'; hs.stun = 0; const n0 = hs.teles.length, [dist, a] = mot(hs); Grotesk.ai.holdning(hs, P, dist, a); brune += hs.teles.slice(n0).filter(t => t.shape === 'circle').length; hs.state = 'chase'; }
               ut.slaatt = { brune, snort: P.snortT }; nullstill(); await spill(.3); hs.state = 'chase'; hs.stun = 0; const [dist, a] = mot(hs); Laug.snor(hs, P, a); const t = hs.teles[hs.teles.length - 1];
               await spill(.6); P.stunT = 1; await til(() => !G.tele.includes(t), 3); await spill(.05); ut.slaatt.underveis = P.snortT; }
             // tommestokken på kloss hold: en kjegle på 2,2 som treffer
@@ -2445,7 +2446,7 @@ async def main():
             sjekk('froskehoppet lander der ringen var, på fritt gulv, i et nytt tjern, og treffer pasienten', h['fra'] < .6 and h['fritt'] and h['tjern'] and h['traff'], h)
             sjekk('hopper draugen mot en vegg, stopper den ved veggen og står aldri inne i den', ds['vegg']['veggFunnet'] and ds['vegg']['fritt'] and ds['vegg']['x'] < .2 and ds['vegg']['mal'] > 1, ds['vegg'])
             sk = ds['skvett']
-            sjekk('bekkenet (en kjegle på 3,2) gjør pasienten VÅT: treg en stund, med en pytt der han står', sk['kjegle'] and sk['traff'] and sk['mokk'] > .8 and sk['ord'] and sk['pytt'], sk)
+            sjekk('bekkenet (en kjegle på 3,2) gjør pasienten VÅT: treg en stund, med en pytt der han står', sk['kjegle'] and sk['traff'] and 1 < sk['vaat'] <= 1.2 and sk['varer']['vaat'] > .2 and sk['varer']['mokk'] > 0 and sk['ord'] and sk['pytt'], sk)
             sn = ds['snor']
             sjekk('snøringen (ring på 1,25) gir SNØRT i 2,5 sekunder, og to lærreimer fra hendene hennes', sn['sirkel'] and 2.2 < sn['snort'] <= 2.5 and sn['ord'] and sn['reimer'] == 2 and sn['reimTegnet'] == 2, sn)
             sjekk('mens pasienten er snørt, slår lauget innen åtte ruter 25 prosent hardere, men ikke pleieren utenfor lauget', abs(sn['la'] - 1.25) < 1e-9 and abs(sn['hs'] - 1.25) < 1e-9 and sn['pl'] == 1, sn)
@@ -2478,10 +2479,10 @@ async def main():
         await start_lop(pg, url=URL3D)
         d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
           if (!ENEMIES.draug || !ENEMIES.holdning) return { mangler: true };
-          startFloor(6, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; ut.d3 = D3.on;
-          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 9 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
-          const s1 = freeSpot(P.x + 4.5, P.z + .6, 2), dr = spawnEnemy('draug', s1.x, s1.z, false, 6), s2 = freeSpot(P.x - 4, P.z - .8, 2), hs = spawnEnemy('holdning', s2.x, s2.z, false, 6);
-          const s3 = freeSpot(P.x - 2.5, P.z + 1.6, 2), la = spawnEnemy('laerling', s3.x, s3.z, false, 6); dr.cd = hs.cd = la.cd = 1e9;
+          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; ut.d3 = D3.on;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 10 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2 + .5; P.z = r.z + r.h / 2 + .5; R.snapCamera(P.x, P.z);
+          const s1 = freeSpot(P.x + 4.2, P.z - 1.2, 2), dr = spawnEnemy('draug', s1.x, s1.z, false, 4), s2 = freeSpot(P.x - 3.8, P.z + .4, 2), hs = spawnEnemy('holdning', s2.x, s2.z, false, 4);
+          const s3 = freeSpot(P.x - 2.2, P.z - 1.8, 2), la = spawnEnemy('laerling', s3.x, s3.z, false, 4); dr.cd = hs.cd = la.cd = 1e9;
           { const g0 = G.time, t0 = performance.now(); while ((dr.state === 'spawn' || hs.state === 'spawn' || la.state === 'spawn') && performance.now() - t0 < 60000) await vent(50); }
           await vent(300); dr.state = hs.state = 'chase';
           Havet.hopp(dr, P, Math.atan2(P.x - dr.x, P.z - dr.z)); Laug.snor(hs, P, Math.atan2(P.x - hs.x, P.z - hs.z));

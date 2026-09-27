@@ -633,7 +633,7 @@ MONSTER_ART.draug = {
 
 const VAATT = { wet: 1, tjern: 1, soup: 1, myr: 1 };
 Object.assign(Havet, {
-  LEGE: 2, LEGE_TAK: .5,
+  LEGE: 2, LEGE_TAK: .5, VAAT_T: 1.2,
   /* vann under draugen: en pytt med vann (ikke strøm i den) eller myr i Nattskogen */
   vannUnder(e) { const p = puddleAt(e.x, e.z); if (p) return VAATT[p.kind] && !(p.elec > 0) ? p : null; return typeof gulvUnder === 'function' && gulvUnder(e.x, e.z) === 'myr' ? { kind: 'myr' } : null; },
   /* biter på kloss hold */
@@ -652,7 +652,7 @@ Object.assign(Havet, {
       Sound.play('splash', .9, 1.2); const px = o.x + Math.sin(o.a) * d, pz = o.z + Math.cos(o.a) * d;
       if (!solid(Math.floor(px), Math.floor(pz))) addPuddle(px, pz, 'wet', 1, 10);
       Particles.spawn(px, .5, pz, 10, 0x9ad0e0, { speed: 3.5, up: 4, life: .5 }); slashFx(e.x, e.z, o.a, 3.2, 1.3, false, 0x9ad0e0);
-      if (this.treff('cone', o, e.dmg * .8, { type: 'draug', x: e.x, z: e.z, kb: 2 })) { const P = G.player; P.mokkT = Math.max(P.mokkT || 0, 1.2); statusOrd(P, 'VÅT'); }
+      if (this.treff('cone', o, e.dmg * .8, { type: 'draug', x: e.x, z: e.z, kb: 2 })) { const P = G.player; P.vaatT = Math.max(P.vaatT || 0, this.VAAT_T); P.mokkT = Math.max(P.mokkT || 0, .05); statusOrd(P, 'VÅT'); }
     }, e);
     e.cd = rnd(1.8, 2.5);
   },
@@ -704,6 +704,13 @@ Object.assign(Grotesk.ai, {
   }
 });
 Object.assign(Grotesk.tick, { draug(e, dt) { Havet.hoppTick(e, dt); Havet.lege(e, dt); return null; } });
+/* VÅT: pasienten går tregere (P.mokkT, som myr) så lenge P.vaatT varer. En egen klokke, fordi pyttene setter P.mokkT rett
+   (et tjern gir 0,35 sekunder) og ellers ville kortet ned tregheten fra bekkenet */
+{ const _up = updatePlayer; updatePlayer = function (dt, A) {
+  const P = G.player;
+  if (P && P.vaatT > 0) { P.vaatT -= dt; if (P.vaatT > 0 && P.alive) P.mokkT = Math.max(P.mokkT || 0, dt + .02); else P.vaatT = 0; }
+  return _up(dt, A);
+}; }
 // draugen sklir ikke i sitt eget element (snubletråden på tørt gulv tar den fortsatt)
 { const _es = enemySlip; enemySlip = function (e) { if (e && e.type === 'draug' && (e.hopp || Havet.vannUnder(e))) return; return _es(e); }; }
 
