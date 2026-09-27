@@ -577,7 +577,8 @@ async def main():
                 if side: await pg.click('#hNext'); await pg.wait_for_timeout(150)
                 smal.append(await pg.evaluate(HB_PLASS))
         await pg.screenshot(path='/tmp/e_10indeks_smal.png')
-        sjekk('fiendeindeksen får plass på smal skjerm, to kort per side', len(smal) == 16 and all(smal), smal)
+        forvent = await pg.evaluate("() => [8, 9].reduce((a, k) => a + Math.ceil(HANDBOK[k].indeks.length / 2), 0)")  # vokser når nye fiender kommer i indeksen
+        sjekk('fiendeindeksen får plass på smal skjerm, to kort per side', len(smal) == forvent and forvent >= 16 and all(smal), (forvent, smal))
         sjekk('ingen konsollfeil (smal indeks)', not pg.errs, pg.errs[:6])
         await pg.close()
 
@@ -2094,6 +2095,106 @@ async def main():
         sjekk('i 3D kaster Nøkken under vannet ingen lykteskygge, mens pleieren ved siden av gjør det', d3['d3'] and d3['nede'] and not d3['skyggeNede'] and d3['skyggePleier'] and d3['baand'], d3)
         await pg.screenshot(path='/tmp/e_58_grunnarbeid_3d.png')
         sjekk('ingen konsollfeil (grunnarbeid i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 59) Skinnlauget: Lærlingen og Klokkeren går til angrep på tre etasjer, laugets stans deler én nedkjøling, bjella treffer i sølvringen
+        #     og ikke utenfor, høyst ti kjettinger samtidig, én klokker per rom, fiendeindeksen og Enkel grafikk
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        la = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} },
+            til = async (f, t = 4, maks = 40000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
+            spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); };
+          if (typeof Laug !== 'object') return { mangler: true };
+          const skade = {}, _hp = window.hurtPlayer; window.hurtPlayer = function (d, src) { const r = _hp(d, src); if (r > 0 && src) skade[src.type] = (skade[src.type] || 0) + r; return r; };
+          const rom = () => { const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 8 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; return r; };
+          const ved = (dx, dz) => freeSpot(P.x + dx, P.z + dz, 3), mot = e => [Math.hypot(P.x - e.x, P.z - e.z), Math.atan2(P.x - e.x, P.z - e.z)];
+          try {
+            // hver type, på etasje 3, 4 og 6: legger an innen 6 sekunder spilltid og skader en pasient med 400 i helse innen 20
+            for (const d of [3, 4, 6]) {
+              startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); rom(); P.hp = P.maxHp = 400; P.invuln = 0; for (const k in skade) delete skade[k];
+              const s1 = ved(2.4, 0), l = spawnEnemy('laerling', s1.x, s1.z, false, d), s2 = ved(-4.5, 1), k = spawnEnemy('klokker', s2.x, s2.z, false, d); k.kallT = 1e9;
+              const g0 = G.time, t0 = performance.now(), E = { l: {}, k: {} };
+              while (G.time - g0 < 20 && performance.now() - t0 < 120000) { await vent(60); const t = G.time - g0; if (P.hp < 150) P.hp = 400;
+                if (l.state === 'wind' && E.l.wind === undefined) E.l.wind = t; if (k.state === 'wind' && E.k.wind === undefined) E.k.wind = t;
+                if (skade.laerling && E.l.skade === undefined) E.l.skade = t; if (skade.klokker && E.k.skade === undefined) E.k.skade = t;
+                if (E.l.skade !== undefined && E.k.skade !== undefined) break; }
+              ut.etasjer[d] = E; for (const e of [l, k]) if (e.alive) killEntity(e, {}); await spill(.3);
+            }
+            rolig(); rom(); P.hp = P.maxHp = 9999; P.invuln = 0;
+            // laugets stans: av tre på under to sekunder får pasienten bare den første, og etter nedkjølingen kommer den igjen
+            const o = { x: P.x, z: P.z, r: 1 }, stans = [];
+            for (let i = 0; i < 3; i++) { P.invuln = 0; P.iframe = 0; P.stunT = 0; Laug.treff('circle', o, 1, { type: 'laerling', x: P.x, z: P.z }, .6, 'SPENT FAST'); stans.push(P.stunT > 0); await spill(.3); }
+            await spill(2.2); P.invuln = 0; P.stunT = 0; Laug.treff('circle', o, 1, { type: 'klokker', x: P.x, z: P.z }, .35, 'HEKTET'); stans.push(P.stunT > 0); ut.stans = stans;
+            // bjella: lyden kommer først, sølvringen treffer den som står i den, og ikke den som har gått to ruter ut av den
+            const s3 = ved(-5, 0), k = spawnEnemy('klokker', s3.x, s3.z, false, 4); k.kallT = 1e9; await til(() => k.state !== 'spawn');
+            const sp = Sound.play, lyder = []; Sound.play = function (n) { lyder.push(n); return sp.apply(Sound, arguments); };
+            const ring = async utenfor => {
+              await spill(.8); k.state = 'chase'; k.ringT = 0; k.stun = 0; P.invuln = 0; P.iframe = 0; skade.klokker = 0; lyder.length = 0; const [dist, a] = mot(k);
+              Grotesk.ai.klokker(k, P, dist, a); k.cd = 99; const t = k.teles[k.teles.length - 1]; if (!t) return { varsel: false };
+              const r = { varsel: true, lenke: t.o.type === 'lenke', r: t.o.r, forst: lyder[0] === 'bjelle' };
+              if (utenfor) { for (let i = 0; i < 16; i++) { const v = i / 16 * Math.PI * 2, x = t.o.x + Math.sin(v) * (t.o.r + 2), z = t.o.z + Math.cos(v) * (t.o.r + 2); if (!solid(Math.floor(x), Math.floor(z))) { P.x = x; P.z = z; break; } } r.avstand = Math.hypot(P.x - t.o.x, P.z - t.o.z); }
+              await til(() => !G.tele.includes(t), 3); await spill(.1); r.skade = skade.klokker; r.kjeder = Kjeder.liste.length; return r; };
+            ut.inne = await ring(false); rom(); ut.ute = await ring(true); rom(); Sound.play = sp;
+            killEntity(k, {}); await spill(.8);
+            // høyst én klokker i rommet: en til blir en lærling
+            const a1 = spawnEnemy('klokker', ved(4, 3).x, ved(4, 3).z, false, 4), a2 = spawnEnemy('klokker', ved(-4, 3).x, ved(-4, 3).z, false, 4); ut.enKlokker = [a1.type, a2.type]; killEntity(a1, {}); killEntity(a2, {});
+            // fem klokkere som ringer stort samtidig vil ha 25 kjettinger, men det blir aldri flere enn ti
+            Laug.flereKlokkere = true; const kl = [];
+            for (let i = 0; i < 5; i++) { const v = i / 5 * Math.PI * 2, s = ved(Math.sin(v) * 5, Math.cos(v) * 5), e = spawnEnemy('klokker', s.x, s.z, false, 4); e.kallT = 1e9; kl.push(e); }
+            Laug.flereKlokkere = false; await til(() => kl.every(e => e.state !== 'spawn'));
+            for (const e of kl) { e.ringN = 2; e.ringT = 0; e.state = 'chase'; const [dist, a] = mot(e); Grotesk.ai.klokker(e, P, dist, a); e.cd = 99; }
+            let maks = 0; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 2.2 && performance.now() - t0 < 40000) { maks = Math.max(maks, Kjeder.liste.length); await vent(30); } }
+            ut.kjeder = maks; for (const e of kl) killEntity(e, {}); await spill(1);
+            // Enkel grafikk: ingen kjettinger tegnes, men treffet og skaden kommer som før
+            R.safe = true; const s4 = ved(-5, 0), ks = spawnEnemy('klokker', s4.x, s4.z, false, 4); ks.kallT = 1e9; await til(() => ks.state !== 'spawn'); rom();
+            Laug.sistTreff = -1; ks.ringN = 2; ks.ringT = 0; ks.state = 'chase'; P.invuln = 0; skade.klokker = 0; { const [dist, a] = mot(ks); Grotesk.ai.klokker(ks, P, dist, a); } ks.cd = 99;
+            let kjS = 0; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.6 && performance.now() - t0 < 30000) { kjS = Math.max(kjS, Kjeder.liste.length); await vent(40); } }
+            ut.safe = { kjeder: kjS, treff: Laug.sistTreff > 0, skade: skade.klokker > 0 }; R.safe = false; killEntity(ks, {});
+          } finally { window.hurtPlayer = _hp; R.safe = false; Laug.flereKlokkere = false; }
+          ut.info = ['laerling', 'klokker'].every(t => (FIENDE_INFO[t] || [])[0] && FIENDE_INFO[t][1] && FIENDE_REKKE.includes(t) && MESTER_TITTEL[t] && FIENDESTEMME[t] && LINES[t] && DEATH_CAUSES[t]) && !ROLLER.laerling && !ROLLER.klokker;
+          ut.bilde = ['laerling', 'klokker'].map(t => { const c = fiendeBilde(t, 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); });
+          ut.pulje = { 3: DEPTH_ENEMIES[3].filter(t => t === 'laerling').length, 4: [DEPTH_ENEMIES[4].filter(t => t === 'laerling').length, DEPTH_ENEMIES[4].filter(t => t === 'klokker').length], 6: [DEPTH_ENEMIES[6].filter(t => t === 'laerling').length, DEPTH_ENEMIES[6].filter(t => t === 'klokker').length] };
+          return ut; }""")
+        sjekk('Skinnlauget finnes (Laug i 50_skinnlauget.js)', not la.get('mangler'), la)
+        if not la.get('mangler'):
+            E = la['etasjer']
+            sjekk('Lærlingen og Klokkeren legger an innen 6 sekunder spilltid på etasje 3, 4 og 6', all(E[d][t].get('wind') is not None and E[d][t]['wind'] <= 6 for d in ['3', '4', '6'] for t in ['l', 'k']), E)
+            sjekk('begge skader en pasient med 400 i helse innen 20 sekunder spilltid på etasje 3, 4 og 6', all(E[d][t].get('skade') is not None and E[d][t]['skade'] <= 20 for d in ['3', '4', '6'] for t in ['l', 'k']), E)
+            sjekk('laugets stans deler én nedkjøling: av tre på under to sekunder slår bare den første inn, og etterpå kommer den igjen', la['stans'] == [True, False, False, True], la['stans'])
+            sjekk('bjella ringer før sølvringen (lenke), og ringen treffer den som står i den', la['inne'].get('varsel') and la['inne']['lenke'] and la['inne']['forst'] and la['inne']['skade'] > 0, la['inne'])
+            sjekk('bjella treffer ikke den som står to ruter utenfor ringen', la['ute'].get('varsel') and la['ute'].get('avstand', 0) > la['ute']['r'] + 1.9 and la['ute']['skade'] == 0, la['ute'])
+            sjekk('høyst én klokker i rommet, en til blir lærling', la['enKlokker'] == ['klokker', 'laerling'], la['enKlokker'])
+            sjekk('fem store ringer samtidig gir høyst ti kjettinger, men kjettinger kommer', 6 <= la['kjeder'] <= 10, la['kjeder'])
+            sjekk('i Enkel grafikk tegnes ingen kjettinger, men treffet og skaden kommer', la['safe'] == {'kjeder': 0, 'treff': True, 'skade': True}, la['safe'])
+            sjekk('fiendeindeksen, replikker, stemmer, dødsårsaker og mestertitler for begge, og ingen av dem i ROLLER', la['info'], la)
+            sjekk('fiendeBilde tegner begge', all(x > .08 for x in la['bilde']), la['bilde'])
+            sjekk('Lærlingen i Underetasjen, Kjelleren (to) og Dypet (to), Klokkeren i Kjelleren og Dypet', la['pulje'] == {'3': 1, '4': [2, 1], '6': [2, 1]}, la['pulje'])
+        await pg.screenshot(path='/tmp/e_59_laug.png')
+        sjekk('ingen konsollfeil (Skinnlauget)', not pg.errs, pg.errs[:6])
+        # håndbokssiden med begge: får plass, og kortene har bilde
+        await pg.goto(URL); await pg.wait_for_timeout(2000)
+        hb = await pg.evaluate("""() => { if (!FIENDE_REKKE.includes('laerling')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'fiender'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(FIENDE_REKKE.indexOf('laerling') / per));
+          return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
+        await pg.wait_for_timeout(300)
+        hb['plass'] = await pg.evaluate(HB_PLASS) if not hb.get('mangler') else False
+        sjekk('håndboka har en side med Lærlingen og Klokkeren, og den får plass', 'Lærlingen' in hb.get('navn', []) and 'Klokkeren' in hb.get('navn', []) and hb['plass'], hb)
+        await pg.screenshot(path='/tmp/e_59_handbok.png')
+        sjekk('ingen konsollfeil (Skinnlauget i håndboka)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: begge i kamp, med kjettinger fra mørket (én runde, 3D er tungt i programvaregrafikk)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          if (typeof Laug !== 'object') return { mangler: true };
+          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; ut.d3 = D3.on;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 8 && r.h >= 8) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
+          const s1 = freeSpot(P.x + 2.2, P.z + .3, 3), l = spawnEnemy('laerling', s1.x, s1.z, false, 4), s2 = freeSpot(P.x - 3.8, P.z - 1.2, 3), k = spawnEnemy('klokker', s2.x, s2.z, false, 4); k.kallT = 1e9;
+          const S = { l: {}, k: {} }, g0 = G.time, t0 = performance.now(); let kj = 0;
+          while (G.time - g0 < 14 && performance.now() - t0 < 150000) { await vent(80); P.hp = 9999; S.l[l.state] = 1; S.k[k.state] = 1; kj = Math.max(kj, Kjeder.liste.length); if (S.l.wind && S.k.wind && kj && k.state === 'wind' && Kjeder.liste.length) break; }
+          ut.S = S; ut.kjeder = kj; return ut; }""")
+        sjekk('i 3D legger begge an, og krokene kommer fra mørket', not d3.get('mangler') and d3.get('d3') and d3['S']['l'].get('wind') and d3['S']['k'].get('wind') and d3['kjeder'] > 0, d3)
+        await pg.screenshot(path='/tmp/e_59_laug_3d.png')
+        sjekk('ingen konsollfeil (Skinnlauget i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
         await b.close()
