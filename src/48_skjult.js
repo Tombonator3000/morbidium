@@ -6,15 +6,13 @@
    Her gjemmes innholdet (møbler, lys, gløden og glasset), og når veggen faller, byttes det lukkede mot det åpne og lysene tennes.
    ============================================================ */
 const Skjult = {
-  props: [], pd: [], lys: [], tenn: null,
+  props: [], pd: [], lys: [], tenn: null, // lys: platene som tennes ved innbruddet (tingenes, glassets og fyllyset fra decorateLevel)
   /* rommets egne ting (fra spawnProps): usynlige, med lyset slukket og uten glød til veggen er slått inn */
   gjemTing() {
     this.props = []; this.pd = []; this.lys = []; this.tenn = null;
     const F = G.F, S = G.skjult; if (!F || !S) return;
     const hemm = F.rooms.find(r => r.role === 'secret'); if (!hemm) return;
     for (const o of G.props) if (o.room === hemm.id) { o.skjult = true; if (o.g) o.g.visible = false; if (o.light) this.slukk(o.light); this.props.push(o); }
-    // fyllyset fra decorateLevel står slukket fra før (userData.skjult)
-    if (R.levelL) for (const L of R.levelL.children) if (L.userData.skjult && !this.lys.includes(L)) this.lys.push(L);
     if (typeof Glod === 'object') for (let i = Glod.liste.length - 1; i >= 0; i--) { const E = Glod.liste[i]; if (E.eier && E.eier.skjult) { Glod.fjern(E); Glod.liste.splice(i, 1); } }
   },
   slukk(L) { if (!L || !L.userData || !L.userData.col) return; R.setLight(L, 0); if (!this.lys.includes(L)) this.lys.push(L); },

@@ -2172,6 +2172,14 @@ async def main():
         await pg.screenshot(path='/tmp/e_51_skjult_etter3d.png')
         sjekk('det skjulte i 3D: gulvet bak er toon og skjult, tåka ligger ikke der, og listene på sprekken er egne', d3a['on'] and d3a['gulv'] == 'MeshToonMaterial' and d3a['synlig'] is False and d3a['taake'] == 0 and d3a['lister'] == d3a['listerSynlig'], d3a)
         sjekk('det skjulte i 3D: etter innbruddet er gulvet der, tåka dekker det, og listene på sprekken er borte', not d3b['skjult'] and d3b['synlig'] and d3b['listerSynlig'] == 0 and d3b['secrets'] == 1 and (not d3a['harTaake'] or d3b['taake'] > 0), d3b)
+        # en sprekk i en nordvegg: listene langs veggen fortsetter over sprekken i egne InstancedMesh, og de er borte når veggen faller
+        nord = await pg.evaluate("""async () => { const G = MORBIDIUM; let s0 = null;
+          for (let s = 1; s < 300 && s0 === null; s++) { const F = generateFloor(s * 7919 + 2 * 7919, 2, {}), h = F.rooms.find(r => r.role === 'secret'), p = F.rooms[h.parent]; if (F.crack.every(i => ((i / F.W) | 0) === p.z - 1) && ['panel', 'tapet', 'paviljong'].includes(p.vegg)) s0 = s; }
+          if (s0 === null) return null; G.run.seed = s0 * 7919; startFloor(2, false); await new Promise(r => setTimeout(r, 300));
+          const F = G.F, c = Spesial.cracks[1], lister = (D3.sprekkDeler || []).length, synlig = (D3.sprekkDeler || []).filter(m => m.visible).length, pos = new THREE.Vector3(), mx = new THREE.Matrix4();
+          const paaSprekk = (D3.sprekkDeler || []).every(im => { for (let k = 0; k < im.count; k++) { im.getMatrixAt(k, mx); pos.setFromMatrixPosition(mx); if (!F.crack.includes(Math.floor(pos.z - 1) * F.W + Math.floor(pos.x))) return false; } return true; });
+          Spesial.damage(c, 9); return { s0, lister, synlig, paaSprekk, etter: (D3.sprekkDeler || []).filter(m => m.visible).length, skjult: !!G.skjult }; }""")
+        sjekk('det skjulte i 3D: listene på en sprukken nordvegg er egne, ligger bare på sprekken og forsvinner ved innbruddet', nord is not None and nord['lister'] > 0 and nord['synlig'] == nord['lister'] and nord['paaSprekk'] and nord['etter'] == 0 and not nord['skjult'], nord)
         sjekk('ingen konsollfeil (det skjulte, 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
         await b.close()
