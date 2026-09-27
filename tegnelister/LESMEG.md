@@ -2,7 +2,7 @@
 
 Laget av `tools/lag_tegnelister.py` fra `assets/manifest.json`. Ikke rediger for hånd; kjør skriptet på nytt når bilder er levert.
 
-Status: 544 av 544 bilder i manifestet er levert. De 0 som mangler, er samlet i 0 ark og bilder fordelt på 0 lister, én ChatGPT-samtale per liste. I tillegg kommer 0 delark til oppskriftssystemet.
+Status: 558 av 558 bilder i manifestet er levert. De 0 som mangler, er samlet i 0 ark og bilder fordelt på 0 lister, én ChatGPT-samtale per liste. I tillegg kommer 0 delark til oppskriftssystemet.
 
 Hvert ark er én PNG. Et figurark gir seks bilder (hode og kropp fra tre kanter), et «ni ting»-ark opptil ni. Store ting som trær, porter og sjefskropper tegnes som enkeltbilder, fordi en rute på malen blir for liten til dem. Referansebildene i `referanse/` viser dagens kodetegninger i samme rutenett som malen; last dem opp sammen med malen, så ser ChatGPT hva som skal i hver rute.
 

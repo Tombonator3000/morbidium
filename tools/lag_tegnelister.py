@@ -174,7 +174,8 @@ def ovrige(dekket):
     for t in typer: ut.append(figur(t)); igjen = [k for k in igjen if k not in figurnokler(t)]
     for k in [k for k in igjen if k.startswith('anim_')]: ut.append(anim(k))
     for k in [k for k in igjen if k.startswith('ui_')]: ut.append(ui(k))
-    igjen = [k for k in igjen if not k.startswith(('anim_', 'ui_'))]
+    for k in [k for k in igjen if man[k].get('tekstur')]: ut.append(enkelt(k))
+    igjen = [k for k in igjen if not k.startswith(('anim_', 'ui_')) and not man[k].get('tekstur')]
     for k in [k for k in igjen if stor(k)]: ut.append(enkelt(k))
     små = [k for k in igjen if not stor(k)]
     for i in range(0, len(små), 9): ut.append(ark(f'ovrige_{i // 9 + 1}', f'Øvrige {i // 9 + 1}', små[i:i + 9]))
@@ -250,7 +251,10 @@ def prompt(a, ref):
         L.append(f'Draw ONE image, {fmt}: {setning(B.beskriv(k))}')
         if k.startswith(('prop_', 'drom_')) and not flat(k): L.append('Seen from the front and slightly above, so it shows its front and a little of its top.')
         if a.get('ekstra'): L.append(a['ekstra'])
-        L.append('Exactly one object, centered and fully visible, not cropped. Transparent background, no ground shadow, no text, no frame.')
+        if man[k].get('tekstur'):
+            L.append('Flat full-bleed material texture with even lighting, no perspective, margin, frame, text or cast shadow. Match opposite edges for seamless repetition. Keep the surface opaque except for explicitly requested holes in a broken wall.')
+        else:
+            L.append('Exactly one object, centered and fully visible, not cropped. Transparent background, no ground shadow, no text, no frame.')
         if ref: L.append('The attached image shows the placeholder the game uses today. Use it only to see what it is; redraw it properly in our style.')
     elif t == 'anim':
         k = a['rest'][0]; m = man[k]; d = B.beskriv(k)

@@ -118,6 +118,11 @@ const Paint = {
   wallTex(th, stil = 'panel') {
     // 2 enheter bred og like høy som veggen (128 px per enhet). v = høyde / veggens høyde
     const V = typeof VEGG === 'object' && VEGG[stil];
+    const im = typeof uteBilde === 'function' && uteBilde('vegg_' + stil);
+    if (im && V) {
+      const hp = Math.round((V.h || 2.3) * 128);
+      return R.canvasTex(256, hp, (g, w, h) => g.drawImage(im, 0, 0, w, h), true);
+    }
     if (V && V.tegn) { const hp = Math.round((V.h || 2.3) * 128); return R.canvasTex(256, hp, (g, w, h) => V.tegn(g, w, h, th, mulberry32(stil.length * 97 + 5)), true); }
     return R.canvasTex(256, 296, (g, w, h) => {
       const yOf = u => h - u / 2.3 * h, rng = mulberry32(99);

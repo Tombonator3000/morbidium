@@ -909,6 +909,105 @@
   ],
   "w": 0.4
  },
+ "gulv_brostein": {
+  "ax": 2,
+  "ay": 2,
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "tekstur": true,
+  "w": 4
+ },
+ "gulv_gress": {
+  "ax": 2,
+  "ay": 2,
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "tekstur": true,
+  "w": 4
+ },
+ "gulv_grus": {
+  "ax": 2,
+  "ay": 2,
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "tekstur": true,
+  "w": 4
+ },
+ "gulv_is": {
+  "ax": 2,
+  "ay": 2,
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "tekstur": true,
+  "w": 4
+ },
+ "gulv_jord": {
+  "ax": 2,
+  "ay": 2,
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "tekstur": true,
+  "w": 4
+ },
+ "gulv_mose": {
+  "ax": 2,
+  "ay": 2,
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "tekstur": true,
+  "w": 4
+ },
+ "gulv_myr": {
+  "ax": 2,
+  "ay": 2,
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "tekstur": true,
+  "w": 4
+ },
+ "gulv_sno": {
+  "ax": 2,
+  "ay": 2,
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "tekstur": true,
+  "w": 4
+ },
+ "gulv_sti": {
+  "ax": 2,
+  "ay": 2,
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "tekstur": true,
+  "w": 4
+ },
  "historie_1": {
   "ax": 1.2,
   "ay": 0.05,
@@ -3832,6 +3931,16 @@
   ],
   "w": 1.1
  },
+ "prop_gran": {
+  "ax": 1,
+  "ay": 0.05,
+  "h": 4.6,
+  "px": [
+   256,
+   589
+  ],
+  "w": 2
+ },
  "prop_grav": {
   "ax": 0.65,
   "ay": 1.1,
@@ -5461,6 +5570,50 @@
    217
   ],
   "w": 3.06
+ },
+ "vegg_hekk": {
+  "ax": 1,
+  "ay": 0.85,
+  "h": 1.7,
+  "px": [
+   256,
+   218
+  ],
+  "tekstur": true,
+  "w": 2
+ },
+ "vegg_ruin": {
+  "ax": 1,
+  "ay": 0.55,
+  "h": 1.1,
+  "px": [
+   256,
+   141
+  ],
+  "tekstur": true,
+  "w": 2
+ },
+ "vegg_skog": {
+  "ax": 1,
+  "ay": 1.4,
+  "h": 2.8,
+  "px": [
+   256,
+   358
+  ],
+  "tekstur": true,
+  "w": 2
+ },
+ "vegg_steinmur": {
+  "ax": 1,
+  "ay": 0.6,
+  "h": 1.2,
+  "px": [
+   256,
+   154
+  ],
+  "tekstur": true,
+  "w": 2
  },
  "verktoytavle1": {
   "ax": 0.625,

@@ -1,0 +1,9 @@
+etter kamp: {'state': 'play', 'enemies': 4, 'combat': True, 'hp': 50, 'slots': ['skjema', 'lys', None, 'brekning']}
+ryddet: {'combat': False, 'rooms': 2, 'lock': False}
+tjeneste: bibliotek
+boss: {'boss': 'Den hvite hjorten', 'state': 'intro'}
+luke: True
+drøm: Hjemme
+før død: {'s': 'play', 'd': 8729.126999999999, 'hp': 0, 'alive': False, 'depth': 2}
+state: dead
+ingen feil

@@ -232,9 +232,27 @@ UTV = {
   'prop_skrin': "a small black lacquered instrument case with shifting brass geometric patterns on the lid, the lid open a finger width with warm light in the gap, standing on a small wooden side table"
 }
 MISC.update(UTV)
+MISC.update({
+  'prop_gran': 'one tall slightly crooked Norwegian spruce tree with drooping green branch tiers, short brown trunk and roots; transparent background, no ground shadow',
+  'gulv_gress': 'seamless overhead garden grass in muted olive green, scattered hand-inked grass tufts',
+  'gulv_grus': 'seamless overhead warm beige gravel with small irregular stones',
+  'gulv_jord': 'seamless overhead dark warm garden soil, small stones and fine roots',
+  'gulv_mose': 'seamless overhead olive moss carpet with sparse spruce needles',
+  'gulv_myr': 'seamless overhead peat, damp moss and shallow dark pools',
+  'gulv_is': 'seamless overhead pale blue-grey frozen pond ice with fine cracks',
+  'gulv_sti': 'seamless overhead trampled brown forest trail with scattered spruce needles',
+  'gulv_brostein': 'seamless overhead irregular warm grey cobblestones with dark narrow joints',
+  'gulv_sno': 'seamless overhead connected powder snow with subtle grey-blue creases, no separate oval patches',
+  'vegg_hekk': 'dense clipped olive-green hedge foliage, flat front view, tileable horizontally, fully opaque',
+  'vegg_steinmur': 'low old dry-stone garden wall with moss on top, flat front view, tileable horizontally',
+  'vegg_skog': 'dense dark forest of pale birch trunks and spruce foliage, flat front view, tileable horizontally',
+  'vegg_ruin': 'low crumbling stone wall, irregular broken top edge and transparent sky above, flat front view, tileable horizontally'
+})
 UTV_FIG = {'gartner', 'huldra', 'vedkubbe', 'nokken', 'baklengs', 'blank_m', 'blank_k', 'ansikt_m', 'ansikt_k', 'hekk', 'kaalhode'}
 er_fig = lambda k, typer: any(k.startswith(p + '_' + t + '_') for t in typer for p in ('hode', 'kropp', 'blob'))
 RUNDER = [
+  ('Runde 15: uteflater og grantrær', lambda k: k.startswith(('gulv_', 'vegg_')) or k == 'prop_gran',
+   'Bakketeksturer er sett rett ovenfra, fyller hele bildet og dekker 4 x 4 spillruter. Vegger er sett rett forfra og gjentas vannrett. Flater beskjæres ikke og får ikke fjernet bakgrunn. Granen er en vanlig gjennomsiktig rekvisitt. Se UTEGRAFIKK.md for leveranse og kontroll.'),
   ('Runde 14: historien', lambda k: k.startswith('historie_') or k in ('prop_forstander', 'prop_venterom', 'prop_skrin'),
    'Historien er Hellraiser møter Twin Peaks, på et norsk sanatorium i 1923, med et Lovecraft-hav under huset. Journalsidene før drømmene, de fire sluttbildene, forstanderen som er sydd fast til stolen i Dypet, Venterommet med de røde forhengene og instrumentskrinet. Alt vises stort i samtalepanelet. Journalsidene er stilleben (ting, ikke folk), mørkere og mer høytidelige enn resten. Kroker og kjettinger skal være elegante og kalde, ikke blodige.'),
   ('Runde 10: uterom og de nye rommene', lambda k: k in UTV and k.startswith('prop_') and not k.startswith(('prop_telefon', 'prop_kaffebord', 'prop_ku', 'prop_brennevin', 'prop_badekarmann', 'prop_heis', 'prop_rotter', 'prop_radiobord', 'prop_damer', 'prop_utedo', 'prop_kubbekona', 'prop_kjempe', 'prop_tannfe', 'prop_lampemann')),
