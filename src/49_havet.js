@@ -103,18 +103,18 @@ function tentakel(bak, foran, pts, o = {}) {
   for (let k = 0; k < 4; k++) { const a = Math.round(k * (n - 1) / 4), b = Math.round((k + 1) * (n - 1) / 4); bak.add(pts.slice(a, b + 1), W(a / (n - 1)), k ? (o.col || HAV.arm) : (o.colV || HAV.armV), z); }
   // buken på sugesiden og glansen på ryggen, inni omrisset (blekket deres ligger under fyllet til strøkene over)
   const buk = [], glans = []; for (let i = 1; i <= Math.min(n - 2, 5); i++) buk.push(forskj(i, .2)); for (let i = 2; i <= Math.min(n - 3, 5); i++) glans.push(forskj(i, -.24));
-  bak.add(buk, w0 * .3, o.buk || HAV.buk, z); bak.add(glans, w0 * .1, o.glans || HAV.glans, z);
+  bak.add(buk, w0 * .3, o.buk || HAV.buk, z); if (o.glans !== false) bak.add(glans, w0 * .1, o.glans || HAV.glans, z); // glans: false sparer plass i båndet (Krakens bakre armer)
   if (!foran) return;
-  for (let i = 2; i <= n - 3; i++) { const s = i / (n - 1), r = W(s) * .17, [x, y] = forskj(i, .34); foran.circle(x, y, r, o.sug || HAV.sug, z + zf); if (r > .045) foran.circle(x, y, r * .42, HAV.sugI, z + zf + .001); }
+  for (let i = 2; i <= n - 3; i += o.sugSteg || 1) { const s = i / (n - 1), r = W(s) * .17, [x, y] = forskj(i, .34); foran.circle(x, y, r, o.sug || HAV.sug, z + zf); if (r > .045) foran.circle(x, y, r * .42, o.sugI || HAV.sugI, z + zf + .001); }
 }
 /* håndbokportrettet: den samme armen på lerretet, fra risten opp til tuppen med øyet (delen tegnes over, i x .3 og y 2) */
-function tentakelPortrett(g, S, cx, cy, pts, w0) {
+function tentakelPortrett(g, S, cx, cy, pts, w0, F = HAV) {
   const n = pts.length, W = s => w0 * (1 - .6 * s), P = p => [cx + p[0] * S, cy - p[1] * S];
   const strok = (a, b, w, col) => { g.beginPath(); for (let i = a; i <= b; i++) { const [x, y] = P(pts[i]); i === a ? g.moveTo(x, y) : g.lineTo(x, y); } g.lineWidth = w * S; g.strokeStyle = col; g.lineCap = 'round'; g.lineJoin = 'round'; g.stroke(); };
-  for (let pass = 0; pass < 2; pass++) for (let k = 0; k < 4; k++) { const a = Math.round(k * (n - 1) / 4), b = Math.round((k + 1) * (n - 1) / 4), w = W(a / (n - 1)); strok(a, b, pass ? w : w + .07, pass ? (k ? HAV.arm : HAV.armV) : INK); }
+  for (let pass = 0; pass < 2; pass++) for (let k = 0; k < 4; k++) { const a = Math.round(k * (n - 1) / 4), b = Math.round((k + 1) * (n - 1) / 4), w = W(a / (n - 1)); strok(a, b, pass ? w : w + .07, pass ? (k ? F.arm : F.armV) : INK); }
   for (let i = 2; i <= n - 3; i++) {
     const s = i / (n - 1), a = pts[i - 1], b = pts[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, w = W(s), x = pts[i][0] + dy / L * w * .34, y = pts[i][1] - dx / L * w * .34, [px, py] = P([x, y]);
-    for (const [r, c] of [[w * .17 + .03, INK], [w * .17, HAV.sug], [w * .07, HAV.sugI]]) { g.beginPath(); g.arc(px, py, r * S, 0, TAU); g.fillStyle = c; g.fill(); }
+    for (const [r, c] of [[w * .17 + .03, INK], [w * .17, F.sug], [w * .07, F.sugI]]) { g.beginPath(); g.arc(px, py, r * S, 0, TAU); g.fillStyle = c; g.fill(); }
   }
 }
 
@@ -285,10 +285,11 @@ const Havet = {
   /* armen finner sitt sted: risten nærmest i rommet, ellers en rute under en høy vegg (med en sprekk), ellers slår den hull i gulvet.
      Aldri en rist i et annet rom: dørene er stengt under kampen, og en arm bak veggen kan ikke nås (rommet blir aldri ryddet) */
   plasser(e) {
-    const rom = roomAt(e.x, e.z), s = rom >= 0 ? this.slukNaer(e.x, e.z, 14, e, rom) : this.slukNaer(e.x, e.z, 5, e, undefined, true);
+    // spawnEnemy.gulv: Kraken kaller armen opp der varselet var, rett gjennom gulvet
+    const rom = roomAt(e.x, e.z), gulv = !!spawnEnemy.gulv, s = gulv ? null : rom >= 0 ? this.slukNaer(e.x, e.z, 14, e, rom) : this.slukNaer(e.x, e.z, 5, e, undefined, true);
     if (s) { e.x = s.x; e.z = s.z; e.hjem = { x: s.x, z: s.z }; e.sted = 'sluk'; }
     else {
-      const v = this.vegg(e, rom);
+      const v = gulv ? null : this.vegg(e, rom);
       if (v) { e.x = v.x; e.z = v.z; e.hjem = v; e.sted = 'vegg'; try { const g = propSprite(null, v.x, v.vz + .03, { P: propArt({ k: 'sprekk' }), shadow: false }); R.level.add(g); e.mesh = g; } catch (err) { } }
       else {
         let f = { x: e.x, z: e.z }; // et sted på gulvet minst en rute fra de andre armene
@@ -447,7 +448,8 @@ Object.assign(Grotesk.ai, {
   avlopsarm(e, T, dist, toT) {
     if (e.fase !== 'opp' || e.dukket || e.faseT < .35 || e.faseT > Havet.OPPE - .45) { e.cd = .15; return; }
     if (dist < 3.2) { Havet.feie(e, toT); return; }
-    if (dist < 6.5 && los(e.x, e.z, T.x, T.z)) { if (Math.random() < .6) Havet.slag(e, toT, dist); else Havet.grip(e, toT); return; }
+    // grepet står over mens malstrømmen drar: to drag samtidig kan ikke løpes fra
+    if (dist < 6.5 && los(e.x, e.z, T.x, T.z)) { if (Math.random() < .6 || Kraken.virvel()) Havet.slag(e, toT, dist); else Havet.grip(e, toT); return; }
     e.cd = .3;
   },
   /* kaller armer, preker for de andre, eller døper pasienten */
@@ -722,4 +724,384 @@ Object.assign(FIENDE_INFO, {
   draug: ['En pleier som gikk ned i kjelleren i 1887 for å hente en pasient, og kom opp igjen våtere. Hopper som en frosk og skvetter med bekkenet.', 'Slåss på tørt gulv. I vann blir den friskere, men strøm i vannet biter godt på den.']
 });
 
-Object.assign(window, { nearestEnemy, statusOrd, puddleAt, moveEnt, BOSS_MOVES, laanbareTrekk, addProj, updateProjectiles, Havet, tentakel, tentakelLinje }); // til testene
+/* ============================================================
+   KRAKEN
+   Biskop Erik Pontoppidan i Bergen beskrev den i 1752 som en flytende øy. Her bor den i badevannet til den som sover under huset.
+   Den sier selv at den ikke er den som sover, så nr. 0 blir aldri sett. Hvalen som ble skutt utenfor Røst, hadde spist en av armene
+   dens, og Journalen lå i magen ved siden av armen: Journalen er skrevet med blekket til Kraken.
+   - Den sitter i et hull med tjern midt i rommet (leder strøm) og flytter seg ikke (fart .001: 0 ville gitt standardfarten).
+   - favn: armer stiger opp av vannet i en ring rundt pasienten og klemmer inn mot midten. Gå ut mellom dem.
+   - blekk: en kjegle med blekk, og tre skyer der det landet (tregere og mer Morbidium). I 3D blir rommet mørkere.
+   - dypdykk: den dukker (e.dukket), boblene følger pasienten, og så kommer den opp der. To armer stiger opp imens.
+     Står i egne, så Journalen låner det ikke: bare Krakens egen tick flytter den.
+   - malstrom: en virvel (en sone i G.zones) som drar pasienten inn, og nebbet biter i midten. Sonen trenger ikke eieren sin,
+     så Journalen kan låne den.
+   - dypkall: armer opp av ristene i rommet (eller gjennom gulvet), høyst fire.
+   Tegningen kan byttes med bilder fra ChatGPT (kraken_kappe, kraken_oye, kraken_pupill, kraken_nebb, kraken_skum).
+   ============================================================ */
+const KR = { hud: '#8a4a5a', hudV: '#6a3444', hudM: '#5a2a3a', hudL: '#b87e8a', flekk: '#d8b0b4', buk: '#dcb0a6', glans: '#b07686', sug: '#f2d0c4', sugI: '#7a3a46', L: '#2a0e18',
+  oye: '#f0e4b0', iris: '#d8a030', irisM: '#8a5a10', nebb: '#2e2220', nebbL: '#8a6a50', munn: '#4a0a18', rur: '#d8d0bc', tang: '#3e5a34', vann: '#12303c', skum: '#eef6f4', blekk: 0x1e2430 };
+const KR_FARGE = { arm: KR.hud, armV: KR.hudV, sug: KR.sug, sugI: KR.sugI };
+const krDel = (k, w, h, ax, ay, draw) => () => Art.part('kraken_' + k, w, h, ax, ay, draw);
+// øyet sitter her i dukken (kappen står .15 over gulvet)
+const KR_OYE = [.14, 1.5];
+const KRAKEN_DELER = {
+  kappe: krDel('kappe', 3.6, 3.85, 1.8, .05, g => {
+    const rng = mulberry32(1752), r = (a, b) => a + rng() * (b - a), ey = -(KR_OYE[1] - .15), ex = KR_OYE[0];
+    // finnene bak kuppelen, som ører
+    for (const s of [-1, 1]) A.cel(g, A.blob([[s * 1.0, -2.5], [s * 1.5, -3.05], [s * 1.74, -2.72], [s * 1.64, -2.28], [s * 1.28, -2.1]]), KR.hudV, { line: KR.L, sk: .75, lw: .045 });
+    // kappen: en høy, bulende kuppel som lener seg litt
+    const kropp = A.blob([[-1.42, .02], [-1.55, -.5], [-1.36, -1.0], [-1.4, -1.6], [-1.52, -2.2], [-1.36, -2.85], [-.95, -3.36], [-.25, -3.64], [.5, -3.56], [1.12, -3.22], [1.48, -2.62], [1.54, -1.98], [1.4, -1.4], [1.32, -.92], [1.52, -.42], [1.44, .02]]);
+    A.cel(g, kropp, KR.hud, { line: KR.L, sk: .7, lw: .065 });
+    g.save(); kropp(g); g.clip();
+    // mørke skjolder og bleke flekker, tettest øverst
+    for (let i = 0; i < 9; i++) A.flat(g, A.ell(r(-1.2, 1.2), r(-3.3, -.6), r(.16, .34), r(.1, .22), r(0, 3)), 'rgba(70,24,40,.28)', 0);
+    for (let i = 0; i < 34; i++) { const y = r(-3.45, -.35), rr = r(.025, .085) * (1.3 + y * .15); if (Math.hypot(r(-1.3, 1.3) - ex, y - ey) < .72) continue; A.flat(g, A.ell(r(-1.3, 1.3), y, rr, rr * .8), KR.flekk, 0); }
+    for (let i = 0; i < 16; i++) { const x = r(-1.2, 1.2), y = r(-3.3, -1.0); A.dot(g, x, y, .012, 'rgba(255,230,230,.55)'); }
+    // folder rundt foten og opp mot øyet
+    for (const [a, c, b] of [[[-1.3, -.3], [-.7, -.55], [-.1, -.35]], [[.3, -.32], [.8, -.6], [1.3, -.35]], [[-1.2, -.7], [-.9, -1.0], [-.6, -1.1]], [[-1.1, -2.3], [-.5, -2.0], [.2, -2.1]], [[.5, -2.5], [1.0, -2.2], [1.35, -2.3]]]) A.curve(g, a, c, b, .028, KR.hudM);
+    // kanten mot lyset øverst
+    A.curve(g, [-.9, -3.2], [-.2, -3.55], [.6, -3.42], .05, 'rgba(230,180,190,.45)');
+    g.restore();
+    // øyehulen: rynket og mørk, med et tungt lokk over
+    A.cel(g, A.ell(ex, ey, .68, .56), '#3a1622', { line: KR.L, lw: .05, hi: false });
+    A.cel(g, A.blob([[ex - .74, ey - .18], [ex - .5, ey - .62], [ex, ey - .74], [ex + .52, ey - .62], [ex + .76, ey - .16], [ex + .4, ey - .42], [ex, ey - .48], [ex - .4, ey - .42]]), KR.hudV, { line: KR.L, lw: .045, sk: .7 });
+    for (const [a, c, b] of [[[ex - .6, ey - .78], [ex, ey - .95], [ex + .62, ey - .76]], [[ex - .44, ey - .9], [ex, ey - 1.04], [ex + .42, ey - .9]], [[ex - .5, ey + .62], [ex, ey + .74], [ex + .52, ey + .6]], [[ex - .34, ey + .74], [ex, ey + .84], [ex + .36, ey + .72]]]) A.curve(g, a, c, b, .03, KR.hudM);
+    // trakten på siden, der blekket kommer ut
+    A.cel(g, A.blob([[1.2, -.56], [1.26, -.92], [1.58, -.98], [1.76, -.88], [1.74, -.68], [1.52, -.6]]), KR.hudV, { line: KR.L, lw: .045, sk: .75 });
+    A.cel(g, A.ell(1.72, -.78, .07, .11), '#140810', { lw: .025, hi: false }); A.flat(g, A.ell(1.62, -.66, .05, .025), 'rgba(30,36,48,.8)', 0);
+    // rur på kuppelen
+    const rur = (x, y, s = 1) => { A.cel(g, A.blob([[x - .06 * s, y + .03 * s], [x - .035 * s, y - .05 * s], [x + .035 * s, y - .05 * s], [x + .06 * s, y + .03 * s]]), KR.rur, { lw: .018, hi: false, line: '#3a2a2a' }); A.dot(g, x, y - .02 * s, .016 * s, '#5a4a40'); };
+    for (const [x, y, s] of [[.95, -2.9, 1.1], [1.08, -2.78, .8], [.84, -2.76, .9], [1.02, -2.6, .7], [-1.18, -1.9, .9], [-1.26, -1.74, .7], [-1.08, -1.72, .6], [.3, -.5, .8], [.44, -.44, .6]]) rur(x, y, s);
+    // tang som henger fra foten
+    for (const [x, y, dx, dy] of [[-.95, -.9, -.12, .9], [-.5, -.55, .08, .6], [.72, -.75, .1, .78], [1.05, -1.2, .16, 1.2]]) { A.curve(g, [x, y], [x + dx * 2.2, y + dy * .5], [x + dx, y + dy], .06); A.curve(g, [x, y], [x + dx * 2.2, y + dy * .5], [x + dx, y + dy], .034, KR.tang); }
+    // kirken biskopen bygde på ryggen i tankene sine: en stiplet blyantskisse, for den er ikke der
+    g.save(); g.translate(-.38, -3.5); g.rotate(-.2); g.setLineDash([.06, .04]); g.lineWidth = .024; g.strokeStyle = 'rgba(40,24,30,.75)'; g.fillStyle = 'rgba(246,240,228,.38)';
+    const tegn = (pts, fyll = true) => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); if (fyll) g.fill(); g.stroke(); };
+    tegn([[-.36, .02], [-.36, -.26], [.16, -.26], [.16, .02]]); tegn([[-.42, -.24], [-.12, -.46], [.2, -.24]]);
+    tegn([[.16, .02], [.16, -.42], [.34, -.42], [.34, .02]]); tegn([[.13, -.4], [.25, -.76], [.37, -.4]]);
+    g.setLineDash([]); g.beginPath(); g.moveTo(.25, -.76); g.lineTo(.25, -.88); g.moveTo(.2, -.83); g.lineTo(.3, -.83); g.stroke();
+    for (const x of [-.26, -.08]) { g.beginPath(); g.moveTo(x, -.08); g.lineTo(x, -.16); g.arc(x + .04, -.16, .04, Math.PI, 0); g.lineTo(x + .08, -.08); g.stroke(); }
+    g.beginPath(); g.moveTo(.21, .02); g.lineTo(.21, -.1); g.arc(.25, -.1, .04, Math.PI, 0); g.lineTo(.29, .02); g.stroke();
+    // og ei gran ved siden av
+    g.setLineDash([.05, .035]); tegn([[-.66, .02], [-.52, -.34], [-.38, .02]]); tegn([[-.64, -.12], [-.52, -.46], [-.4, -.12]]); g.setLineDash([]);
+    g.restore();
+  }),
+  // øyehvitt med blodårer. Iris og pupill ligger i en egen del som ser etter pasienten
+  oye: krDel('oye', 1.4, 1.2, .7, .6, g => {
+    A.cel(g, A.ell(0, 0, .56, .44), KR.oye, { line: KR.L, lw: .04, sk: .82 });
+    for (const [a, b, c] of [[[-.54, -.06], [-.38, -.02], [-.3, .08]], [[-.5, .16], [-.36, .12], [-.28, .2]], [[.52, -.12], [.38, -.06], [.32, -.14]], [[.5, .14], [.4, .1], [.34, .18]], [[.1, -.43], [.08, -.3], [.14, -.26]]]) A.curve(g, a, b, c, .018, '#b8303a');
+    A.flat(g, A.ell(0, .3, .42, .1), 'rgba(120,70,40,.18)', 0);
+  }),
+  pupill: krDel('pupill', .9, .8, .45, .4, g => {
+    A.flat(g, A.ell(0, 0, .36, .31), KR.iris, .02, KR.irisM);
+    for (let k = 0; k < 18; k++) { const a = k / 18 * TAU; A.line(g, [[Math.cos(a) * .12, Math.sin(a) * .1], [Math.cos(a) * .33, Math.sin(a) * .28]], .012, 'rgba(120,70,10,.45)'); }
+    // pupillen ligger vannrett, som hos en geit
+    A.flat(g, A.blob([[-.29, -.01], [-.2, -.075], [0, -.05], [.2, -.075], [.29, -.01], [.29, .03], [.2, .075], [0, .055], [-.2, .075], [-.29, .03]]), '#120a0c', 0);
+    A.dot(g, .13, -.15, .055, '#ffffff'); A.dot(g, -.15, .12, .022, 'rgba(255,255,255,.7)');
+  }),
+  // papegøyenebbet: overnebbet krøker ned over undernebbet
+  nebb: krDel('nebb', 1.0, 1.0, .5, .5, g => {
+    A.cel(g, A.ell(0, .05, .3, .3), KR.munn, { lw: .03, hi: false });
+    A.cel(g, A.blob([[-.28, .04], [-.2, .3], [-.02, .42], [.12, .36], [.22, .2], [.26, .02], [.1, .12], [-.08, .12]]), KR.nebb, { line: '#0e0808', lw: .035, sk: .8 });
+    A.cel(g, A.blob([[-.34, .0], [-.32, -.24], [-.12, -.4], [.14, -.38], [.32, -.2], [.34, .04], [.2, .24], [.06, .38], [.02, .2], [.12, .06], [-.12, .02]]), KR.nebb, { line: '#0e0808', lw: .035, sk: .8 });
+    A.curve(g, [-.22, -.24], [0, -.34], [.2, -.22], .03, KR.nebbL); A.curve(g, [.2, .0], [.16, .16], [.08, .28], .02, KR.nebbL);
+  }),
+  // vannkanten foran foten, med skum: kroppen stiger opp av hullet
+  skum: krDel('skum', 4.4, .8, 2.2, .4, g => {
+    const kant = [[-1.9, -.06], [-1.4, -.2], [-.7, -.26], [0, -.28], [.7, -.26], [1.4, -.2], [1.9, -.06], [1.5, .12], [.8, .22], [0, .25], [-.8, .22], [-1.5, .12]];
+    A.flat(g, A.blob(kant), 'rgba(18,48,60,.92)', .035, KR.L);
+    for (const [a, c, b] of [[[-1.6, -.1], [-.8, -.2], [0, -.18]], [[0, -.2], [.8, -.22], [1.6, -.1]], [[-1.2, .06], [0, .14], [1.2, .06]]]) A.curve(g, a, c, b, .025, 'rgba(154,208,224,.6)');
+    const rng = mulberry32(1753);
+    for (let i = 0; i < 26; i++) { const t = i / 25, a = Math.PI * (1 - t), x = Math.cos(a) * 1.85, y = Math.sin(a) * .22 + .02, rr = .05 + rng() * .06; A.flat(g, A.ell(x, y, rr * 1.4, rr), KR.skum, .018, '#2a4a54'); }
+    for (let i = 0; i < 12; i++) { const x = -1.5 + i * .27, y = -.24 + Math.abs(x) * .08; A.flat(g, A.ell(x, y, .06, .035), KR.skum, .015, '#2a4a54'); }
+  })
+};
+// armene i dukken: [rot x, rot y, lengde, lean, krok, bredde, bak, fase]. To høye bak kuppelen som krøller seg over den, to på sidene,
+// og foran én lang over vannet og stumpen etter armen hvalen utenfor Røst spiste (med bandasje)
+const KR_ARMER = [[-.62, 1.8, 3.3, -.22, 1.5, .56, 1, 3.3], [.66, 1.9, 3.5, .26, -1.6, .58, 1, 5.1], [-1.05, .5, 3.1, -.55, -1.7, .66, 1, 0], [1.1, .55, 3.3, .5, 1.8, .68, 1, 2.1],
+  [-.72, .24, 2.7, -1.2, -1.9, .58, 0, 4.2], [.84, .26, 1.3, .95, .35, .72, 0, 1.3]];
+const KR_STUMP = 5, KR_BANDASJE = 5; // stumpen er den siste armen, bandasjen den sjette delen
+KRAKEN_DELER.bandasje = krDel('bandasje', .7, .7, .35, .12, g => {
+  // gasbind rundt enden av stumpen: tullet på skrå, med en rust flekk, en sikkerhetsnål og en løs ende
+  A.cel(g, A.blob([[-.2, .08], [-.23, -.12], [-.2, -.3], [-.1, -.4], [.04, -.42], [.16, -.36], [.22, -.2], [.21, 0], [.18, .08]]), '#f2ede0', { line: '#4a3a32', lw: .03, sk: .85 });
+  for (const y of [-.02, -.12, -.22, -.31]) A.curve(g, [-.21, y + .03], [0, y - .03], [.2, y + .01], .014, '#b8ad98');
+  A.flat(g, A.ell(.02, -.28, .09, .07), 'rgba(140,50,40,.55)', 0); A.flat(g, A.ell(.05, -.3, .045, .035), 'rgba(110,30,30,.6)', 0);
+  A.curve(g, [.18, -.06], [.32, -.02], [.3, .12], .05); A.curve(g, [.18, -.06], [.32, -.02], [.3, .12], .03, '#f2ede0'); // den løse enden
+  A.line(g, [[-.14, -.16], [-.02, -.2]], .018, '#8a9096'); A.dot(g, -.15, -.16, .022, '#a8acb4');
+});
+LAGDUKKE.kraken = {
+  scale: .95, skygge: 2.1,
+  deler: [
+    { P: KRAKEN_DELER.kappe, x: 0, y: .15, z: 0, anim: (d, S) => { const p = Math.sin(S.t * 1.1) * .018; d.m.scale.set(1 + p, 1 - p * .7 + S.aapen * .04, 1); d.m.position.y = .15 + S.aapen * .1; } },
+    { P: KRAKEN_DELER.oye, x: KR_OYE[0], y: KR_OYE[1], z: .01, anim: (d, S) => { d.m.scale.set(1 + S.aapen * .08, Kraken.blunk(S.t) * (1 + S.aapen * .12), 1); d.m.position.y = KR_OYE[1] + S.aapen * .1; } },
+    { P: KRAKEN_DELER.pupill, x: KR_OYE[0], y: KR_OYE[1], z: .012, anim: (d, S) => {
+      // ser etter pasienten: mot siden dukken vender (den speiles), og ned når pasienten står foran
+      const B = G.boss, P = G.player, se = B && B.type === 'kraken' && P ? [Math.min(.13, Math.abs(P.x - B.x) * .03), clamp((P.z - B.z) * .025, -.06, .08)] : [0, 0];
+      d.m.position.set(KR_OYE[0] + se[0], KR_OYE[1] - se[1] + S.aapen * .1, .012); const k = Kraken.blunk(S.t), a = 1 - S.aapen * .35; d.m.scale.set(a, k * a, 1); } },
+    { P: KRAKEN_DELER.nebb, x: 0, y: .62, z: .014, anim: (d, S) => { const a = Math.min(1, S.aapen * 1.2); d.m.scale.set(.4 + a * .6, .05 + a * .95, 1); d.m.visible = a > .05; } },
+    { P: KRAKEN_DELER.skum, x: 0, y: 0, z: .05, anim: (d, S) => {
+      // vannkanten blir stående i flaten når kroppen synker eller stiger (B.hop), så den dykker ned gjennom sitt eget skum
+      const B = G.boss, h = B && B.type === 'kraken' && B.doll && B.doll.deler && B.doll.deler.includes(d) ? B.hop || 0 : 0;
+      d.m.position.y = -h / (LAGDUKKE.kraken.scale * BILL_Y) + Math.sin(S.t * 2.2) * .02; d.m.scale.set(1 + Math.sin(S.t * 1.7) * .02, 1, 1); } },
+    { P: KRAKEN_DELER.bandasje, x: 1.5, y: .9, z: .035 } // plasseres på enden av stumpen i lemmer
+  ],
+  /* seks armer: fire bak kappen og to foran, som svaier og løftes når Kraken angriper. Under vann tegnes de ikke */
+  lemmer(dd, S) {
+    if (!dd.root.visible) return;
+    const a = S.aapen || 0;
+    KR_ARMER.forEach(([x0, y0, L, lean, krok, w, bak, fase], i) => {
+      const stump = i === KR_STUMP, pts = tentakelLinje(x0, y0, L + a * (stump ? .2 : .6), { lean: lean * (1 - a * .5), krok: krok * (1 - a * .45) + Math.sign(krok) * a * .3, amp: .13 + a * .06, t: S.t, fart: 1.5 + a, fase, skjelv: a * .015 }, bak ? 10 : stump ? 7 : 11);
+      // de bakre armene uten glans og sugekopper, så de får plass i båndet bak
+      if (bak) tentakel(dd.back, null, pts, { w, z: -.03 - i * .002, col: KR.hud, colV: KR.hudV, buk: KR.buk, glans: false, side: Math.sign(x0) });
+      else tentakel(dd.front, dd.front, pts, { w, z: .02, col: KR.hud, colV: KR.hudV, buk: KR.buk, glans: KR.glans, sug: KR.sug, sugI: KR.sugI, side: -Math.sign(x0) });
+      if (stump) { const m = dd.deler[KR_BANDASJE].m, n = pts.length, e = pts[n - 2]; m.position.set(e[0], e[1], .035); m.rotation.z = -pts.vinkel[n - 2]; }
+    });
+  },
+  portrett(g, S, cx, cy, lag) {
+    if (lag !== 'bak') return;
+    // bildet er 4,4 enheter bredt (vannkanten), så armene krølles innenfor det
+    for (const [x0, y0, L, lean, krok, w] of [[-.62, 1.8, 2.9, -.62, -.9, .5], [.66, 1.9, 3.0, .6, 1.0, .52], [-1.05, .5, 1.9, -.5, -1.6, .58], [1.1, .55, 1.9, .5, 1.7, .6], [-.72, .24, 1.6, -1.1, -1.4, .5]])
+      tentakelPortrett(g, S, cx, cy, tentakelLinje(x0, y0, L, { lean, krok, amp: .08, t: 1.3 + x0 }), w, KR_FARGE);
+  }
+};
+RIG.kraken = { blob: true, scale: 1 };
+
+SJEF_DATA.kraken = { type: 'kraken', weapon: null, name: 'Kraken', title: 'Beskrevet av biskopen i Bergen, 1752. Aldri friskmeldt.', hp: 1000, minion: 'avlopsarm', minions: 2,
+  attacks: ['favn', 'blekk', 'dypdykk', 'malstrom', 'favn', 'blekk', 'dypkall'], puddle: 'tjern', r: 1.6, fart: .001, skygge: 2.3, egne: ['dypdykk'], tick: (B, dt) => Kraken.tick(B, dt) };
+SJEF_PULJE.push('kraken');
+SJEF_REKKE.push('kraken');
+Object.assign(LINES.bossIntro, { kraken: ['Åtte armer, og ingen av dem har skrevet under.', 'Du står i badevannet mitt.', 'Biskopen i Bergen så meg i 1752. Han trodde jeg var en øy.'] });
+Object.assign(LINES.monolog, { kraken: ['Biskopen trodde jeg var en øy.', 'Han bygde en kirke på ryggen min i tankene sine, og jeg lot ham.', 'Jeg er ikke den som sover. Jeg bor bare i badevannet dens.'] });
+Object.assign(LINES.monolog2, { kraken: ['Hvalen utenfor Røst spiste en arm av meg. Journalen lå i magen, ved siden av armen.', 'Blekket i den er mitt. Hver side du har lest, er skrevet med meg.', 'Du har blekk på hendene nå. Det går ikke av.'] });
+Object.assign(LINES.boss, { kraken: ['Blubb.', 'Mer blekk!', 'Ned. Alt går ned.', 'Havet er under deg. Det er alltid under deg.', 'Jeg har flere armer enn du har tid.'] });
+LINES.bossDod.kraken = 'Skriv... pent... med meg...';
+SJEF_EPITAF.kraken = 'Kraken er behandlet. Biskop Pontoppidan kalte den en flytende øy i 1752. Den var bare noe som bor i badevannet til den som sover. Journalen er skrevet med blekket dens, og blekket er fortsatt vått.';
+Object.assign(DEATH_CAUSES, { boss_kraken: ['Tatt av Kraken, nøyaktig som biskopen beskrev.', 'Brukt som blekk.', 'Sugd ned i malstrømmen. Poe skrev om det. Ingen trodde ham heller.'] });
+Object.assign(FIENDE_INFO, { kraken: ['En blekksprut fra havet under huset, beskrevet av biskopen i Bergen i 1752. Lar armene stige opp rundt deg, sprøyter blekk, drar deg inn i en malstrøm og dukker opp under deg.', 'Gå ut mellom armene før de klemmer. Løp utover når vannet går rundt, og når den dukker, se etter boblene der du står.'] });
+PA[6].push('Pasienter som ser en øy i badekaret, bes ikke gå i land på den. Biskopen gjorde det i 1752.');
+
+const Kraken = {
+  armer: [], MAKS_ARMER: 4, SYNK: .55, JAKT: .6, RING: 1.0, STIG: .4,
+  /* blunker av og til, som Klumpens øyne */
+  blunk(t) { return Math.sin(t * 1.3 + 4) > .985 || Math.sin(t * .37) > .997 ? .08 : 1; },
+  /* sjefen er kommet: bredere bånd foran, hullet i gulvet og et kaldt lys */
+  start(B) {
+    // fire armer bak og to foran med sugekopper bruker rundt 5800 punkter i hvert bånd, og båndene i en Lagdukke har 3200
+    const d = B.doll; for (const k of ['back', 'front']) { const gl = d[k]; if (!gl || gl.cap >= 6000) continue; const n = new Ribbon(6000, d.U); gl.mesh.parent && gl.mesh.parent.remove(gl.mesh); gl.geo.dispose(); gl.mesh.material.dispose(); d.plane.add(n.mesh); d[k] = n; }
+    B.bubbleH = 4.5; B.blood = KR.blekk; B.hull = addPuddle(B.x, B.z, 'tjern', 2.4, 1e9); R.ripple(B.x, B.z);
+    if (B.glow) { R.remove(B.glow); B.glow = R.light(B.x, B.z, 5.5, '#6ab8c8', .3); }
+  },
+  tick(B, dt) {
+    if (B.dykk) { this.dykkTick(B, dt); if (B.dykk && B.state === 'act') B.t = Math.max(B.t, .1); return; } // neste angrep venter til den er oppe
+    // taket på 46 pytter kan skyve hullet ut: da graves det på nytt
+    if (!B.hull || !G.puddles.includes(B.hull)) B.hull = addPuddle(B.x, B.z, 'tjern', 2.4, 1e9);
+    if (Math.random() < dt * 3) Particles.spawn(B.x + rnd(-1.9, 1.9), .1, B.z + rnd(-1, 1.3), 1, 0x9ad0e0, { speed: .3, up: 1.4, g: 0, life: .7, size: .7 });
+  },
+  /* et sted der den store kroppen får plass, i samme rom */
+  plass(x, z, rom) {
+    const fri = (px, pz) => { for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (solid(Math.floor(px + dx * 1.1), Math.floor(pz + dz * 1.1))) return false; return rom === undefined || roomAt(px, pz) === rom; };
+    for (let r = 0; r <= 5; r += .5) for (let k = 0; k < 12; k++) { const a = k / 12 * TAU, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (fri(px, pz)) return { x: px, z: pz }; if (!r) break; }
+    return freeSpot(x, z, 3);
+  },
+  /* hullet den forlot, renner ut */
+  krymp(p) { if (!p || !G.puddles.includes(p)) return; p.r = Math.min(p.r, 1.1); p.mesh.scale.set(p.r * 2, p.r * 2, 1); p.life = Math.min(p.life, 5); p.max = Math.max(p.life, 2); },
+  /* ---------- dykket: synker, boblene følger pasienten, ringen, og opp der ---------- */
+  dykkTick(B, dt) {
+    const D = B.dykk, P = G.player; D.t += dt;
+    const bobler = (x, z, n, r) => Particles.spawn(x + rnd(-r, r), .1, z + rnd(-r, r), n, 0x9ad0e0, { speed: .8, up: 3, g: 0, life: .6, size: .8 });
+    if (D.fase === 'synk') {
+      const k = Math.min(1, D.t / this.SYNK); B.hop = -4.8 * k * k;
+      if (Math.random() < dt * 24) bobler(B.x, B.z, 2, 1.6);
+      if (k >= 1) { D.fase = 'jakt'; D.t = 0; B.doll.root.visible = false; this.krymp(B.hull); B.hull = null; Sound.play('sluk', .8, .6); this.kallArmer(B, 2); }
+    } else if (D.fase === 'jakt') {
+      // boblene der pasienten står: den er rett under
+      D.bT = (D.bT || 0) - dt; if (D.bT <= 0) { D.bT = .1; bobler(P.x, P.z, 2, .7); if (Math.random() < .5) R.ripple(P.x + rnd(-.5, .5), P.z + rnd(-.5, .5)); }
+      if (D.t >= this.JAKT) { D.fase = 'ring'; D.t = 0; D.o = { x: P.x, z: P.z, r: 2.6, color: 0x2a6a7a, type: 'vann' }; addTele('circle', D.o, this.RING, () => { }, B); Sound.play('sluk', 1, .5); }
+    } else if (D.fase === 'ring') {
+      D.bT = (D.bT || 0) - dt; if (D.bT <= 0) { D.bT = .08; bobler(D.o.x, D.o.z, 3, 1.8); R.ripple(D.o.x + rnd(-1.5, 1.5), D.o.z + rnd(-1.5, 1.5)); }
+      if (D.t >= this.RING) this.opp(B, D);
+    } else if (D.fase === 'opp') {
+      const k = Math.min(1, D.t / this.STIG); B.hop = -3.2 * (1 - k) * (1 - k);
+      if (k >= 1) { B.hop = 0; B.dykk = null; B.aapen = 0; }
+    }
+  },
+  opp(B, D) {
+    const o = D.o, s = this.plass(o.x, o.z, D.rom);
+    B.x = s.x; B.z = s.z; B.vx = B.vz = 0; B.r = D.r0; B.dukket = false; B.hop = -3.2; B.aapen = 1; B.doll.root.visible = true; B.doll.root.position.set(B.x, B.hop, B.z);
+    D.fase = 'opp'; D.t = 0;
+    hitShape('circle', o, D.dmg * 1.2, { type: 'boss', x: s.x, z: s.z, kb: 12 }, 'enemy');
+    B.hull = addPuddle(B.x, B.z, 'tjern', 2.4, 1e9);
+    Particles.spawn(B.x, .4, B.z, 26, 0x9ad0e0, { speed: 6, up: 9, life: .8 }); R.ripple(B.x, B.z); R.shake(.6); Sound.play('splash', 1, .55); Sound.play('slam', .8, .6);
+    FX.bubble(B, pick(['Her.', 'Under deg. Alltid under deg.', 'Blubb.']), 1.2, 'boss');
+  },
+  /* ---------- armene som stiger opp rundt pasienten i favn ----------
+     En liten samling tentakler som gjenbrukes, lagd første gang de trengs og kastet (ut av grafikkminnet) når etasjen rives.
+     Hver har sitt eget manus: opp, trekk seg tilbake, slå inn mot midten, og ned igjen */
+  lagArm() {
+    const U = makeU(), root = new THREE.Group(), plane = new THREE.Group(), sc = 1.1; root.add(plane); plane.scale.set(sc, sc * BILL_Y, sc);
+    const rib = new Ribbon(3400, U); plane.add(rib.mesh);
+    const d = { type: 'krakenarm', root, plane, U, back: rib, front: null, meshes: [], shadow: Doll.blob(.6), shadowA: 1, flip: 1, aktiv: false, A0: null };
+    root.add(d.shadow); d.dispose = () => dukkeKast(d);
+    if (typeof ekstraDukke === 'function') ekstraDukke(d); // så 3D lyser den opp og lykta gir den skygge
+    return d;
+  },
+  arm(x, z, plan) {
+    let d = this.armer.find(a => !a.aktiv); if (!d) { if (this.armer.length >= 8) return null; d = this.lagArm(); this.armer.push(d); }
+    const s = Math.sin(plan.mot); d.dir = (s < 0 ? -1 : 1) * Math.max(.45, Math.abs(s));
+    Object.assign(d, { aktiv: true, t: 0, plan, x, z, A0: { h: 0, hv: 0, lean: 0, krok: 2.2, L: 2.6, amp: .1, skjelv: 0, fase: Math.random() * 6 } });
+    d.root.position.set(x, 0, z); d.root.visible = true; if (!d.root.parent) R.scene.add(d.root);
+    return d;
+  },
+  armTick(dt) {
+    for (const d of this.armer) {
+      if (!d.aktiv) continue;
+      d.t += dt; const Pl = d.plan, A0 = d.A0, t = d.t, dir = d.dir;
+      const M = t < Pl.opp ? { h: 0, lean: 0, krok: 2.2, L: 2.6, amp: .1, rate: 6 }
+        : t < Pl.slag - .12 ? { h: 1, lean: -dir * .45, krok: -dir * 1.1, L: 2.9, amp: .05, skjelv: .045, rate: 7 }
+        : t < Pl.slag + .3 ? { h: 1, lean: dir * 1.55, krok: dir * .35, L: 3.6, amp: 0, rate: 26 }
+        : t < Pl.ned ? { h: 1, lean: dir * .8, krok: dir * 1.7, L: 3.0, amp: .12, rate: 6 }
+        : { h: 0, lean: dir * .3, krok: 2.6, L: 2.6, amp: .05, rate: 9 };
+      const k = 1 - Math.exp(-(M.rate || 6) * dt); for (const q of ['lean', 'krok', 'L', 'amp']) A0[q] += (M[q] - A0[q]) * k; A0.skjelv += ((M.skjelv || 0) - A0.skjelv) * k;
+      A0.hv += (M.h - A0.h) * 110 * dt - A0.hv * 12 * dt; A0.h = clamp(A0.h + A0.hv * dt, 0, 1.2);
+      if (t > Pl.ned + .9 && A0.h < .03) { d.aktiv = false; d.root.visible = false; R.remove(d.root); continue; }
+      const R0 = d.back, h = A0.h; R0.begin();
+      if (h > .02) {
+        const pts = tentakelLinje(0, .02, A0.L * Math.max(.05, h), { lean: A0.lean, krok: A0.krok, amp: A0.amp, t: G.time, fart: 2, skjelv: A0.skjelv, fase: A0.fase });
+        tentakel(R0, R0, pts, { w: .62 * Math.min(1, .45 + h * .55), col: KR.hud, colV: KR.hudV, buk: KR.buk, glans: KR.glans, sug: KR.sug, sugI: KR.sugI, sugSteg: 2, side: -Math.sign(dir) });
+      }
+      // vannet rundt roten
+      const b = Math.sin(G.time * 3 + A0.fase) * .015, w = .3 + Math.min(1, h) * .3;
+      R0.add([[-w - .1, .04 + b], [-w * .5, .09], [w * .5, .09 - b], [w + .1, .04]], .09, HAV.vann, .02);
+      for (const [x, y, r, f] of [[-.36, .1, .05, 0], [.34, .12, .055, 2], [-.12, .15, .04, 4], [.16, .16, .035, 1], [.02, .06, .045, 3]]) R0.circle(x * (w + .1) / .44, y + Math.sin(G.time * 4 + f) * .02, r, HAV.skum, .021);
+      R0.end(.028);
+      d.shadow.material.opacity = .9 * Math.min(1, h + .2);
+    }
+  },
+  /* favn: armene reiser seg i en ring rundt der pasienten står, og klemmer inn mot midten én etter én */
+  favn(B, dist, toP, dmg) {
+    const P = G.player, n = B.enraged ? 6 : 5, R0 = 3.4, cx = P.x, cz = P.z, a0 = Math.random() * TAU;
+    B.t = B.atkDur = 2.5; B.aapen = 1; FX.bubble(B, pick(['Kom i favnen min.', 'Åtte armer, og alle vil holde deg.', 'Hold stille. Det er bare en klem.']), 1.4, 'boss'); Sound.play('sluk', .9, .6);
+    let i = 0;
+    for (let k = 0; k < n; k++) {
+      const a = a0 + k / n * TAU, x = cx + Math.sin(a) * R0, z = cz + Math.cos(a) * R0; if (solid(Math.floor(x), Math.floor(z))) continue;
+      const opp = .75 + i++ * .09, mot = Math.atan2(cx - x, cz - z), o = { x, z, r: .8, color: 0x2a6a7a, type: 'vann' };
+      this.arm(x, z, { opp, slag: opp + .75, ned: opp + 1.3, mot });
+      addTele('circle', o, opp, () => { hitShape('circle', o, dmg * .4, { type: 'boss', x: o.x, z: o.z, kb: 5 }, 'enemy'); Sound.play('splash', .7, .9); R.ripple(o.x, o.z); Particles.spawn(o.x, .3, o.z, 8, 0x9ad0e0, { speed: 3, up: 5, life: .5 }); }, B);
+      bossLater(B, opp + .05, () => {
+        const r = { x, z, a: mot, w: 1.25, len: R0 + 1.2, color: KR.blekk, type: 'vann' };
+        addTele('rect', r, .7, () => { hitShape('rect', r, dmg * .8, { type: 'boss', x, z, kb: 9 }, 'enemy'); beam(r.x, r.z, r.x + Math.sin(r.a) * r.len, r.z + Math.cos(r.a) * r.len, 0x5a2a3a, .45, .3, .6); Sound.play('slam', .7, 1.1); R.shake(.16); }, B);
+      });
+    }
+    bossLater(B, 2.3, () => { B.aapen = 0; });
+  },
+  /* blekk: en kjegle fra trakten, og tre skyer der blekket landet */
+  blekk(B, dist, toP, dmg) {
+    B.t = B.atkDur = 1.5; B.aapen = 1; FX.bubble(B, pick(['Mer blekk!', 'Skriv pent.', 'Signer med meg.']), 1.2, 'boss');
+    const o = { x: B.x, z: B.z, a: toP, r: 6, arc: 1.1, color: KR.blekk, type: 'morb' };
+    addTele('cone', o, .9, () => {
+      o.x = B.x; o.z = B.z; hitShape('cone', o, dmg * .6, { type: 'boss', x: B.x, z: B.z, kb: 4 }, 'enemy'); Sound.play('splat', 1, .6); Sound.play('splash', .6, .5); R.shake(.2);
+      for (const k of [1.9, 3.5, 5.1]) { const x = o.x + Math.sin(o.a) * k, z = o.z + Math.cos(o.a) * k; if (solid(Math.floor(x), Math.floor(z))) continue; addRoyk(x, z, 1 + k * .1, 4.5); if (typeof Blod === 'object') Blod.flekk(x, z, '#1e2430', 1.1, .8); }
+      for (let k = 0; k < 3; k++) Particles.spawn(o.x + Math.sin(o.a) * 1.6, 1.4, o.z + Math.cos(o.a) * 1.6, 8, KR.blekk, { speed: 7, up: 2, life: .6, size: 1.2 });
+      if (D3.on) D3.morke(1.4, .1);
+    }, B);
+    bossLater(B, 1.3, () => { B.aapen = 0; });
+  },
+  /* dypdykk: synker ned i hullet, og alt det andre skjer i tick (dykkTick), så det ikke avhenger av køen eller varslene */
+  dypdykk(B, dist, toP, dmg) {
+    B.t = B.atkDur = this.SYNK + this.JAKT + this.RING + this.STIG + .2; B.atkAnim = false;
+    FX.bubble(B, pick(['Ned. Alt går ned.', 'Blubb.', 'Se ned.']), 1.2, 'boss');
+    B.dykk = { fase: 'synk', t: 0, dmg, r0: B.r, rom: roomAt(B.x, B.z) }; B.dukket = true; B.r = .01; // ingen dytt fra en kropp som ikke er der
+    Sound.play('sluk', 1, .7); Sound.play('splash', .6, .5); R.ripple(B.x, B.z);
+  },
+  /* armer opp av ristene i rommet, de nærmeste pasienten først, og ellers gjennom gulvet rundt pasienten */
+  kallArmer(B, n, maks = this.MAKS_ARMER) {
+    const rom = roomAt(B.x, B.z), P = G.player, sted = [];
+    const sluk = G.props.filter(p => p.kind === 'drain' && p.room === rom && Havet.ledig(p)).sort((a, b) => d2(a.x, a.z, P.x, P.z) - d2(b.x, b.z, P.x, P.z));
+    for (const s of sluk) if (sted.length < n) sted.push({ x: s.x, z: s.z, sluk: true });
+    for (let i = 0; sted.length < n && i < 24; i++) { const a = Math.random() * TAU, s = freeSpot(P.x + Math.sin(a) * rnd(2.6, 4.4), P.z + Math.cos(a) * rnd(2.6, 4.4), 1.5); if (roomAt(s.x, s.z) === rom && d2(s.x, s.z, B.x, B.z) > 9 && !sted.some(q => d2(q.x, q.z, s.x, s.z) < 2.25)) sted.push(s); }
+    sted.forEach((s, k) => {
+      const o = { x: s.x, z: s.z, r: .9, color: 0x2a6a7a, type: 'vann' };
+      addTele('circle', o, 1.0 + k * .15, () => {
+        if (Havet.armer() >= maks || G.enemies.filter(f => f.alive).length >= 14) return;
+        spawnEnemy.kalt = true; spawnEnemy.gulv = !s.sluk; Havet.flereArmer = true;
+        try { spawnEnemy('avlopsarm', s.x, s.z, false, G.depth); } finally { spawnEnemy.kalt = false; spawnEnemy.gulv = false; Havet.flereArmer = false; }
+        Sound.play('splash', .8, .8); R.ripple(s.x, s.z); Particles.spawn(s.x, .3, s.z, 10, 0x9ad0e0, { speed: 3, up: 6, life: .6 });
+        Havet.treff('circle', o, bossDmg(B) * .4, { type: 'boss', x: o.x, z: o.z, kb: 5 });
+      }, B);
+    });
+    return sted.length;
+  },
+  dypkall(B, dist, toP, dmg) {
+    B.t = B.atkDur = 1.4; B.aapen = .8; FX.bubble(B, pick(['Opp, armer!', 'Kom opp, alle sammen.', 'Jeg har flere armer enn du har tid.']), 1.4, 'boss'); Sound.play('sluk', .9, .7);
+    this.kallArmer(B, 2 + (B.enraged ? 1 : 0));
+    bossLater(B, 1.3, () => { B.aapen = 0; });
+  },
+  /* ---------- malstrømmen: en sone som ikke trenger eieren sin ----------
+     Etter Moskstraumen ved Røst, og Poes malstrøm. Den drar pasienten inn mot midten (omtrent tre ruter i sekundet, så den som løper
+     utover, kommer seg løs), og etter 1,6 sekunder kommer en indre ring der nebbet biter ved 2,6 */
+  virvelMat() {
+    if (this._vm) return this._vm; // én tekstur og ett materiale for hele spillet, som R.tex
+    const tex = R.canvasTex(256, 256, g => {
+      g.translate(128, 128);
+      const gr = g.createRadialGradient(0, 0, 4, 0, 0, 127); gr.addColorStop(0, 'rgba(4,10,16,.95)'); gr.addColorStop(.3, 'rgba(12,36,48,.8)'); gr.addColorStop(.8, 'rgba(30,70,84,.4)'); gr.addColorStop(1, 'rgba(30,70,84,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 127, 0, TAU); g.fill();
+      for (let k = 0; k < 5; k++) { g.beginPath(); for (let i = 0; i <= 64; i++) { const s = i / 64, r = 10 + s * 112, a = k / 5 * TAU + s * 4.4; i ? g.lineTo(Math.cos(a) * r, Math.sin(a) * r) : g.moveTo(Math.cos(a) * r, Math.sin(a) * r); } g.lineCap = 'round'; g.lineWidth = 8; g.strokeStyle = 'rgba(20,14,24,.6)'; g.stroke(); g.lineWidth = 3.5; g.strokeStyle = 'rgba(232,246,242,.75)'; g.stroke(); }
+    });
+    return this._vm = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0 });
+  },
+  malstrom(B, dist, toP, dmg) {
+    B.t = B.atkDur = 2.9; B.aapen = .7; FX.bubble(B, pick(['Rundt og rundt. Og ned.', 'Havet er under deg. Det er alltid under deg.', 'Poe skrev om meg. Han tok feil om nesten alt.']), 1.8, 'boss');
+    this.virvel(B.x, B.z, B, dmg);
+    bossLater(B, 2.8, () => { B.aapen = 0; });
+  },
+  /* uten argumenter: er det en malstrøm i rommet nå? */
+  virvel(x, z, B, dmg) {
+    if (x === undefined) return G.zones.some(zn => zn.kind === 'malstrom' && zn.t > 0);
+    const m = new THREE.Mesh(R.plane1(), this.virvelMat()); m.rotation.x = -Math.PI / 2; m.position.set(x, .045, z); m.scale.set(14, 14, 1); m.renderOrder = 2; R.dyn.add(m);
+    const zn = { kind: 'malstrom', x, z, r: 7, t: 2.6, max: 2.6, B, dmg, alive: true, teles: [], mesh: m, indre: null, hviskT: 0 };
+    G.zones.push(zn); addTele('circle', { x, z, r: 7, color: 0x2a6a7a, type: 'vann' }, 2.6, () => { }, zn);
+    Sound.play('sluk', 1, .5); Sound.play('hvisk', .7, .6);
+    return zn;
+  },
+  soner(dt) {
+    const P = G.player;
+    for (let i = G.zones.length - 1; i >= 0; i--) {
+      const zn = G.zones[i]; if (zn.kind !== 'malstrom') continue;
+      zn.t -= dt; const alder = zn.max - zn.t;
+      if (!zn.B || !zn.B.alive) zn.t = Math.min(zn.t, 0); // eieren er borte: virvelen stilner
+      zn.mesh.rotation.z -= dt * (1.4 + alder * 1.2); zn.mesh.material.opacity = .85 * clamp(Math.min(alder / .4, (zn.t + .3) / .3), 0, 1);
+      if (zn.t > 0 && P && P.alive) {
+        const dx = zn.x - P.x, dz = zn.z - P.z, d = Math.hypot(dx, dz);
+        if (d < zn.r && d > .5) { const k = dt * 12, s = dt * 3.5; P.kvx += dx / d * k - dz / d * s; P.kvz += dz / d * k + dx / d * s; } // inn mot midten, og litt rundt
+      }
+      if (Math.random() < dt * 16) { const a = Math.random() * TAU, r = rnd(1.2, zn.r); Particles.spawn(zn.x + Math.sin(a) * r, .1, zn.z + Math.cos(a) * r, 1, 0xe8f2f0, { speed: .6, up: .6, g: 0, life: .5, size: .7 }); }
+      zn.hviskT -= dt; if (zn.hviskT <= 0 && zn.t > .5) { zn.hviskT = .9; Sound.play('hvisk', .35, rnd(.6, .8)); }
+      if (alder >= 1.6 && !zn.indre && zn.t > 0) {
+        const o = { x: zn.x, z: zn.z, r: 2.3, color: KR.blekk, type: 'vann' };
+        zn.indre = addTele('circle', o, zn.t, () => {
+          hitShape('circle', o, zn.dmg * 1.3, { type: 'boss', x: o.x, z: o.z + .01, kb: 7 }, 'enemy'); Sound.play('bitt', 1, .5); Sound.play('splash', .9, .6); R.shake(.45); R.ripple(o.x, o.z);
+          Particles.spawn(o.x, .3, o.z, 18, 0x9ad0e0, { speed: 5, up: 7, life: .7 }); if (zn.B && zn.B.type === 'kraken') zn.B.aapen = 1;
+        }, zn);
+      }
+      if (zn.t <= 0) { zn.alive = false; cancelTeles(zn); R.remove(zn.mesh); G.zones.splice(i, 1); }
+    }
+  },
+  /* sjefen er behandlet: hullet renner ut */
+  dod(B) { this.krymp(B.hull); B.hull = null; Sound.play('rive', .9, .6); Particles.spawn(B.x, .5, B.z, 20, KR.blekk, { speed: 4, up: 4, life: .9 }); },
+  /* ny etasje: armene ut av grafikkminnet (lages på nytt neste gang de trengs) */
+  rydd() { for (const d of this.armer) { R.remove(d.root); d.dispose(); } this.armer = []; }
+};
+Object.assign(BOSS_MOVES, {
+  favn(B, dist, toP, dmg) { Kraken.favn(B, dist, toP, dmg); },
+  blekk(B, dist, toP, dmg) { Kraken.blekk(B, dist, toP, dmg); },
+  dypdykk(B, dist, toP, dmg) { Kraken.dypdykk(B, dist, toP, dmg); },
+  malstrom(B, dist, toP, dmg) { Kraken.malstrom(B, dist, toP, dmg); },
+  dypkall(B, dist, toP, dmg) { Kraken.dypkall(B, dist, toP, dmg); }
+});
+{ const _sb = spawnBoss; spawnBoss = function (depth, x, z) { const B = _sb(depth, x, z); if (B && B.type === 'kraken') Kraken.start(B); return B; }; }
+{ const _bd = bossDie; bossDie = function (B) { _bd(B); if (B && B.type === 'kraken') Kraken.dod(B); }; }
+{ const _uz = updateZones; updateZones = function (dt) { _uz(dt); Kraken.soner(dt); Kraken.armTick(dt); }; }
+{ const _cf = clearFloor; clearFloor = function () { Kraken.rydd(); _cf(); }; }
+
+Object.assign(window, { nearestEnemy, statusOrd, puddleAt, moveEnt, BOSS_MOVES, laanbareTrekk, addProj, updateProjectiles, Havet, tentakel, tentakelLinje, Kraken, KRAKEN_DELER, updateZones, bossDie }); // til testene
