@@ -2519,6 +2519,9 @@ async def main():
           const _sp = Sound.play; Sound.play = function (n) { lyder.push(n); return _sp.apply(Sound, arguments); };
           (async () => { while (samle) { for (const t of G.tele) if (t.owner && t.owner.type === 'oldermann') teleSett.add(t); await vent(15); } })();
           const varsler = () => [...teleSett].map(t => ({ shape: t.shape, r: t.o.r, w: t.o.w, len: t.o.len, type: t.o.type }));
+          // det han faktisk gjør (angrepet som kjøres), ikke bare det referatet sier
+          const gjort = [], FN = { naaler: 'naal', kjeder: 'kjede', klubba: 'klubbe', votering: 'votering' }, _fn = {};
+          for (const f in FN) { _fn[f] = Oldermann[f]; Oldermann[f] = function (e) { if (e && e.referat) gjort.push({ ref: e.referat.length, e, k: FN[f] }); return _fn[f].apply(Oldermann, arguments); }; }
           try {
             // tre dagsordener i vanlig kamp: det han gjør, er det han sa, i samme rekkefølge
             const s0 = freeSpot(P.x + 3, P.z, 3), o = spawnEnemy('oldermann', s0.x, s0.z, false, 4);
@@ -2526,6 +2529,9 @@ async def main():
             ut.referat = (o.referat || []).filter(a => a.ferdig).slice(0, 3).map(a => ({ saker: a.saker, utfort: a.utfort }));
             // den første boblen i hver dagsorden er hele dagsorden, i den rekkefølgen sakene ble gjort
             ut.bobler = [1, 2, 3].map(n => { const b = bobler.find(x => x.ref === n); return b ? b.tekst : null; });
+            // angrepene i hver dagsorden: Eventuelt er den saken boblen sa, og votering blir klubba når det er fullt
+            ut.gjort = (o.referat || []).filter(a => a.ferdig).slice(0, 3).map(a => { const n = o.referat.indexOf(a) + 1; return { saker: a.saker, ev: a.ev, gjort: gjort.filter(g => g.e === o && g.ref === n).map(g => g.k) }; });
+            ut.gjortRiktig = ut.gjort.length === 3 && ut.gjort.every(a => a.gjort.length === a.saker.length && a.saker.every((k, j) => a.gjort[j] === (k === 'eventuelt' ? a.ev : k) || (k === 'votering' && a.gjort[j] === 'klubbe')));
             ut.bobleRekke = ut.referat.map((a, i) => { const b = ut.bobler[i] || [], navn = a.saker.map(k => Oldermann.NAVN[k]); return b[0] === 'Dagsorden:' && navn.every((nv, j) => (b[j + 1] || '').startsWith((j + 1) + '. ' + nv)); });
             ut.tall = tall.filter(s => /Dagsorden|Sak |Knappenål|Kjetting|Klubba|Votering|Eventuelt/.test(s));
             ut.klubbe = lyder.filter(n => n === 'klubbe').length; ut.bokslag = lyder.filter(n => n === 'bokslag').length;
@@ -2543,6 +2549,12 @@ async def main():
               await spill(t); const r = { tele: varsler(), skade: hp0 - P.hp, d0, d1: Math.hypot(P.x - o2.x, P.z - o2.z), proj: (Oldermann.skutt || 0) - n0, ord: tall.slice(t0n, t0n + 8), ev: o2.referat[o2.referat.length - 1].ev };
               o2.dagsorden = null; P.hp = 1e6; return r; };
             ut.naal = await sak(['naal'], 4);
+            // står pasienten feil for saken, venter han (høyst 2,5 s), og dagsorden blir stående i boblen så lenge
+            { await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; o2.stun = 0; plasser(4);
+              o2.dagsorden = { saker: ['naal'], i: 0, cd: 1e9, ev: null, vent: null }; o2.cd = 1e9; o2.referat.push({ saker: ['naal'], utfort: [] }); const bel = Oldermann.boble(o2, -1); await spill(1.5);
+              const langt = { x: o2.x + 20, z: o2.z }, g0 = G.time, t0 = performance.now(); let borte = 0, n = 0, fyrt = null;
+              while (G.time - g0 < 3.2 && performance.now() - t0 < 30000) { if (fyrt === null) { Oldermann.sak(o2, langt, 20, 0); o2.cd = 1e9; if (o2.dagsorden.i === 1) fyrt = +(G.time - g0).toFixed(2); else { n++; if (!bel.isConnected) borte++; } } await vent(60); }
+              ut.vent = { fyrt, borte, n }; await til(() => o2.state !== 'wind', 3); o2.dagsorden = null; P.hp = 1e6; }
             ut.kjede = await sak(['kjede'], 5.5); ut.kjede.hektet = !!(P.statusT && P.statusT.HEKTET !== undefined);
             ut.klubbe1 = await sak(['klubbe'], 1.6);
             for (const e of G.enemies) if (e.alive && e.type === 'laerling') killEntity(e, {});
@@ -2565,13 +2577,16 @@ async def main():
             { document.body.classList.add('uten-bobler'); const falsk = { x: P.x - 40, z: P.z + 1, alive: true, bubbleH: 4.3, referat: [], dagsorden: { saker: ['naal', 'kjede', 'eventuelt'], i: 0 } };
               const el = Oldermann.boble(falsk, 0, 'Møtet er satt.'); await spill(.2); const rb = el.getBoundingClientRect(), W = document.getElementById('fx').getBoundingClientRect();
               ut.klem = { synlig: el.isConnected && getComputedStyle(el).display !== 'none' && rb.width > 0, inne: rb.left >= W.left - 1 && rb.right <= W.right + 1 && rb.top >= W.top - 1, l: Math.round(rb.left), r: Math.round(rb.right), t: Math.round(rb.top) };
+              // står han langt nord og til venstre, havner boblen i hjørnet under panelet: den skyves ned så ingenting i toppen dekker den
+              falsk.z = P.z - 30; await spill(.2); const rb2 = el.getBoundingClientRect(), over = ['badge', 'miniBar', 'bossBar', 'tools', 'mapring'].filter(id => { const r = document.getElementById(id).getBoundingClientRect(); return r.width && r.height && rb2.left < r.right && rb2.right > r.left && rb2.top < r.bottom && rb2.bottom > r.top; });
+              ut.klem.hjorne = { over, t: Math.round(rb2.top), b: Math.round(rb2.bottom), panel: Math.round(document.getElementById('badge').getBoundingClientRect().bottom), mini: !document.getElementById('miniBar').classList.contains('hidden') };
               falsk.alive = false; document.body.classList.remove('uten-bobler'); await spill(.1); }
             killEntity(o2, {}); await spill(.8);
             // aldri i parken: 60 etasjefrø i Parken gir aldri Oldermannen, i Kjelleren kommer han
             const F = G.F, frø = F.seed, d0 = G.depth, risk = F.rooms.find(r => r.role === 'risk') || F.rooms[0], rolle = risk.role; risk.role = 'risk';
             const telle = d => { G.depth = d; let n = 0; for (let s = 1; s <= 60; s++) { F.seed = s * 7919; Mini.onFloor(); if (Object.values(Mini.rom).includes('oldermann')) n++; } return n; };
             ut.park = telle(1); ut.kjeller = telle(4); F.seed = frø; G.depth = d0; risk.role = rolle; Mini.onFloor();
-          } finally { Oldermann.boble = _b; Sound.play = _sp; mo.disconnect(); samle = false; R.safe = false; document.body.classList.remove('uten-bobler'); }
+          } finally { Oldermann.boble = _b; Sound.play = _sp; Object.assign(Oldermann, _fn); mo.disconnect(); samle = false; R.safe = false; document.body.classList.remove('uten-bobler'); }
           ut.info = !!((FIENDE_INFO.oldermann || [])[0] && FIENDE_INFO.oldermann[1] && SJEF_REKKE.includes('oldermann') && MINISJEFER.includes('oldermann') && FIENDESTEMME.oldermann && LINES.oldermann && DEATH_CAUSES.oldermann) && !ROLLER.oldermann;
           ut.bilde = (() => { const c = fiendeBilde('oldermann', 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); })();
           return ut; }""")
@@ -2580,11 +2595,14 @@ async def main():
             R = om['referat']
             sjekk('tre dagsordener er ferdige, og hver ender med Eventuelt etter to saker', len(R) == 3 and all(len(a['saker']) == 3 and a['saker'][-1] == 'eventuelt' for a in R), R)
             sjekk('over tre dagsordener gjør han sakene i nøyaktig den rekkefølgen han sa', len(R) == 3 and all(a['utfort'] == a['saker'] for a in R), R)
+            sjekk('angrepene han faktisk gjør, følger dagsorden (Eventuelt som boblen sa, votering eller klubba)', om['gjortRiktig'], om['gjort'])
             sjekk('dagsorden står i boblen, med sakene i samme rekkefølge', len(om['bobleRekke']) == 3 and all(om['bobleRekke']), om['bobler'])
             sjekk('dagsorden og sakene kommer aldri som tall eller ord over hodet', om['tall'] == [], om['tall'])
             sjekk('bokslag for hver dagsorden og et klubbeslag for hver sak', om['bokslag'] >= 3 and om['klubbe'] >= om['saker'], {k: om[k] for k in ['bokslag', 'klubbe', 'saker']})
             n = om['naal']
             sjekk('knappenåler: et rektangel 2,2 bredt og 8 langt, så tre salver med fem nåler som treffer', any(t['shape'] == 'rect' and t['w'] == 2.2 and t['len'] == 8 for t in n['tele']) and n['proj'] == 15 and n['skade'] > 0, n)
+            v = om['vent']
+            sjekk('står pasienten feil, venter han høyst 2,5 s, og dagsorden blir stående i boblen mens han venter', v['fyrt'] is not None and 2.3 <= v['fyrt'] <= 2.9 and v['n'] > 5 and v['borte'] == 0, v)
             k = om['kjede']
             sjekk('kjettinger: en sølvring på 1,6 der pasienten står, som treffer, hekter og drar ham inn', any(t['shape'] == 'circle' and t['r'] == 1.6 and t['type'] == 'lenke' for t in k['tele']) and k['skade'] > 0 and k['hektet'] and k['d1'] < k['d0'] - 1, k)
             kl = om['klubbe1']
@@ -2598,6 +2616,7 @@ async def main():
             s = om['safe']
             sjekk('Enkel grafikk: sølvringen og nålene kommer og treffer, men ingen kjettinger tegnes', s['kjeder'] == 0 and s['kjede']['skade'] > 0 and s['naal']['proj'] == 15, s)
             sjekk('dagsorden holdes inne på skjermen når han står utenfor, og synes selv om snakkeboblene er av', om['klem']['synlig'] and om['klem']['inne'], om['klem'])
+            sjekk('dagsorden havner aldri bak panelet, minisjeflinja, knappene eller kompasset', om['klem']['hjorne']['over'] == [] and om['klem']['hjorne']['t'] >= om['klem']['hjorne']['panel'], om['klem'])
             sjekk('aldri i parken, men han kommer i Kjelleren', om['park'] == 0 and om['kjeller'] > 0, [om['park'], om['kjeller']])
             sjekk('fiendeindeksen (blant minisjefene), replikker, stemme og dødsårsaker, og ikke i ROLLER', om['info'], om['info'])
             sjekk('fiendeBilde tegner ham', om['bilde'] > .08, om['bilde'])
