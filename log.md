@@ -984,3 +984,9 @@ Alle tidspunkt er UTC.
 - Sett over og i orden: trillepasientens hjul og stativ, speilpasientens ramme, hjertene og rammene i HUD i vanlig spillstørrelse, og løs pynt, hatter, hår og ansiktstilbehør i alle tre retninger. Ikke rettet: eyeliner fra siden stikker litt foran ansiktet, fordi tegningen har to øyne.
 - Ny testdel 56 (Hår og pynt på hodet). Alle sjekkene unntatt den uten konsollfeil feiler på bygget fra før (1ff4a4f). Del 8, 9, 10, 11, 27, 36 og 56 er grønne.
 - Skjermbilder til Tom: 56_papiljotter_for.png og 56_papiljotter_etter.png (dødskortet), 56_kontakt.png og 56_kontakt_for.png (all pynt på begge kjønn i f, s og b), 56_kontakt_oppskrift_for.png og 56_kontakt_oppskrift_etter.png (hatter, frisyrer og tilbehør på personalet), 56_hjort_for.png og 56_hjort_etter.png (2D og 3D, samme frø og plass), og 56_fiender_kontroll.png.
+
+## 2026-09-27 07:18 Skeptikeren på C1 (papiljottene og kontrollene i grafikkleveransen)
+- Gått gjennom: PAS_PYNT med skala, hodeTopp, deler(), placeAddons og placeLook (dreiingen), HUD-portrettet, LOOKS, frisyrene og ansiktstilbehøret på personalet (Oppskrift.kleDeler), og løftet av hjortens kropp. Sett på dødskortet, kontaktarkene (pynt på begge kjønn i f, s og b, hatter, hår og tilbehør på personalet), reservehodet uten bilder, hjorten i 2D og 3D, trillepasienten og speilpasienten, og spilldukken med papiljotter i 3D på PC, stående og liggende telefon (ingen konsollfeil). Papiljottene sitter i håret i alle rendererne, og hjorten står på beina.
+- Ingen feil funnet som måtte rettes. Testdel 56 feiler på den gamle koden (dreiingen, hjorten, dekningen), så den er ikke tom.
+- Ikke rettet (fra før): eyeliner fra siden stikker foran ansiktet, fordi tegningen har to øyne. 28_oppskrift.js står ikke i noe spors liste, men er endret her (frisyrene og TILBEHOR_FESTE), så det må med i flettingen.
+- Del 9, 10, 11, 27, 36 og 56 grønne.
