@@ -291,7 +291,8 @@ const Havet = {
       else {
         let f = { x: e.x, z: e.z }; // et sted på gulvet minst en rute fra de andre armene
         ut: for (let r = 0; r <= 3; r += .5) for (let k = 0; k < 12; k++) { const x = e.x + Math.cos(k / 12 * TAU) * r, z = e.z + Math.sin(k / 12 * TAU) * r; if (!solid(Math.floor(x), Math.floor(z)) && !G.enemies.some(o => o !== e && o.alive && o.type === 'avlopsarm' && o.hjem && d2(o.hjem.x, o.hjem.z, x, z) < 1)) { f = { x, z }; break ut; } if (!r) break; }
-        e.x = f.x; e.z = f.z; e.hjem = f; e.sted = 'gulv'; e.hull = addPuddle(e.x, e.z, 'tjern', .8, 1e9);
+        // står den i et tjern fra før, slår den ikke nytt hull (addPuddle ville slått dem sammen, og tjernet ble borte da armen døde)
+        e.x = f.x; e.z = f.z; e.hjem = f; e.sted = 'gulv'; e.hull = G.puddles.some(p => p.kind === 'tjern' && d2(p.x, p.z, f.x, f.z) < p.r * p.r) ? null : addPuddle(e.x, e.z, 'tjern', .8, 1e9);
       }
     }
     e.doll.sted = e.sted; e.doll.root.position.set(e.x, 0, e.z);
