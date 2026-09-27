@@ -2190,7 +2190,7 @@ async def main():
         b3 = await pg.evaluate("""async () => { """ + BK_HJELP + """
           rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); rydd(); ut.d3 = D3.on;
           addTele('circle', { x: P.x, z: P.z + 2, r: 1 }, .1, null, null); await tomt(); const k0 = kall(), g0 = R.renderer.info.memory.geometries, former = ['circle', 'rect', 'cone'], B = Object.assign(eier(), { kind: 'boss', type: 'krok' });
-          for (let i = 0; i < 24; i++) { const a = i * .5; addTele(former[i % 3], { x: P.x + Math.sin(a) * 2.5, z: P.z + Math.cos(a) * 2.5, r: 1 + (i % 4) * .6, w: .4 + (i % 3) * .6, len: 5, a, arc: 1.6, color: [0xb3261e, 0x9ad0e0, 0xffe25a, 0x3a2a44][i % 4] }, 1.2, null, i % 5 ? null : B); }
+          for (let i = 0; i < 24; i++) { const a = i * .5; addTele(former[i % 3], { x: P.x + Math.sin(a) * 2.5, z: P.z + Math.cos(a) * 2.5, r: 1 + (i % 4) * .6, w: .4 + (i % 3) * .6, len: 5, a, arc: 1.6, color: [0xb3261e, 0x9ad0e0, 0xffe25a, 0x3a2a44][i % 4], stille: true }, 1.2, null, i % 5 ? null : B); } // stille: nedslagene (merkene og lynene) prøves i del 49
           await spill(.3); const q = R.renderer.properties.get(Blekk.mat), pr = q.currentProgram || q.program;
           const k2 = kall(); Blekk.mesh.visible = false; const k3 = kall(); Blekk.mesh.visible = true;
           Object.assign(ut, { k: k2 - k0, egne: k2 - k3, blekk: G.tele.filter(t => t.mesh.isBlekk).length, kval: Blekk.kval(), lenket: !!pr && !(pr.diagnostics && !pr.diagnostics.runnable) && !Blekk.brutt, lys: Blekk.lys.visible });
@@ -2323,6 +2323,11 @@ async def main():
           const sk = Nedslag.M.filter(m => m.t < m.liv).map(m => Nedslag.aDek.array[m.i * 2]);
           ut.lop = { lop: t1.lop - t0.lop, merker: t1.merker - t0.merker, skrens: sk.includes(3), part: t1.partikler - t0.partikler };
           Nedslag.tom();
+          // korskriket (r 6,2) når forbi rommet: ingen partikler inne i veggen eller ute i mørket, og merket blir høyst 6,5 skritt
+          { const K = { x: P.x, z: P.z, r: 6.2 }; let vegg = 0; for (let i = 0; i < 64; i++) { const q = Nedslag.kant('circle', K, i / 64); if (solid(Math.floor(q.x), Math.floor(q.z))) vegg++; }
+            const sp0 = Particles.spawn; let iVegg = 0, nSp = 0; Particles.spawn = function (x, y, z) { nSp++; if (solid(Math.floor(x), Math.floor(z))) iVegg++; return sp0.apply(this, arguments); };
+            try { addTele('circle', K, .05, null, eier({ kind: 'boss' })); await tomt(); } finally { Particles.spawn = sp0; }
+            const m = Nedslag.M.filter(m => m.t < m.liv); ut.kor = { vegg, iVegg, nSp, merker: m.length, str: m.length ? Math.max(m[0].sx, m[0].sz) : 0 }; Nedslag.tom(); }
           // 40 store angrep av alle typene: høyst 12 merker, de som har bleknet brukes om igjen, ingen geometri blir liggende, partiklene er borte innen 5 s
           const info = R.renderer.info.memory, g0 = info.geometries, typer = Object.keys(TELE_TYPE); let maks = 0; t0 = T(); n0 = Particles.n;
           for (let i = 0; i < 40; i++) { const a = i * .9; addTele('circle', { x: P.x + Math.sin(a) * 3, z: P.z + Math.cos(a) * 3, r: 2.2 + (i % 3) * .6, type: typer[i % typer.length] }, .05 + (i % 10) * .02, null, i % 4 ? null : eier({ kind: 'boss' })); if (i % 10 === 9) { await tomt(); maks = Math.max(maks, Nedslag.levende); } }
@@ -2349,6 +2354,7 @@ async def main():
         sjekk('et varsel som går av, gir et nedslag med partikler langs omrisset, men ikke et som avbrytes eller har o.stille', la['d'] == 1 and la['part'] >= 8 and la['kvote'] > 0 and la['merker'] == 0, la)
         sjekk('strøm gir gnister og to eller tre korte lyn på kanten', 2 <= ns['strom']['lyn'] <= 3 and ns['strom']['part'] >= 8, ns['strom'])
         sjekk('en prosjektilbane gir bare et lite blaff, et løp gir skrensemerker', ns['bane']['baner'] == 1 and 1 <= ns['bane']['part'] <= 8 and ns['bane']['merker'] == 0 and ns['lop']['lop'] == 1 and ns['lop']['merker'] == 1 and ns['lop']['skrens'] and ns['lop']['part'] >= 4, [ns['bane'], ns['lop']])
+        sjekk('et stort angrep som når inn i veggen (korskriket, r 6,2): ingen partikler i veggen, og merket blir høyst 6,5 skritt', ns['kor']['vegg'] > 0 and ns['kor']['iVegg'] == 0 and ns['kor']['nSp'] >= 8 and ns['kor']['merker'] == 1 and 0 < ns['kor']['str'] <= 6.5, ns['kor'])
         st = ns['stor']
         sjekk('40 store angrep: høyst 12 merker (ett tegnekall), sjokkbølger, merker som har bleknet brukes om igjen, partiklene er borte innen 5 s og geometrien vokser høyst 2',
               st['merker'] == 40 and st['maks'] == 12 and st['sjokk'] >= 40 and st['nTopp'] > 100 and st['n5'] <= st['n0'] and st['levende'] == 0 and st['gjenbruk'] == 1 and st['dg'] <= 2 and st['dg2'] <= 2 and st['kall'] == 1, st)

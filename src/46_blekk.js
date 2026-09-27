@@ -358,7 +358,7 @@ void main() {
   gl_FragColor = vec4(mix(vCol, uBlekk, t.g / max(dekk, 0.001)), a);
 }`;
 const Nedslag = {
-  N: 12, M: [], mesh: null, aDek: null, skygger: null, ko: [], tall: { land: 0, partikler: 0, merker: 0, gjenbruk: 0, sjokk: 0, lyn: 0, tunge: 0, lop: 0, baner: 0 },
+  N: 12, maksMerke: 6.5, M: [], mesh: null, aDek: null, skygger: null, ko: [], tall: { land: 0, partikler: 0, merker: 0, gjenbruk: 0, sjokk: 0, lyn: 0, tunge: 0, lop: 0, baner: 0 },
   /* hvor mange merker som synes nå */
   get levende() { let n = 0; for (const m of this.M) if (m.t < m.liv) n++; return n; },
   kan() { return !R.safe && !!R.scene && !!Particles.mesh; },
@@ -436,6 +436,7 @@ const Nedslag = {
   areal(sh, o) { return sh === 'rect' ? o.w * o.len : sh === 'cone' ? .5 * Math.min(TAU, o.arc) * o.r * o.r : Math.PI * o.r * o.r; },
   /* én partikkel av typen, med retningen ut (nx, nz) */
   sprut(x, z, nx, nz, def, fart = 1) {
+    if (G.F && solid(Math.floor(x), Math.floor(z))) return; // ikke inne i veggen eller ute i mørket: store ringer (korskriket, r 6,2) når langt forbi rommet
     const [form, farge, , v, opp, g, liv, str] = def, k = v * fart * (.55 + Math.random() * .7);
     Particles.spawn(x, .12, z, 1, farge, { form, speed: .01, vx: nx * k, vz: nz * k, up: Math.max(.05, opp), g, life: liv, size: str });
   },
@@ -510,9 +511,11 @@ const Nedslag = {
     if (!stor || (sh === 'rect' && o.w < 1.2)) { if (stor) this.rist(o.x, o.z, .12, 0); return; }
     if (this.kan()) {
       const cel = NED_MERKE[typ] ?? 0, fc = new THREE.Color(T.farge), farge = cel === 1 ? fc.clone().lerp(new THREE.Color(0xff7a2a), .4).getHex() : cel === 0 ? fc.clone().lerp(new THREE.Color(0x8a7a64), .55).getHex() : T.farge;
-      if (sh === 'rect') this.merke(o.x + fx * o.len / 2, o.z + fz * o.len / 2, cel, farge, o.w + .5, o.len * .95, a, .8);
-      else if (sh === 'cone' && o.arc < TAU - .05) { const r = o.r * .55; this.merke(o.x + fx * r, o.z + fz * r, cel, farge, o.r * 1.2, o.r * 1.2, Math.random() * TAU); }
-      else this.merke(o.x, o.z, cel, farge, o.r * 2.1, o.r * 2.1, Math.random() * TAU, cel ? .9 : .8);
+      // merket blir høyst 6,5 skritt: arket har 128 punkter per tegning, så et korskrik (r 6,2) ga et utflytende nett av sprekker over hele rommet og inn i veggene
+      const M = this.maksMerke;
+      if (sh === 'rect') this.merke(o.x + fx * o.len / 2, o.z + fz * o.len / 2, cel, farge, Math.min(M, o.w + .5), Math.min(M, o.len * .95), a, .8);
+      else if (sh === 'cone' && o.arc < TAU - .05) { const r = o.r * .55, d = Math.min(M, o.r * 1.2); this.merke(o.x + fx * r, o.z + fz * r, cel, farge, d, d, Math.random() * TAU); }
+      else { const d = Math.min(M, o.r * 2.1); this.merke(o.x, o.z, cel, farge, d, d, Math.random() * TAU, cel ? .9 : .8); }
     }
     const R0 = sh === 'rect' ? Math.max(o.w, o.len * .4) : o.r;
     if (!R.safe) { R.sjokk(o.x, o.z, .35 + .25 * clamp((R0 - 2.2) / 4, 0, 1), { y: .1 }); this.tall.sjokk++; }
