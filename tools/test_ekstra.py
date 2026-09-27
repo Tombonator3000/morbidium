@@ -2317,8 +2317,9 @@ async def main():
         await pg.evaluate(STILL53, 1.8); await pg.wait_for_timeout(700); await pg.screenshot(path='/tmp/e_53_hint_2d.png')
         # et vanlig slag på sprekken: hult, «Det knaker», og hårstreken vokser et steg
         sl = await pg.evaluate("""async (still) => { const G = MORBIDIUM, P = G.player, I = Skjult.info; eval(still)(1.1); P.face = Math.atan2(0, -I.uz); const lyder = [], _p = Sound.play; Sound.play = function (n, ...a) { lyder.push(n); return _p.call(this, n, ...a); };
-          G.time += 1; meleeHit({ heavy: false, combo: 0, charge: 0 }); Sound.play = _p; return { steg: I.steg, lyder, hp: Spesial.cracks.map(c => c.hp) }; }""", STILL53)
-        sjekk('hint: et vanlig slag på sprekken svarer hult (ingen banking) og hårstreken vokser', sl['steg'] == 1 and 'bonk' in sl['lyder'] and 'veggbank' not in sl['lyder'] and min(sl['hp']) == 2, sl)
+          Spesial.bankT = -9; Spesial.bank(P.x, P.z, P.face, 1.2, 1.4); const direkte = lyder.includes('veggbank'); lyder.length = 0; // sprekken svarer aldri massivt, heller ikke når slaget bommet på den
+          G.time += 1; meleeHit({ heavy: false, combo: 0, charge: 0 }); Sound.play = _p; return { steg: I.steg, lyder, hp: Spesial.cracks.map(c => c.hp), direkte }; }""", STILL53)
+        sjekk('hint: et vanlig slag på sprekken svarer hult (ingen banking) og hårstreken vokser', sl['steg'] == 1 and 'bonk' in sl['lyder'] and 'veggbank' not in sl['lyder'] and not sl['direkte'] and min(sl['hp']) == 2, sl)
         # innbruddet: et tungt slag, og stegene i forløpet i spilltid etter bristen
         FORLOP53 = """async (skudd) => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), tider = {}, ut = { lyder: [], bobler: [] };
           const _p = Sound.play; Sound.play = function (n, ...a) { ut.lyder.push(n); return _p.call(this, n, ...a); }; const _b = FX.bubble; FX.bubble = function (hvem, s, ...a) { if (hvem === P) ut.bobler.push(s); return _b.call(this, hvem, s, ...a); };
