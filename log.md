@@ -1109,3 +1109,7 @@ Alle tidspunkt er UTC.
 ## 2026-09-27 11:22 Tredje vindu: vinter, havet og Holdningssøsteren ferdige, resten startet
 - Mellom 06:22 og omtrent 10:30 UTC ble disse ferdige og sjekket: A5 og A6 (blekkpartikler og nedslag), C1 og C2 (papiljottene med kontrollene fra grafikkleveransen, og snøfallet), B3 (vinter i teksturene), C5 og C6 (Avløpsarmen og Kapellanen, Draugpleieren og Holdningssøsteren). Spor A og D er flettet inn i grenen.
 - Bruksgrensen stoppet spor B midt i B4 (hint og innbrudd) og spor C midt i C7 (Oldermann Nålepute). Begge er startet igjen 11:22 UTC med det som står igjen: B4 og B6 i spor B, C7 og C8 (Kraken) i spor C.
+
+## 2026-09-27 11:24 memory.md og todo.md for spor A og D
+- memory.md har fått «Kampbildet» (R.kastTele, Blekkvarsel, fargene etter skadetype, Nedslag, tekstene og stemplene) og «Snøfallet», og punkter under Pasienten (pynten etter ChatGPT-hodene, frisyrene til personalet, hjorten), Effekter (blekkpartiklene) og Blod og vann på skjermen (blodet som renner).
+- todo.md har fått en egen del for Toms liste i runde 5, med det som er gjort i spor A og D, spørsmålene til Tom og det som er lagt til senere. Kontrollen av hjorten fra grafikkleveransen er krysset av.
