@@ -469,7 +469,7 @@ const Vaer = {
       else { this.v[i] += dt * .8; p[o] += Math.cos(this.v[i] + i) * dt * .6; p[o + 2] += Math.sin(this.v[i] * 1.3 + i) * dt * .5; p[o + 1] = .4 + (1 + Math.sin(t * .7 + i)) * .7; }
       const ute = Math.abs(p[o] - R.camT.x) < 16 && Math.abs(p[o + 2] - R.camT.z) < 13;
       if (!ute || p[o + 1] < 0) {
-        if (this.type === 'regn' && p[o + 1] < 0 && (this.ripT -= .02) < 0 && G.F && G.F.tiles[Math.floor(p[o + 2]) * G.F.W + Math.floor(p[o])]) { this.ripT = .25; R.ripple(p[o], p[o + 2]); }
+        if (this.type === 'regn' && p[o + 1] < 0 && (this.ripT -= .02) < 0 && G.F && gulvSynlig(tIdx(p[o], p[o + 2]))) { this.ripT = .25; R.ripple(p[o], p[o + 2]); }
         this.plasser(i);
       }
       if (this.type === 'regn') { const a = i * 6; this.pos[a] = p[o]; this.pos[a + 1] = p[o + 1]; this.pos[a + 2] = p[o + 2]; this.pos[a + 3] = p[o] - .12; this.pos[a + 4] = p[o + 1] + .55; this.pos[a + 5] = p[o + 2]; }
