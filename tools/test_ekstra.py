@@ -2232,7 +2232,7 @@ async def main():
           // en gnist som flyr mot høyre på skjermen: strukket langs farten, flaten vender mot kameraet
           Particles.spawn(P.x, 1, P.z, 1, 0xfff6a0, { speed: .001, up: .001, vx: 9, g: 0, life: 5 }); await spill(.05);
           const A = M().instanceMatrix.array, len = o => Math.hypot(A[o], A[o + 1], A[o + 2]);
-          ut.gnist = { x: +len(0).toFixed(3), y: +len(4).toFixed(3), retning: +(A[0] / len(0)).toFixed(3), mot: [A[8], A[9], A[10]].map(v => +v.toFixed(3)), sp: +Math.sin(CAM_PITCH).toFixed(3), cp: +Math.cos(CAM_PITCH).toFixed(3) };
+          ut.gnist = { x: +len(0).toFixed(3), y: +len(4).toFixed(3), retning: +(A[0] / len(0)).toFixed(3), mot: [A[8], A[9], A[10]].map(v => +v.toFixed(3)), sp: +Math.sin(52 * Math.PI / 180).toFixed(3), cp: +Math.cos(52 * Math.PI / 180).toFixed(3) };
           Particles.clear();
           // de lever ut livet sitt og blir borte
           Particles.spawn(P.x, 1, P.z, 900, 0xfff6a0, { speed: 6, up: 5, life: .4 }); ut.liv = { n0: Particles.n }; await tomt(); await spill(.1); ut.liv.n = Particles.n; ut.liv.count = M().count;
