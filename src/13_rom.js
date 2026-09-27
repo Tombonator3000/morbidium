@@ -138,7 +138,7 @@ const Spesial = {
   },
   boom(x, z, r) { for (const c of this.cracks) if (!c.broken && d2(c.x, c.z, x, z) < (r + .8) ** 2) { this.damage(c, 3); break; } },
   damage(c, n) {
-    c.hp -= n; puff(c.x, c.z + .3, 2, .8, '#b8a888'); Particles.spawn(c.x, 1, c.z + .3, 6, 0xb8a888, { speed: 3, up: 3, life: .6 }); Sound.play('bonk', .8, .6); R.shake(.12);
+    c.hp -= n; const ute = typeof Skjult === 'object' && Skjult.info && Skjult.info.ute; puff(c.x, c.z + .3, 2, .8, ute ? '#a8b878' : '#b8a888'); if (!ute) Particles.spawn(c.x, 1, c.z + .3, 6, 0xb8a888, { speed: 3, up: 3, life: .6 }); Sound.play('bonk', .8, .6); R.shake(.12); // ute blir bitene svarte i Parken, så bare blader
     if (c.hp > 0) { numText(c.x, c.z, 'Det knaker', 'info', 1.9); if (!this.hul) { this.hul = this.sagt = true; FX.bubble(G.player, 'Den er hul.', 1.4); Tips.vis('sprekk', 700); } return; }
     // med det skjulte rommet tar innbruddet i 48_skjult.js over (støv, lys og møbler); uten det knuses murkassen som før
     const gml = !G.skjult;

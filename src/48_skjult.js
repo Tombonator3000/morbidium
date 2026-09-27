@@ -176,14 +176,14 @@ const Skjult = {
     const I = this.info, K = I ? this.farger(I) : { vegg: '#b8a888', ute: false }, V = this.vis;
     R.shake(.55); Sound.play(K.ute ? 'lovbrudd' : 'murbrudd'); Sound.play('bonk', .5, .45);
     // sprekkveggen fra ChatGPT (lys gjennom sprekken) et femtedels sekund over veggen, foran alt. Ute er det murstein, så hekken og krattet får bare blader
-    if (K.ute) { V.brist = []; if (!R.safe) for (const c of Spesial.cracks) Particles.spawn(c.x, .9, c.z, 12, 0x4a5a26, { speed: 4.5, up: 4, life: 1 }); }
+    if (K.ute) { V.brist = []; for (const c of Spesial.cracks) puff(c.x, c.z + .3, 2, 1.3, '#a8b878'); } // ute blir bitene (Particles) svarte i Parken, så bare blader
     else V.brist = Spesial.cracks.map(c => { const g = propSprite(null, c.x, c.z + .46, { P: propArt({ k: 'sprekk' }), shadow: false }); g.traverse(o => { if (o.material) o.material.depthTest = false; o.renderOrder = 8; }); R.dyn.add(g); return g; });
-    for (const c of Spesial.cracks) puff(c.x + (I ? I.ux * .3 : 0), c.z + (I ? I.uz * .3 : 0) + .2, 2, 1, K.ute ? '#4a6a3a' : K.vegg);
+    for (const c of Spesial.cracks) puff(c.x + (I ? I.ux * .3 : 0), c.z + (I ? I.uz * .3 : 0) + .2, 2, 1, K.ute ? '#a8b878' : K.vegg);
   },
   // veggen synker (y og høyden mot null over 0,3 s) under biter i veggens farge og en sky av innestengt luft
   synk0() {
-    const I = this.info; if (!I) return; const K = this.farger(I), hex = new THREE.Color(K.ute ? '#3e5a28' : K.vegg).getHex();
-    for (const c of Spesial.cracks) { if (!R.safe) Particles.spawn(c.x + I.ux * .3, I.side === 'n' ? 1.1 : I.h, c.z + I.uz * .3, 10, hex, { speed: 4, up: 4, life: .9 }); puff(c.x + I.ux * .5, c.z + I.uz * .5 + .2, 3, 1.1, K.ute ? '#4a6a3a' : K.vegg); }
+    const I = this.info; if (!I) return; const K = this.farger(I), hex = new THREE.Color(K.vegg).getHex();
+    for (const c of Spesial.cracks) { if (!R.safe && !K.ute) Particles.spawn(c.x + I.ux * .3, I.side === 'n' ? 1.1 : I.h, c.z + I.uz * .3, 10, hex, { speed: 4, up: 4, life: .9 }); puff(c.x + I.ux * .5, c.z + I.uz * .5 + .2, 3, 1.1, K.ute ? '#a8b878' : K.vegg); }
     if (!R.safe && typeof Glod === 'object') { const E = Glod.lag(I.ex - I.ux * .3, .25, I.ez - I.uz * .3, 'trekk', { liv: 1.8, n: 36, str: [.3, .9], stig: .5, spre: 1.2 }); if (E) { E.pts.rotation.y = Math.atan2(-I.uz, I.ux); E.mat.uniforms.uAlfa.value = .32; E.mat.uniforms.uVind.value = 2.4; } }
     Sound.play('swingHeavy', .7, .5);
   },
@@ -200,7 +200,7 @@ const Skjult = {
     } catch (e) { console.warn('det skjulte rommet ble ikke byttet', e); }
     try {
       // trærne som sto på og ved det skjulte ute
-      if (typeof Landskap === 'object' && Landskap.skjulteTraer) { for (const g of Landskap.skjulteTraer) { if (!R.safe) puff(g.position.x, g.position.z, 2, 1, '#4a6a3a'); R.remove(g); } Landskap.skjulteTraer = []; }
+      if (typeof Landskap === 'object' && Landskap.skjulteTraer) { for (const g of Landskap.skjulteTraer) { if (!R.safe) puff(g.position.x, g.position.z, 2, 1, '#a8b878'); R.remove(g); } Landskap.skjulteTraer = []; }
       const tm = D3.taakeMask; if (tm && tm.image && tm.image.data) { for (let i = 0; i < tm.image.data.length; i++) tm.image.data[i] = F.tiles[i] > 0 ? 255 : 0; tm.needsUpdate = true; }
       const rm = typeof Regnringer === 'object' && Regnringer.mask; if (rm && rm.image && rm.image.data) { for (let z = 0; z < F.H; z++) for (let x = 0; x < F.W; x++) { const i = z * F.W + x; rm.image.data[i] = F.tiles[i] > 0 && Vaer.ute(x + .5, z + .5) ? 255 : 0; } rm.needsUpdate = true; }
       if (typeof Dybde === 'object' && Dybde.ao) { const a = Dybde.ao; R.remove(a.m); a.t.dispose(); a.m.material.dispose(); Dybde.ao = null; Dybde.kontakt(F); }
@@ -276,4 +276,4 @@ Object.assign(Sound.lib, { veggbank: [{ w: 'sine', f: 140, d: .09, pd: .6, v: .3
 { const _d = Spesial.damage; Spesial.damage = function (c, n) { _d.call(this, c, n); if (!G.skjult) return; if (this.cracks.length && this.cracks.every(k => k.broken)) Skjult.aapne(); else Skjult.oppdaterSteg(); }; }
 { const _u = Spesial.update; Spesial.update = function (dt) { _u.call(this, dt); Skjult.tick(dt); }; }
 
-Object.assign(window, { Skjult, gulvSynlig, FX, slowMo }); // FX og slowMo for testdel 53 (boblene og bristbildet)
+Object.assign(window, { Skjult, gulvSynlig, FX, slowMo, Particles }); // FX, slowMo og Particles for testdel 53 (boblene, bristbildet og bitene)
