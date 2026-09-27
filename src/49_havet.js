@@ -516,11 +516,203 @@ Object.assign(Grotesk.tick, {
 { const _es = enemySlip; enemySlip = function (e) { if (e && e.type === 'avlopsarm') return; return _es(e); }; }
 { const _d = enemyDie; enemyDie = function (e, src) { _d(e, src); try { Havet.dod(e); } catch (err) { } }; }
 
-/* ---------- fiendeindeksen ---------- */
-FIENDE_REKKE.push('avlopsarm', 'kapellan');
-Object.assign(FIENDE_INFO, {
-  avlopsarm: ['En arm fra havet under huset, opp gjennom risten, med ett gult øye ytterst. Feier, slår og griper, og dykker når den har fått nok.', 'Se etter boblene i risten. Under vann biter ingenting på den.'],
-  kapellan: ['En knehøy kapellan med blekksprutkuppel og tentakkelskjegg over prestekragen. Preker, døper deg i sjøvann og kaller opp armer.', 'Slå ham midt i preken, så står menigheten uten velsignelse.']
+/* ============================================================
+   DRAUGPLEIEREN
+   En pleier på nattevakta i 1887 gikk ned i kjelleren for å hente en pasient og kom opp igjen våtere. Halvt draug, halvt
+   noe med gjeller. Biter på kloss hold, skvetter med bekkenet på mellomhold (VÅT: du går tregere) og hopper som en frosk
+   når du holder avstand. I vann (pytter, tjern, suppe og myr) blir den friskere, to i sekundet og høyst halve helsa per liv,
+   men strøm i vannet biter godt på den.
+   ============================================================ */
+Object.assign(FIENDESTEMME, { draug: ['stonn', .65] });
+Object.assign(ENEMIES, { draug: { name: 'Draugpleieren', hp: 44, speed: 2.2, r: .46, dmg: 12, xp: 14, teeth: [1, 4], bubbleH: 3.1, weapon: 'bekken', blood: 0x2a4a44 } });
+Object.assign(LINES, { draug: ['Tid for bad.', 'Vannet er godt i dag. Salt.', 'Har De tømt bekkenet? Jeg har.', 'Vi gikk ned for å hente en pasient i 1887.', 'Blubb.', 'Hold pusten, vennen. Lenge.', 'Nattevakta er ikke over. Den blir aldri over.', 'Jeg har rent tøy til Dem. Det er vått, men det er rent.'] });
+Object.assign(DEATH_CAUSES, { draug: ['Badet av en pleier som ikke lenger trenger luft.', 'Fikk bekkenet over seg. Det var ikke tomt.', 'Druknet på tørt land. Det krever innsats.'] });
+DEPTH_ENEMIES[3].push('draug'); DEPTH_ENEMIES[5].push('draug'); DEPTH_ENEMIES[6].push('draug', 'draug');
+Object.assign(MESTER_TITTEL, { draug: 'Pleier' });
+if (NPC_DYP.vaktmester && NPC_DYP.vaktmester[3]) NPC_DYP.vaktmester[3].push('Nattevakta i 1887 gikk ned i kjelleren. Tre kom opp. Én av dem var tørr.');
+PA[3].push('Nattevakten minner om at bekkenet skal tømmes i sluket, ikke i pasienten.');
+// grønne tall når den blir friskere i vannet
+{ const st = document.createElement('style'); st.textContent = '.dmg.lege{ color:#8fd8a8; font-size:22px; }'; document.head.appendChild(st); }
+
+/* froskehoppet: dukken klemmer seg sammen, strekker seg og letter, og faller ned der varselet er. Kroppen flytter seg i den siste delen (Havet.hoppTick) */
+Object.assign(POSER, {
+  froskehopp: { hR: [[0, .1, -.3], [.5, .28, -.44], [.66, .3, .3], [.82, .34, .36], [1, .2, -.3]], hL: [[0, -.1, -.3], [.5, -.28, -.44], [.66, -.3, .3], [.82, -.34, .36], [1, -.2, -.3]],
+    lean: [[0, 0], [.5, 1.4], [.7, -.6], [.9, .8], [1, 0]], hode: [[0, 0], [.5, .25], [.72, -.3], [1, 0]], klem: [[0, 0], [.5, .36], [.64, .4], [.72, -.28], [.9, -.1], [.97, .32], [1, .1]], hopp: [[0, 0], [.64, 0], [.82, 1.4], [.98, 0], [1, 0]] },
+  skvett: { hR: [[0, .1, -.3], [.55, -.2, -.1], [.75, .5, .2], [1, .3, -.2]], hL: [[0, -.1, -.34], [.55, .2, -.2], [1, -.1, -.34]], lean: [[0, 0], [.55, -.8], [.75, 1], [1, 0]], klem: [[0, 0], [.55, .15], [.75, -.1], [1, 0]] }
 });
 
-Object.assign(window, { nearestEnemy, statusOrd, BOSS_MOVES, laanbareTrekk, addProj, updateProjectiles, Havet, tentakel, tentakelLinje }); // til testene
+/* ---------- tegningen: fiskefrosk i våt pleieruniform, med skrukkete lue og tang ---------- */
+const DRAUG = { hud: '#9ab8b0', hudM: '#6a8a82', hudL: '#c8dcd0', uni: '#6e847a', uniM: '#4a5e56', uniL: '#90a69a', tang: '#3e5a34', tangL: '#5e7a44', lue: '#e0dccc', kors: '#c89a94', drope: '#a8d8e8' };
+RIG.draug = { hip: .46, hipW: .15, neck: .72, shW: .28, shY: .6, armW: .15, legW: .12, handR: .1, arm: DRAUG.uni, leg: DRAUG.hud, hand: DRAUG.hud, shoe: 'barfot:' + DRAUG.hud, scale: .9, headLag: 1.3 };
+const draape = (g, x, y, s = 1) => A.flat(g, A.blob([[x, y - .04 * s], [x + .022 * s, y + .01 * s], [x, y + .03 * s], [x - .022 * s, y + .01 * s]]), DRAUG.drope, .012, '#2a4a5a');
+const tangStraa = (g, a, c, b) => { A.curve(g, a, c, b, .05); A.curve(g, a, c, b, .028, DRAUG.tang); A.curve(g, [a[0] + .01, a[1]], [c[0] + .01, c[1]], [b[0] + .01, b[1] - .03], .01, DRAUG.tangL); };
+MONSTER_ART.draug = {
+  box: { hode: [1.3, 1.15, .65, .1], kropp: [1.3, 1.3, .65, .44] },
+  hode: v => g => {
+    const S = DRAUG.hud, cy = -.44;
+    // den krøllete pleierlua med et falmet kors: sitter skjevt, våt
+    const lue = (x, rot, kors) => { g.save(); g.translate(x, cy - .28); g.rotate(rot); A.cel(g, A.blob([[-.2, .06], [-.22, -.04], [-.14, -.12], [-.02, -.1], [.06, -.15], [.18, -.1], [.22, 0], [.2, .07], [0, .09]]), DRAUG.lue, { sk: .8 }); A.line(g, [[-.18, .04], [.18, .05]], .014, '#a8a490'); if (kors) { A.line(g, [[0, -.08], [0, .02]], .03, DRAUG.kors); A.line(g, [[-.05, -.03], [.05, -.03]], .03, DRAUG.kors); } A.flat(g, A.ell(.1, -.02, .05, .03), 'rgba(90,110,100,.35)', 0); g.restore(); };
+    if (v === 'b') {
+      for (const s of [-1, 1]) tangStraa(g, [s * .18, cy - .1], [s * .3, cy + .1], [s * .26, cy + .34]);
+      A.cel(g, A.ell(0, cy + .02, .34, .3), S, { sk: .72 });
+      // finnekammen opp gjennom nakken
+      A.cel(g, A.blob([[-.04, cy + .3], [-.06, cy + .1], [-.1, cy - .02], [-.05, cy - .06], [-.07, cy - .16], [0, cy - .2], [.06, cy - .14], [.05, cy - .04], [.08, cy + .04], [.05, cy + .14], [.04, cy + .3]]), DRAUG.hudM, { lw: .025, hi: false });
+      for (const y of [-.1, .02, .14]) A.line(g, [[-.04, cy + y], [.04, cy + y + .02]], .01, DRAUG.hudL);
+      tangStraa(g, [0, cy - .22], [-.06, cy - .02], [-.02, cy + .22]);
+      lue(0, .08, false); draape(g, .2, cy + .32);
+      return;
+    }
+    if (v === 's') {
+      tangStraa(g, [-.14, cy - .16], [-.3, cy + .04], [-.24, cy + .3]);
+      // flatt hode med kjeven som stikker fram
+      A.cel(g, A.blob([[-.28, cy + .12], [-.3, cy - .1], [-.16, cy - .26], [.08, cy - .26], [.26, cy - .14], [.36, cy + .02], [.38, cy + .12], [.3, cy + .2], [.04, cy + .24], [-.18, cy + .22]]), S, { sk: .72 });
+      A.cel(g, A.blob([[.02, cy + .14], [.38, cy + .1], [.34, cy + .22], [.1, cy + .26]]), DRAUG.hudL, { lw: .02, hi: false });
+      A.line(g, [[.04, cy + .13], [.38, cy + .1]], .024); for (let i = 0; i < 5; i++) { const x = .1 + i * .055; A.flat(g, A.poly([[x, cy + .12], [x + .02, cy + .12], [x + .01, cy + .17]]), '#f4f0e0', 0); }
+      for (let i = 0; i < 3; i++) A.curve(g, [-.06 + i * .05, cy + .02], [-.08 + i * .05, cy + .08], [-.05 + i * .05, cy + .14], .016, DRAUG.hudM); // gjellene
+      A.flat(g, A.ell(.16, cy - .1, .1, .1), '#f0ecd0', .028); A.dot(g, .19, cy - .1, .04); A.dot(g, .2, cy - .115, .012, '#ffffff');
+      A.curve(g, [.06, cy - .18], [.16, cy - .23], [.26, cy - .17], .02, DRAUG.hudM);
+      A.dot(g, .33, cy - .02, .012);
+      lue(-.06, -.2, true); draape(g, .36, cy + .3); draape(g, -.26, cy + .34, .8);
+      return;
+    }
+    for (const s of [-1, 1]) { tangStraa(g, [s * .2, cy - .14], [s * .36, cy + .04], [s * .32, cy + .3]); tangStraa(g, [s * .1, cy - .2], [s * .2, cy - .02], [s * .16, cy + .14]); }
+    // bredt, flatt hode, blekt og grønt, med lys strupe
+    A.cel(g, A.blob([[-.34, cy + .06], [-.32, cy - .14], [-.2, cy - .26], [0, cy - .28], [.2, cy - .26], [.32, cy - .14], [.34, cy + .06], [.26, cy + .22], [0, cy + .28], [-.26, cy + .22]]), S, { sk: .72 });
+    A.flat(g, A.blob([[-.22, cy + .12], [.22, cy + .12], [.16, cy + .24], [0, cy + .27], [-.16, cy + .24]]), DRAUG.hudL, 0);
+    for (const s of [-1, 1]) for (let i = 0; i < 3; i++) A.curve(g, [s * (.25 + i * .025), cy + .02 + i * .05], [s * (.3 + i * .025), cy + .05 + i * .05], [s * (.27 + i * .025), cy + .09 + i * .05], .014, DRAUG.hudM); // tre gjellespalter på hver side
+    // store øyne langt ute på sidene, som ser hver sin vei
+    for (const s of [-1, 1]) {
+      A.flat(g, A.ell(s * .2, cy - .08, .12, .115), '#f0ecd0', .03); A.dot(g, s * .25, cy - .07, .045); A.dot(g, s * .235, cy - .09, .014, '#ffffff');
+      A.curve(g, [s * .09, cy - .17], [s * .2, cy - .23], [s * .31, cy - .16], .024, DRAUG.hudM); // tunge lokk
+      A.flat(g, A.ell(s * .2, cy + .02, .07, .02), 'rgba(60,90,80,.35)', 0);
+    }
+    for (const s of [-1, 1]) A.dot(g, s * .03, cy + .05, .012, '#3a524c');
+    // leppeløs munn fra side til side, med nåletenner
+    A.curve(g, [-.22, cy + .15], [0, cy + .2], [.22, cy + .15], .026);
+    for (let i = 0; i < 8; i++) { const x = -.17 + i * .049, y = cy + .16 + Math.sin((i + .5) / 8 * Math.PI) * .035; A.flat(g, A.poly([[x - .012, y - .004], [x + .012, y - .004], [x, y + .045]]), '#f4f0e0', .006); }
+    lue(.02, -.12, true);
+    draape(g, -.08, cy + .34); draape(g, .22, cy + .3, .8); draape(g, .3, cy - .3, .7);
+  },
+  kropp: v => g => {
+    const top = -.72, U = DRAUG.uni, UM = DRAUG.uniM;
+    const flekker = pts => { for (const [x, y, rx, ry] of pts) A.flat(g, A.ell(x, y, rx, ry), 'rgba(50,70,62,.45)', 0); };
+    const rur = (x, y, s = 1) => { A.cel(g, A.blob([[x - .035 * s, y + .02 * s], [x - .02 * s, y - .03 * s], [x + .02 * s, y - .03 * s], [x + .035 * s, y + .02 * s]]), '#d8d0bc', { lw: .014, hi: false }); A.dot(g, x, y - .015 * s, .008 * s, '#6a6458'); };
+    const fald = y => { A.line(g, [[-.3, y], [-.2, y + .03], [-.08, y - .01], [.06, y + .03], [.2, y], [.3, y + .03]], .014, UM); for (const [x, s] of [[-.22, 1], [0, .8], [.18, 1.1]]) draape(g, x, y + .08, s); };
+    if (v === 'b') {
+      A.cel(g, A.blob([[-.32, .32], [.32, .32], [.3, 0], [.3, top + .2], [.18, top + .04], [0, top - .02], [-.18, top + .04], [-.3, top + .2], [-.3, 0]]), U, { line: '#1a2420', sk: .75 });
+      A.cel(g, A.blob([[-.04, top + .02], [-.08, top + .2], [-.05, top + .4], [0, top + .5], [.05, top + .4], [.08, top + .2], [.04, top + .02]]), DRAUG.hudM, { lw: .022, hi: false }); // finnen gjennom sømmen
+      A.line(g, [[0, top + .5], [0, .3]], .014, UM);
+      flekker([[-.16, top + .3, .08, .12], [.18, -.1, .07, .1]]); for (const [x, y] of [[.2, top + .12], [.24, top + .18], [.15, top + .16]]) rur(x, y);
+      fald(.3);
+      return;
+    }
+    if (v === 's') {
+      A.cel(g, A.blob([[-.24, .32], [.24, .32], [.2, 0], [.24, top + .26], [.14, top + .06], [-.04, top], [-.2, top + .12], [-.26, top + .32], [-.24, 0]]), U, { line: '#1a2420', sk: .75 }); // krum rygg
+      A.cel(g, A.blob([[-.12, top + .04], [-.24, top + .12], [-.28, top + .22], [-.2, top + .18]]), DRAUG.hudM, { lw: .02, hi: false });
+      A.cel(g, A.rr(.08, top + .24, .12, .08, .01), '#f0ecd8', { lw: .014, hi: false });
+      g.save(); g.fillStyle = '#3a4a44'; g.font = 'bold .06px Georgia'; g.textAlign = 'center'; g.fillText('1887', .14, top + .3); g.restore();
+      flekker([[.04, top + .4, .08, .12], [-.1, -.04, .07, .1]]); for (const [x, y] of [[-.1, top + .06], [-.05, top + .1]]) rur(x, y);
+      fald(.3);
+      return;
+    }
+    A.cel(g, A.blob([[-.34, .32], [.34, .32], [.32, 0], [.32, top + .18], [.2, top + .03], [.08, top], [0, top + .1], [-.08, top], [-.2, top + .03], [-.32, top + .18], [-.32, 0]]), U, { line: '#1a2420', sk: .75 });
+    A.cel(g, A.poly([[-.1, top + .01], [0, top + .14], [.1, top + .01]]), DRAUG.hudL, { lw: .02, hi: false }); // halsen i v-en
+    A.line(g, [[0, top + .14], [0, .3]], .014, UM);
+    for (let i = 0; i < 3; i++) A.dot(g, .04, top + .22 + i * .12, .016, '#d8d4c4');
+    // navnelapp med årstallet, og ruren på skulderen
+    A.cel(g, A.rr(-.26, top + .22, .16, .08, .01), '#f0ecd8', { lw: .014, hi: false });
+    g.save(); g.fillStyle = '#3a4a44'; g.font = 'bold .06px Georgia'; g.textAlign = 'center'; g.fillText('1887', -.18, top + .285); g.restore();
+    for (const [x, y, s] of [[.22, top + .1, 1], [.27, top + .15, .9], [.18, top + .15, .8], [.26, top + .08, .7]]) rur(x, y, s);
+    // våte flekker, lommer og en tangdott i lomma
+    flekker([[-.14, top + .46, .1, .14], [.18, -.06, .08, .12], [.02, top + .3, .05, .06]]);
+    A.cel(g, A.rr(.08, -.02, .16, .12, .02), Col.dark(U, .9), { lw: .02, hi: false }); tangStraa(g, [.14, -.02], [.1, .08], [.14, .16]);
+    A.line(g, [[-.32, -.06], [.32, -.06]], .016, UM);
+    fald(.3);
+  }
+};
+
+const VAATT = { wet: 1, tjern: 1, soup: 1, myr: 1 };
+Object.assign(Havet, {
+  LEGE: 2, LEGE_TAK: .5,
+  /* vann under draugen: en pytt med vann (ikke strøm i den) eller myr i Nattskogen */
+  vannUnder(e) { const p = puddleAt(e.x, e.z); if (p) return VAATT[p.kind] && !(p.elec > 0) ? p : null; return typeof gulvUnder === 'function' && gulvUnder(e.x, e.z) === 'myr' ? { kind: 'myr' } : null; },
+  /* biter på kloss hold */
+  bitt(e, toT) {
+    const tid = .45, o = { x: e.x + Math.sin(toT) * .8, z: e.z + Math.cos(toT) * .8, r: .8, color: 0x2a6a7a, type: 'vann' };
+    e.state = 'wind'; e.t = tid + .3; e.face = toT; Sound.play('slim', .4, 1.1);
+    addTele('circle', o, tid, () => { e.positur = { navn: 'greip', t: 0, dur: .3 }; Sound.play('slim', .8, .8); this.treff('circle', o, e.dmg, { type: 'draug', x: e.x, z: e.z, kb: 5 }); }, e);
+    e.cd = rnd(1.1, 1.6);
+  },
+  /* skvetter med bekkenet: en vid kjegle, en pytt der pasienten står, og VÅT (tregere en stund) */
+  skvett(e, T, toT) {
+    const tid = .65, o = { x: e.x, z: e.z, a: toT, r: 3.2, arc: 1.3, color: 0x3a8a7a, type: 'vann' }, d = Math.min(3, Math.hypot(T.x - e.x, T.z - e.z));
+    e.state = 'wind'; e.t = tid + .35; e.face = toT; e.positur = { navn: 'skvett', t: 0, dur: tid + .2 };
+    if (Math.random() < .35) FX.bubble(e, pick(['Tid for bad.', 'Bekkenet, vennen.', 'Litt kaldt først.']), 1.1);
+    addTele('cone', o, tid, () => {
+      Sound.play('splash', .9, 1.2); const px = o.x + Math.sin(o.a) * d, pz = o.z + Math.cos(o.a) * d;
+      if (!solid(Math.floor(px), Math.floor(pz))) addPuddle(px, pz, 'wet', 1, 10);
+      Particles.spawn(px, .5, pz, 10, 0x9ad0e0, { speed: 3.5, up: 4, life: .5 }); slashFx(e.x, e.z, o.a, 3.2, 1.3, false, 0x9ad0e0);
+      if (this.treff('cone', o, e.dmg * .8, { type: 'draug', x: e.x, z: e.z, kb: 2 })) { const P = G.player; P.mokkT = Math.max(P.mokkT || 0, 1.2); statusOrd(P, 'VÅT'); }
+    }, e);
+    e.cd = rnd(1.8, 2.5);
+  },
+  /* froskehoppet: en ring ved pasienten, dukken klemmer seg sammen og letter, og kroppen flyttes i steg med moveEnt de siste
+     0,45 sekundene (hoppTick), så den aldri lander i en vegg. Nedslaget etterlater et tjern som leder strøm */
+  HOPP: 1.25, HOPP_FLYT: .45,
+  hopp(e, T, toT) {
+    const s = freeSpot(T.x - Math.sin(toT) * .5, T.z - Math.cos(toT) * .5, 1.5), tid = this.HOPP, o = { x: s.x, z: s.z, r: 1.3, color: 0x3a8a7a, type: 'vann' };
+    e.state = 'wind'; e.t = tid + .35; e.face = toT; e.positur = { navn: 'froskehopp', t: 0, dur: tid };
+    e.hopp = { t: 0, fra: { x: e.x, z: e.z }, til: { x: s.x, z: s.z } };
+    Sound.play('slim', .45, .6); if (Math.random() < .4) FX.bubble(e, pick(['Hopp i havet!', 'Blubb!', 'Nå kommer pleieren.']), 1);
+    addTele('circle', o, tid, () => this.landing(e, o), e);
+    e.cd = rnd(2.2, 3);
+  },
+  hoppTick(e, dt) {
+    const H = e.hopp; if (!H) return;
+    if (e.state !== 'wind' || !e.alive) { e.hopp = null; if (e.positur && e.positur.navn === 'froskehopp') e.positur = null; return; }
+    H.t += dt; const k = clamp((H.t - (this.HOPP - this.HOPP_FLYT)) / this.HOPP_FLYT, 0, 1);
+    if (k > 0) moveEnt(e, lerp(H.fra.x, H.til.x, k) - e.x, lerp(H.fra.z, H.til.z, k) - e.z);
+    if (k > 0 && !H.lettet) { H.lettet = true; Sound.play('swing', .5, .6); puff(e.x, e.z, 2, .6); }
+  },
+  landing(e, o) {
+    if (e.hopp) { moveEnt(e, e.hopp.til.x - e.x, e.hopp.til.z - e.z); e.hopp = null; }
+    Sound.play('splash', 1, .8); Sound.play('slam', .7, 1.1); R.shake(.18); R.ripple(o.x, o.z);
+    Particles.spawn(o.x, .3, o.z, 12, 0x9ad0e0, { speed: 4, up: 5, life: .6 });
+    if (!solid(Math.floor(o.x), Math.floor(o.z))) addPuddle(o.x, o.z, 'tjern', 1.2, 10);
+    this.treff('circle', o, e.dmg * 1.1, { type: 'draug', x: o.x, z: o.z, kb: 7 });
+  },
+  /* i vann blir den friskere: to i sekundet, høyst halve helsa per liv. Grønne tall og en slurk av og til */
+  lege(e, dt) {
+    if (!e.alive || e.hp >= e.max || e.hopp) return 0;
+    const tak = this.LEGE_TAK * e.max - (e.helt || 0); if (tak <= 0 || !this.vannUnder(e)) return 0;
+    const h = Math.min(this.LEGE * dt, e.max - e.hp, tak); e.hp += h; e.helt = (e.helt || 0) + h; e.legeVis = (e.legeVis || 0) + h;
+    if (e.legeVis >= 2) { numText(e.x, e.z, '+' + Math.round(e.legeVis), 'lege', 2.2); e.legeVis = 0; if (Math.random() < .4) Sound.play('sluk', .25, 1.5); if (Math.random() < .5) Particles.spawn(e.x, .2, e.z, 3, 0x8fd8a8, { speed: .5, up: 2, g: 0, life: .6, size: .7 }); }
+    return h;
+  }
+});
+Object.assign(Grotesk.keep, { draug: 1.2 });
+Object.assign(Grotesk.talk, { draug: 1 });
+Object.assign(Grotesk.hold, { draug: 1 });
+Object.assign(Grotesk.ai, {
+  /* biter nær, hopper når du holder avstand, skvetter med bekkenet imellom */
+  draug(e, T, dist, toT) {
+    const sikt = los(e.x, e.z, T.x, T.z);
+    if (dist < 1.6) { Havet.bitt(e, toT); return; }
+    if (dist >= 3.5 && dist < 7.5 && sikt && Math.random() < .55) { Havet.hopp(e, T, toT); return; }
+    if (dist < 4.2 && sikt) { Havet.skvett(e, T, toT); return; }
+    e.cd = .3;
+  }
+});
+Object.assign(Grotesk.tick, { draug(e, dt) { Havet.hoppTick(e, dt); Havet.lege(e, dt); return null; } });
+// draugen sklir ikke i sitt eget element (snubletråden på tørt gulv tar den fortsatt)
+{ const _es = enemySlip; enemySlip = function (e) { if (e && e.type === 'draug' && (e.hopp || Havet.vannUnder(e))) return; return _es(e); }; }
+
+/* ---------- fiendeindeksen ---------- */
+FIENDE_REKKE.push('avlopsarm', 'kapellan', 'draug');
+Object.assign(FIENDE_INFO, {
+  avlopsarm: ['En arm fra havet under huset, opp gjennom risten, med ett gult øye ytterst. Feier, slår og griper, og dykker når den har fått nok.', 'Se etter boblene i risten. Under vann biter ingenting på den.'],
+  kapellan: ['En knehøy kapellan med blekksprutkuppel og tentakkelskjegg over prestekragen. Preker, døper deg i sjøvann og kaller opp armer.', 'Slå ham midt i preken, så står menigheten uten velsignelse.'],
+  draug: ['En pleier som gikk ned i kjelleren i 1887 for å hente en pasient, og kom opp igjen våtere. Hopper som en frosk og skvetter med bekkenet.', 'Slåss på tørt gulv. I vann blir den friskere, men strøm i vannet biter godt på den.']
+});
+
+Object.assign(window, { nearestEnemy, statusOrd, puddleAt, moveEnt, BOSS_MOVES, laanbareTrekk, addProj, updateProjectiles, Havet, tentakel, tentakelLinje }); // til testene
