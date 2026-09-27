@@ -2105,7 +2105,8 @@ async def main():
             til = async (f, t = 4, maks = 40000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
             spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); };
           if (typeof Laug !== 'object') return { mangler: true };
-          const skade = {}, _hp = window.hurtPlayer; window.hurtPlayer = function (d, src) { const r = _hp(d, src); if (r > 0 && src) skade[src.type] = (skade[src.type] || 0) + r; return r; };
+          // alle treff fra lauget går gjennom Laug.treff, som gir true når pasienten tok skade
+          const skade = {}, _lt = Laug.treff; Laug.treff = function (shape, o, dmg, src) { const r = _lt.apply(Laug, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
           const rom = () => { const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 8 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; return r; };
           const ved = (dx, dz) => freeSpot(P.x + dx, P.z + dz, 3), mot = e => [Math.hypot(P.x - e.x, P.z - e.z), Math.atan2(P.x - e.x, P.z - e.z)];
           try {
@@ -2150,12 +2151,12 @@ async def main():
             Laug.sistTreff = -1; ks.ringN = 2; ks.ringT = 0; ks.state = 'chase'; P.invuln = 0; skade.klokker = 0; { const [dist, a] = mot(ks); Grotesk.ai.klokker(ks, P, dist, a); } ks.cd = 99;
             let kjS = 0; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.6 && performance.now() - t0 < 30000) { kjS = Math.max(kjS, Kjeder.liste.length); await vent(40); } }
             ut.safe = { kjeder: kjS, treff: Laug.sistTreff > 0, skade: skade.klokker > 0 }; R.safe = false; killEntity(ks, {});
-          } finally { window.hurtPlayer = _hp; R.safe = false; Laug.flereKlokkere = false; }
+          } finally { Laug.treff = _lt; R.safe = false; Laug.flereKlokkere = false; }
           ut.info = ['laerling', 'klokker'].every(t => (FIENDE_INFO[t] || [])[0] && FIENDE_INFO[t][1] && FIENDE_REKKE.includes(t) && MESTER_TITTEL[t] && FIENDESTEMME[t] && LINES[t] && DEATH_CAUSES[t]) && !ROLLER.laerling && !ROLLER.klokker;
           ut.bilde = ['laerling', 'klokker'].map(t => { const c = fiendeBilde(t, 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); });
           ut.pulje = { 3: DEPTH_ENEMIES[3].filter(t => t === 'laerling').length, 4: [DEPTH_ENEMIES[4].filter(t => t === 'laerling').length, DEPTH_ENEMIES[4].filter(t => t === 'klokker').length], 6: [DEPTH_ENEMIES[6].filter(t => t === 'laerling').length, DEPTH_ENEMIES[6].filter(t => t === 'klokker').length] };
           return ut; }""")
-        sjekk('Skinnlauget finnes (Laug i 50_skinnlauget.js)', not la.get('mangler'), la)
+        sjekk('Skinnlauget finnes (Laug i 50_skinnlauget.js)', not la.get('mangler'), la.get('mangler', ''))
         if not la.get('mangler'):
             E = la['etasjer']
             sjekk('Lærlingen og Klokkeren legger an innen 6 sekunder spilltid på etasje 3, 4 og 6', all(E[d][t].get('wind') is not None and E[d][t]['wind'] <= 6 for d in ['3', '4', '6'] for t in ['l', 'k']), E)
