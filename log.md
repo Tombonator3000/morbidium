@@ -1095,3 +1095,8 @@ Alle tidspunkt er UTC.
 - Ny sjekk i del 49: et stort angrep som når inn i veggen gir ingen partikler i veggen, og merket blir høyst 6,5 skritt.
 - Del 48 feilet én gang på at 900 partikler ikke var borte (3 igjen), men gikk igjennom neste gang, og en prøve av en rolig etasje i 4 s viste ingen andre som lager partikler. Ser ut som travelhet på maskinen.
 - Del 28, 29, 36, 46, 48 og 49 er grønne.
+
+## 2026-09-27 10:14 Spor D og A flettet, og en skarpere sjekk i del 48
+- Spor D (04b6332) og spor A (bde5be0) er flettet inn i grenen. Loggen er sortert etter tid, og de nye testdelene fra begge sporene ligger i nummerrekkefølge (44 til 49, 56 og 57). To små hjelpere i kladdemappa gjør dette likt hver gang: flett_logg.py og flett_test.py (tre-veis per testdel).
+- Delene 17, 18, 36, 44 til 49, 56 og 57 på den flettede grenen: 123 OK og 1 feil. Feilen var i del 48, der Enkel grafikk slås av og på tre ganger og all geometri i spillet telles før og etter. Én geometri kom til. Del 48 alene og etter del 47 var grønn begge gangene, så noe annet i spillet laget en ting første gang i det samme vinduet.
+- Sjekken ser nå direkte på at hver partikkelmesh som byttes ut, kastes (geometri og materiale, 6 av 6), og tåler én geometri fra noe annet. En lekkasje per bytte vil fortsatt bli fanget. Del 48 er grønn.

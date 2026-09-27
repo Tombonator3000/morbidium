@@ -2377,8 +2377,10 @@ async def main():
           Particles.spawn(P.x, 1, P.z, 900, 0xfff6a0, { speed: 6, up: 5, life: .4 }); ut.liv = { n0: Particles.n }; await tomt(); await spill(.1); ut.liv.n = Particles.n; ut.liv.count = M().count;
           // enkel grafikk: klossene tilbake på neste bilde, og tilbake til blekk igjen, uten at geometri blir liggende
           const g0 = info.geometries, t0 = info.textures;
-          for (let i = 0; i < 3; i++) { R.safe = true; await spill(.05); if (!i) ut.safe = { geo: M().geometry.type, mat: M().material.type }; Particles.spawn(P.x, 1, P.z, 20, 0xb3261e, { life: 5 }); R.safe = false; await spill(.05); }
-          ut.safe.tilbake = M().geometry.type; ut.safe.n = Particles.n; ut.safe.dg = info.geometries - g0; ut.safe.dt = info.textures - t0;
+          // hver meshen som byttes ut, må kastes (geometri og materiale); det globale tallet tåler én geometri fra noe annet som lages første gang i samme stund
+          const kast = [], folg = m => { const k = { g: false, m: false }; m.geometry.addEventListener('dispose', () => k.g = true); m.material.addEventListener('dispose', () => k.m = true); kast.push(k); };
+          for (let i = 0; i < 3; i++) { folg(M()); R.safe = true; await spill(.05); if (!i) ut.safe = { geo: M().geometry.type, mat: M().material.type }; Particles.spawn(P.x, 1, P.z, 20, 0xb3261e, { life: 5 }); folg(M()); R.safe = false; await spill(.05); }
+          ut.safe.tilbake = M().geometry.type; ut.safe.n = Particles.n; ut.safe.dg = info.geometries - g0; ut.safe.dt = info.textures - t0; ut.safe.kastet = kast.filter(k => k.g && k.m).length + '/' + kast.length;
           const cc = M().instanceColor.array; ut.safe.farge = [cc[0], cc[1], cc[2]].map(v => +v.toFixed(3));
           // enkel grafikk før init (som ved oppstart med innstillingen på) gir klosser fra første bilde, og blekket etterpå
           Particles.clear(); const gm = M(); R.scene.remove(gm); gm.geometry.dispose(); gm.material.dispose(); Particles.mesh = null; Particles.d.length = 0;
@@ -2395,7 +2397,7 @@ async def main():
         sjekk('gnisten strekkes ut langs farten og flaten vender mot kameraet', gn['x'] > gn['y'] * 1.8 and gn['retning'] > .99 and abs(gn['mot'][1] - gn['sp']) < .002 and abs(gn['mot'][2] - gn['cp']) < .002 and abs(gn['mot'][0]) < .002, gn)
         sjekk('900 partikler lever ut og er borte', pt['liv'] == {'n0': 900, 'n': 0, 'count': 0}, pt['liv'])
         sa = pt['safe']
-        sjekk('enkel grafikk gir klosser, blekket kommer tilbake, fargene og partiklene følger med, og ingen geometri eller tekstur blir liggende', sa['geo'] == 'BoxGeometry' and sa['mat'] == 'MeshBasicMaterial' and sa['tilbake'] == 'PlaneGeometry' and sa['n'] == 60 and sa['dg'] <= 0 and sa['dt'] <= 0 and sa['farge'] == [0.702, 0.149, 0.118], sa)
+        sjekk('enkel grafikk gir klosser, blekket kommer tilbake, fargene og partiklene følger med, og ingen geometri eller tekstur blir liggende', sa['geo'] == 'BoxGeometry' and sa['mat'] == 'MeshBasicMaterial' and sa['tilbake'] == 'PlaneGeometry' and sa['n'] == 60 and sa['kastet'] == '6/6' and sa['dg'] <= 1 and sa['dt'] <= 0 and sa['farge'] == [0.702, 0.149, 0.118], sa)
         sjekk('enkel grafikk satt før init gir klosser, og blekket kommer når den slås av', sa['init'] == 'BoxGeometry' and sa['initEtter'] == 'PlaneGeometry' and sa['d'] == 900, sa)
         # pikslene: en klump blodpartikler som står stille, blir rød på skjermen (snitt over 9 x 9 punkter, før og etter)
         xy = await pg.evaluate("""async () => { """ + PT_HJELP + """
