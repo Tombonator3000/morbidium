@@ -536,7 +536,7 @@ const Particles = {
    den må flyttes minst (helst opp) og glir dit. Samme ord på samme sted på et øyeblikk blir ett («BONK ×2»), og høyst tre store
    ord lever samtidig. Alt flyttes med transform, så telefonen slipper å legge ut siden på nytt for hver tekst i hvert bilde. */
 const FX = {
-  items: [], n: 0, M: 4,
+  items: [], n: 0, M: 4, MAKS: 28,
   text(x, y, z, str, cls = '', life = .9) {
     const now = G.time;
     for (const it of this.items) if (it.kind === 'text' && it.str === str && it.cls === cls && now - it.tSist < .4 && Math.hypot(it.x - x, it.z - z) < 2) {
@@ -570,7 +570,7 @@ const FX = {
     const T = this.items.filter(it => it.kind === 'text' && it.malt && !(uT && it.tall)).sort((a, b) => b.pri - a.pri || a.n - b.n);
     for (const it of T) {
       const hw = it.bw / 2 + M / 2, hh = it.bh / 2 + M / 2, x0 = it.px, y0 = it.py, fx = it.mx, fy = it.my; it.mx = it.my = 0;
-      if (x0 + hw < 0 || x0 - hw > W || y0 + hh < 0 || y0 - hh > H) continue;
+      if (x0 + hw < 0 || x0 - hw > W || y0 + hh < 0 || y0 - hh > H || lagt.length >= this.MAKS) continue; // i en stor slåsskamp står de minst viktige der de er, så telefonen holder farten
       const inn = (x, y) => [clamp(x, hw, Math.max(hw, W - hw)), clamp(y, hh, Math.max(hh, H - hh))];
       const fri = p => { for (const b of lagt) if (p[0] - hw < b[2] && p[0] + hw > b[0] && p[1] - hh < b[3] && p[1] + hh > b[1]) return false; return true; };
       let p = inn(x0, y0);

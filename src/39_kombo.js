@@ -187,7 +187,7 @@ const Kombo = {
   stempel(ord, under) {
     const el = this.el('kstempel'); if (!el) return;
     el.innerHTML = esc(ord) + (under ? '<small>' + esc(under) + '</small>' : ''); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
-    clearTimeout(this.stH); this.stH = setTimeout(() => { el.classList.remove('on'); Stempel.plass(); }, 1500); Stempel.plass();
+    clearTimeout(this.stH); this.stH = setTimeout(() => { el.classList.remove('on'); Stempel.plass(true); }, 1500); Stempel.plass();
   },
   vis(pang) {
     const el = this.el('kombo'); if (!el) return;
@@ -235,21 +235,30 @@ const Stempel = {
     // tar det over for et stempel som står, slås det ned på nytt: tilbake til av uten overgang, og så inn igjen
     el.style.transition = 'none'; el.classList.remove('on'); el.style.top = ''; void el.offsetWidth; el.style.transition = ''; el.classList.add('on');
     Sound.play('stamp'); this.vistT = performance.now(); this.naa = [t, sub];
-    clearTimeout(this.h); this.h = setTimeout(() => { el.classList.remove('on'); this.naa = null; this.plass(); }, 1500);
+    clearTimeout(this.h); this.h = setTimeout(() => { el.classList.remove('on'); this.naa = null; this.plass(true); }, 1500);
     if (this.ko.length && !this.kh) this.kh = setTimeout(() => this.neste(), this.MIN);
     this.plass();
   },
-  /* plassene regnes ut når et stempel eller en lapp kommer eller går: høyden på den skrå boksen er bredde·sin + høyde·cos.
-     Et stempel som står, flyttes bare når kombostempelet kommer over det, og lappen bare når den kommer eller et stempel står. */
-  plass(nyLapp) {
+  /* plassene regnes ut når et stempel eller en lapp kommer: de som står, legges under hverandre fra der de hører hjemme (lappen
+     i nedre tredjedel), og høyden på den skrå boksen er bredde·sin + høyde·cos. Stakken skal slutte over evnekortene: den skyves
+     opp så langt det trengs, og er det ikke plass likevel (liggende telefon med alle tre), blir stemplene litt mindre.
+     Når et stempel går (ut), blir de andre stående der de er, og lappen går opp igjen først når den selv er borte. */
+  plass(ut) {
     const H = innerHeight, k = $('kstempel'), b = $('bigstamp'), t = $('toast'); if (!k || !b || !t) return;
-    const kOn = k.classList.contains('on'), bOn = b.classList.contains('on'), topp = el => parseFloat(getComputedStyle(el).top) || 0;
+    const kOn = k.classList.contains('on'), bOn = b.classList.contains('on'), tOn = t.classList.contains('on');
+    if (!kOn && !bOn) { if (!ut || !tOn) { t.classList.remove('lav'); t.style.top = t.style.scale = ''; } return; }
+    if (ut) return;
     const hoy = (el, grad, s) => { const r = grad * Math.PI / 180; return (el.offsetWidth * Math.sin(r) + el.offsetHeight * Math.cos(r)) * s; };
-    let bunn = 0;
-    if (kOn) bunn = topp(k) + hoy(k, 7, 1.12) / 2; // kombostempelet står 7 grader på skrå og vokser til 1,1 før det blekner
-    if (bOn) { const h = hoy(b, 8, 1); let y = topp(b); if (kOn) { b.style.top = ''; y = Math.max(topp(b), bunn + 8 + h / 2); b.style.top = y + 'px'; } bunn = Math.max(bunn, y + h / 2); }
-    if (kOn || bOn) { const h = hoy(t, 4, 1); t.classList.add('lav'); t.style.top = Math.max(h / 2 + 4, Math.min(H - h / 2 - 4, Math.max(H * .7, bunn + 8 + h / 2))) + 'px'; }
-    else if (nyLapp || !t.classList.contains('on')) { t.classList.remove('lav'); t.style.top = ''; }
+    t.classList.toggle('lav', tOn); const L = [];
+    // kombostempelet står 7 grader på skrå og vokser til 1,1 før det blekner
+    for (const [el, on, grad, s] of [[k, kOn, 7, 1.12], [b, bOn, 8, 1], [t, tOn, 4, 1]]) if (on) { el.style.top = el.style.scale = ''; L.push({ el, h: hoy(el, grad, s), y: parseFloat(getComputedStyle(el).top) || 0 }); }
+    let bunn = -1e9; for (const it of L) { it.y = Math.max(it.y, bunn + 8 + it.h / 2); bunn = it.y + it.h / 2; }
+    const kr = $('cards') && $('cards').getBoundingClientRect(), hi = kr && kr.height > 0 && kr.top > H * .45 ? kr.top - 16 : H - 6, lo = Math.max(8, H * .03); // -16: tallene og myntene på kortene stikker opp over kanten
+    const d = Math.min(Math.max(0, bunn - hi), Math.max(0, L[0].y - L[0].h / 2 - lo)); bunn -= d; for (const it of L) it.y -= d;
+    let f = 1;
+    // lappen holder størrelsen (den har forklaringen), så det er stemplene som krymper
+    if (bunn > hi) { const S = L.filter(it => it.el !== t), fast = L.length > S.length ? L[L.length - 1].h : 0; f = Math.max(.55, (hi - lo - fast - 8 * (L.length - 1)) / S.reduce((s, it) => s + it.h, 0)); let y = lo; for (const it of L) { const h = it.el === t ? it.h : it.h * f; it.y = y + h / 2; y += h + 8; } }
+    for (const it of L) { it.el.style.top = it.y.toFixed(1) + 'px'; if (f < 1 && it.el !== t) it.el.style.scale = f.toFixed(3); }
   }
 };
 
@@ -271,7 +280,7 @@ const Stempel = {
 { const _bd = bossDie; bossDie = function (B) { _bd(B); Kombo.sjef(B); }; }
 { const _sb = stampBig; stampBig = function (t, sub) { _sb(t, sub); if (t === 'SYNERGI' || t === 'FORVANDLING') Kombo.fanfare(t === 'SYNERGI' ? 'synergi' : 'forvandling'); }; }
 // lappen får teksten med en gang som før, og legger seg under stemplene hvis et står
-{ const _t = toast; toast = function (t, sub) { const sto = $('toast').classList.contains('on'); _t(t, sub); Stempel.plass(!sto); }; }
+{ const _t = toast; toast = function (t, sub) { _t(t, sub); Stempel.plass(); }; }
 { const _sf = startFloor; startFloor = function (...a) { Kombo.onFloor(); return _sf.apply(this, a); }; }
 { const _rs = runStats; runStats = function () {
   let s = _rs(); const r = G.run || {};
