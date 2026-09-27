@@ -941,6 +941,44 @@ Alle tidspunkt er UTC.
 - Et spor stopper nå med én gang hvis en agent faller ut, i stedet for å prøve resten av punktene og feile på hvert av dem.
 - Agentene tenker på «high» i stedet for «max», så runden bruker mindre av grensen.
 
+## 2026-09-27 02:12 Tekstene legger seg ikke oppå hverandre, og stemplene står i kø (A2, «IKKBONKG»)
+- Det Tom så i 6.png: en perfekt unnvikelse av trillepasienten gir «IKKE I DAG» og «bom» på pasienten, og når stolen treffer veggen like etter, kommer «BONK» på nesten samme sted. Ordene ble liggende oppå hverandre og leste «IKKBONKG».
+- De flytende tekstene (FX i 04_render.js) legges nå ut på nytt hvert bilde. Store ord (krit og stempel) går først, så skade på pasienten, så tall og til sist info, og eldre før nyere. En tekst som ville dekket en annen tekst eller en snakkeboble, flyttes dit den må flyttes minst (helst opp) og glir dit. Planen sa «skyv opp inntil fire ganger, så til siden»; å prøve plassene rundt hver tekst som alt ligger der og ta den nærmeste gir samme resultat og hopper ikke fram og tilbake.
+- Samme ord på samme sted på et øyeblikk blir ett ord med en liten puls: «AVSLÅTT ×7», «BONK ×2». Høyst tre store ord lever samtidig; de eldste blekner fort. Store ord står litt på skrå, som et stempel.
+- «bom» fjernes når den perfekte unnvikelsen har sitt eget ord. Er «Vis tall» slått av, er ordet skjult, og da får «bom» stå.
+- Tekstene flyttes med transform i stedet for left og top, og størrelsen måles én gang per ny tekst, så telefonen slipper å legge ut siden på nytt for hver tekst hvert bilde. Skjulte tall tar ikke plass.
+- Stemplene på skjermen: kombostempelet kommer med en gang som før. Det store stempelet (stampBig) venter til det forrige har stått i 0,7 sekunder (høyst tre i kø, like hoppes over). Står begge, legges det store 8 punkter under kombostempelet, og lappen (toast) legger seg i nedre tredjedel under dem så lenge et stempel står. Teksten i lappen settes fortsatt med en gang. På liggende telefon er alle tre mindre, så de får plass under hverandre.
+- Ny testdel 45 (Tekster og stempler), på PC 1280x720, liggende telefon 844x390 og én gang i 3D. Alle sjekkene feiler på bygget fra før (1ff4a4f). Del 24, 26, 29, 36 og 45 er grønne.
+- Skjermbilder til Tom: 45_tekst_for.png og 45_tekst_etter.png (6.png laget på nytt i liggehallen i Parken), og 45_stempler_etter_844x390.png med tre stempler på en gang.
+
+## 2026-09-27 02:53 Skeptikeren på A2: stemplene og lappen holder seg over evnekortene
+- Sjekket planpunktet, testdel 45 og skjermbildene, og tok egne bilder av tre stempler på en gang på PC (1280x720), TV (1920x1080), liggende telefon (844x390) og stående telefon (390x844). Tekstene over pasienten (45_tekst_etter.png) er klart bedre: BONK over IKKE I DAG, og «bom» borte.
+- Feil 1: lappen (toast) la seg oppå evnekortene når et stempel sto. På PC dekket forklaringen tallene på kortene (lappen 520 til 626, kortene fra 614), og på liggende telefon lå hele lappen og bunnen av det store stempelet over kortene, så forklaringen ikke kunne leses (det gamle 45_stempler_etter_844x390.png). Stempel.plass legger nå stemplene og lappen under hverandre og måler toppen av kortene (16 punkter ekstra for tallene og myntene som stikker opp). Går det ikke, skyves stakken opp, og er det fortsatt ikke plass, krymper stemplene (ikke lappen, den har forklaringen). Når et stempel går, blir de andre stående der de er, som før.
+- Feil 2: en lang forklaring i lappen gikk ut av skjermen på stående telefon (fra før, men nå står lappen lavt der alle ser den). Forklaringen brytes nå innenfor 94 prosent av bredden.
+- Feil 3: utleggingen av tekstene prøver alle plassene rundt hver tekst som alt ligger der, så en stor haug på samme sted koster mye (100 tekster: 7,7 ms per bilde på denne maskinen, flere ganger mer på en telefon). Nå legges høyst 28 ut; resten (de minst viktige og nyeste) står der de er. 100 tekster koster nå 0,2 ms.
+- Ikke rettet: fanfaren for SYNERGI og FORVANDLING spilles når stampBig kalles, også når stempelet står i kø og vises opptil 0,7 sekunder senere. Test 29 venter fanfaren med en gang, så det er latt være.
+- 45_stempler_etter_844x390.png er tatt på nytt. Del 24, 26, 29, 36 og 45 kjøres.
+- Del 24, 26, 36 og 45 grønne (60 av 61). Del 29 feilet én gang på «kjeden slutter av seg selv» mens maskinen hadde last 9 på 4 kjerner: testen venter på spilltid med et tak på 20 sekunder ekte tid. Alene gikk del 29 gjennom.
+- Del 45 sjekker nå også at de tre stemplene slutter over evnekortene (på bygget før rettingen lå lappen 309 til 386 og kortene fra 284 på liggende telefon). Del 45 grønn.
+
+## 2026-09-27 04:18 Blodet på glasset renner som blod (A4)
+- Det Tom så i 10.png: tynne, rette røde streker fra toppen av skjermen og helt ned. Det var sporene etter bloddråpene på glasset (43_vaatt.js). Hvert spor var ett strøk med samme bredde og styrke hele veien, dråpene mistet nesten ingen masse og rant hele skjermen, alderen på sporet ble nullstilt for hvert nytt punkt, og de tunge treffene la dråper helt oppe i kanten.
+- Nå tar sporet med seg litt av dråpen for hver piksel den renner (r² minker med 0,2 ganger bredden ganger strekningen), så en enkelt dråpe renner et stykke og stanser. Bare dråper som slår seg sammen, renner langt.
+- Dråpene renner i rykk og napp, og følger ripene i glasset: et rolig felt som er likt for alle dråper i etasjen, pluss dråpens egen slingring og litt skjelving. Sporene slingrer derfor litt, og to spor i nærheten følger samme vei.
+- Hvert punkt i sporet har sin egen bredde og alder. Sporet smalner mot dråpen etter hvert som den mister masse, toppen blekner og tynnes først, og et spor er borte når også det nyeste punktet er 8 sekunder gammelt (vann 3,5).
+- Sporet tegnes som et bredt, svakt strøk og en smal kjerne, så det får en rund rygg som lyset glinser langs. Leddene tegnes med «lighten», så de ikke blir dobbelt så tykke der bitene møtes. Etter 2 til 3 sekunder trekker det gamle sporet seg sammen til en rad små perler (vann etter 1 til 1,8 sekunder), på faste steder så de ikke flimrer.
+- Lerretet får en svart, helt dekkende bunn i stedet for å tømmes, så svakere strøk og perler faktisk blir svakere når det lastes opp (før ble fargen delt på dekningen igjen).
+- Tunge treff legger dråpene fra 15 til 35 prosent ned på skjermen i stedet for helt oppe, høyst seks bloddråper renner samtidig, og når ingenting renner og sporene bare blekner, tegnes og lastes lerretet opp annethvert bilde.
+- Ikke gjort: tørking i den blå kanalen (valgfritt i planen). Blå kanal er fortsatt ledig.
+- Ny testdel 47 (Blod som renner), på PC og stående telefon og én gang i 3D. Den lengste loddrette stripen med blod etter et tungt treff er nå 49 av 216 punkter (194 før), en enkelt dråpe renner 42 punkter (178 før), og sporene smalner og slingrer. Alle sjekkene unntatt de uten konsollfeil og 3D-sjekken feiler på bygget fra før (1ff4a4f). Del 17, 18, 34, 36 og 47 er grønne.
+- Skjermbilder til Tom: 47_blod_for.png og 47_blod_etter.png (tungt treff og 3 sekunder spilltid i liggehallen i Parken, samme frø og utsnitt), og 47_blod_etter_390x844.png.
+
+## 2026-09-27 04:55 Skeptikeren på A4 (blod som renner)
+- Sjekket planpunktet, koden i 43_vaatt.js, testdel 47 og skjermbildene. Etterbildene er klart bedre: sporene slingrer, smalner og perler seg, og de rette strekene fra toppen er borte, også på stående telefon.
+- Feil: testdel 47 feilet omtrent hver tredje gang. Den krevde at alle sporene etter ett tungt treff smalnet og slingret, men hvor mange spor som gjør det, avhenger av hva Blod.treff har trukket fra Math.random før (etasjen), og i en simulering med 400 frø feilet ett treff alene i 133 av dem. Per spor smalner 92 prosent og 94 prosent slingrer. Testen slår nå sammen tolv tunge treff med hvert sitt frø og krever at minst tre av fire spor smalner og slingrer, og at sporene i midten smalner til 0,8 eller mindre (målt 0,63 på PC og 0,57 på telefon). Den lengste stripen måles over alle tolv. Tallene er nå like fra kjøring til kjøring.
+- Målt og latt være: tegningen av sporene koster mer enn før (hver bit to strøk og perlene i tillegg). I spilløkka på stående telefon med firedobbelt strupet prosessor, regn og et tungt treff hvert 1,5 sekund: 1,96 ms per bilde i snitt og 5,8 ms i 95-persentilen, mot 1,31 og 4,5 før, og ingen topper. Opptegningen i R.render ble ikke tregere.
+- Del 17, 18, 34, 36 og 47 kjørt; del 34 og 47 grønne to ganger etter rettingen.
+
 ## 2026-09-27 06:23 Andre vindu: åtte punkter ferdige og sjekket, resten startet
 - Mellom 01:22 og omtrent 05:30 UTC ble åtte punkter ferdige og sjekket av hver sin skeptiker, før bruksgrensen stoppet sporene igjen:
   1. Spor A: A1 (varsler og hugg frigjør geometrien) og A3 (Blekkvarsel, alle angrepsvarsler i én blekkshader).
@@ -950,3 +988,42 @@ Alle tidspunkt er UTC.
 - Påbegynt og delvis committet: A5, C1, B3 og C5. Agentene som kommer nå, gjør dem ferdige.
 - Resten startet 06:22 UTC: A5 og A6, C1 og C2, B3, B4 og B6, C5, C6, C7 og C8.
 - B5 (gulv i full oppløsning med egne fliser) er tatt ut av denne runden. Det er en stor endring i hvordan gulvet tegnes, og den trengs først når Tom skal bestille gulv (liste 12). Veggprøven i liste 11 kommer først uansett.
+
+## 2026-09-27 06:58 Papiljottene sitter på hodet, og kontrollene i grafikkleveransen (C1)
+- Det Tom så i 8.png: papiljottene svevde som en glorie over hodet på dødskortet. Tallene i PAS_PYNT var stilt inn for det tegnede reservehodet (issen på .88), men spillet bruker hodene fra ChatGPT, der den tette issen når .78 over festepunktet. Papiljottene fra ChatGPT er i tillegg bredere og høyere enn tegningen, så bare 0 til 2 prosent av dem lå over hodet.
+- PAS_PYNT har fått et valgfritt felt skala (papiljotter .75, hårnett .9, hjelm .92) og nye tall for papiljotter, hårnett, hjelm, sløyfe og nattlue. Hornene og svulsten i LOOKS er senket. Nå ligger minst 20 prosent av all pynt over hodet (papiljottene 56 prosent), for begge kjønn forfra, fra siden og bakfra.
+- hodeTopp måler issen én gang per hodetegning, og pynten som ikke sitter i ansiktet flyttes like mye som hodet er høyere eller lavere enn .78. Hodene fra ChatGPT gir .78, så ingenting endres der, men det tegnede reservehodet (.94) får pynten opp på seg i stedet for inni håret.
+- Pynten og tilleggene dreies med hodet (placeAddons og placeLook). Før gled en hatt 0,2 til 0,26 enheter av hodet når en fiende eller sjef vippet hodet.
+- HUD-portrettet krymper bare hodet når pynten stikker over kanten (nattlua, hjelmen), så ansiktet får plassen med papiljotter.
+- Kontrollene i GRAFIKKLEVERANSE.md: kroppen til den hvite hjorten fra ChatGPT lå med buken på bakken under et hode som svevde (bunnen på festepunktet, ay .1). Den løftes .8 når bildet brukes, så buken ligger over beina og halsen møter hodet, i 2D og 3D. Rettet i 37_utefiender.js i stedet for manifestet, så sporet for veggene slipper å lage manifestet på nytt.
+- Frisyrene fra ChatGPT på personalet (Oppskrift.kleDeler) er parykker med hull til ansiktet, men lå med bunnen på 60 prosent av hodet og svevde som en klump over hodets eget hår (1 til 7 prosent over hodet). Nå legges toppen av håret litt over issen, så det dekker hodet (minst 20 prosent, de fleste over 50). Munnbindet dekket øynene og gassmasken pannen; ansiktstilbehøret legges nå etter øynene (TILBEHOR_FESTE). Hattene og brillene satt fra før.
+- Sett over og i orden: trillepasientens hjul og stativ, speilpasientens ramme, hjertene og rammene i HUD i vanlig spillstørrelse, og løs pynt, hatter, hår og ansiktstilbehør i alle tre retninger. Ikke rettet: eyeliner fra siden stikker litt foran ansiktet, fordi tegningen har to øyne.
+- Ny testdel 56 (Hår og pynt på hodet). Alle sjekkene unntatt den uten konsollfeil feiler på bygget fra før (1ff4a4f). Del 8, 9, 10, 11, 27, 36 og 56 er grønne.
+- Skjermbilder til Tom: 56_papiljotter_for.png og 56_papiljotter_etter.png (dødskortet), 56_kontakt.png og 56_kontakt_for.png (all pynt på begge kjønn i f, s og b), 56_kontakt_oppskrift_for.png og 56_kontakt_oppskrift_etter.png (hatter, frisyrer og tilbehør på personalet), 56_hjort_for.png og 56_hjort_etter.png (2D og 3D, samme frø og plass), og 56_fiender_kontroll.png.
+
+## 2026-09-27 07:18 Skeptikeren på C1 (papiljottene og kontrollene i grafikkleveransen)
+- Gått gjennom: PAS_PYNT med skala, hodeTopp, deler(), placeAddons og placeLook (dreiingen), HUD-portrettet, LOOKS, frisyrene og ansiktstilbehøret på personalet (Oppskrift.kleDeler), og løftet av hjortens kropp. Sett på dødskortet, kontaktarkene (pynt på begge kjønn i f, s og b, hatter, hår og tilbehør på personalet), reservehodet uten bilder, hjorten i 2D og 3D, trillepasienten og speilpasienten, og spilldukken med papiljotter i 3D på PC, stående og liggende telefon (ingen konsollfeil). Papiljottene sitter i håret i alle rendererne, og hjorten står på beina.
+- Ingen feil funnet som måtte rettes. Testdel 56 feiler på den gamle koden (dreiingen, hjorten, dekningen), så den er ikke tom.
+- Ikke rettet (fra før): eyeliner fra siden stikker foran ansiktet, fordi tegningen har to øyne. 28_oppskrift.js står ikke i noe spors liste, men er endret her (frisyrene og TILBEHOR_FESTE), så det må med i flettingen.
+- Del 9, 10, 11, 27, 36 og 56 grønne.
+
+## 2026-09-27 08:25 Snøfall som ligner snø (C2)
+- Det Tom så i 6.png: snøen som faller, var 220 harde firkanter på to til tre punkter i en fast boks som ikke fulgte kameraet. På stående telefon kom det aldri snø i den nederste femtedelen av skjermen, alle fnuggene slengte i takt, og det var ingen vind eller dybde.
+- Ny fil 47_sno.js (Sno): snøen faller i tre lag på skjermkortet. Fjerne, små fnugg nær bakken under bakketåka, vanlige fnugg midt i lufta (dette er Vaer.obj, så del 37 holder), og noen få store nær glasset som tegnes rett på skjermen, flytter seg 1,4 ganger så fort som bakken og viker unna pasienten. Alt regnes ut i vertex-shaderen fra tiden, som går med spilltiden, så pausen og treffstansen fryser snøen. Prosessoren gjør ingenting per fnugg.
+- Boksen følger kameraet hvert bilde (bredde, høyde, zoom og vinkelen) og brettes med mod(), så stående og liggende telefon og kameraavstand 1,25 blir dekket helt ut. Fnuggene ligger fast i verden og kommer tilbake et nytt sted for hver runde.
+- Utseendet er et atlas på 128 punkter tegnet i kode: en myk klump, en klump med cel-skygge og svak blekkant, en krystall med seks armer i blekk (bare de nære) og en uskarp skive. Aldri helt hvitt. En maske over uterommene holder snøen ute av paviljongene. I 3D får fnuggene lyset fra lampene, så de er varme under gasslyktene og blågrå i mørket.
+- Vind fra etasjens frø, med kast hvert 8. til 20. sekund der fnuggene slenger mer og vindsuset øker. Mengden går opp og ned over et par minutter. Høy 700, 380 og 120 fnugg, middels (telefon og TV) 420, 220 og 60, lav 240 og 110 og ingen nære, 2D 300, 160 og 40 (200, 110 og 40 på berøringsskjerm). Tre tegnekall.
+- Størrelsene er større enn i planen (fjern .07 til .1, midt .12 til .19, nær .3 til .46 enheter). Med planens tall ble fnuggene prikker på tre til fem punkter som knapt syntes mot den hvite bakken.
+- Gasslyktene får snø som faller i lyset i stedet for møll (GLOD_TYPER.lyssno), og sirissene tier mens det snør.
+- Enkel grafikk: ingen snø på skjermkortet. De gamle prikkene er runde (en myk prikk på 16 punkter i størrelse 4,5) og legges der de synes på skjermen, så 81 prosent av dem er i bildet (52 før). Lette teksturer har ingen snø, som før.
+- Ikke gjort (valgfritt i planen): vinden i bakketåka, snø på hodene og tingene, fotspor, knirkende fottrinn og frost på glasset.
+- Ny testdel 57 (Snøfall), i 2D med én runde i 3D på PC og stående telefon. Alle sjekkene unntatt de uten konsollfeil feiler på bygget fra før (1ff4a4f). Del 24, 36, 37, 39 og 57 er grønne. Del 28 feiler på at Morbidium-gløden ikke er borte etter pytten, også alene. Den feilet likt før denne endringen (kun_gammel_28.log), så det kommer ikke herfra.
+- Skjermbilder til Tom: 57_sno_for_1280.png og 57_sno_etter_1280.png (en snøetasje i Parken ved gasslyktene, 3D, samme frø og sted), 57_sno_for_390x844.png og 57_sno_etter_390x844.png, og 57_sno_etter_2d.png.
+
+## 2026-09-27 09:24 Skeptikeren på C2: snøfallet
+- Kontrollert: de tre lagene, boksen som følger kameraet (testen regner det synlige rektangelet selv, så den er ikke tom), opprydding i Vaer.stopp (geometriene tilbake og masken kastet), enkel grafikk med runde prikker, lette teksturer uten snø, snø i lyktelyset i stedet for møll, tiden som følger spilltiden, tre tegnekall, og at Stemning.maal lager et nytt objekt hvert kall (så vindsuset ikke vokser seg større for hvert bilde).
+- Rettet: de uskarpe nære fnuggene hadde en lys kant og så ut som såpebobler på skjermbildet. Nå er de en myk klump uten kant, som et fnugg ute av fokus.
+- Rettet: toppen av fnuggene blektes med smoothstep med kantene baklengs, som er udefinert i GLSL og kan gi feil på noen mobiler. Skrevet om til 1 minus smoothstep.
+- Rettet: med lette teksturer (R.lowTex) er det ikke noe snøfall, og da sang sirissene igjen på snøetasjene. Nå tier de når etasjen har snøvær, uansett grafikk.
+- Skjermbildene 57_sno_etter_1280.png, 57_sno_etter_390x844.png og 57_sno_etter_2d.png er tatt på nytt.
+- Del 24, 36, 37, 39 og 57 er grønne. Del 28 feiler på at Morbidium-gløden ikke er borte etter pytten, likt på bygget fra før, så det kommer ikke fra snøen.
