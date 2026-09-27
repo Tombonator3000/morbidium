@@ -42,7 +42,7 @@ const SNO_VS = `
       vec2 p = (aFro.xz + hopp) * uBoks + uVind * (0.8 + 0.4 * r2) + sway - uCam * (uParal - 1.0);
       vec2 rel = mod(p - uCam - uBoksMin, uBoks) + uBoksMin;
       vec3 w = vec3(uCam.x + rel.x, y, uCam.y + rel.y); vXZ = w.xz;
-      a *= smoothstep(uYtop, uYtop * 0.82, y) * smoothstep(0.0, 0.25, y);
+      a *= (1.0 - smoothstep(uYtop * 0.82, uYtop, y)) * smoothstep(0.0, 0.25, y); // smoothstep med kantene baklengs er udefinert i GLSL
       vec3 lys = uAmb;
       for (int i = 0; i < 8; i++) { float k = max(0.0, 1.0 - length(uLysP[i].xyz - w) / max(uLysP[i].w, 0.001)); lys += uLysF[i] * k * k; }
       vF = vec4(uFarge * min(lys, vec3(1.3)), a);
@@ -119,8 +119,8 @@ const Sno = {
         g.stroke();
       };
       armer(6, INK + '.3)'); armer(3.6, LYS); g.fillStyle = LYS; g.beginPath(); g.arc(32, 96, 4.6, 0, TAU); g.fill();
-      // 3: uskarp skive med en lysere kant (nære fnugg ute av fokus)
-      gr = g.createRadialGradient(96, 96, 0, 96, 96, 27); gr.addColorStop(0, 'rgba(236,241,249,.5)'); gr.addColorStop(.74, 'rgba(238,243,250,.58)'); gr.addColorStop(.88, 'rgba(244,247,252,.85)'); gr.addColorStop(1, 'rgba(242,246,252,0)');
+      // 3: nære fnugg ute av fokus: en myk, uskarp klump uten lys kant (med kant så de ut som såpebobler)
+      gr = g.createRadialGradient(96, 96, 0, 96, 96, 27); gr.addColorStop(0, 'rgba(242,246,252,.78)'); gr.addColorStop(.45, 'rgba(240,244,251,.62)'); gr.addColorStop(.8, 'rgba(236,241,249,.2)'); gr.addColorStop(1, 'rgba(236,241,249,0)');
       g.fillStyle = gr; g.beginPath(); g.arc(96, 96, 27, 0, TAU); g.fill();
     });
     t.premultiplyAlpha = true; return this._atlas = t;
@@ -260,5 +260,5 @@ const Sno = {
 // gasslyktene: snø i lyset i stedet for møll. Etasjen leses fra G.F, for tingene lages før været starter
 { const _of = Effekter.onFloor; Effekter.onFloor = function () { const K = GLOD_KILDER.lyktestolpe, vinter = G.F && G.F.vaer === 'sno'; if (vinter) GLOD_KILDER.lyktestolpe = SNO_LYKT; try { _of.call(this); } finally { GLOD_KILDER.lyktestolpe = K; } }; }
 // lyden: ingen sirisser i snøværet, og vindsuset øker med kastene
-{ const _m = Stemning.maal; Stemning.maal = function () { const M = _m.call(this); if (Vaer.type === 'sno') { delete M.amb_natt; if (M.amb_vind) M.amb_vind[0] *= 1 + .8 * Sno.kast; } return M; }; }
+{ const _m = Stemning.maal; Stemning.maal = function () { const M = _m.call(this); if (Vaer.type === 'sno' || (G.F && G.F.vaer === 'sno' && !G.drom)) { delete M.amb_natt; if (M.amb_vind) M.amb_vind[0] *= 1 + .8 * Sno.kast; } return M; }; }
 Object.assign(window, { Sno, SNO_LAG, SNO_BUDSJETT }); // til testene
