@@ -1998,6 +1998,85 @@ async def main():
         sjekk('ingen konsollfeil (etter flettingen)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 45) Tekster og stempler
+        #     Flytende tekster legger seg ikke oppå hverandre eller over snakkebobler (IKKE I DAG, BONK og bom i 6.png), sju like ord
+        #     blir ett med ×7, «bom» forsvinner når den perfekte unnvikelsen har sitt eget ord, høyst tre store ord lever samtidig,
+        #     og det store stempelet, kombostempelet og lappen står under hverandre og i kø. PC (1280x720) og liggende telefon (844x390).
+        HJELP45 = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
+          const rute = e => { const b = e.getBoundingClientRect(); return { s: e.id || e.textContent, x0: b.left, y0: b.top, x1: b.right, y1: b.bottom }; };
+          const tekster = () => [...document.querySelectorAll('#fx .dmg')].filter(e => getComputedStyle(e).display !== 'none').map(rute);
+          const kryss = L => { const p = []; for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i], c = L[j]; if (a.x0 < c.x1 - 1 && c.x0 < a.x1 - 1 && a.y0 < c.y1 - 1 && c.y0 < a.y1 - 1) p.push(a.s + ' / ' + c.s); } return p; };
+          const inni = L => L.every(a => a.x0 >= -1 && a.y0 >= -1 && a.x1 <= innerWidth + 1 && a.y1 <= innerHeight + 1), kort = L => L.map(a => [a.s, Math.round(a.x0), Math.round(a.y0), Math.round(a.x1), Math.round(a.y1)]);
+          const klar = async () => { rolig(); G.meta.settings.tips = false; P.hp = P.maxHp = 9999; P.roll = P.iframe = P.invuln = 0; const r = G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; await ramme(4); FX.clear(); };"""
+        TRE45 = """async () => { """ + HJELP45 + """
+          await klar(); FX.text(P.x, 2.7, P.z, 'IKKE I DAG', 'crit', 4); FX.text(P.x + .3, 2.6, P.z, 'BONK', 'crit', 4); FX.text(P.x, 1.6, P.z, 'bom', 'info', 4);
+          await ramme(20); const L = tekster(); return { n: L.length, kryss: kryss(L), inni: inni(L), transform: [...document.querySelectorAll('#fx .dmg')].every(e => e.style.transform.startsWith('translate3d') && !e.style.left), L: kort(L) }; }"""
+        TEKST45 = """async () => { """ + HJELP45 + """
+          await klar(); ut.tre = await (""" + TRE45 + """)();
+          // sju AVSLÅTT på ett bilde blir én tekst
+          FX.clear(); for (let i = 0; i < 7; i++) FX.text(P.x + (i % 3) * .2, 1.6, P.z, 'AVSLÅTT', 'stamp', 1);
+          await ramme(2); ut.sju = [...document.querySelectorAll('#fx .dmg')].filter(e => e.textContent.startsWith('AVSLÅTT')).map(e => e.textContent);
+          // perfekt unnvikelse: ordet til kunngjøreren, og ingen «bom» fra den samme unnvikelsen
+          FX.clear(); const n0 = Kombo.tall.perfekt, PERF = ['PÅ HÅRET', 'UNNSLUPPET', 'IKKE I DAG', 'FOR SENT, DOKTOR'];
+          Kombo.perfektT = 0; P.invuln = 0; P.roll = .3; P.iframe = .3; hurt(P, 3, { type: 'test' }); await ramme(2);
+          let ord = [...document.querySelectorAll('#fx .dmg')].map(e => e.textContent); ut.perfekt = { ord, kjort: Kombo.tall.perfekt === n0 + 1, bom: ord.some(s => s.startsWith('bom')), ordet: ord.some(s => PERF.includes(s)) };
+          // mens kunngjøreren hviler (2,2 s), er «bom» det eneste ordet, og da blir det stående
+          P.invuln = 0; P.roll = .3; P.iframe = .3; hurt(P, 3, { type: 'test' }); await ramme(1); ut.perfekt.bomIgjen = [...document.querySelectorAll('#fx .dmg')].some(e => e.textContent.startsWith('bom')); P.roll = P.iframe = 0;
+          // høyst tre store ord: de to eldste av fem blekner og blir borte, de tre nyeste står
+          FX.clear(); for (let i = 0; i < 5; i++) FX.text(P.x - 3 + i * 1.5, 2.4, P.z + (i % 2) * 2.5, 'ORD ' + i, 'crit', 4);
+          for (let i = 0; i < 90 && document.querySelectorAll('#fx .dmg.crit').length > 3; i++) await ramme(1);
+          ut.tak = [...document.querySelectorAll('#fx .dmg.crit')].map(e => e.textContent);
+          // tall som er skjult (Vis tall av), tar ikke plass fra en info-tekst på samme sted
+          FX.clear(); document.body.classList.add('uten-tall'); FX.text(P.x, 1.6, P.z, '12', '', 3); FX.text(P.x, 1.6, P.z, 'Benektet', 'info', 3); await ramme(3);
+          const inf = FX.items.find(it => it.str === 'Benektet'); ut.utenTall = !!inf && Math.abs(inf.mx) < 1 && Math.abs(inf.my) < 1; document.body.classList.remove('uten-tall');
+          // en tekst legger seg ikke over en snakkeboble
+          FX.clear(); FX.bubble(P, 'Jeg har det helt fint, takk.', 4); FX.text(P.x, P.bubbleH, P.z, 'HER', 'crit', 4); await ramme(8);
+          const bob = [...document.querySelectorAll('#fx .bubble')].map(rute), her = tekster().filter(a => a.s === 'HER'); ut.boble = { kryss: kryss(bob.concat(her)), n: bob.length + her.length };
+          FX.clear(); return ut; }"""
+        STEMPEL45 = """async () => { """ + HJELP45 + """
+          const $ = id => document.getElementById(id), k = $('kstempel'), b = $('bigstamp'), t = $('toast'), borte = async () => { for (let i = 0; i < 120 && (b.classList.contains('on') || k.classList.contains('on') || Stempel.ko.length); i++) await vent(50); };
+          await klar(); await borte();
+          // alle tre på en gang: det store stempelet, kombostempelet og lappen står under hverandre (målt når kombostempelet har landet)
+          stampBig('RYDDET', 'Rommet er friskmeldt'); Kombo.stempel('KIRURGISK', '20 treff på rad'); toast('Test', 'Lappen'); ut.lappStraks = t.textContent === 'TestLappen';
+          for (let i = 0; i < 80; i++) { if (k.getAnimations().every(a => a.currentTime >= 350) && !b.getAnimations().length) break; await vent(25); }
+          const S = [t, k, b].map(rute); ut.tre = { kryss: kryss(S), inni: inni(S), lav: t.classList.contains('lav'), S: kort(S) };
+          // køen: RYDDET står, DIAGNOSE venter til RYDDET har stått i 0,7 sekunder
+          await borte(); const t0 = performance.now(); stampBig('RYDDET'); stampBig('DIAGNOSE', 'Hypokondri'); const straks = b.textContent;
+          for (let i = 0; i < 400 && !b.textContent.startsWith('DIAGNOSE'); i++) await vent(20);
+          const t1 = performance.now(), diag = b.textContent; for (let i = 0; i < 400 && b.classList.contains('on'); i++) await vent(20);
+          ut.ko = { straks, diag, ryddet: Math.round(t1 - t0), diagnose: Math.round(performance.now() - t1) };
+          // like stempler hoppes over, og høyst tre venter
+          await borte(); stampBig('A'); stampBig('B'); stampBig('B'); stampBig('C'); stampBig('A'); stampBig('D'); stampBig('E'); ut.koen = Stempel.ko.map(q => q[0]);
+          await borte(); toast('Uten stempel', ''); ut.lappOppe = !t.classList.contains('lav') && !t.style.top;
+          return ut; }"""
+        UA45 = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        for navn, kw in (('PC', {'viewport': {'width': 1280, 'height': 720}}), ('liggende telefon', {'viewport': {'width': 844, 'height': 390}, 'has_touch': True, 'is_mobile': True, 'device_scale_factor': 2, 'user_agent': UA45})):
+            pg = await ny_side(b, **kw)
+            await start_lop(pg)
+            tk = await pg.evaluate(TEKST45)
+            tre = tk['tre']
+            sjekk(f'{navn}: IKKE I DAG, BONK og bom på samme sted legger seg ved siden av hverandre, innenfor skjermen og med transform', tre['n'] == 3 and not tre['kryss'] and tre['inni'] and tre['transform'], tre)
+            sjekk(f'{navn}: sju AVSLÅTT på ett bilde blir én tekst, «AVSLÅTT ×7»', tk['sju'] == ['AVSLÅTT ×7'], tk['sju'])
+            sjekk(f'{navn}: perfekt unnvikelse viser kunngjørerens ord uten «bom», og «bom» står når kunngjøreren hviler', tk['perfekt']['kjort'] and tk['perfekt']['ordet'] and not tk['perfekt']['bom'] and tk['perfekt']['bomIgjen'], tk['perfekt'])
+            sjekk(f'{navn}: høyst tre store ord samtidig, og det er de nyeste som står', tk['tak'] == ['ORD 2', 'ORD 3', 'ORD 4'], tk['tak'])
+            sjekk(f'{navn}: skjulte tall tar ikke plass, og en tekst legger seg ikke over en snakkeboble', tk['utenTall'] and tk['boble']['n'] == 2 and not tk['boble']['kryss'], (tk['utenTall'], tk['boble']))
+            if navn == 'PC':
+                await pg.evaluate(TRE45); await pg.screenshot(path='/tmp/e_45_tekst.png')
+            st = await pg.evaluate(STEMPEL45)
+            sjekk(f'{navn}: det store stempelet, kombostempelet og lappen står under hverandre uten å overlappe, og lappen får teksten med en gang', st['lappStraks'] and not st['tre']['kryss'] and st['tre']['inni'] and st['tre']['lav'], st['tre'])
+            ko = st['ko']
+            sjekk(f'{navn}: et nytt stort stempel venter til det forrige har stått i 0,7 sekunder, og står selv minst like lenge', ko['straks'] == 'RYDDET' and ko['diag'] == 'DIAGNOSEHypokondri' and 680 <= ko['ryddet'] < 8000 and ko['diagnose'] >= 700, ko)
+            sjekk(f'{navn}: like stempler hoppes over, høyst tre venter, og lappen er tilbake oppe når stemplene er borte', st['koen'] == ['B', 'C', 'D'] and st['lappOppe'], (st['koen'], st['lappOppe']))
+            sjekk(f'ingen konsollfeil (tekster og stempler, {navn})', not pg.errs, pg.errs[:6])
+            await pg.close()
+        # og en gang i 3D
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        tre = await pg.evaluate(TRE45)
+        sjekk('3D: IKKE I DAG, BONK og bom legger seg ved siden av hverandre', tre['n'] == 3 and not tre['kryss'] and tre['inni'], tre)
+        sjekk('ingen konsollfeil (tekster og stempler i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

@@ -31,7 +31,7 @@ function continueRun() {
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 function toast(t, sub) { const el = $('toast'); el.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : ''); el.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => el.classList.remove('on'), 1900); }
-function stampBig(t, sub) { const el = $('bigstamp'); el.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : ''); el.classList.add('on'); Sound.play('stamp'); clearTimeout(stampBig.h); stampBig.h = setTimeout(() => el.classList.remove('on'), 1500); }
+function stampBig(t, sub) { Stempel.stor(t, sub); } // i kø bak et stempel som står, og under kombostempelet (Stempel i 39_kombo.js)
 function paLine(txt) { const el = $('pa'); el.textContent = 'Høyttaleren: ' + txt; el.classList.add('on'); Sound.play('pa', .7); clearTimeout(paLine.h); paLine.h = setTimeout(() => el.classList.remove('on'), 5200); }
 function show(id, on) { $(id).classList.toggle('hidden', !on); }
 function partCanvas(P, w, h, s = 1) {
