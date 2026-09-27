@@ -46,10 +46,12 @@ const Paint = {
   /* hele gulvet males som ett lerret: fliser med skjeve blekkfuger, malte flekker,
      tegnet skygge langs veggene, rusk og en tykk blekkant der gulvet møter veggen.
      Telefoner og TV får 24 px per rute også i drømmene (de er små, men fikk 64 px: 3200 x 1664, rundt 28 MB i grafikkminnet) */
-  floorCanvas(F, th) {
+  floorCanvas(F, th, skj) {
     const W = F.W, H = F.H, T = R.lowTex ? 16 : R.coarse || R.tv ? 24 : W * H > 1800 ? 32 : 64, rng = mulberry32((F.seed || 1) * 31 + 7);
     const c = document.createElement('canvas'); c.width = W * T; c.height = H * T; const g = c.getContext('2d');
     const isF = (x, z) => x >= 0 && z >= 0 && x < W && z < H && F.tiles[z * W + x] > 0, isC = (x, z) => isF(x, z) && F.tiles[z * W + x] === T_COR;
+    // kanten mellom det synlige og det skjulte males som en vegg (skygge og blekk), så gulvet i rommet foran sprekken ser helt vanlig ut. Åpnet blir den en terskel
+    const kant = (x, z, nx, nz) => !isF(nx, nz) || (!!skj && skj[z * W + x] !== skj[nz * W + nx]);
     g.lineCap = 'round'; g.lineJoin = 'round';
     // gulvet i hver rute: rommets eget (romStil i generatoren), korridoren sitt, og ellers sjakk som før
     const STIL = new Array(W * H), UTE = new Uint8Array(W * H), sno = F.vaer === 'sno';
@@ -99,8 +101,8 @@ const Paint = {
     g.fillStyle = 'rgba(40,24,12,.26)';
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
       if (!isF(x, z)) continue;
-      if (!isF(x, z - 1)) { g.beginPath(); g.moveTo(x * T, z * T); g.lineTo(x * T + T, z * T); g.lineTo(x * T + T, z * T + T * (.42 + Math.sin(x * 1.7) * .06)); g.quadraticCurveTo(x * T + T / 2, z * T + T * (.5 + Math.cos(x * 2.3) * .08), x * T, z * T + T * (.42 + Math.sin((x - 1) * 1.7) * .06)); g.closePath(); g.fill(); }
-      if (!isF(x - 1, z)) { g.fillRect(x * T, z * T, T * .2, T); }
+      if (kant(x, z, x, z - 1)) { g.beginPath(); g.moveTo(x * T, z * T); g.lineTo(x * T + T, z * T); g.lineTo(x * T + T, z * T + T * (.42 + Math.sin(x * 1.7) * .06)); g.quadraticCurveTo(x * T + T / 2, z * T + T * (.5 + Math.cos(x * 2.3) * .08), x * T, z * T + T * (.42 + Math.sin((x - 1) * 1.7) * .06)); g.closePath(); g.fill(); }
+      if (kant(x, z, x - 1, z)) { g.fillRect(x * T, z * T, T * .2, T); }
     }
     // 7) rusk: papirbiter, piller, støv, sprekker
     for (let i = 0; i < W * H / 6; i++) {
@@ -125,7 +127,7 @@ const Paint = {
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
       if (!isF(x, z)) continue;
       const e = (x0, y0, x1, y1) => { g.beginPath(); g.moveTo(x0 * T, y0 * T); g.lineTo(x1 * T, y1 * T); g.stroke(); };
-      if (!isF(x, z - 1)) e(x, z, x + 1, z); if (!isF(x, z + 1)) e(x, z + 1, x + 1, z + 1); if (!isF(x - 1, z)) e(x, z, x, z + 1); if (!isF(x + 1, z)) e(x + 1, z, x + 1, z + 1);
+      if (kant(x, z, x, z - 1)) e(x, z, x + 1, z); if (kant(x, z, x, z + 1)) e(x, z + 1, x + 1, z + 1); if (kant(x, z, x - 1, z)) e(x, z, x, z + 1); if (kant(x, z, x + 1, z)) e(x + 1, z, x + 1, z + 1);
     }
     const tex = new THREE.CanvasTexture(c); tex.anisotropy = 4; return tex;
   },
@@ -167,76 +169,112 @@ const Paint = {
     g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(0, yOf(1.06)); g.lineTo(w, yOf(1.06)); g.moveTo(0, yOf(.14)); g.lineTo(w, yOf(.14)); g.stroke();
     g.fillStyle = INK; g.fillRect(0, 0, w, 9); g.fillRect(0, h - 7, w, 7);
   },
+  /* det skjulte rommet (F.skjult, 48_skjult.js) er ikke der før veggen er slått inn: gulvet der er en egen mesh som står skjult, og veggene
+     bygges to ganger, lukket (der det skjulte er tomrom, så sprekken blir vanlig vegg) og åpen (som før). Feiler delingen, bygges etasjen som før */
   level(F, th) {
+    const skj = F.skjult && F.skjult.length === F.W * F.H ? F.skjult : null;
+    if (skj) try { return this.lagNivaa(F, th, skj); } catch (e) { console.warn('det skjulte rommet feilet, etasjen bygges som før', e); }
+    return this.lagNivaa(F, th, null);
+  },
+  lagNivaa(F, th, skj) {
     if (R.level) { R.scene.remove(R.level); }
     // lysplatene fra forrige etasje: ut av lista over lyskilder (den vokste ellers for hver etasje) og materialene kastes (teksturen deles)
     if (R.levelL) { R.lscene.remove(R.levelL); const gml = R.levelL; gml.traverse(o => { if (o !== gml && o.material) o.material.dispose(); }); if (R.kilder) R.kilder = R.kilder.filter(k => k.parent && k.parent !== gml); }
     if (this.owned) for (const o of this.owned) try { o.dispose(); } catch (e) { }
-    this.owned = []; this.opptatt = new Map(); // veggfelt med dør eller plakat, så 3D-listene holder seg unna
+    this.owned = []; this.opptatt = new Map(); this.skjult = false; this.aapen = null; // veggfelt med dør eller plakat, så 3D-listene holder seg unna
     const L = R.level = new THREE.Group(); R.scene.add(L); R.levelL = new THREE.Group(); R.lscene.add(R.levelL);
     const W = F.W, H = F.H, tiles = F.tiles, isF = (x, z) => x >= 0 && z >= 0 && x < W && z < H && tiles[z * W + x] > 0;
+    const isFL = skj ? (x, z) => isF(x, z) && !skj[z * W + x] : isF; // det som synes før sprekken er slått inn
     R.setGrade(th);
-    // gulv med malt skygge i hjørnene (vertexfarger)
-    const pos = [], uv = [], col = [];
-    const ao = (x, z) => { let n = 0; for (const [dx, dz] of [[-1, -1], [0, -1], [-1, 0], [0, 0]]) if (!isF(x + dx, z + dz)) n++; return n; };
-    const northShade = (x, z) => (!isF(x, z - 1) || !isF(x - 1, z - 1)) ? .8 : 1;
+    // gulv med malt skygge i hjørnene (vertexfarger). Det skjulte gulvet får sin egen geometri med samme materiale
+    const pos = [], uv = [], col = [], posS = [], uvS = [], colS = [];
+    const ao = (f, x, z) => { let n = 0; for (const [dx, dz] of [[-1, -1], [0, -1], [-1, 0], [0, 0]]) if (!f(x + dx, z + dz)) n++; return n; };
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
       const t = tiles[z * W + x]; if (!t) continue;
+      const skjult = skj && skj[z * W + x], f = skjult ? isF : isFL, P = skjult ? posS : pos, U = skjult ? uvS : uv, C = skjult ? colS : col;
       let c = t === T_COR ? th.corridor : 1;
       const rid = F.roomId ? F.roomId[z * W + x] : -1;
       let tint = [1, 1, 1]; if (rid >= 0 && F.rooms && F.rooms[rid].role === 'service') tint = SERVICES[F.rooms[rid].service].tint;
       const q = [[x, z], [x, z + 1], [x + 1, z + 1], [x, z], [x + 1, z + 1], [x + 1, z]];
       for (const [px, pz] of q) {
-        const k = c * (1 - ao(px, pz) * .05);
-        pos.push(px, 0, pz); uv.push(px / W, 1 - pz / H); col.push(k * tint[0], k * tint[1], k * tint[2]);
+        const k = c * (1 - ao(f, px, pz) * .05);
+        P.push(px, 0, pz); U.push(px / W, 1 - pz / H); C.push(k * tint[0], k * tint[1], k * tint[2]);
       }
     }
-    const fg = new THREE.BufferGeometry();
-    fg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); fg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); fg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    const geo = (p, u, c) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(p, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(u, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); return g; };
+    const fg = geo(pos, uv, col);
     this.mesh = {};
-    { const ft = this.floorCanvas(F, th), fm = new THREE.MeshBasicMaterial({ map: ft, vertexColors: true }); this.owned.push(ft, fm, fg); L.add(this.mesh.gulv = new THREE.Mesh(fg, fm)); }
+    { const ft = this.floorCanvas(F, th, skj), fm = new THREE.MeshBasicMaterial({ map: ft, vertexColors: true }); this.owned.push(ft, fm, fg); L.add(this.mesh.gulv = new THREE.Mesh(fg, fm));
+      if (skj) { const gs = geo(posS, uvS, colS), m = this.mesh.gulvSkjult = new THREE.Mesh(gs, fm); m.visible = false; m.userData.del = 'aapen'; this.owned.push(gs); L.add(m); } }
     // vegger: høye bak, lave foran. Bare fronten (mot kameraet) og toppen er synlige.
     // hver veggrute får stilen til rommet (eller korridoren) den vender mot: helst sør, så nord, så sidene
-    const wallH = new Float32Array(W * H), wallS = new Array(W * H);
-    const stilFor = (x, z) => { for (const [dx, dz] of [[0, 1], [0, -1], [-1, 0], [1, 0], [-1, 1], [1, 1], [-1, -1], [1, -1]]) { const nx = x + dx, nz = z + dz; if (!isF(nx, nz)) continue; const rid = F.roomId ? F.roomId[nz * W + nx] : -1; return rid >= 0 && F.rooms ? (F.rooms[rid].vegg || 'panel') : ((F.korridor && F.korridor.vegg) || 'panel'); } return 'panel'; };
     const VG = typeof VEGG === 'object' ? VEGG : { panel: { h: 2.3 } };
-    for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
-      if (tiles[z * W + x]) continue;
-      let near = false; for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (isF(x + dx, z + dz)) near = true;
-      if (!near) continue;
-      const st = stilFor(x, z), V = VG[st] || VG.panel; wallS[z * W + x] = VG[st] ? st : 'panel';
-      wallH[z * W + x] = (isF(x - 1, z - 1) || isF(x, z - 1) || isF(x + 1, z - 1)) ? (V.lav || .42) : (V.h || 2.3);
-    }
-    const cp = [], cc = [], grupper = {};
+    const veggKart = f => {
+      const wallH = new Float32Array(W * H), wallS = new Array(W * H);
+      const stilFor = (x, z) => { for (const [dx, dz] of [[0, 1], [0, -1], [-1, 0], [1, 0], [-1, 1], [1, 1], [-1, -1], [1, -1]]) { const nx = x + dx, nz = z + dz; if (!f(nx, nz)) continue; const rid = F.roomId ? F.roomId[nz * W + nx] : -1; return rid >= 0 && F.rooms ? (F.rooms[rid].vegg || 'panel') : ((F.korridor && F.korridor.vegg) || 'panel'); } return 'panel'; };
+      for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
+        if (f(x, z)) continue;
+        let near = false; for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (f(x + dx, z + dz)) near = true;
+        if (!near) continue;
+        const st = stilFor(x, z), V = VG[st] || VG.panel; wallS[z * W + x] = VG[st] ? st : 'panel';
+        wallH[z * W + x] = (f(x - 1, z - 1) || f(x, z - 1) || f(x + 1, z - 1)) ? (V.lav || .42) : (V.h || 2.3);
+      }
+      return { wallH, wallS };
+    };
+    const aapen = veggKart(isF), lukket = skj ? veggKart(isFL) : aapen;
+    // sonen rundt det skjulte (to ruter): bare der kan de to byggene bli ulike, for en vegg avhenger bare av 5 x 5 ruter rundt seg
+    let sone = null;
+    if (skj) { sone = new Uint8Array(W * H); for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) if (skj[z * W + x]) for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) { const nx = x + dx, nz = z + dz; if (nx >= 0 && nz >= 0 && nx < W && nz < H) sone[nz * W + nx] = 1; } }
     const cTopTema = new THREE.Color(th.cap || Col.dark(th.wall, .5)), cInk = new THREE.Color(INK), toppFarge = {};
-    const quadC = (a, b, c, d, color) => { for (const v of [a, b, c, a, c, d]) { cp.push(v[0], v[1], v[2]); cc.push(color.r, color.g, color.b); } };
-    const quadF = (st, x0, x1, z0, h) => { const G2 = grupper[st] || (grupper[st] = { fp: [], fu: [] }), hh = (VG[st] && VG[st].h) || 2.3, vs = [[x0, 0, z0, x0 * .5, 0], [x1, 0, z0, x1 * .5, 0], [x1, h, z0, x1 * .5, h / hh], [x0, 0, z0, x0 * .5, 0], [x1, h, z0, x1 * .5, h / hh], [x0, h, z0, x0 * .5, h / hh]]; for (const v of vs) { G2.fp.push(v[0], v[1], v[2]); G2.fu.push(v[3], v[4]); } };
-    for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
-      const h = wallH[z * W + x]; if (!h) continue;
-      const st = wallS[z * W + x], V = VG[st] || VG.panel;
-      const nh = (nx, nz) => (nx < 0 || nz < 0 || nx >= W || nz >= H) ? 0 : wallH[nz * W + nx];
-      if (nh(x, z + 1) < h) quadF(st, x, x + 1, z + 1, h);
-      if (V.topp === null) continue; // smijernsgjerdet har ingen topp
+    // en rute gir en front (quadF, per stil) og en topp med blekkant (quadC). T er toppen ({cp, cc}), grp veggene per stil
+    const quadC = (T, a, b, c, d, color) => { for (const v of [a, b, c, a, c, d]) { T.cp.push(v[0], v[1], v[2]); T.cc.push(color.r, color.g, color.b); } };
+    const quadF = (grp, st, x0, x1, z0, h) => { const G2 = grp[st] || (grp[st] = { fp: [], fu: [] }), hh = (VG[st] && VG[st].h) || 2.3, vs = [[x0, 0, z0, x0 * .5, 0], [x1, 0, z0, x1 * .5, 0], [x1, h, z0, x1 * .5, h / hh], [x0, 0, z0, x0 * .5, 0], [x1, h, z0, x1 * .5, h / hh], [x0, h, z0, x0 * .5, h / hh]]; for (const v of vs) { G2.fp.push(v[0], v[1], v[2]); G2.fu.push(v[3], v[4]); } };
+    const rute = (K, x, z, T, grp) => {
+      const h = K.wallH[z * W + x]; if (!h) return;
+      const st = K.wallS[z * W + x], V = VG[st] || VG.panel;
+      const nh = (nx, nz) => (nx < 0 || nz < 0 || nx >= W || nz >= H) ? 0 : K.wallH[nz * W + nx];
+      if (nh(x, z + 1) < h) quadF(grp, st, x, x + 1, z + 1, h);
+      if (V.topp === null) return; // smijernsgjerdet har ingen topp
       const cTop = V.topp ? (toppFarge[st] || (toppFarge[st] = new THREE.Color(V.topp))) : cTopTema;
-      quadC([x, h, z], [x, h, z + 1], [x + 1, h, z + 1], [x + 1, h, z], cTop);
+      quadC(T, [x, h, z], [x, h, z + 1], [x + 1, h, z + 1], [x + 1, h, z], cTop);
       // blekkant rundt toppen der naboen er lavere
       const e = .07, y = h + .002;
-      if (nh(x, z - 1) !== h) quadC([x, y, z], [x, y, z + e], [x + 1, y, z + e], [x + 1, y, z], cInk);
-      if (nh(x, z + 1) !== h) quadC([x, y, z + 1 - e], [x, y, z + 1], [x + 1, y, z + 1], [x + 1, y, z + 1 - e], cInk);
-      if (nh(x - 1, z) !== h) quadC([x, y, z], [x, y, z + 1], [x + e, y, z + 1], [x + e, y, z], cInk);
-      if (nh(x + 1, z) !== h) quadC([x + 1 - e, y, z], [x + 1 - e, y, z + 1], [x + 1, y, z + 1], [x + 1, y, z], cInk);
+      if (nh(x, z - 1) !== h) quadC(T, [x, y, z], [x, y, z + e], [x + 1, y, z + e], [x + 1, y, z], cInk);
+      if (nh(x, z + 1) !== h) quadC(T, [x, y, z + 1 - e], [x, y, z + 1], [x + 1, y, z + 1], [x + 1, y, z + 1 - e], cInk);
+      if (nh(x - 1, z) !== h) quadC(T, [x, y, z], [x, y, z + 1], [x + e, y, z + 1], [x + e, y, z], cInk);
+      if (nh(x + 1, z) !== h) quadC(T, [x + 1 - e, y, z], [x + 1 - e, y, z + 1], [x + 1, y, z + 1], [x + 1, y, z], cInk);
+    };
+    // delene: '' er felles (utenfor sonen, og der lukket og åpen blir like), 'lukket' og 'sprekk' før innbruddet, 'aapen' etter
+    const DEL = {}, del = d => DEL[d] || (DEL[d] = { T: { cp: [], cc: [] }, grp: {} });
+    const legg = (d, T, grp) => { const D = del(d); for (let k = 0; k < T.cp.length; k++) D.T.cp.push(T.cp[k]); for (let k = 0; k < T.cc.length; k++) D.T.cc.push(T.cc[k]); for (const [st, g] of Object.entries(grp)) { const t = D.grp[st] || (D.grp[st] = { fp: [], fu: [] }); for (const v of g.fp) t.fp.push(v); for (const v of g.fu) t.fu.push(v); } };
+    const lik = (a, b) => a.length === b.length && a.every((v, k) => v === b[k]);
+    const likt = (A, B) => { const ka = Object.keys(A.grp).sort(), kb = Object.keys(B.grp).sort(); return lik(A.T.cp, B.T.cp) && lik(A.T.cc, B.T.cc) && lik(ka, kb) && ka.every(k => lik(A.grp[k].fp, B.grp[k].fp) && lik(A.grp[k].fu, B.grp[k].fu)); };
+    const krakk = new Set(F.crack || []), felles = del('');
+    for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
+      const i = z * W + x;
+      if (!sone || !sone[i]) { rute(lukket, x, z, felles.T, felles.grp); continue; }
+      const A = { T: { cp: [], cc: [] }, grp: {} }, B = { T: { cp: [], cc: [] }, grp: {} }; rute(lukket, x, z, A.T, A.grp); rute(aapen, x, z, B.T, B.grp);
+      if (likt(A, B)) { legg('', A.T, A.grp); continue; }
+      legg(krakk.has(i) ? 'sprekk' : 'lukket', A.T, A.grp); legg('aapen', B.T, B.grp);
     }
-    const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(cp, 3)); cg.setAttribute('color', new THREE.Float32BufferAttribute(cc, 3));
-    { const cm = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); this.owned.push(cg, cm); L.add(this.mesh.topp = new THREE.Mesh(cg, cm)); }
-    // én veggmesh per stil; gjerder og ruiner er utklipp, glasset er gjennomsiktig
-    this.mesh.vegger = [];
-    for (const [st, G2] of Object.entries(grupper)) {
+    // toppene: én mesh per del med vertexfarger. Den felles er Paint.mesh.topp som før, de andre ligger i toppEkstra
+    this.mesh.toppEkstra = [];
+    for (const [d, D] of Object.entries(DEL)) {
+      if (d && !D.T.cp.length) continue;
+      const cg = new THREE.BufferGeometry(); cg.setAttribute('position', new THREE.Float32BufferAttribute(D.T.cp, 3)); cg.setAttribute('color', new THREE.Float32BufferAttribute(D.T.cc, 3));
+      const cm = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }), m = new THREE.Mesh(cg, cm); m.userData.del = d; m.visible = d !== 'aapen'; this.owned.push(cg, cm); L.add(m);
+      if (d) this.mesh.toppEkstra.push(m); else this.mesh.topp = m;
+    }
+    // én veggmesh per stil og del; gjerder og ruiner er utklipp, glasset er gjennomsiktig. Delene av samme stil deler tekstur og materiale
+    this.mesh.vegger = []; const matFor = {};
+    for (const [d, D] of Object.entries(DEL)) for (const [st, G2] of Object.entries(D.grp)) {
       const V = VG[st] || VG.panel, wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(G2.fp, 3)); wg.setAttribute('uv', new THREE.Float32BufferAttribute(G2.fu, 2));
-      const wt = this.wallTex(th, st, F), wm = new THREE.MeshBasicMaterial({ map: wt, side: THREE.DoubleSide, transparent: !!V.alfa, alphaTest: V.alfa && st !== 'glass' ? .4 : 0, depthWrite: st !== 'glass' });
-      const m = new THREE.Mesh(wg, wm); m.userData.veggStil = st; this.owned.push(wg, wt, wm); L.add(m); this.mesh.vegger.push(m);
-      if (st === 'panel' || !this.mesh.vegg) this.mesh.vegg = m;
+      let wm = matFor[st];
+      if (!wm) { const wt = this.wallTex(th, st, F); wm = matFor[st] = new THREE.MeshBasicMaterial({ map: wt, side: THREE.DoubleSide, transparent: !!V.alfa, alphaTest: V.alfa && st !== 'glass' ? .4 : 0, depthWrite: st !== 'glass' }); this.owned.push(wt, wm); }
+      const m = new THREE.Mesh(wg, wm); m.userData.veggStil = st; m.userData.del = d; m.visible = d !== 'aapen'; this.owned.push(wg); L.add(m); this.mesh.vegger.push(m);
+      if (!d && (st === 'panel' || !this.mesh.vegg)) this.mesh.vegg = m;
     }
-    this.wallH = wallH; this.wallS = wallS;
+    this.wallH = lukket.wallH; this.wallS = lukket.wallS; if (skj) { this.aapen = aapen; this.skjult = true; }
     // ute: bakken fortsetter utenfor rommene, med trær i mørket (17_romtyper.js)
     if (F.ute && typeof Landskap === 'object') { try { Landskap.bakke(F, th, L); } catch (e) { console.warn('bakken feilet', e); } }
     return L;
@@ -250,7 +288,7 @@ const Paint = {
       else { g.strokeStyle = 'rgba(42,26,20,.55)'; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); let x = 20, y = 30 + r2() * 60; g.moveTo(x, y); while (x < 110) { x += 10 + r2() * 14; y += (r2() - .5) * 26; g.lineTo(x, y); } g.stroke(); if (k === 3) { g.beginPath(); g.moveTo(60, 60); g.lineTo(70 + r2() * 20, 95); g.stroke(); } }
     })); this.owned.push(...tex);
     for (let i = 0; i < n; i++) {
-      const x = rng() * W, z = rng() * F.H, t = F.tiles[Math.floor(z) * W + Math.floor(x)]; if (!t) continue;
+      const x = rng() * W, z = rng() * F.H, t = gulvSynlig(Math.floor(z) * W + Math.floor(x)); if (!t) continue;
       const mat = new THREE.MeshBasicMaterial({ map: tex[Math.floor(rng() * 4)], transparent: true, depthWrite: false }); this.owned.push(mat);
       const m = new THREE.Mesh(R.geo('plane1', () => new THREE.PlaneGeometry(1, 1)), mat);
       m.rotation.x = -Math.PI / 2; m.rotation.z = rng() * TAU; const s = .8 + rng() * 1.4; m.scale.set(s, s, 1); m.position.set(x, .008, z); m.renderOrder = 1; R.level.add(m);
@@ -275,3 +313,6 @@ const Paint = {
     m.position.set(x, .9, z + .012); R.level.add(m); for (const tx of [Math.floor(x - .5), Math.floor(x)]) this.opptatt.set(tx + ',' + z, 'dor'); return m;
   }
 };
+
+/* gulv som synes: ikke tomrom, og ikke det skjulte rommet før veggen er slått inn (G.skjult, 48_skjult.js) */
+function gulvSynlig(i) { const F = G.F; return !!F && i >= 0 && i < F.tiles.length && F.tiles[i] > 0 && !(G.skjult && G.skjult[i]); }

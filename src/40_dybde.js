@@ -87,7 +87,7 @@ const Dybde = {
     if (R.safe || !F || !R.level || !Paint.wallH) return;
     const W = F.W, H = F.H, PX = 8, c = document.createElement('canvas'); c.width = W * PX; c.height = H * PX;
     const g = c.getContext('2d'), wh = Paint.wallH, VG = typeof VEGG === 'object' ? VEGG : {};
-    const gulv = (x, z) => x >= 0 && z >= 0 && x < W && z < H && F.tiles[z * W + x] > 0;
+    const gulv = (x, z) => x >= 0 && z >= 0 && x < W && z < H && gulvSynlig(z * W + x); // ikke det skjulte rommet før veggen er slått inn
     const vegg = (x, z) => { if (x < 0 || z < 0 || x >= W || z >= H) return 0; const h = wh[z * W + x]; if (!h) return 0; const st = Paint.wallS && Paint.wallS[z * W + x], V = VG[st] || {}; return V.alfa ? .35 : 1; };
     const strek = (x0, y0, x1, y1, a) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; };
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {

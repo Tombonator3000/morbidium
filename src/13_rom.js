@@ -110,7 +110,7 @@ const Spesial = {
     const F = G.F; this.cracks = [];
     for (const i of F.crack || []) { const x = i % F.W, z = (i / F.W) | 0, g = propSprite(null, x + .5, z + .96, { P: propArt({ k: 'sprekk' }) }); R.level.add(g); this.cracks.push({ i, x: x + .5, z: z + .5, g, hp: 3 }); }
     for (const r of F.rooms) if (r.role === 'cursed') for (const d of r.doors) { const x = d % F.W, z = (d / F.W) | 0; R.level.add(propSprite(null, x + .5, z + .5, { P: thornArt(), flat: true })); R.light(x + .5, z + .5, 1.3, '#ff3a2a', .4, R.levelL); }
-    for (const r of F.rooms) if (r.role === 'secret') { const t = freeSpot(r.x + 1.5, r.z + 1.5, 2); for (let i = 0; i < 3; i++) dropPickup(t.x + i * .3, t.z, 'tooth', 1); dropPickup(t.x, t.z + .4, 'cons', pick(Object.keys(PILL_COL))); }
+    for (const r of F.rooms) if (r.role === 'secret' && !G.skjult) { const t = freeSpot(r.x + 1.5, r.z + 1.5, 2); for (let i = 0; i < 3; i++) dropPickup(t.x + i * .3, t.z, 'tooth', 1); dropPickup(t.x, t.z + .4, 'cons', pick(Object.keys(PILL_COL))); }
   },
   /* sprukken vegg: tre vanlige slag, ett tungt, eller en eksplosjon */
   hitCrack(x, z, face, range, arc, power) {

@@ -153,7 +153,7 @@ const Bygg = {
   tick(dt) {
     if (!this.ferdig) return; const P = G.player, F = G.F;
     if (P) for (const r of F.rooms) {
-      if (this.ferdig.has(r.id)) continue; const dx = Math.max(r.x - P.x, 0, P.x - (r.x + r.w)), dz = Math.max(r.z - P.z, 0, P.z - (r.z + r.h));
+      if (this.ferdig.has(r.id) || (G.skjult && r.role === 'secret')) continue; const dx = Math.max(r.x - P.x, 0, P.x - (r.x + r.w)), dz = Math.max(r.z - P.z, 0, P.z - (r.z + r.h));
       if (dx * dx + dz * dz > 36) continue; this.ferdig.add(r.id);
       for (const o of G.props) if (o.room === r.id && o.byggS) this.liste.push({ o, t: -Math.hypot(o.x - P.x, o.z - P.z) * .035 - Math.random() * .08 });
     }
