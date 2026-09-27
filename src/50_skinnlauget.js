@@ -570,7 +570,7 @@ Object.assign(Grotesk.ai, {
 FIENDE_REKKE.push('laerling', 'klokker', 'holdning');
 Object.assign(FIENDE_INFO, {
   laerling: ['Skinnlaugets yngste, i et lærforkle som knirker. Elsker reimer og nagler og vil vise deg alle. Bukker, slår med reima og spenner deg fast.', 'Bukket er varselet. Gå til siden når han bøyer seg, og slå mens han ber om unnskyldning.'],
-  klokker: ['Laugets klokker, med sølvbjella fra Avdeling Null. Slår aldri selv. Når bjella ringer, kommer krokene ut av mørket der du står.', 'Hører du bjella, gå ut av sølvringen. Ta ham først, ellers roper han på lærlingen.'],
+  klokker: ['Laugets klokker med sølvbjella. Slår aldri selv, men når bjella ringer, kommer krokene ut av mørket der du står.', 'Gå ut av sølvringen når bjella ringer. Ta ham først, ellers roper han på lærlingen.'],
   holdning: ['Laugets holdningssøster. Snører deg inn med lærreimer så du går sakte og rett, og slår med tommestokken når du kommer nær.', 'Rull deg løs med en gang, snøret ryker når du ruller.']
 });
 
