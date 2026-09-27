@@ -13,7 +13,7 @@
    ============================================================ */
 const D3 = {
   on: false, bygd: false, ting: [], byttet: [], egne: [], gjemt: [], pool: [], dukker: new Set(), t: 0,
-  BUMP: .7,
+  BUMP: .7, BUMP_SNO: .45, // snøen: fonnene får relieff uten at klattene blir bobleplast
   NIVA: {
     hoy: { navn: 'høy', skygge: 2048, lys: 8, glod: true, stov: 192, straaler: true, taake: true, tilt: .7, kant: true, dpr: 2 },
     middels: { navn: 'middels', skygge: 1024, lys: 6, glod: true, stov: 96, straaler: true, taake: true, tilt: .45, kant: true, dpr: 1.5 },
@@ -64,13 +64,13 @@ const D3 = {
     // himmel og måne
     const Q = this.Q(); this.q = Q;
     const amb = new THREE.AmbientLight(new THREE.Color(th.fog || '#1a1622').lerp(new THREE.Color('#3a3450'), .6), Q.flat ? .95 : .32);
-    const hemi = new THREE.HemisphereLight('#8a90c8', '#2a1a14', Q.flat ? .45 : .16);
+    const sno = F.vaer === 'sno', hemi = new THREE.HemisphereLight('#8a90c8', sno ? '#4a5470' : '#2a1a14', Q.flat ? .45 : .16); // snøen kaster blått lys opp
     const mane = new THREE.DirectionalLight('#9aaee8', .42); mane.castShadow = Q.skygge > 0;
     if (Q.skygge) mane.shadow.mapSize.set(Q.skygge, Q.skygge); const sc2 = mane.shadow.camera; sc2.left = -16; sc2.right = 16; sc2.top = 16; sc2.bottom = -16; sc2.near = 1; sc2.far = 60; mane.shadow.bias = -.0015; mane.shadow.normalBias = .02;
     // skyggekameraet følger kameraet, men bare i hele ruter av skyggekartet (se tick), ellers kryper kantene på alle faste skygger
     // når kameraet glir. Aksene er de samme som lookAt gir skyggekameraet: z mot månen, x vannrett, y oppover i kartet
     this.maneB = null; if (Q.skygge) { const off = new THREE.Vector3(-7, 16, 9), z = off.clone().normalize(), x = new THREE.Vector3(0, 1, 0).cross(z).normalize(); this.maneB = { off, x, y: z.clone().cross(x), z, texel: (sc2.right - sc2.left) / Q.skygge, t: new THREE.Vector3() }; }
-    if (F.ute) { mane.intensity = .78; mane.color.set('#a8bce8'); } // ute lyser månen sterkere
+    if (F.ute) { mane.intensity = sno ? .84 : .78; mane.color.set('#a8bce8'); } // ute lyser månen sterkere, og mest på snøen
     this.maneI = mane.intensity; // lynet (38_effekter.js) løfter månelyset et øyeblikk, så alt kaster skarp skygge
     sc.add(amb, hemi, mane, mane.target); this.mane = mane; this.ting.push(amb, hemi, mane, mane.target);
     this.pool = []; this.nyPool = true; for (let i = 0; i < Q.lys; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); } // i en ny etasje tennes lysene med en gang (fordel)
@@ -80,7 +80,8 @@ const D3 = {
     const vegger = PM.vegger && PM.vegger.length ? PM.vegger : PM.vegg ? [PM.vegg] : [];
     const topper = [PM.topp, ...(PM.toppEkstra || [])].filter(Boolean); // toppEkstra: veggene rundt det skjulte rommet, lukket og åpen (12_paint.js)
     for (const m of [PM.gulv, PM.gulvSkjult, PM.bakke, ...topper, ...vegger]) if (m && !m.geometry.attributes.normal) m.geometry.computeVertexNormals(); // den malte stilen trenger ikke normaler, lys gjør det
-    for (const g of [PM.gulv, PM.gulvSkjult]) if (g) { bytt(g, this.toon({ map: g.material.map, bumpMap: g.material.map, bumpScale: this.BUMP, vertexColors: true })); g.receiveShadow = true; }
+    // snøen er så lys at lykta brente den helt hvit: gulvet dempes litt og blir kaldere, så klattene og skyggene synes også i lyset
+    for (const g of [PM.gulv, PM.gulvSkjult]) if (g) { bytt(g, this.toon({ map: g.material.map, bumpMap: g.material.map, bumpScale: sno ? this.BUMP_SNO : this.BUMP, vertexColors: true, color: sno ? 0xc4cad6 : 0xffffff })); g.receiveShadow = true; }
     for (const t of topper) { bytt(t, this.toon({ vertexColors: true, side: THREE.DoubleSide })); t.castShadow = true; }
     // én mesh per veggstil (17_romtyper.js); gjerder og ruiner er utklipp og kaster ikke skygge som en mur
     for (const v of vegger) { const b = v.material; bytt(v, this.toon({ map: b.map, side: THREE.DoubleSide, transparent: b.transparent, alphaTest: b.alphaTest, depthWrite: b.depthWrite })); v.castShadow = !b.transparent; v.receiveShadow = true; }
@@ -210,6 +211,7 @@ const D3 = {
   taake(F, th) {
     const cfg = (F.taake || { 1: [.3, '#a8b8d0'], 2: [.1, '#e8dcc0'], 3: [.26, '#d4ece6'], 4: [.14, '#dccfb4'], 5: [.42, '#7a8ab8'], 6: [.34, '#9a7ab8'] }[G.depth] || [.12, '#dddddd']).slice(); // F.taake: drømmene har sin egen
     if (F.vaer === 'taake') cfg[0] += .22;
+    if (F.vaer === 'sno' && !F.taake) { cfg[0] = .3; cfg[1] = '#dde6f2'; } // snødrev: lys, kald tåke langs bakken
     const data = new Uint8Array(F.W * F.H); for (let i = 0; i < data.length; i++) data[i] = gulvSynlig(i) ? 255 : 0; // ikke over det skjulte rommet før det er åpnet
     const mask = new THREE.DataTexture(data, F.W, F.H, THREE.LuminanceFormat); mask.magFilter = mask.minFilter = THREE.LinearFilter; mask.generateMipmaps = false; mask.needsUpdate = true; this.egne.push(mask); this.taakeMask = mask;
     // punktlysene lyser opp tåka rundt seg (settes hvert bilde i tick): xz og radius i p, farge ganget med styrke i f

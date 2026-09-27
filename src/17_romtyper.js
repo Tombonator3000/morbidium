@@ -160,11 +160,7 @@ const GULV = {
     g.fillStyle = 'rgba(90,110,60,.35)'; if (hRute(c.x, c.z, 395) < .5) { g.beginPath(); g.arc(px + (hRute(c.x, c.z, 396) < .5 ? 0 : T), py + T * .5, T * .25, 0, TAU); g.fill(); }
   }
 };
-/* snø ligger på bakken ute når det snør */
-function snoPaa(g, px, py, T, c) {
-  g.fillStyle = 'rgba(240,244,250,.78)';
-  for (let k = 0; k < 4; k++) { g.beginPath(); g.ellipse(px + hRute(c.x, c.z, 400 + k) * T, py + hRute(c.z, c.x, 404 + k) * T, T * (.2 + hRute(c.x, c.z, 408 + k) * .25), T * .14, 0, 0, TAU); g.fill(); }
-}
+/* snøen på gulvet males som ett lag over hele uteområdet i Paint.snoDekke (12_paint.js), ikke her rute for rute */
 
 /* ---------- vegger: VEGG[stil] = { h, lav, topp, alfa, tegn(g, w, hp, th, rng) }. Lerretet er 2 enheter bredt og h høyt (128 px per enhet). ---------- */
 const VEGG = {
@@ -378,29 +374,47 @@ Object.assign(BREAK, { lenestol: 1, kortbord: 1, harhaug: 1, kullhaug: 2, hageni
    UTE: bakken utenfor rommene, trær i mørket, vær og gasslykter
    ============================================================ */
 const Landskap = {
-  /* bakken slik koden maler den: 256 x 256 som dekker 5 x 5 ruter */
-  malBakke(g, skog, sno) {
+  /* bakken slik koden maler den: 256 x 256 som dekker 5 x 5 ruter. Snøbakken er S x S over 10 x 10 ruter */
+  malBakke(g, skog, sno, S = 256) {
+    if (sno) return this.malSnoBakke(g, skog, S);
     const rng = mulberry32(skog ? 55 : 44);
     g.fillStyle = skog ? '#1a2216' : '#243a1c'; g.fillRect(0, 0, 256, 256);
     for (let k = 0; k < 90; k++) { g.fillStyle = rng() < .5 ? (skog ? '#10180e' : '#1a2c14') : (skog ? '#26301e' : '#2e4a24'); g.beginPath(); g.ellipse(rng() * 256, rng() * 256, 10 + rng() * 26, 6 + rng() * 14, rng() * 3, 0, TAU); g.fill(); }
     g.strokeStyle = skog ? 'rgba(90,70,40,.5)' : 'rgba(110,150,80,.45)'; g.lineWidth = 2;
     for (let k = 0; k < 160; k++) { const x = rng() * 256, y = rng() * 256; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rng() - .5) * 6, y - 5 - rng() * 5); g.stroke(); }
-    if (sno) { g.fillStyle = 'rgba(236,242,250,.7)'; for (let k = 0; k < 40; k++) { g.beginPath(); g.ellipse(rng() * 256, rng() * 256, 14 + rng() * 30, 8 + rng() * 12, 0, 0, TAU); g.fill(); } }
+  },
+  /* snødekt bakke: blågrå snø med søkk i Art.cel (skyggen nede til høyre), noen mørke flekker jord og strå som stikker opp.
+     Flekkene som går over kanten, tegnes også på motsatt side, så bakken gjentas uten søm */
+  malSnoBakke(g, skog, S) {
+    const rng = mulberry32(skog ? 57 : 46), k = S / 256, rundt = (x, y, r, f) => { for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) if (x + dx > -r && x + dx < S + r && y + dy > -r && y + dy < S + r) f(x + dx, y + dy); };
+    g.fillStyle = '#cdd6e2'; g.fillRect(0, 0, S, S);
+    // fonner: en lys haug med blå skygge nede til høyre og blekk under, som snøen på gulvet
+    for (let i = 0; i < 26; i++) { const x = rng() * S, y = rng() * S, r = (18 + rng() * 34) * k, ry = r * (.3 + rng() * .15);
+      rundt(x, y, r, (px, py) => { const bue = (dx, dy, s) => { g.beginPath(); g.moveTo(px - r + dx, py + dy); g.bezierCurveTo(px - r * .5 + dx, py - ry * 2 * s + dy, px + r * .4 + dx, py - ry * 1.6 * s + dy, px + r + dx, py + dy); g.closePath(); g.fill(); };
+        g.fillStyle = 'rgba(42,26,20,.12)'; bue(1.5 * k, 2.5 * k, 1); g.fillStyle = '#b4c0d2'; bue(0, 0, 1); g.fillStyle = '#d8e0ea'; bue(-1.5 * k, -2 * k, .92); }); }
+    g.strokeStyle = 'rgba(130,148,180,.45)'; g.lineWidth = 1.5 * k;
+    for (let i = 0; i < 40; i++) { const x = rng() * S, y = rng() * S, r = (8 + rng() * 16) * k; rundt(x, y, r, (px, py) => { g.beginPath(); g.moveTo(px - r, py); g.quadraticCurveTo(px, py - r * .3, px + r, py + r * .1); g.stroke(); }); }
+    for (let i = 0; i < 9; i++) { const x = rng() * S, y = rng() * S, r = (3 + rng() * 5) * k;
+      rundt(x, y, r * 2, (px, py) => { g.fillStyle = skog ? 'rgba(60,50,36,.55)' : 'rgba(78,70,52,.5)'; g.beginPath(); g.ellipse(px, py, r, r * .55, 0, 0, TAU); g.fill(); g.strokeStyle = 'rgba(42,26,20,.5)'; g.lineWidth = 1.5 * k; g.beginPath(); g.ellipse(px, py + r * .12, r, r * .55, 0, .15, Math.PI - .15); g.stroke(); }); }
+    g.strokeStyle = skog ? 'rgba(50,44,30,.6)' : 'rgba(70,80,50,.55)'; g.lineWidth = 1.5 * k;
+    for (let i = 0; i < 60; i++) { const x = rng() * S, y = rng() * S; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rng() - .5) * 5 * k, y - (4 + rng() * 5) * k); g.stroke(); }
+    g.fillStyle = '#eef3f8'; for (let i = 0; i < 90; i++) g.fillRect(rng() * S, rng() * S, k, k);
   },
   /* en stor flate under hele etasjen: gress i parken, mose og barnåler i skogen.
      Bilde fra ChatGPT (bakke_park, bakke_skog) dekker 4 x 4 ruter og tegnes i 512 x 512, 256 x 256 på telefon og TV; snøen legges oppå som før */
   bakke(F, th, L) {
     const skog = F.depth === 5, sno = F.vaer === 'sno', B = 24, S = R.coarse || R.tv ? 256 : 512;
-    const im = R.lowTex ? null : Paint.bilde(skog ? 'bakke_skog' : 'bakke_park', F); let kastet = false;
+    // i snøvær males snøbakken over bildet fra ChatGPT, som er sommer; den gjentas hver tiende rute
+    const im = R.lowTex || sno ? null : Paint.bilde(skog ? 'bakke_skog' : 'bakke_park', F); let kastet = false;
     const legg = tex => {
       if (kastet || !im.naturalWidth) return tex;
       const c = tex.image, g = c.getContext('2d'); c.width = c.height = S; g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, S, S);
-      if (sno) { const rng = mulberry32(skog ? 56 : 45), k = S / 256; g.fillStyle = 'rgba(236,242,250,.7)'; for (let i = 0; i < 40; i++) { g.beginPath(); g.ellipse(rng() * S, rng() * S, (14 + rng() * 30) * k, (8 + rng() * 12) * k, 0, 0, TAU); g.fill(); } }
       tex.repeat.set((F.W + B * 2) / 4, (F.H + B * 2) / 4); tex.fraBilde = skog ? 'bakke_skog' : 'bakke_park'; tex.needsUpdate = true; return tex;
     };
-    const tex = im && im.complete ? legg(R.canvasTex(1, 1, () => { }, true)) : R.canvasTex(256, 256, g => this.malBakke(g, skog, sno), true);
-    if (!tex.fraBilde) { tex.repeat.set((F.W + B * 2) / 5, (F.H + B * 2) / 5); if (im) { im.addEventListener('load', () => legg(tex), { once: true }); tex.addEventListener('dispose', () => { kastet = true; }); } }
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(F.W + B * 2, F.H + B * 2), new THREE.MeshBasicMaterial({ map: tex, color: skog ? 0x8a94a4 : 0x9aa4b4 }));
+    const SS = sno && !R.lowTex ? S : 256, rute = sno ? 10 : 5;
+    const tex = im && im.complete ? legg(R.canvasTex(1, 1, () => { }, true)) : R.canvasTex(SS, SS, g => this.malBakke(g, skog, sno, SS), true);
+    if (!tex.fraBilde) { tex.repeat.set((F.W + B * 2) / rute, (F.H + B * 2) / rute); if (im) { im.addEventListener('load', () => legg(tex), { once: true }); tex.addEventListener('dispose', () => { kastet = true; }); } }
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(F.W + B * 2, F.H + B * 2), new THREE.MeshBasicMaterial({ map: tex, color: sno ? (skog ? 0xa0a8b8 : 0xb0b8c8) : skog ? 0x8a94a4 : 0x9aa4b4 }));
     m.rotation.x = -Math.PI / 2; m.position.set(F.W / 2, -.03, F.H / 2); m.userData.d3 = true; L.add(m);
     Paint.mesh.bakke = m; Paint.owned.push(tex, m.material, m.geometry);
   },
@@ -417,7 +431,7 @@ const Landskap = {
       ut.push([x + .5 + (rng() - .5) * .6, z + .5 + (rng() - .5) * .6, rng(), vedSkjult(x, z)]);
     }
     ut.sort((a, b) => a[2] - b[2]);
-    const tint = new THREE.Color(skog ? '#6a7898' : '#7a8aa8');
+    const tint = new THREE.Color(F.vaer === 'sno' ? (skog ? '#8a98b6' : '#9aaac6') : skog ? '#6a7898' : '#7a8aa8'); // lysere i snøen
     for (const [x, z, r, skjult] of ut.slice(0, skog ? 140 : 90)) {
       const k = skog ? (r < .55 ? 'gran' : 'bjork') : (r < .45 ? 'tre' : r < .85 ? 'busk' : 'gran');
       const g = propSprite(null, x, z, { P: ROM_ART[k]({}), shadow: false }); g.userData.U.uTint.value.copy(tint); g.userData.m.scale.multiplyScalar(.85 + r * .35); R.level.add(g); if (skjult) this.skjulteTraer.push(g);
