@@ -2140,7 +2140,8 @@ async def main():
         # 56) Hår og pynt på hodet
         #     Papiljottene og den andre pynten sitter på hodet og svever ikke over det (8.png): minst 15 prosent av pynten ligger over hodet
         #     for begge kjønn i alle tre retninger, hornene og svulsten minst 10 prosent. Issen måles på hodebildet (hodeTopp), pynten dreies
-        #     med et hode som vipper, og HUD-portrettet krymper ikke hodet for pynt som ikke stikker over kanten.
+        #     med et hode som vipper, og HUD-portrettet krymper ikke hodet for pynt som ikke stikker over kanten. Også kontrollene i GRAFIKKLEVERANSE.md:
+        #     hjortens kropp står over beina, frisyrene fra ChatGPT på personalet dekker hodet, og ansiktstilbehøret sitter på ansiktet.
         PYNT56 = """() => { const ut = { lav: [], min: {}, topp: [], kode: 0 };
           const dekning = (H, Q, ox, oy) => { const S = 128, W = 420, cx = 210, cy = 330, c = document.createElement('canvas'); c.width = c.height = W; const g = c.getContext('2d'),
               img = (P, x, y) => g.drawImage(P.canvas, cx + (x - P.ax) * S, cy - (y + P.h - P.ay) * S, P.w * S, P.h * S);
@@ -2179,6 +2180,24 @@ async def main():
           for (let y = 0; y < H; y++) { let n = 0; for (let x = 0; x < W; x++) if (a[(y * W + x) * 4 + 3] > 128) n++; if (n > W * .05) { if (hi < 0) hi = y; lo = y; } }
           const opp = y => +(d.y + P.h - P.ay - y / 128).toFixed(2); return { bilde: SPRITES.hjort_kropp ? spriteReady('hjort_kropp') : 'mangler', bunn: opp(lo + 1), topp: opp(hi), hals: LAGDUKKE.hjort.deler[1].y }; }""")
         sjekk('hjortens kropp står over beina og når opp til halsen', hj['bilde'] is True and .6 <= hj['bunn'] <= .95 and hj['topp'] >= hj['hals'], hj)
+        # frisyrene og ansiktstilbehøret fra ChatGPT på personalet (Oppskrift.kleDeler): håret er en parykk som skal dekke hodet, ikke sveve over det
+        # (før lå 1 til 7 prosent av håret over hodet), munnbindet under øynene og gassmasken over ansiktet (før dekket begge øynene og pannen)
+        op = await pg.evaluate("""() => { const D = Oppskrift.deler(), ut = { har: {}, lav: [], bind: [], maske: [] }, alle = [];
+          for (const hs in D.hode || {}) for (const hn in D.hode[hs]) alle.push(D.hode[hs][hn]);
+          const dekning = (H, Q, ox, oy) => { const S = 100, W = 360, cx = 180, cy = 300, c = document.createElement('canvas'); c.width = c.height = W; const g = c.getContext('2d'),
+              img = (P, x, y) => g.drawImage(P.canvas, cx + (x - P.ax) * S, cy - (y + P.h - P.ay) * S, P.w * S, P.h * S);
+            img(H, 0, 0); const h = g.getImageData(0, 0, W, W).data; g.clearRect(0, 0, W, W); img(Q, ox, oy); const q = g.getImageData(0, 0, W, W).data;
+            let n = 0, over = 0; for (let i = 3; i < q.length; i += 4) if (q[i] > 128) { n++; if (h[i] > 128) over++; } return n ? over / n : 0; };
+          const kle = (hode, kind, set) => { const f = [], d = { setParts() { }, addAddon(P, L) { f.push(L); } }; Oppskrift.kleDeler(d, hode, null, kind === 'tilbehor' ? null : set, kind, kind === 'tilbehor' ? set : null); return f[0]; };
+          for (const s in D.har || {}) for (const n in D.har[s]) for (const hode of alle) for (const v of ['f', 's', 'b']) { const L = kle(hode, 'har', D.har[s][n]); if (!hode[v] || !L || !L.views[v]) continue;
+            const o = L.off[v], a = dekning(Oppskrift.delPart(hode[v], 'hode'), L.views[v], o[0], o[1]); ut.har[s + n] = Math.min(ut.har[s + n] ?? 1, +a.toFixed(2)); if (a < .15) ut.lav.push([s + n, v, +a.toFixed(2)]); }
+          const T = (D.tilbehor || {}).ansikt || {};
+          for (const hode of alle) for (const v of ['f', 's']) { const hh = Oppskrift.delPart(hode[v], 'hode').dh;
+            if (T[2]) { const L = kle(hode, 'tilbehor', T[2]); ut.bind.push(+((L.off[v][1] + L.views[v].dh) / hh).toFixed(2)); }
+            if (T[3]) { const L = kle(hode, 'tilbehor', T[3]); ut.maske.push(+((L.off[v][1] + L.views[v].dh / 2) / hh).toFixed(2)); } }
+          ut.lav = ut.lav.slice(0, 8); return ut; }""")
+        sjekk('frisyrene fra ChatGPT dekker hodet (minst 15 prosent av håret over hodet på alle hodene og i alle retningene)', len(op['har']) >= 6 and not op['lav'], op)
+        sjekk('munnbindet har overkanten under øynene og gassmasken står midt på ansiktet', op['bind'] and op['maske'] and all(.38 <= x <= .5 for x in op['bind']) and all(.3 <= x <= .5 for x in op['maske']), [op['bind'], op['maske']])
         # dødskortet med papiljotter
         await pg.evaluate("() => { const G = MORBIDIUM; G.run.look = { v: 1, kjonn: 'm', har: 'brun', hud: 0, klaer: 'kape', farge: 'sennep', sko: 'tofler', pynt: ['papiljotter'] }; G.player.invuln = 0; playerDie(); }")
         el = await pg.wait_for_selector('#deadc', timeout=60000); await pg.wait_for_timeout(300)
