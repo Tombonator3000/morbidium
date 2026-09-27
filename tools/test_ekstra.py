@@ -2384,7 +2384,8 @@ async def main():
         pg = await ny_side(b, viewport={'width': 960, 'height': 540})
         await start_lop(pg, url=URL3D)
         n3 = await pg.evaluate("""async () => { """ + NS_HJELP + """
-          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); rydd(); Nedslag.tom(); ut.d3 = D3.on; const g0 = R.renderer.info.memory.geometries, t0 = T();
+          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); rydd(); ut.d3 = D3.on;
+          addTele('circle', { x: P.x + 2, z: P.z, r: 2.4 }, .05, null, null); await tomt(); await spill(.5); Nedslag.tom(); const g0 = R.renderer.info.memory.geometries, t0 = T(); // første gang lages varslene og merkene
           for (let i = 0; i < 14; i++) { const a = i * .45; addTele(i % 5 ? 'circle' : 'cone', { x: P.x + Math.sin(a) * 3, z: P.z + Math.cos(a) * 3, r: 2.4, a, arc: 1.6, type: Object.keys(TELE_TYPE)[i % 11] }, .1 + (i % 7) * .03, null, null); }
           await tomt(); const q = R.renderer.properties.get(Nedslag.mesh.material), pr = q.currentProgram || q.program;
           const k1 = kall(); Nedslag.mesh.visible = false; const k0 = kall(); Nedslag.mesh.visible = true;

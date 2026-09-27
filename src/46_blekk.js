@@ -329,7 +329,7 @@ R.telegraph = function (shape, o, dur, eier) { return Blekk.ta(shape, o, dur, ei
 /* partiklene per type: [form, farge, andel, fart ut, opp, tyngde, liv, størrelse] */
 const NED_TYPE = {
   fysisk: [['stov', 0xcbbba2, .6, 2.4, 1.4, 1.2, .9, 1.4], ['papir', 0x4a3a2c, .4, 4.6, 5, 16, .7, .55]],
-  strom: [['gnist', 0xfff2a0, .8, 6.5, 3.5, 9, .35, .8], ['stov', 0xd8e4f0, .2, 1.6, 1, 0, .6, 1]],
+  strom: [['gnist', 0xffd23a, .85, 6.5, 3.5, 9, .4, 1.05], ['stov', 0xd8e4f0, .15, 1.6, 1, 0, .6, 1]],
   gass: [['stov', 0x9fdcec, 1, 1.8, 1.2, -1.2, 1.1, 1.8]],
   vann: [['drape', 0x7ec4f2, .55, 4, 4.5, 14, .6, .8], ['stov', 0xbfe2f4, .45, 1.8, 1, 0, .9, 1.5]],
   gift: [['drape', 0x9fcf3a, .6, 3.6, 4, 13, .6, .8], ['stov', 0xb8d890, .4, 1.6, 1, -.5, 1, 1.5]],
@@ -385,7 +385,7 @@ const Nedslag = {
     // sprekk: støvring med typefargen, knust midte og sprekker med greiner i blekk
     celle(0, () => {
       sky(60, '255,0,0', .35); x.strokeStyle = 'rgb(0,255,0)';
-      for (let k = 0; k < 9; k++) { x.lineWidth = 2.6 + rng() * 1.6; rift(6 + rng() * 6, 40 + rng() * 20, k / 9 * TAU + rng() * .4, 0, true); }
+      for (let k = 0; k < 9; k++) { x.lineWidth = 1.8 + rng() * 1.3; rift(6 + rng() * 6, 40 + rng() * 20, k / 9 * TAU + rng() * .4, 0, true); }
       x.lineWidth = 1.6; x.beginPath(); for (let k = 0; k <= 12; k++) { const v = k / 12 * TAU, r = 13 + rng() * 5; k ? x.lineTo(Math.cos(v) * r, Math.sin(v) * r) : x.moveTo(Math.cos(v) * r, Math.sin(v) * r); } x.stroke();
       x.fillStyle = 'rgb(0,200,0)'; for (let k = 0; k < 14; k++) { const v = rng() * TAU, r = 18 + rng() * 40; x.beginPath(); x.arc(Math.cos(v) * r, Math.sin(v) * r, .8 + rng() * 1.6, 0, TAU); x.fill(); }
     });
@@ -405,7 +405,7 @@ const Nedslag = {
     // skrensemerker: to svarte gummistriper som blir tynnere bakover, og litt støv
     celle(3, () => {
       sky(52, '255,0,0', .22);
-      for (const s of [-20, 20]) { for (let k = 0; k < 3; k++) { x.strokeStyle = `rgba(0,255,0,${.55 - k * .12})`; x.lineWidth = 9 - k * 2.5; x.beginPath(); x.moveTo(s + (rng() - .5) * 3, 58); x.quadraticCurveTo(s + (rng() - .5) * 8, 0, s * .8 + (rng() - .5) * 4, -56); x.stroke(); } }
+      for (const s of [-20, 20]) { for (let k = 0; k < 3; k++) { x.strokeStyle = `rgba(0,255,0,${.75 - k * .15})`; x.lineWidth = 13 - k * 3.5; x.beginPath(); x.moveTo(s + (rng() - .5) * 3, 58); x.quadraticCurveTo(s + (rng() - .5) * 8, 0, s * .8 + (rng() - .5) * 4, -56); x.stroke(); } }
     });
     const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearMipmapLinearFilter; return t;
   },
@@ -488,7 +488,7 @@ const Nedslag = {
       for (let i = 0, m = Math.round(Math.min(16, n * .5)); i < m; i++) { const q = (Math.random() - .5) * 2.2; this.sprut(o.x + fx * .3 + (Math.random() - .5) * o.w * .6, o.z + fz * .3, -fx * Math.cos(q) + fz * Math.sin(q), -fz * Math.cos(q) - fx * Math.sin(q), st, 1.1); }
       const del = .6 * o.len / (2 * o.len + o.w); // de første 60 prosentene av sidene, fra der den tar sats
       for (let i = 0, m = Math.round(n * .45); i < m; i++) { const u = Math.random() * del, p = this.kant(sh, o, Math.random() < .5 ? u : 1 - u); this.sprut(p.x, p.z, p.nx + fx * .6, p.nz + fz * .6, this.velg(D), .8); }
-      if (this.kan()) { const k = Math.min(1.8, o.len * .3); this.merke(o.x + fx * (k * .5 + .2), o.z + fz * (k * .5 + .2), 3, 0x8a7a64, Math.max(.9, o.w * .9), k, a, .75); }
+      if (this.kan()) { const k = Math.min(2.6, o.len * .4); this.merke(o.x + fx * (k * .5 + .1), o.z + fz * (k * .5 + .1), 3, 0x8a7a64, Math.max(1.1, o.w), k, a, .9); }
       this.rist(o.x, o.z, .12, 0); this.tall.partikler += Particles.n - n0; return;
     }
     // langs omrisset, og noen inne i formen på store angrep
@@ -512,7 +512,7 @@ const Nedslag = {
       const cel = NED_MERKE[typ] ?? 0, fc = new THREE.Color(T.farge), farge = cel === 1 ? fc.clone().lerp(new THREE.Color(0xff7a2a), .4).getHex() : cel === 0 ? fc.clone().lerp(new THREE.Color(0x8a7a64), .55).getHex() : T.farge;
       if (sh === 'rect') this.merke(o.x + fx * o.len / 2, o.z + fz * o.len / 2, cel, farge, o.w + .5, o.len * .95, a, .8);
       else if (sh === 'cone' && o.arc < TAU - .05) { const r = o.r * .55; this.merke(o.x + fx * r, o.z + fz * r, cel, farge, o.r * 1.2, o.r * 1.2, Math.random() * TAU); }
-      else this.merke(o.x, o.z, cel, farge, o.r * 2.1, o.r * 2.1, Math.random() * TAU);
+      else this.merke(o.x, o.z, cel, farge, o.r * 2.1, o.r * 2.1, Math.random() * TAU, cel ? .9 : .8);
     }
     const R0 = sh === 'rect' ? Math.max(o.w, o.len * .4) : o.r;
     if (!R.safe) { R.sjokk(o.x, o.z, .35 + .25 * clamp((R0 - 2.2) / 4, 0, 1), { y: .1 }); this.tall.sjokk++; }
@@ -537,7 +537,7 @@ const Nedslag = {
       if (this.skyggeBrutt) return;
       try {
         const tex = R.canvasTex(32, 32, g => { const gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(.55, 'rgba(0,0,0,.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); });
-        const m = this.skygger = new THREE.InstancedMesh(R.plane1(), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, color: 0x1c1410 }), 64);
+        const m = this.skygger = new THREE.InstancedMesh(R.plane1(), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, color: new THREE.Color(0x1c1410) }), 64);
         m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.renderOrder = 1; m.count = 0; R.scene.add(m); this.sd = new THREE.Object3D();
       } catch (e) { this.skyggeBrutt = true; return; }
       return this.skygge();
