@@ -9,31 +9,45 @@ const Paint = {
     for (let i = 1; i <= n; i++) { const t = i / n; g.lineTo(lerp(x0, x1, t) + (i < n ? (rng() - .5) * amp : 0), lerp(y0, y1, t) + (i < n ? (rng() - .5) * amp : 0)); }
     g.stroke();
   },
-  floorTex(th) {
-    const rng = mulberry32(777), T = 256;
-    return R.canvasTex(T * 2, T * 2, (g) => {
-      for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
-        const x = i * T, y = j * T, base = (i + j) % 2 ? (th.tileB2 || th.tileB) : th.tileA;
-        g.fillStyle = base; g.fillRect(x, y, T, T);
-        // malte flekker
-        for (let k = 0; k < 5; k++) {
-          const cx = x + rng() * T, cy = y + rng() * T, r = 20 + rng() * 60, dark = rng() < .6;
-          g.fillStyle = dark ? 'rgba(40,30,10,.07)' : 'rgba(255,250,220,.08)'; g.beginPath();
-          for (let a = 0; a <= 10; a++) { const an = a / 10 * TAU, rr = r * (.7 + rng() * .5); g.lineTo(cx + Math.cos(an) * rr, cy + Math.sin(an) * rr * .7); }
-          g.fill();
-        }
-        // lys kant oppe og til venstre, skygge nede og til høyre
-        g.fillStyle = Col.light(base, .22); g.fillRect(x + 6, y + 6, T - 12, 7); g.fillRect(x + 6, y + 6, 7, T - 12);
-        g.fillStyle = Col.dark(base, .86); g.fillRect(x + 6, y + T - 13, T - 12, 7); g.fillRect(x + T - 13, y + 6, 7, T - 12);
-      }
-      g.strokeStyle = th.grout; g.lineWidth = 5; g.lineCap = 'round';
-      for (let k = 0; k <= 2; k++) { this.wobble(g, k * T, 0, k * T, T * 2, 3, rng); this.wobble(g, 0, k * T, T * 2, k * T, 3, rng); }
-    }, true);
+  /* bilde fra ChatGPT til en flate (gulv_, vegg_ og bakke_ i manifestet, DESIGN_BRIEF.md del D), eller null så koden maler som før.
+     Drømmene beholder sine egne farger; bare sikksakkgulvet og forhengene, som ikke finnes andre steder, kan ha bilde der.
+     Panelveggen, sjakkgulvet og plankegulvet har egne farger i Underetasjen, Kjelleren og Dypet (nøkkel_3, _4 og _6), og mangler
+     det bildet, maler koden. Et bilde som ikke er ferdig pakket ut, kommer likevel tilbake (complete er false): da maler den som
+     spør først, og bytter når bildet kommer (som Art.part) */
+  bilde(key, F) {
+    if (F && F.drom && key !== 'gulv_sikksakk' && key !== 'vegg_forheng') return null;
+    const d = F && F.depth; if ((key === 'vegg_panel' || key === 'gulv_sjakk' || key === 'gulv_planker') && (d === 3 || d === 4 || d === 6)) key += '_' + d;
+    if (!SPRITES[key]) return null;
+    let im = Art.img[key]; if (!im) { im = Art.img[key] = new Image(); im.src = SPRITES[key]; }
+    return im.complete && !im.naturalWidth ? null : im; // et bilde nettleseren ikke kan lese (WebP i en gammel Safari), males av koden
+  },
+  /* dagens tegning av en flate i samme målestokk som bildet ChatGPT skal levere, til referansebildene i tegnelister/
+     (tools/lag_tegnelister.py --bilder): gulv og bakke er 4 x 4 ruter i 512 x 512, vegger 1,5 ganger så brede som høye, 128 px per enhet */
+  referanse(key) {
+    const m = /^(gulv|vegg|bakke)_([a-z]+)(?:_(\d))?$/.exec(key); if (!m) return null;
+    const hva = m[1], st = m[2], th = THEMES[+m[3] || 2], c = document.createElement('canvas'), g = c.getContext('2d'); g.lineCap = 'round'; g.lineJoin = 'round';
+    if (hva === 'vegg') { const V = VEGG[st] || VEGG.panel, hh = V.h || 2.3; c.width = Math.round(192 * hh); c.height = Math.round(128 * hh); if (V.tegn) V.tegn(g, c.width, c.height, th, mulberry32(st.length * 97 + 5)); else this.malPanel(g, c.width, c.height, th); return c; }
+    c.width = c.height = 512;
+    if (hva === 'bakke') { g.scale(2.5, 2.5); Landskap.malBakke(g, st === 'skog', false); return c; } // bakken males 256 px over 5 ruter, her 128 px per rute
+    const T = 128, rng = mulberry32(7), ute = ['brostein', 'gress', 'grus', 'jord', 'mose', 'myr', 'is', 'sti'].includes(st);
+    for (let z = 0; z < 4; z++) for (let x = 0; x < 4; x++) {
+      if (GULV[st]) { GULV[st](g, x * T, z * T, T, { x, z, th, rom: null, ute, kant: {} }); continue; }
+      g.fillStyle = st === 'planker' ? (th.corr || '#b9a878') : (x + z) % 2 ? (th.tileB2 || th.tileB) : th.tileA; g.fillRect(x * T, z * T, T, T);
+    }
+    // sjakk og planker males rett i floorCanvas: fuger, lys kant og plankeskjøter på samme måte
+    if (st === 'planker') { g.strokeStyle = 'rgba(60,40,20,.45)'; g.lineWidth = T * .04; for (let z = 0; z < 4; z++) for (let k = 1; k < 3; k++) { g.beginPath(); g.moveTo(0, z * T + k * T / 3); g.lineTo(4 * T, z * T + k * T / 3); g.stroke(); } }
+    if (st === 'sjakk') {
+      g.strokeStyle = 'rgba(255,250,225,.22)'; g.lineWidth = T * .05;
+      for (let z = 0; z < 4; z++) for (let x = 0; x < 4; x++) { g.beginPath(); g.moveTo(x * T + T * .12, z * T + T * .88); g.lineTo(x * T + T * .12, z * T + T * .14); g.lineTo(x * T + T * .86, z * T + T * .14); g.stroke(); }
+      g.strokeStyle = th.grout; g.lineWidth = T * .07; for (let k = 0; k <= 4; k++) { this.wobble(g, k * T, 0, k * T, 4 * T, 3, rng); this.wobble(g, 0, k * T, 4 * T, k * T, 3, rng); }
+    }
+    return c;
   },
   /* hele gulvet males som ett lerret: fliser med skjeve blekkfuger, malte flekker,
-     tegnet skygge langs veggene, rusk og en tykk blekkant der gulvet møter veggen */
+     tegnet skygge langs veggene, rusk og en tykk blekkant der gulvet møter veggen.
+     Telefoner og TV får 24 px per rute også i drømmene (de er små, men fikk 64 px: 3200 x 1664, rundt 28 MB i grafikkminnet) */
   floorCanvas(F, th) {
-    const W = F.W, H = F.H, T = R.lowTex ? 16 : W * H > 1800 ? (R.coarse || R.tv ? 24 : 32) : 64, rng = mulberry32((F.seed || 1) * 31 + 7);
+    const W = F.W, H = F.H, T = R.lowTex ? 16 : R.coarse || R.tv ? 24 : W * H > 1800 ? 32 : 64, rng = mulberry32((F.seed || 1) * 31 + 7);
     const c = document.createElement('canvas'); c.width = W * T; c.height = H * T; const g = c.getContext('2d');
     const isF = (x, z) => x >= 0 && z >= 0 && x < W && z < H && F.tiles[z * W + x] > 0, isC = (x, z) => isF(x, z) && F.tiles[z * W + x] === T_COR;
     g.lineCap = 'round'; g.lineJoin = 'round';
@@ -115,30 +129,43 @@ const Paint = {
     }
     const tex = new THREE.CanvasTexture(c); tex.anisotropy = 4; return tex;
   },
-  wallTex(th, stil = 'panel') {
+  wallTex(th, stil = 'panel', F) {
     // 2 enheter bred og like høy som veggen (128 px per enhet). v = høyde / veggens høyde
-    const V = typeof VEGG === 'object' && VEGG[stil];
-    if (V && V.tegn) { const hp = Math.round((V.h || 2.3) * 128); return R.canvasTex(256, hp, (g, w, h) => V.tegn(g, w, h, th, mulberry32(stil.length * 97 + 5)), true); }
-    return R.canvasTex(256, 296, (g, w, h) => {
-      const yOf = u => h - u / 2.3 * h, rng = mulberry32(99);
-      g.fillStyle = th.wall; g.fillRect(0, 0, w, h);
-      for (let x = 0; x < w; x += 32) { g.fillStyle = 'rgba(42,26,20,.06)'; g.fillRect(x + 14, 0, 6, yOf(1.02)); }
-      g.fillStyle = 'rgba(90,70,40,.12)'; g.beginPath(); g.ellipse(170, yOf(1.8), 40, 26, .2, 0, TAU); g.fill();
-      g.fillStyle = th.wains; g.fillRect(0, yOf(1.0), w, yOf(.14) - yOf(1.0));
-      g.strokeStyle = Col.dark(th.wains, .7); g.lineWidth = 4;
-      for (let x = 16; x < w; x += 32) { g.beginPath(); g.moveTo(x, yOf(.95)); g.lineTo(x + (rng() - .5) * 2, yOf(.2)); g.stroke(); }
-      g.fillStyle = Col.light(th.wains, .25); for (let x = 16; x < w; x += 32) g.fillRect(x - 12, yOf(.95), 5, yOf(.2) - yOf(.95));
-      g.fillStyle = Col.dark(th.wains, .6); g.fillRect(0, yOf(1.06), w, yOf(.98) - yOf(1.06));
-      g.fillStyle = Col.light(th.wains, .3); g.fillRect(0, yOf(1.06), w, 4);
-      g.fillStyle = th.base; g.fillRect(0, yOf(.14), w, h - yOf(.14));
-      // blekkdetaljer: avflassing, sprekker, skitt nederst
-      g.lineCap = 'round'; g.lineJoin = 'round';
-      for (const [cx, cy, r] of [[60, yOf(1.7), 22], [200, yOf(1.35), 16]]) { g.fillStyle = Col.dark(th.wall, .88); g.beginPath(); for (let a = 0; a <= 9; a++) { const an = a / 9 * TAU, rr = r * (.6 + rng() * .5); g.lineTo(cx + Math.cos(an) * rr, cy + Math.sin(an) * rr * .7); } g.closePath(); g.fill(); g.strokeStyle = 'rgba(42,26,20,.55)'; g.lineWidth = 2.5; g.stroke(); }
-      g.strokeStyle = 'rgba(42,26,20,.5)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(120, yOf(2.2)); g.lineTo(128, yOf(1.95)); g.lineTo(122, yOf(1.75)); g.lineTo(134, yOf(1.55)); g.stroke();
-      const dg = g.createLinearGradient(0, yOf(.6), 0, yOf(.14)); dg.addColorStop(0, 'rgba(40,25,10,0)'); dg.addColorStop(1, 'rgba(40,25,10,.25)'); g.fillStyle = dg; g.fillRect(0, yOf(.6), w, yOf(.14) - yOf(.6));
-      g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(0, yOf(1.06)); g.lineTo(w, yOf(1.06)); g.moveTo(0, yOf(.14)); g.lineTo(w, yOf(.14)); g.stroke();
-      g.fillStyle = INK; g.fillRect(0, 0, w, 9); g.fillRect(0, h - 7, w, 7);
-    }, true);
+    const V = typeof VEGG === 'object' && VEGG[stil], hh = (V && V.h) || 2.3;
+    // bilde fra ChatGPT (vegg_<stil>): 1,5 ganger så bredt som høyt, så flekkene gjentas hver 1,5h rute og ikke annenhver.
+    // Blekkstreken oppe og nede legges på her som på de malte veggene, men ikke på gjerdet og ruinen, som er utklipp
+    const im = !R.lowTex && stil !== 'glass' ? this.bilde('vegg_' + stil, F) : null; let kastet = false;
+    const legg = tex => {
+      if (kastet || !im.naturalWidth) return tex;
+      const c = tex.image, w = c.width = Math.round(192 * hh), hp = c.height = Math.round(128 * hh), g = c.getContext('2d');
+      g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, w, hp); if (!(V && V.alfa)) { g.fillStyle = INK; g.fillRect(0, 0, w, 9); g.fillRect(0, hp - 7, w, 7); }
+      tex.repeat.x = 2 / (1.5 * hh); tex.fraBilde = 'vegg_' + stil; tex.needsUpdate = true; return tex;
+    };
+    if (im && im.complete) return legg(R.canvasTex(1, 1, () => { }, true));
+    const tex = V && V.tegn ? R.canvasTex(256, Math.round(hh * 128), (g, w, h) => V.tegn(g, w, h, th, mulberry32(stil.length * 97 + 5)), true) : R.canvasTex(256, 296, (g, w, h) => this.malPanel(g, w, h, th), true);
+    if (im) { im.addEventListener('load', () => legg(tex), { once: true }); tex.addEventListener('dispose', () => { kastet = true; }); } // bildet pakkes fortsatt ut: malt nå, byttet når det kommer
+    return tex;
+  },
+  /* panelveggen: brystpanel, list og puss med flekker (2,3 enheter høy) */
+  malPanel(g, w, h, th) {
+    const yOf = u => h - u / 2.3 * h, rng = mulberry32(99);
+    g.fillStyle = th.wall; g.fillRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 32) { g.fillStyle = 'rgba(42,26,20,.06)'; g.fillRect(x + 14, 0, 6, yOf(1.02)); }
+    g.fillStyle = 'rgba(90,70,40,.12)'; g.beginPath(); g.ellipse(170, yOf(1.8), 40, 26, .2, 0, TAU); g.fill();
+    g.fillStyle = th.wains; g.fillRect(0, yOf(1.0), w, yOf(.14) - yOf(1.0));
+    g.strokeStyle = Col.dark(th.wains, .7); g.lineWidth = 4;
+    for (let x = 16; x < w; x += 32) { g.beginPath(); g.moveTo(x, yOf(.95)); g.lineTo(x + (rng() - .5) * 2, yOf(.2)); g.stroke(); }
+    g.fillStyle = Col.light(th.wains, .25); for (let x = 16; x < w; x += 32) g.fillRect(x - 12, yOf(.95), 5, yOf(.2) - yOf(.95));
+    g.fillStyle = Col.dark(th.wains, .6); g.fillRect(0, yOf(1.06), w, yOf(.98) - yOf(1.06));
+    g.fillStyle = Col.light(th.wains, .3); g.fillRect(0, yOf(1.06), w, 4);
+    g.fillStyle = th.base; g.fillRect(0, yOf(.14), w, h - yOf(.14));
+    // blekkdetaljer: avflassing, sprekker, skitt nederst
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    for (const [cx, cy, r] of [[60, yOf(1.7), 22], [200, yOf(1.35), 16]]) { g.fillStyle = Col.dark(th.wall, .88); g.beginPath(); for (let a = 0; a <= 9; a++) { const an = a / 9 * TAU, rr = r * (.6 + rng() * .5); g.lineTo(cx + Math.cos(an) * rr, cy + Math.sin(an) * rr * .7); } g.closePath(); g.fill(); g.strokeStyle = 'rgba(42,26,20,.55)'; g.lineWidth = 2.5; g.stroke(); }
+    g.strokeStyle = 'rgba(42,26,20,.5)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(120, yOf(2.2)); g.lineTo(128, yOf(1.95)); g.lineTo(122, yOf(1.75)); g.lineTo(134, yOf(1.55)); g.stroke();
+    const dg = g.createLinearGradient(0, yOf(.6), 0, yOf(.14)); dg.addColorStop(0, 'rgba(40,25,10,0)'); dg.addColorStop(1, 'rgba(40,25,10,.25)'); g.fillStyle = dg; g.fillRect(0, yOf(.6), w, yOf(.14) - yOf(.6));
+    g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(0, yOf(1.06)); g.lineTo(w, yOf(1.06)); g.moveTo(0, yOf(.14)); g.lineTo(w, yOf(.14)); g.stroke();
+    g.fillStyle = INK; g.fillRect(0, 0, w, 9); g.fillRect(0, h - 7, w, 7);
   },
   level(F, th) {
     if (R.level) { R.scene.remove(R.level); }
@@ -205,7 +232,7 @@ const Paint = {
     this.mesh.vegger = [];
     for (const [st, G2] of Object.entries(grupper)) {
       const V = VG[st] || VG.panel, wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(G2.fp, 3)); wg.setAttribute('uv', new THREE.Float32BufferAttribute(G2.fu, 2));
-      const wt = this.wallTex(th, st), wm = new THREE.MeshBasicMaterial({ map: wt, side: THREE.DoubleSide, transparent: !!V.alfa, alphaTest: V.alfa && st !== 'glass' ? .4 : 0, depthWrite: st !== 'glass' });
+      const wt = this.wallTex(th, st, F), wm = new THREE.MeshBasicMaterial({ map: wt, side: THREE.DoubleSide, transparent: !!V.alfa, alphaTest: V.alfa && st !== 'glass' ? .4 : 0, depthWrite: st !== 'glass' });
       const m = new THREE.Mesh(wg, wm); m.userData.veggStil = st; this.owned.push(wg, wt, wm); L.add(m); this.mesh.vegger.push(m);
       if (st === 'panel' || !this.mesh.vegg) this.mesh.vegg = m;
     }

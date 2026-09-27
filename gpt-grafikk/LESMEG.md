@@ -20,6 +20,7 @@ Verktøyene vet hva et bilde er bare ut fra filnavnet. Skriv det med små boksta
 | Spriteark: like store ruter på én rad, samme festepunkt i hver rute (se del I i `DESIGN_BRIEF.md`) | `anim_<navn>.png` | `anim_kastesprut.png` |
 | HUD og menyer: rammer, ringer, hjerter og ikoner uten tekst (se del G) | `ui_<navn>.png` | `ui_panel.png`, `ui_hjerte_full.png` |
 | Løse deler til lagdelte skapninger (se del H) | `koret_<del>.png`, `klumpen_<del>.png` | `koret_munn0.png`, `klumpen_ansikt2.png` |
+| Tekstur til en vegg, et gulv eller bakken ute (se del D og tegneliste 11 og 12) | `vegg_<stil>.png`, `gulv_<stil>.png`, `bakke_park.png`, `bakke_skog.png` | `vegg_panel.png`, `gulv_planker_3.png` |
 
 Eksempel på et «ni ting»-ark med de ni første kuriositetene:
 
@@ -37,6 +38,15 @@ Utvidelsen høsten 2026 har fire nye runder i `ART_BRIEF.md`: runde 10 (møblene
 - PNG, helst med gjennomsiktig bakgrunn. Hvit eller ensfarget bakgrunn går også, den fjernes fra kantene og innover.
 - Ingen skygge på bakken, ingen tekst, ingen ramme, ingen bakgrunn.
 - Magenta hjelpelinjer fra malene kan bli stående, de fjernes automatisk.
+
+## Teksturene: vegger, gulv og bakken ute
+Teksturene er unntaket fra reglene over. De lages i en egen ChatGPT-samtale med stilblokken for teksturer (del D i `DESIGN_BRIEF.md`), og ferdige prompter står i `tegnelister/11_vegger_og_bakken.md` (veggene og bakken ute) og `tegnelister/12_gulv.md` (gulvene).
+- Bildet skal dekke hele flata, uten gjennomsiktighet. Bare `vegg_gjerde.png` og `vegg_ruin.png` er gjennomsiktige, mellom stengene og over bruddkanten.
+- Vegger: 1536 x 1024, et utsnitt av veggen rett forfra, 1,5 ganger så bredt som høyt, med gulvet nederst og toppen av veggen øverst. Det skal gå i ett fra venstre mot høyre.
+- Gulv og bakke: 1024 x 1024, rett ovenfra, nøyaktig 4 x 4 ruter på én meter. Det skal gå i ett i begge retninger.
+- `_3`, `_4` og `_6` bak navnet er fargene i Underetasjen, Kjelleren og Dypet. Uten tall brukes fargene fra Mottaket.
+- Bildeløpet fjerner ingen bakgrunn og beskjærer ingenting for disse. Det skalerer dem (veggene til 128 punkter per meter, gulv og bakke til 512 x 512), retter kanter som ikke går helt i ett, og lagrer dem som WebP i `assets/ferdig/`.
+- Gulvene i liste 12 bestilles først når Claude sier at gulvet tegnes med egne fliser i spillet.
 
 ## Slik kommer bildene inn
 1. Last ned bildet fra ChatGPT og gi det riktig filnavn.
