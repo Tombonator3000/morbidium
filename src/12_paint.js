@@ -369,7 +369,7 @@ const Paint = {
       const h = K.wallH[z * W + x]; if (!h) return;
       const st = K.wallS[z * W + x], V = VG[st] || VG.panel, sn = snoVegg(x, z);
       const nh = (nx, nz) => (nx < 0 || nz < 0 || nx >= W || nz >= H) ? 0 : K.wallH[nz * W + nx];
-      if (nh(x, z + 1) < h) quadF(grp, st, x, x + 1, z + 1, h, sn);
+      if (nh(x, z + 1) < h) quadF(grp, st, x, x + 1, z + 1, h, sn && !(isF(x, z + 1) && !uteGulv(x, z + 1))); // ikke snøbånd og istapper på en front inn i en paviljong
       if (V.topp === null) return; // smijernsgjerdet har ingen topp
       const cTop = sn ? snoTopp(x, z, st) : V.topp ? (toppFarge[st] || (toppFarge[st] = new THREE.Color(V.topp))) : cTopTema;
       quadC(T, [x, h, z], [x, h, z + 1], [x + 1, h, z + 1], [x + 1, h, z], cTop);
