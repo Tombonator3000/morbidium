@@ -1100,3 +1100,8 @@ Alle tidspunkt er UTC.
 - Spor D (04b6332) og spor A (bde5be0) er flettet inn i grenen. Loggen er sortert etter tid, og de nye testdelene fra begge sporene ligger i nummerrekkefølge (44 til 49, 56 og 57). To små hjelpere i kladdemappa gjør dette likt hver gang: flett_logg.py og flett_test.py (tre-veis per testdel).
 - Delene 17, 18, 36, 44 til 49, 56 og 57 på den flettede grenen: 123 OK og 1 feil. Feilen var i del 48, der Enkel grafikk slås av og på tre ganger og all geometri i spillet telles før og etter. Én geometri kom til. Del 48 alene og etter del 47 var grønn begge gangene, så noe annet i spillet laget en ting første gang i det samme vinduet.
 - Sjekken ser nå direkte på at hver partikkelmesh som byttes ut, kastes (geometri og materiale, 6 av 6), og tåler én geometri fra noe annet. En lekkasje per bytte vil fortsatt bli fanget. Del 48 er grønn.
+
+## 2026-09-27 10:20 Minisjefene gir ikke merke og sjokkbølge på hvert lille angrep
+- Skeptikeren på A6 så at Hviskekoret (en minisjef) skriker med små sirkler (radius 1,5) omtrent hvert tredje sekund, og at hvert skrik ga merke i gulvet, sjokkbølge og risting, fordi nedslaget regnet alle angrep fra minisjefer som store.
+- Nå teller bare angrep med radius 2,2 eller mer, og angrep fra sjefene, som store, slik planen sa. Minisjefenes store angrep får fortsatt hele nedslaget. Varselet selv (ringen med tegn og sprekkene) er som før.
+- Del 49 er grønn.
