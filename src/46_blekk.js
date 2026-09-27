@@ -99,10 +99,11 @@ const BLEKK_FS = `
     if (d > rimW + px * 7.0) discard; // tidlig ut utenfor papirkanten
     // streken: litt ujevn bredde som en penn, blekket flyter ut på høy kvalitet, taggete for strøm og boblende for gass og vann
     float dr = d;
-    if (uKval > 0.5) rimW *= 0.8 + 0.55 * sto(vec2(u * 38.0, fro * 9.0));
+    vec2 rundt = vec2(cos(u * 6.28318), sin(u * 6.28318)); // går rundt uten skjøt der omrisset begynner
+    if (uKval > 0.5) rimW *= 0.8 + 0.55 * sto(rundt * 6.0 + fro * 9.0);
     if (uKval > 1.5) dr += (sto(W * 2.2 + fro * 17.0) - 0.5) * 0.04;
     if (abs(typ - 2.0) < 0.5) dr += (h1(floor(u * 60.0) + floor(t * 16.0) * 7.0 + fro) - 0.5) * 0.08;
-    else if (typ > 2.5 && typ < 4.5) dr += sin(u * 90.0 + t * 5.0) * 0.022;
+    else if (typ > 2.5 && typ < 4.5) dr += sin(u * 6.28318 * 14.0 + t * 5.0) * 0.015;
     float inn = 1.0 - smoothstep(-px, px, d), ink = 1.0 - smoothstep(rimW * 0.5, rimW * 0.5 + px * 1.2, abs(dr));
     vec3 blekk = vec3(0.09, 0.055, 0.045), papir = vec3(0.97, 0.93, 0.84), hvit = vec3(1.0, 0.97, 0.88), col = vCol;
     float halo = (1.0 - smoothstep(rimW * 0.5 + px, rimW * 0.5 + px * 5.0, dr)) * step(0.0, dr);
@@ -118,13 +119,13 @@ const BLEKK_FS = `
       float fase = 6.28318 * (5.0 * t + 17.0 * t * t * t / (3.0 * dur * dur)), puls = 0.5 + 0.5 * sin(fase);
       float rest = (1.0 - p) * dur, las = 1.0 - smoothstep(0.0, 0.12, rest), blink = step(0.5, fract(t * 24.0));
       lag(papir, halo * 0.6);
-      lag(col, inn * (0.13 + 0.1 * puls + 0.12 * las));
+      lag(col, inn * (0.15 + 0.1 * puls + 0.12 * las));
       // feid område bak fronten
       float feid = inn * (1.0 - smoothstep(p - 0.015, p, f)); vec3 skr = mix(mix(col, vTint, 0.3), blekk, 0.12);
       if (uKval > 0.5) {
         float sp = 0.3, q1 = abs(fract((W.x + W.y) * 0.7071 / sp) - 0.5) * sp, q2 = abs(fract((W.x - W.y) * 0.7071 / sp) - 0.5) * sp;
         float s1 = 1.0 - smoothstep(0.03, 0.03 + px * 1.5, q1), s2 = (1.0 - smoothstep(0.03, 0.03 + px * 1.5, q2)) * smoothstep(0.6, 0.75, p);
-        lag(skr, feid * (0.14 + 0.5 * max(s1, s2)));
+        lag(skr, feid * (0.2 + 0.55 * max(s1, s2)));
       } else lag(skr, feid * 0.3);
       // glød innenfra kanten
       float glo = inn * exp(d / (0.18 + 0.12 * stor));
@@ -209,7 +210,7 @@ const Blekk = {
   /* lenket shaderen? Sjekkes etter første tegning; ellers tar den gamle tegningen over */
   sjekk() {
     if (this.sjekket) return; this.sjekket = true;
-    try { const pr = R.renderer.properties.get(this.mat).program; if (pr && pr.diagnostics && !pr.diagnostics.runnable) this.knekk(); } catch (e) { }
+    try { const q = R.renderer.properties.get(this.mat), pr = q.currentProgram || q.program; if (pr && pr.diagnostics && !pr.diagnostics.runnable) this.knekk(); } catch (e) { }
   },
   knekk() { this.brutt = true; if (this.mesh) this.mesh.visible = false; if (this.lys) this.lys.visible = false; },
   /* en plass til et nytt varsel, eller null (da tegnes det på den gamle måten) */
@@ -273,7 +274,7 @@ const Blekk = {
       if (!s.bruk || s.state === 2) continue;
       const o = s.o, a = s.shape === 'circle' ? 0 : (o.a || 0), fx = Math.sin(a), fz = Math.cos(a), t = s.t, d = Math.max(.05, s.dur);
       const puls = .5 + .5 * Math.sin(TAU * (5 * t + 17 * t * t * t / (3 * d * d))), las = s.state ? 0 : 1 - clamp((1 - s.p) * d / .12, 0, 1);
-      const sty = s.state === 1 ? .9 * (1 - Math.min(1, t / .18)) : .22 + .22 * puls + .4 * las;
+      const sty = s.state === 1 ? .6 * (1 - Math.min(1, t / .18)) : .1 + .12 * puls + .3 * las;
       if (s.shape === 'rect') { M.position.set(s.x + fx * o.len / 2, 0, s.z + fz * o.len / 2); M.scale.set(o.w + 1, o.len + 1, 1); }
       else if (s.shape === 'cone') { M.position.set(s.x + fx * o.r * .45, 0, s.z + fz * o.r * .45); M.scale.set(o.r * 2.2, o.r * 2.2, 1); }
       else { M.position.set(s.x, 0, s.z); M.scale.set(o.r * 2.5, o.r * 2.5, 1); }
