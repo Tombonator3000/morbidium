@@ -728,9 +728,9 @@ WEAPON_ART.klubbe = [.6, 1.0, .3, .12];
   A.line(g, [[-.16, -.82], [.1, -.82]], .016, 'rgba(255,230,200,.4)');
 }; }
 // en knappenål i fart: spissen fram, glasshodet bak
-const naalPart = () => Art.part('knappenaal', .24, .7, .12, .35, g => {
-  A.line(g, [[0, .2], [0, -.32]], .036, INK); A.line(g, [[0, .2], [0, -.32]], .018, '#d8dce4');
-  A.dot(g, 0, .22, .075, INK); A.dot(g, 0, .22, .058, '#c82a3a'); A.dot(g, -.02, .2, .018, '#ffffff');
+const naalPart = () => Art.part('knappenaal', .3, .9, .15, .45, g => {
+  A.line(g, [[0, .26], [0, -.4]], .046, INK); A.line(g, [[0, .26], [0, -.4]], .024, '#e4e8f0');
+  A.dot(g, 0, .28, .095, INK); A.dot(g, 0, .28, .074, '#c82a3a'); A.dot(g, -.025, .255, .024, '#ffffff');
 });
 
 const Oldermann = {
@@ -739,8 +739,10 @@ const Oldermann = {
   boble(e, naa, sitat) {
     const D = e.dagsorden; if (!D) return;
     FX.bubble(e, 'Dagsorden', 3.6); const it = FX.items[FX.items.length - 1]; if (!it || it.target !== e) return;
+    it.klem = true; // dagsorden er varselet: boblen holdes inne på skjermen, og synes selv om snakkeboblene er slått av
     const el = it.el, rad = (t, st) => { const d = document.createElement('div'); d.textContent = t; if (st) Object.assign(d.style, st); el.appendChild(d); return d; };
-    el.textContent = ''; el.style.textAlign = 'left'; if (!document.body.classList.contains('touch')) el.style.maxWidth = '250px';
+    const tlf = document.body.classList.contains('touch'); // litt mindre skrift, så den lange boblen ikke tar halve telefonen
+    el.textContent = ''; Object.assign(el.style, { display: 'block', textAlign: 'left', fontSize: tlf ? '14px' : '19px', lineHeight: '1' }); if (!tlf) el.style.maxWidth = '250px';
     rad('Dagsorden:', { fontWeight: 'bold' });
     D.saker.forEach((k, i) => rad((i + 1) + '. ' + this.navn(D, k, i < naa || i === naa), i < naa ? { textDecoration: 'line-through', opacity: .5 } : i === naa ? { color: '#8a1a1a', fontWeight: 'bold' } : null));
     if (sitat) rad('«' + sitat + '»', { fontStyle: 'italic', marginTop: '2px' });
@@ -845,6 +847,14 @@ const Oldermann = {
     });
   }
 };
+// boblen med dagsorden skyves inn fra kanten (han står ofte utenfor bildet på en stående telefon)
+{ const _u = FX.update; FX.update = function (dt) {
+  _u.call(this, dt);
+  for (const it of this.items) if (it.klem) {
+    const el = it.el, fx = el.parentNode, w = el.offsetWidth, h = el.offsetHeight; if (!fx || !w) continue;
+    el.style.left = clamp(parseFloat(el.style.left) || 0, w / 2 + 6, Math.max(w / 2 + 6, fx.clientWidth - w / 2 - 6)) + 'px'; el.style.top = Math.max(parseFloat(el.style.top) || 0, h + 6) + 'px';
+  }
+}; }
 Object.assign(Grotesk.keep, { oldermann: 2.6 });
 Object.assign(Grotesk.talk, { oldermann: 1 });
 Object.assign(Grotesk.hold, { oldermann: 1 });

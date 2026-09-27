@@ -2533,12 +2533,14 @@ async def main():
             // hver sak for seg, satt opp for hånd
             rolig(); midt(); await spill(.3);
             const o2 = spawnEnemy('oldermann', freeSpot(P.x, P.z, 3).x, freeSpot(P.x, P.z, 3).z, false, 4); await til(() => o2.state !== 'spawn'); o2.cd = 1e9;
-            const plasser = d => { const s = freeSpot(o2.x + d, o2.z, 3); P.x = s.x; P.z = s.z; P.kvx = P.kvz = 0; P.stunT = 0; P.invuln = 0; P.iframe = 0; G.laugStunT = 0; };
+            // pasienten settes der han ser Oldermannen (ellers venter saken, og testen har stoppet ham med cd), med litt plass rundt
+            const fri = (x, z) => [[0, 0], [.45, 0], [-.45, 0], [0, .45], [0, -.45]].every(([a, c]) => !solid(Math.floor(x + a), Math.floor(z + c)));
+            const plasser = d => { let s = null; for (let i = 0; i < 32 && !s; i++) { const v = i / 32 * Math.PI * 2, x = o2.x + Math.sin(v) * d, z = o2.z + Math.cos(v) * d; if (fri(x, z) && los(o2.x, o2.z, x, z)) s = { x, z }; } s = s || freeSpot(o2.x + d, o2.z, 3); P.x = s.x; P.z = s.z; P.kvx = P.kvz = 0; P.stunT = 0; P.invuln = 0; P.iframe = 0; P.deny = null; G.laugStunT = 0; };
             const sak = async (saker, d, t = 1.8) => {
               await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; o2.stun = 0; plasser(d); teleSett.clear();
               o2.dagsorden = { saker, i: 0, cd: .35, ev: null, vent: null }; (o2.referat || (o2.referat = [])).push({ saker, utfort: [] });
-              const hp0 = P.hp, d0 = Math.hypot(P.x - o2.x, P.z - o2.z), n0 = Oldermann.skutt || 0; Oldermann.sak(o2, P, d0, Math.atan2(P.x - o2.x, P.z - o2.z)); o2.cd = 1e9;
-              await spill(t); const r = { tele: varsler(), skade: hp0 - P.hp, d0, d1: Math.hypot(P.x - o2.x, P.z - o2.z), proj: (Oldermann.skutt || 0) - n0, ev: o2.referat[o2.referat.length - 1].ev };
+              const hp0 = P.hp, d0 = Math.hypot(P.x - o2.x, P.z - o2.z), n0 = Oldermann.skutt || 0, t0n = tall.length; Oldermann.sak(o2, P, d0, Math.atan2(P.x - o2.x, P.z - o2.z)); o2.cd = 1e9;
+              await spill(t); const r = { tele: varsler(), skade: hp0 - P.hp, d0, d1: Math.hypot(P.x - o2.x, P.z - o2.z), proj: (Oldermann.skutt || 0) - n0, ord: tall.slice(t0n, t0n + 8), ev: o2.referat[o2.referat.length - 1].ev };
               o2.dagsorden = null; P.hp = 1e6; return r; };
             ut.naal = await sak(['naal'], 4);
             ut.kjede = await sak(['kjede'], 5.5); ut.kjede.hektet = !!(P.statusT && P.statusT.HEKTET !== undefined);
@@ -2559,12 +2561,17 @@ async def main():
             o2.dagsorden = null; o2.cd = 1e9; for (const e of G.enemies) if (e.alive && e !== o2) killEntity(e, {});
             await til(() => !Kjeder.liste.length, 4); R.safe = true; let kjS = 0; const kt = setInterval(() => { kjS = Math.max(kjS, Kjeder.liste.length); }, 20);
             ut.safe = { kjede: await sak(['kjede'], 5), naal: await sak(['naal'], 4) }; clearInterval(kt); ut.safe.kjeder = kjS; ut.safe.for = Kjeder.liste.length; R.safe = false;
+            // boblen med dagsorden er varselet: den holdes inne på skjermen når han står langt utenfor, og synes selv om snakkeboblene er slått av
+            { document.body.classList.add('uten-bobler'); const falsk = { x: P.x - 40, z: P.z + 1, alive: true, bubbleH: 4.3, referat: [], dagsorden: { saker: ['naal', 'kjede', 'eventuelt'], i: 0 } };
+              const el = Oldermann.boble(falsk, 0, 'Møtet er satt.'); await spill(.2); const rb = el.getBoundingClientRect(), W = document.getElementById('fx').getBoundingClientRect();
+              ut.klem = { synlig: el.isConnected && getComputedStyle(el).display !== 'none' && rb.width > 0, inne: rb.left >= W.left - 1 && rb.right <= W.right + 1 && rb.top >= W.top - 1, l: Math.round(rb.left), r: Math.round(rb.right), t: Math.round(rb.top) };
+              falsk.alive = false; document.body.classList.remove('uten-bobler'); await spill(.1); }
             killEntity(o2, {}); await spill(.8);
             // aldri i parken: 60 etasjefrø i Parken gir aldri Oldermannen, i Kjelleren kommer han
             const F = G.F, frø = F.seed, d0 = G.depth, risk = F.rooms.find(r => r.role === 'risk') || F.rooms[0], rolle = risk.role; risk.role = 'risk';
             const telle = d => { G.depth = d; let n = 0; for (let s = 1; s <= 60; s++) { F.seed = s * 7919; Mini.onFloor(); if (Object.values(Mini.rom).includes('oldermann')) n++; } return n; };
             ut.park = telle(1); ut.kjeller = telle(4); F.seed = frø; G.depth = d0; risk.role = rolle; Mini.onFloor();
-          } finally { Oldermann.boble = _b; Sound.play = _sp; mo.disconnect(); samle = false; R.safe = false; }
+          } finally { Oldermann.boble = _b; Sound.play = _sp; mo.disconnect(); samle = false; R.safe = false; document.body.classList.remove('uten-bobler'); }
           ut.info = !!((FIENDE_INFO.oldermann || [])[0] && FIENDE_INFO.oldermann[1] && SJEF_REKKE.includes('oldermann') && MINISJEFER.includes('oldermann') && FIENDESTEMME.oldermann && LINES.oldermann && DEATH_CAUSES.oldermann) && !ROLLER.oldermann;
           ut.bilde = (() => { const c = fiendeBilde('oldermann', 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); })();
           return ut; }""")
@@ -2590,6 +2597,7 @@ async def main():
             sjekk('halv helse: «Ekstraordinært årsmøte!», fire sølvringer, klokkeren kommer, og så tre saker og Eventuelt', 'Ekstraordinært årsmøte' in om['aarsBoble'] and a['ringer'] == 4 and a['klokker'] == 1 and a['saker'] == 4 and a['sist'] == 'eventuelt', [om['aarsBoble'], a])
             s = om['safe']
             sjekk('Enkel grafikk: sølvringen og nålene kommer og treffer, men ingen kjettinger tegnes', s['kjeder'] == 0 and s['kjede']['skade'] > 0 and s['naal']['proj'] == 15, s)
+            sjekk('dagsorden holdes inne på skjermen når han står utenfor, og synes selv om snakkeboblene er av', om['klem']['synlig'] and om['klem']['inne'], om['klem'])
             sjekk('aldri i parken, men han kommer i Kjelleren', om['park'] == 0 and om['kjeller'] > 0, [om['park'], om['kjeller']])
             sjekk('fiendeindeksen (blant minisjefene), replikker, stemme og dødsårsaker, og ikke i ROLLER', om['info'], om['info'])
             sjekk('fiendeBilde tegner ham', om['bilde'] > .08, om['bilde'])
