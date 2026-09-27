@@ -131,6 +131,7 @@ const Spesial = {
   bank(x, z, face, range, arc) {
     const F = G.F; if (!F || !Paint.wallH || G.time - this.bankT < .4 || this.sistProps) return;
     const tx = Math.floor(x + Math.sin(face) * 1.1), tz = Math.floor(z + Math.cos(face) * 1.1); if (tx < 0 || tz < 0 || tx >= F.W || tz >= F.H || !(Paint.wallH[tz * F.W + tx] > 0)) return;
+    if ((F.crack || []).includes(tz * F.W + tx) || G.npcs.some(n => n.doll && Math.hypot(n.x - x, n.z - z) < range + .6)) return; // sprekken skal aldri svare massivt, og personalet som ble truffet, sier fra selv
     const naer = (ox, oz, r) => { const dx = ox - x, dz = oz - z, d = Math.hypot(dx, dz); return d <= range + r && (d <= .8 || Math.abs(angDiff(Math.atan2(dx, dz), face)) <= arc / 2); };
     for (const e of G.boss && !G.boss.gone ? G.enemies.concat([G.boss]) : G.enemies) if (!e.gone && e.state !== 'spawn' && naer(e.x, e.z, e.r || .4)) return; // også en som nettopp døde av slaget
     this.bankT = G.time; Sound.play('veggbank', 1, .94 + Math.random() * .12);

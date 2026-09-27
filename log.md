@@ -1000,3 +1000,10 @@ Alle tidspunkt er UTC.
 - lag_brief.py beskriver sprekkvegg som bristbildet. Ingen ny tegning trengs.
 - Test 53 «Hint og innbrudd» (20 sjekker, 2D, 3D, enkel grafikk og hekken i Parken). Test 51 venter nå på at innbruddet er ferdig før den ser etter listene på sprekken, siden de synker med veggen. Del 53, 51, 6, 32 og 36 er grønne. På bygget fra før B4 feiler 53 allerede i oppsettet (det finnes ingen flekk å finne).
 - Skjermbilder til Tom i r5_bilder: 53_hint.png og 53_brudd.png (før og etter, 2D og 3D, nordvegg inne og hekken i Parken), og enkeltbildene 53_hint_* og 53_brudd_*.
+
+## 2026-09-27 14:17 Skeptikeren på hint og innbrudd (B4)
+- Sjekket: flekken (tekstur, flater, vekst per slag, monokkelen, Paint.owned og toon i 3D via lysLag, også ruskene som kommer etterpå), trekken (egen sløyfe, lavpass, panorering, stille i kamp), dragene (Glod, rotasjonen ut av veggen, ingen med enkel grafikk eller lette teksturer), bankingen, boblene og tipset, innbruddet (stopp, brist, synking, byttet, lysene, møblene, tennene og ruskene) og test 53. Skjermbildene i r5_bilder (53_hint, 53_brudd) og egne på telefon stående og liggende (hekken), med lette teksturer i 2D og i TV-modus (53v_*): ingen konsollfeil, rommet åpnes overalt. Flekken er nesten usynlig i 3D og svak i 2D; støvvifta, dragene og boblen er det spilleren ser. Det passer Toms ønske om at det ikke skal være opplagt.
+- Rettet: et slag som bommet på sprekken, men hadde sprekkruta 1,1 foran seg, ga det massive bankeslaget, så den hule veggen kunne svare som en vanlig vegg. Bankingen hopper nå over sprekkruter, og også slag som traff personalet (de sier fra selv). Test 53 sjekker sprekken.
+- Funnet, ikke rettet her: alle partikler fra Particles blir svarte (instanceColor lages med count 0 i Particles.init, three r128), inne og ute, 2D og 3D. Spor A har skrevet Particles om med en egen instanceColor, så det forsvinner ved flettingen. Da kan bitene ute ved innbruddet vurderes igjen.
+- I TV-modus (1920 x 1080 i testnettleseren) tar innbruddet 84 sekunder sanntid for 2 sekunder spilltid, men blir ferdig.
+- Del 53, 51, 6, 32 og 36 er grønne (66 sjekker). Bygget har 544 innebygde bilder.
