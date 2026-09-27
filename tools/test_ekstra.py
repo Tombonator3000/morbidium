@@ -740,7 +740,11 @@ async def main():
           const sett = new Set(); let kilder = 0, dekket = 0;
           for (let d = 1; d <= 6; d++) { startFloor(d, false); await vent(80); for (const E of Glod.liste) sett.add(E.type); for (const o of G.props) if (['baal', 'vedovn', 'kjele', 'komfyr', 'gryte', 'candles', 'kjempeplante', 'lyktestolpe'].includes(o.kind)) { kilder++; if (Glod.liste.some(E => E.eier === o)) dekket++; } ut['glod' + d] = Glod.liste.every(E => !E.eier || G.props.includes(E.eier) || G.puddles.includes(E.eier)); }
           ut.sett = [...sett]; ut.kilder = kilder; ut.dekket = dekket;
-          const p = addPuddle(P.x, P.z, 'morb', 1, 3); ut.morbPytt = !!(p && p.glod && p.glod.pts); await spill(3.6); await vent(300); ut.morbBorte = !Glod.liste.includes(p.glod);
+          // addPuddle slår sammen med en lilla pytt i nærheten og beholder den lengste levetiden, så testpytten får kort liv selv,
+          // og vi venter til både pytten og gløden er borte (høyst 8 s spilltid), i stedet for en fast ventetid
+          const p = addPuddle(P.x, P.z, 'morb', 1, 3); ut.morbPytt = !!(p && p.glod && p.glod.pts); if (p) p.life = Math.min(p.life, 3);
+          { const gm0 = G.time, rt0 = performance.now(); while (p && (G.puddles.includes(p) || Glod.liste.includes(p.glod)) && G.time - gm0 < 8 && performance.now() - rt0 < 120000) await vent(50);
+            ut.morbBorte = !!p && !G.puddles.includes(p) && !Glod.liste.includes(p.glod); if (!ut.morbBorte) ut.morbInfo = { spilltid: +(G.time - gm0).toFixed(2), liv: p && +p.life.toFixed(2), iPytter: !!p && G.puddles.includes(p), iGlod: !!p && Glod.liste.includes(p.glod), state: G.state }; }
           R.safe = true; ut.enkel = Glod.lag(P.x, 0, P.z, 'gnister') === null && Lyn.slag(0, 0, 0, 1, 0, 1) === null; R.safe = false;
           // lynet: varsel på bakken, så nedslag som treffer fienden der, og deg om du står der
           startFloor(1, false); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2;

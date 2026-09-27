@@ -1113,3 +1113,9 @@ Alle tidspunkt er UTC.
 ## 2026-09-27 11:24 memory.md og todo.md for spor A og D
 - memory.md har fått «Kampbildet» (R.kastTele, Blekkvarsel, fargene etter skadetype, Nedslag, tekstene og stemplene) og «Snøfallet», og punkter under Pasienten (pynten etter ChatGPT-hodene, frisyrene til personalet, hjorten), Effekter (blekkpartiklene) og Blod og vann på skjermen (blodet som renner).
 - todo.md har fått en egen del for Toms liste i runde 5, med det som er gjort i spor A og D, spørsmålene til Tom og det som er lagt til senere. Kontrollen av hjorten fra grafikkleveransen er krysset av.
+
+## 2026-09-27 12:59 Morbidium-sjekken i del 28 er gjort deterministisk (tips fra Codex)
+- Codex, som Tom ba hjelpe til, pekte på at sjekken «Morbidium stiger fra lilla pytter og forsvinner med pytten» kunne bli rød uten at noe var galt: addPuddle slår en ny pytt sammen med en lilla pytt i nærheten og beholder den lengste levetiden (05_world.js), og ventingen hadde en grense i faktisk tid. Sjekken kjøres rett etter at etasje 6 er bygget, der en lilla pytt kan ligge nær start. Da levde testpytten mye lenger enn 3 sekunder.
+- Nå får testpytten selv kort levetid (3 s) etter at den er laget, og sjekken venter til både pytten er ute av G.puddles og gløden ute av Glod.liste (høyst 8 s spilltid, 120 s faktisk tid). Feiler den, logges spilltid, levetid, tilstand og hvor den hang igjen.
+- Sjekken fanger fortsatt en glød som blir stående etter pytten. Del 28 er grønn.
+- Tom vil ha færre gjentatte kontroller. Etter spor B og C: målrettede kontroller for det som er endret, og ett samlet integrasjonsløp etter flettingen. Grønne resultater gjenbrukes der koden ikke er endret.
