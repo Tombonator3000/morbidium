@@ -1,8 +1,24 @@
 # Morbidium: gjøremål
 
+## Toms liste, runde 5 (26. og 27.9.)
+Tom sendte fem skjermbilder og ba om: (1) flottere effekter når fiender angriper, (2) snø som ser bedre ut, (3) hårruller som sitter på hodet, (4) skjulte rom som skjules bedre, (5) svar på om ChatGPT skal lage vegger og gulv, (6) flere fiender: Cthulhu og tentakelmonstre, og en Hellraiser-parodi med lærentusiaster. Skjermbildene viste også stempler oppå hverandre («IKKBONKG») og blod på skjermen som rant i rette streker.
+- [x] Angrepsvarslene tegnes i blekk (Blekkvarsel): omrisset tegner seg inn, fyllet feier over, låsen blinker, etterbildet står igjen, store angrep får tegn og sprekker, og fargen følger skadetypen. Varslene følger fienden der treffet gjør det. Lekkasjen i grafikkminnet fra varsler og hugg er tettet.
+- [x] Blekkpartikler (dråper, gnister, papirbiter og støv) i stedet for svarte klosser, og nedslag med merker i gulvet, sjokkbølge, risting, skrensemerker og skygger under det som kastes.
+- [x] Tekstene og stemplene legger seg ikke oppå hverandre («IKKBONKG» er borte).
+- [x] Blodet på glasset renner som blod: buktende, smalner, perler seg og tørker ovenfra.
+- [x] Hårrullene og annen pynt sitter på hodet i alle retninger og på alle tegningene. Kontrollene fra GRAFIKKLEVERANSE.md: hjortens kropp løftet over beina, frisyrene og ansiktstilbehøret til personalet rettet, trillepasienten, speilpasienten, hjertene og rammene var i orden.
+- [x] Snøfallet i tre lag med ekte fnugg, vind og kast, lys fra lampene og snø i lyktelyset.
+- [ ] Tom: er varslene passe sterke og tydelige? Se bildene 46_varsel_* og 49_nedslag_*. Styrken kan justeres i Blekk.
+- [ ] Tom: er det nok snø på telefonen, eller skal det være mer? Mengden står i SNO_BUDSJETT i 47_sno.js.
+- [ ] Claude, senere: i 2D med lys blir varsler ved lamper og ved pasienten bleke, og strømgnister og lyn synes dårlig på lyse gulv. Kan løses ved å tegne varslene etter lysgangingen.
+- [ ] Claude, senere: resten av A7 (halvmåne-shader på huggene, stråler som bånd, fartsstrek på prosjektiler, ANIM-oppføringer så ChatGPT kan levere ark), starBurst som bruker materialet om igjen, og større marger i partikkelarket hvis nabotegningen synes rundt små partikler på telefon.
+- [ ] Claude, senere: eyeliner fra siden stikker foran ansiktet (tegningen har to øyne), og liket av menn i morgenkåpe viser ikke pynten.
+- [ ] Claude, senere: blodet på glasset kan tørke mot brunrødt i den ledige blå kanalen, og snø på hoder og ting, fotspor, knirkende fottrinn og frost på glasset (C9 i planen).
+- [ ] Claude, senere: flere eldre testdeler venter i sanntid (wait_for_timeout før en sjekk på skade eller tid). De bør vente på G.time. Morbidium-sjekken i del 28 feiler også på bygget fra før runden.
+
 ## Grafikkleveranse 2026-09-26
 - [x] Alle bestillingene i de ti tegnelistene levert. 544 av 544 manifestbilder, ingen manglende delark.
-- [ ] Claude: kontroller Den hvite hjortens kropp mot hals og animerte bein i spillet. Se GRAFIKKLEVERANSE.md for konkret festepunkt og øvrig visuell kontroll.
+- [x] Claude: kontroller Den hvite hjortens kropp mot hals og animerte bein i spillet. Gjort i runde 5: kroppen lå for lavt og er løftet .8 når bildet finnes. De andre kontrollene (trillepasienten, speilpasienten, hjerter og rammer, hatter, hår og ansiktstilbehør) er også gjort, se runde 5 over.
 
 ## Venter på Tom
 - [ ] Spille prototypen og si hva som føles feil i utseende og kamp.
