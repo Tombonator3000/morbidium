@@ -16,6 +16,8 @@
      stavelser, som mumlingen personalet har ellers. Den og fanfarene kan slås
      av under Lyd. Det som blinker, følger «Hvite glimt», og det som forvrenger,
      følger «Forvrengning».
+   - Stemplene på skjermen (Stempel): det store stempelet står i kø, og
+     kombostempelet, det store stempelet og lappen legger seg under hverandre.
    ============================================================ */
 
 /* ---------- stemmen: stavelser med formanter, som en pompøs overlege i en katedral ---------- */
@@ -152,6 +154,8 @@ const Kombo = {
   perfekt() {
     if (G.time < this.perfektT || G.state !== 'play') return; this.perfektT = G.time + 2.2;
     const P = G.player; this.tall.perfekt++; this.spill('perfekt'); slowMo(.45, .3); R.fx.ca = Math.max(R.fx.ca, .8); R.zoomStot(P.x, P.z, .22);
+    // «bom» fra den samme unnvikelsen: ordet under sier det samme, og de lå oppå hverandre (6.png). Med «Vis tall» av er ordet skjult, og da står «bom»
+    if (!document.body.classList.contains('uten-tall')) FX.fjern(it => it.str === 'bom' && G.time - it.tSist < .3);
     numText(P.x, P.z, pick(['PÅ HÅRET', 'UNNSLUPPET', 'IKKE I DAG', 'FOR SENT, DOKTOR']), 'crit', 2.7);
     if (this.n > 0) this.t = this.VINDU; // en perfekt unnvikelse holder kjeden i live
   },
@@ -183,7 +187,7 @@ const Kombo = {
   stempel(ord, under) {
     const el = this.el('kstempel'); if (!el) return;
     el.innerHTML = esc(ord) + (under ? '<small>' + esc(under) + '</small>' : ''); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
-    clearTimeout(this.stH); this.stH = setTimeout(() => el.classList.remove('on'), 1500);
+    clearTimeout(this.stH); this.stH = setTimeout(() => { el.classList.remove('on'); Stempel.plass(); }, 1500); Stempel.plass();
   },
   vis(pang) {
     const el = this.el('kombo'); if (!el) return;
@@ -209,6 +213,46 @@ const Kombo = {
   }
 };
 
+/* ---------- stemplene på skjermen: kø for det store stempelet, og stemplene og lappen under hverandre ----------
+   Kombostempelet (#kstempel) kommer med en gang, og et nytt tar over for det gamle. Det store stempelet (#bigstamp, stampBig)
+   venter til det forrige har stått i 0,7 sekunder: høyst tre i kø, og like stempler hoppes over. Står begge, legges det store
+   8 px under kombostempelet, og så lenge et stempel står, ligger lappen (#toast) i nedre tredjedel, under stemplene. */
+const Stempel = {
+  ko: [], vistT: 0, naa: null, h: 0, kh: 0, MIN: 700,
+  stor(t, sub = '') {
+    const el = $('bigstamp'); if (!el) return;
+    const ms = performance.now() - this.vistT, lik = k => !!k && k[0] === t && k[1] === sub;
+    if (this.ko.length || (el.classList.contains('on') && ms < this.MIN)) {
+      if (!lik(this.naa) && !this.ko.some(lik) && this.ko.length < 3) this.ko.push([t, sub]);
+      if (!this.kh) this.kh = setTimeout(() => this.neste(), Math.max(0, this.MIN - ms));
+      return;
+    }
+    this.vis(t, sub);
+  },
+  neste() { this.kh = 0; const k = this.ko.shift(); if (k) this.vis(k[0], k[1]); },
+  vis(t, sub) {
+    const el = $('bigstamp'); el.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : '');
+    // tar det over for et stempel som står, slås det ned på nytt: tilbake til av uten overgang, og så inn igjen
+    el.style.transition = 'none'; el.classList.remove('on'); el.style.top = ''; void el.offsetWidth; el.style.transition = ''; el.classList.add('on');
+    Sound.play('stamp'); this.vistT = performance.now(); this.naa = [t, sub];
+    clearTimeout(this.h); this.h = setTimeout(() => { el.classList.remove('on'); this.naa = null; this.plass(); }, 1500);
+    if (this.ko.length && !this.kh) this.kh = setTimeout(() => this.neste(), this.MIN);
+    this.plass();
+  },
+  /* plassene regnes ut når et stempel eller en lapp kommer eller går: høyden på den skrå boksen er bredde·sin + høyde·cos.
+     Et stempel som står, flyttes bare når kombostempelet kommer over det, og lappen bare når den kommer eller et stempel står. */
+  plass(nyLapp) {
+    const H = innerHeight, k = $('kstempel'), b = $('bigstamp'), t = $('toast'); if (!k || !b || !t) return;
+    const kOn = k.classList.contains('on'), bOn = b.classList.contains('on'), topp = el => parseFloat(getComputedStyle(el).top) || 0;
+    const hoy = (el, grad, s) => { const r = grad * Math.PI / 180; return (el.offsetWidth * Math.sin(r) + el.offsetHeight * Math.cos(r)) * s; };
+    let bunn = 0;
+    if (kOn) bunn = topp(k) + hoy(k, 7, 1.12) / 2; // kombostempelet står 7 grader på skrå og vokser til 1,1 før det blekner
+    if (bOn) { const h = hoy(b, 8, 1); let y = topp(b); if (kOn) { b.style.top = ''; y = Math.max(topp(b), bunn + 8 + h / 2); b.style.top = y + 'px'; } bunn = Math.max(bunn, y + h / 2); }
+    if (kOn || bOn) { const h = hoy(t, 4, 1); t.classList.add('lav'); t.style.top = Math.max(h / 2 + 4, Math.min(H - h / 2 - 4, Math.max(H * .7, bunn + 8 + h / 2))) + 'px'; }
+    else if (nyLapp || !t.classList.contains('on')) { t.classList.remove('lav'); t.style.top = ''; }
+  }
+};
+
 /* ---------- koblinger ---------- */
 { const _h = hurt; hurt = function (e, dmg, src = {}) {
   const levde = !!(e && e.alive), hp0 = levde ? e.hp : 0, d = _h(e, dmg, src);
@@ -226,6 +270,8 @@ const Kombo = {
 { const _ua = useAbility; useAbility = function (i) { const P = G.player, n0 = P ? P.counters.ability : 0; _ua(i); if (P && P.counters.ability > n0) Kombo.kort(i); }; }
 { const _bd = bossDie; bossDie = function (B) { _bd(B); Kombo.sjef(B); }; }
 { const _sb = stampBig; stampBig = function (t, sub) { _sb(t, sub); if (t === 'SYNERGI' || t === 'FORVANDLING') Kombo.fanfare(t === 'SYNERGI' ? 'synergi' : 'forvandling'); }; }
+// lappen får teksten med en gang som før, og legger seg under stemplene hvis et står
+{ const _t = toast; toast = function (t, sub) { const sto = $('toast').classList.contains('on'); _t(t, sub); Stempel.plass(!sto); }; }
 { const _sf = startFloor; startFloor = function (...a) { Kombo.onFloor(); return _sf.apply(this, a); }; }
 { const _rs = runStats; runStats = function () {
   let s = _rs(); const r = G.run || {};
@@ -237,3 +283,5 @@ Object.assign(MERKNADER, {
   blodrus: { navn: 'Blodrus', krav: 'Slå 50 ganger på rad uten å bli truffet.', gir: 'Kunngjøreren kjenner navnet ditt.' },
   massakre: { navn: 'Massakre', krav: 'Slå fem fiender i hjel på et øyeblikk.', gir: 'Applaus fra pasientene, og en side i årsrapporten.' }
 });
+// til testene (del 45): tekstene, stemplene og lappen
+Object.assign(window, { FX, numText, toast, Stempel });
