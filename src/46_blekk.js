@@ -314,4 +314,4 @@ R.telegraph = function (shape, o, dur, eier) { return Blekk.ta(shape, o, dur, ei
   const _cf = clearFloor; clearFloor = function () { const r = _cf.apply(this, arguments); Blekk.tom(); return r; };
 }
 
-Object.assign(window, { addTele, cancelTeles, updateTele, inShape, slashFx, VFX, Blekk, TELE_TYPE, TELE_FARGE, teleType }); // til testene
+Object.assign(window, { addTele, cancelTeles, updateTele, inShape, slashFx, VFX, Blekk, TELE_TYPE, TELE_FARGE, teleType, Particles, PART_FORM }); // til testene

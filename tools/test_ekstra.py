@@ -2200,6 +2200,94 @@ async def main():
         sjekk('ingen konsollfeil (blekkvarsel i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 48) Blekkpartikler
+        #     Partiklene er flater i blekk og papir som vender mot kameraet, med fire tegninger fra ett ark (gnist, dråpe, papirbit og støv),
+        #     ikke klosser: 900 partikler koster ett tegnekall, fargene kommer fram (før var alle svarte, fordi fargelista ble laget tom),
+        #     gnistene strekkes ut langs farten, formen gjettes fra fargen, enkel grafikk gir klossene tilbake uten å legge igjen geometri,
+        #     og alt er borte etterpå.
+        import io as _io48
+        from PIL import Image as _Img48
+        PT_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
+            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            tomt = async () => { const t0 = performance.now(); while (Particles.n && performance.now() - t0 < 60000) await vent(50); },
+            kall = () => { const i = R.renderer.info; i.autoReset = false; i.reset(); R.render(0); const n = i.render.calls; i.autoReset = true; return n; },
+            lenket = () => { const q = R.renderer.properties.get(Particles.mesh.material), pr = q.currentProgram || q.program; return !!pr && !(pr.diagnostics && !pr.diagnostics.runnable) && !Particles.brutt; },
+            M = () => Particles.mesh, ut = {};"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        pt = await pg.evaluate("""async () => { """ + PT_HJELP + """
+          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); Particles.clear(); await spill(.05);
+          const g = M().geometry, info = R.renderer.info.memory;
+          ut.form = { geo: g.type, aForm: !!g.attributes.aForm, mat: M().material.type, farger: M().instanceColor ? M().instanceColor.array.length : 0 };
+          // 900 samtidig (og 100 til, som ikke får plass) koster ett tegnekall
+          Particles.spawn(P.x, 1, P.z, 1000, 0xb3261e, { speed: 5, up: 4, life: 20, g: 0 }); await spill(.05);
+          const k1 = kall(); M().visible = false; const k0 = kall(); M().visible = true;
+          ut.kall = { n: Particles.n, k: k1 - k0, lenket: lenket() };
+          const c = M().instanceColor.array; ut.farge = [c[0], c[1], c[2], c[899 * 3]].map(v => +(v ?? -1).toFixed(3));
+          Particles.clear(); await spill(.05); ut.kall.tom = M().count;
+          // formen gjettes fra fargen: blod og vann er dråper, hvitt og gult er gnister, o.flat er papir, grått og brunt er støv, o.form vinner
+          const f = (col, o = {}) => { Particles.spawn(P.x, 1, P.z, 1, col, Object.assign({ life: 5 }, o)); return Particles.d[Particles.n - 1].f; };
+          ut.gjett = [f(0xb3261e, { speed: 8 }), f(0x9fd8f0, { speed: 2 }), f(0xfff6a0, { speed: 5 }), f(0xffa040, { speed: 6 }), f(0xefe4c4, { flat: true }), f(0xb8a888, { speed: 3 }), f(0x2a1a1a), f(0xb3261e, { form: 'papir' }), f(0xfff6a0, { form: 'stov' })];
+          Particles.clear();
+          // en gnist som flyr mot høyre på skjermen: strukket langs farten, flaten vender mot kameraet
+          Particles.spawn(P.x, 1, P.z, 1, 0xfff6a0, { speed: .001, up: .001, vx: 9, g: 0, life: 5 }); await spill(.05);
+          const A = M().instanceMatrix.array, len = o => Math.hypot(A[o], A[o + 1], A[o + 2]);
+          ut.gnist = { x: +len(0).toFixed(3), y: +len(4).toFixed(3), retning: +(A[0] / len(0)).toFixed(3), mot: [A[8], A[9], A[10]].map(v => +v.toFixed(3)), sp: +Math.sin(CAM_PITCH).toFixed(3), cp: +Math.cos(CAM_PITCH).toFixed(3) };
+          Particles.clear();
+          // de lever ut livet sitt og blir borte
+          Particles.spawn(P.x, 1, P.z, 900, 0xfff6a0, { speed: 6, up: 5, life: .4 }); ut.liv = { n0: Particles.n }; await tomt(); await spill(.1); ut.liv.n = Particles.n; ut.liv.count = M().count;
+          // enkel grafikk: klossene tilbake på neste bilde, og tilbake til blekk igjen, uten at geometri blir liggende
+          const g0 = info.geometries, t0 = info.textures;
+          for (let i = 0; i < 3; i++) { R.safe = true; await spill(.05); if (!i) ut.safe = { geo: M().geometry.type, mat: M().material.type }; Particles.spawn(P.x, 1, P.z, 20, 0xb3261e, { life: 5 }); R.safe = false; await spill(.05); }
+          ut.safe.tilbake = M().geometry.type; ut.safe.n = Particles.n; ut.safe.dg = info.geometries - g0; ut.safe.dt = info.textures - t0;
+          const cc = M().instanceColor.array; ut.safe.farge = [cc[0], cc[1], cc[2]].map(v => +v.toFixed(3));
+          Particles.clear(); rolig();
+          return ut; }""")
+        fo = pt['form']
+        sjekk('partiklene er flater med formattributt og egen shader, ikke klosser, og fargelista har plass til alle 900', fo == {'geo': 'PlaneGeometry', 'aForm': True, 'mat': 'ShaderMaterial', 'farger': 2700}, fo)
+        k = pt['kall']
+        sjekk('900 partikler koster ett tegnekall, shaderen lenker, og count går til 0 etter clear', k['n'] == 900 and k['k'] == 1 and k['lenket'] and k['tom'] == 0, k)
+        sjekk('fargen kommer fram (blodrødt, ikke svart)', pt['farge'] == [0.702, 0.149, 0.118, 0.702], pt['farge'])
+        sjekk('formen gjettes fra fargen (dråpe, dråpe, gnist, gnist, papir, støv, dråpe) og o.form vinner', pt['gjett'] == [1, 1, 0, 0, 2, 3, 1, 2, 3], pt['gjett'])
+        gn = pt['gnist']
+        sjekk('gnisten strekkes ut langs farten og flaten vender mot kameraet', gn['x'] > gn['y'] * 1.8 and gn['retning'] > .99 and abs(gn['mot'][1] - gn['sp']) < .002 and abs(gn['mot'][2] - gn['cp']) < .002 and abs(gn['mot'][0]) < .002, gn)
+        sjekk('900 partikler lever ut og er borte', pt['liv'] == {'n0': 900, 'n': 0, 'count': 0}, pt['liv'])
+        sa = pt['safe']
+        sjekk('enkel grafikk gir klosser, blekket kommer tilbake, fargene og partiklene følger med, og ingen geometri eller tekstur blir liggende', sa['geo'] == 'BoxGeometry' and sa['mat'] == 'MeshBasicMaterial' and sa['tilbake'] == 'PlaneGeometry' and sa['n'] == 60 and sa['dg'] <= 0 and sa['dt'] <= 0 and sa['farge'] == [0.702, 0.149, 0.118], sa)
+        # pikslene: en klump blodpartikler som står stille, blir rød på skjermen (snitt over 9 x 9 punkter, før og etter)
+        xy = await pg.evaluate("""async () => { """ + PT_HJELP + """
+          R.shakeOn = false; P.vx = P.vz = 0; R.snapCamera(P.x, P.z); await spill(.3);
+          const s = R.project(P.x + 2.5, 1, P.z + .5); return [Math.round(s.x), Math.round(s.y)]; }""")
+        def flekk48(png, xy):
+            im = _Img48.open(_io48.BytesIO(png)).convert('RGB'); x0, y0 = xy
+            px = [im.getpixel((x0 + i, y0 + j)) for i in range(-4, 5) for j in range(-4, 5)]
+            return [sum(q[k] for q in px) / len(px) for k in range(3)]
+        for48 = await pg.screenshot()
+        await pg.evaluate("""async () => { """ + PT_HJELP + """
+          Particles.spawn(P.x + 2.5, 1, P.z + .5, 40, 0xb3261e, { speed: .001, up: .001, g: 0, life: 30, size: 1.3 }); await spill(.15); }""")
+        etter48 = await pg.screenshot()
+        a_, e_ = flekk48(for48, xy), flekk48(etter48, xy)
+        sjekk('pikslene: blodpartiklene er røde på skjermen (rødt over grønt med minst 50, og endret)', e_[0] - e_[1] > 50 and abs(e_[0] - a_[0]) + abs(e_[1] - a_[1]) > 40, {'for': [round(v) for v in a_], 'etter': [round(v) for v in e_]})
+        # fem drap i et rolig rom, til gjennomsyn
+        await pg.evaluate("""async () => { """ + PT_HJELP + """
+          Particles.clear(); const E = [], typer = ['pleier', 'oppasser', 'kultist', 'yngel', 'pleier'];
+          for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + .3, f = freeSpot(P.x + Math.sin(a) * 2.6, P.z + Math.cos(a) * 2.2, 2); E.push(spawnEnemy(typer[i], f.x, f.z, false, 2)); }
+          await spill(.7); for (const e of E) if (e && e.alive) { e.stun = 5; hurt(e, 1e6, { from: 'player', x: P.x, z: P.z }); } await spill(.12); }""")
+        await pg.screenshot(path='/tmp/e_48_partikler.png')
+        sjekk('ingen konsollfeil (blekkpartikler i 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # én runde i 3D: flatene, shaderen lenker og ett tegnekall
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        p3 = await pg.evaluate("""async () => { """ + PT_HJELP + """
+          rolig(); await spill(.3); Particles.clear(); ut.d3 = D3.on;
+          Particles.spawn(P.x, 1, P.z, 900, 0xfff6a0, { speed: 6, up: 5, life: 20, g: 0 }); Particles.spawn(P.x, 1, P.z, 5, 0xb3261e, {}); await spill(.1);
+          const k1 = kall(); M().visible = false; const k0 = kall(); M().visible = true;
+          Object.assign(ut, { geo: M().geometry.type, n: Particles.n, k: k1 - k0, lenket: lenket() }); Particles.clear(); return ut; }""")
+        sjekk('3D: flater, shaderen lenker og 900 partikler koster ett tegnekall', p3 == {'d3': True, 'geo': 'PlaneGeometry', 'n': 900, 'k': 1, 'lenket': True}, p3)
+        sjekk('ingen konsollfeil (blekkpartikler i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
