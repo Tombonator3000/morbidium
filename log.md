@@ -1003,3 +1003,11 @@ Alle tidspunkt er UTC.
 - Ikke gjort (valgfritt i planen): vinden i bakketåka, snø på hodene og tingene, fotspor, knirkende fottrinn og frost på glasset.
 - Ny testdel 57 (Snøfall), i 2D med én runde i 3D på PC og stående telefon. Alle sjekkene unntatt de uten konsollfeil feiler på bygget fra før (1ff4a4f). Del 24, 36, 37, 39 og 57 er grønne. Del 28 feiler på at Morbidium-gløden ikke er borte etter pytten, også alene. Den feilet likt før denne endringen (kun_gammel_28.log), så det kommer ikke herfra.
 - Skjermbilder til Tom: 57_sno_for_1280.png og 57_sno_etter_1280.png (en snøetasje i Parken ved gasslyktene, 3D, samme frø og sted), 57_sno_for_390x844.png og 57_sno_etter_390x844.png, og 57_sno_etter_2d.png.
+
+## 2026-09-27 09:24 Skeptikeren på C2: snøfallet
+- Kontrollert: de tre lagene, boksen som følger kameraet (testen regner det synlige rektangelet selv, så den er ikke tom), opprydding i Vaer.stopp (geometriene tilbake og masken kastet), enkel grafikk med runde prikker, lette teksturer uten snø, snø i lyktelyset i stedet for møll, tiden som følger spilltiden, tre tegnekall, og at Stemning.maal lager et nytt objekt hvert kall (så vindsuset ikke vokser seg større for hvert bilde).
+- Rettet: de uskarpe nære fnuggene hadde en lys kant og så ut som såpebobler på skjermbildet. Nå er de en myk klump uten kant, som et fnugg ute av fokus.
+- Rettet: toppen av fnuggene blektes med smoothstep med kantene baklengs, som er udefinert i GLSL og kan gi feil på noen mobiler. Skrevet om til 1 minus smoothstep.
+- Rettet: med lette teksturer (R.lowTex) er det ikke noe snøfall, og da sang sirissene igjen på snøetasjene. Nå tier de når etasjen har snøvær, uansett grafikk.
+- Skjermbildene 57_sno_etter_1280.png, 57_sno_etter_390x844.png og 57_sno_etter_2d.png er tatt på nytt.
+- Del 24, 36, 37, 39 og 57 er grønne. Del 28 feiler på at Morbidium-gløden ikke er borte etter pytten, likt på bygget fra før, så det kommer ikke fra snøen.
