@@ -954,3 +954,15 @@ Alle tidspunkt er UTC.
 - 45_stempler_etter_844x390.png er tatt på nytt. Del 24, 26, 29, 36 og 45 kjøres.
 - Del 24, 26, 36 og 45 grønne (60 av 61). Del 29 feilet én gang på «kjeden slutter av seg selv» mens maskinen hadde last 9 på 4 kjerner: testen venter på spilltid med et tak på 20 sekunder ekte tid. Alene gikk del 29 gjennom.
 - Del 45 sjekker nå også at de tre stemplene slutter over evnekortene (på bygget før rettingen lå lappen 309 til 386 og kortene fra 284 på liggende telefon). Del 45 grønn.
+
+## 2026-09-27 04:18 Blodet på glasset renner som blod (A4)
+- Det Tom så i 10.png: tynne, rette røde streker fra toppen av skjermen og helt ned. Det var sporene etter bloddråpene på glasset (43_vaatt.js). Hvert spor var ett strøk med samme bredde og styrke hele veien, dråpene mistet nesten ingen masse og rant hele skjermen, alderen på sporet ble nullstilt for hvert nytt punkt, og de tunge treffene la dråper helt oppe i kanten.
+- Nå tar sporet med seg litt av dråpen for hver piksel den renner (r² minker med 0,2 ganger bredden ganger strekningen), så en enkelt dråpe renner et stykke og stanser. Bare dråper som slår seg sammen, renner langt.
+- Dråpene renner i rykk og napp, og følger ripene i glasset: et rolig felt som er likt for alle dråper i etasjen, pluss dråpens egen slingring og litt skjelving. Sporene slingrer derfor litt, og to spor i nærheten følger samme vei.
+- Hvert punkt i sporet har sin egen bredde og alder. Sporet smalner mot dråpen etter hvert som den mister masse, toppen blekner og tynnes først, og et spor er borte når også det nyeste punktet er 8 sekunder gammelt (vann 3,5).
+- Sporet tegnes som et bredt, svakt strøk og en smal kjerne, så det får en rund rygg som lyset glinser langs. Leddene tegnes med «lighten», så de ikke blir dobbelt så tykke der bitene møtes. Etter 2 til 3 sekunder trekker det gamle sporet seg sammen til en rad små perler (vann etter 1 til 1,8 sekunder), på faste steder så de ikke flimrer.
+- Lerretet får en svart, helt dekkende bunn i stedet for å tømmes, så svakere strøk og perler faktisk blir svakere når det lastes opp (før ble fargen delt på dekningen igjen).
+- Tunge treff legger dråpene fra 15 til 35 prosent ned på skjermen i stedet for helt oppe, høyst seks bloddråper renner samtidig, og når ingenting renner og sporene bare blekner, tegnes og lastes lerretet opp annethvert bilde.
+- Ikke gjort: tørking i den blå kanalen (valgfritt i planen). Blå kanal er fortsatt ledig.
+- Ny testdel 47 (Blod som renner), på PC og stående telefon og én gang i 3D. Den lengste loddrette stripen med blod etter et tungt treff er nå 49 av 216 punkter (194 før), en enkelt dråpe renner 42 punkter (178 før), og sporene smalner og slingrer. Alle sjekkene unntatt de uten konsollfeil og 3D-sjekken feiler på bygget fra før (1ff4a4f). Del 17, 18, 34, 36 og 47 er grønne.
+- Skjermbilder til Tom: 47_blod_for.png og 47_blod_etter.png (tungt treff og 3 sekunder spilltid i liggehallen i Parken, samme frø og utsnitt), og 47_blod_etter_390x844.png.
