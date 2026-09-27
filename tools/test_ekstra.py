@@ -2183,6 +2183,75 @@ async def main():
         sjekk('det skjulte i 3D: listene på en sprukken nordvegg er egne, ligger bare på sprekken og forsvinner ved innbruddet', nord is not None and nord['lister'] > 0 and nord['synlig'] == nord['lister'] and nord['paaSprekk'] and nord['etter'] == 0 and not nord['skjult'], nord)
         sjekk('ingen konsollfeil (det skjulte, 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
+        # 52) Vinter
+        #     Snøen på gulvet er ett lag over hele uteområdet (ingen kutt langs rutene), dekker 75 til 85 % og er aldri helt hvit,
+        #     veggene mot snøen får hvit topp og et snøbånd, bakken ute er snø, lyset er kaldere, og etasjer uten snø har ingen snø
+        V52 = """() => { const G = MORBIDIUM, finn = v => { for (let s = 1; s < 900; s++) if (v(generateFloor(s + 7919, 1, {}))) return s; return null; };
+          window._v52 = { sno: finn(F => F.vaer === 'sno' && F.rooms.some(r => r.template === 'liggehall')), regn: finn(F => F.vaer === 'regn') }; return window._v52; }"""
+        # dekket, kuttene langs rutene, veggene, toppene og bakken i etasjen som står
+        MAAL52 = """() => { const G = MORBIDIUM, F = G.F, c = Paint.mesh.gulv.material.map.image, T = c.width / F.W, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, cw = c.width;
+          const lum = k => (.2126 * d[k] + .7152 * d[k + 1] + .0722 * d[k + 2]) / 255, ute = i => { if (!F.tiles[i]) return false; const rid = F.roomId[i]; return rid >= 0 ? !!F.rooms[rid].ute : !!F.ute; };
+          const snoFarge = k => Math.abs(d[k] - 228) + Math.abs(d[k + 1] - 235) + Math.abs(d[k + 2] - 243) < 12 || Math.abs(d[k] - 179) + Math.abs(d[k + 1] - 191) + Math.abs(d[k + 2] - 210) < 8;
+          const r1 = mulberry32(5); let n = 0, lys = 0, maks = 0, sf = 0;
+          for (let t = 0; t < 100000 && n < 400; t++) { const x = r1() * F.W, z = r1() * F.H; if (!ute(Math.floor(z) * F.W + Math.floor(x))) continue; const k = (Math.floor(z * T) * cw + Math.floor(x * T)) * 4; n++; if (lum(k) > .72) lys++; if (snoFarge(k)) sf++; maks = Math.max(maks, d[k], d[k + 1], d[k + 2]); }
+          // 200 rutegrenser mellom to uteruter: forskjellen over grensen mot forskjellen mellom to kolonner midt i ruta
+          const r2 = mulberry32(9); let over = 0, inne = 0, nb = 0;
+          for (let t = 0; t < 50000 && nb < 200; t++) { const x = 1 + Math.floor(r2() * (F.W - 1)), z = 1 + Math.floor(r2() * (F.H - 1)), i = z * F.W + x, loddrett = nb % 2 === 0, j = loddrett ? i - 1 : i - F.W; if (!ute(i) || !ute(j)) continue;
+            for (let k = 2; k < T - 2; k++) { if (loddrett) { const y = z * T + k, p = (y * cw + x * T - 1) * 4, q = (y * cw + x * T + T / 2 - 1) * 4; over += Math.abs(lum(p) - lum(p + 4)); inne += Math.abs(lum(q) - lum(q + 4)); }
+              else { const xx = x * T + k, p = ((z * T - 1) * cw + xx) * 4, q = ((z * T + T / 2 - 1) * cw + xx) * 4; over += Math.abs(lum(p) - lum(p + cw * 4)); inne += Math.abs(lum(q) - lum(q + cw * 4)); } }
+            nb++; }
+          const sv = Paint.mesh.vegger.filter(m => m.userData.sno), hk = sv.find(m => m.userData.veggStil === 'hekk') || sv.find(m => !(VEGG[m.userData.veggStil] || {}).alfa);
+          let topp12 = 0; if (hk) { const im = hk.material.map.image, dd = im.getContext('2d').getImageData(0, 0, im.width, 12).data; for (let k = 0; k < dd.length; k += 4) topp12 += (.2126 * dd[k] + .7152 * dd[k + 1] + .0722 * dd[k + 2]) / 255; topp12 /= dd.length / 4; }
+          const ca = Paint.mesh.topp.geometry.attributes.color.array; let snoTopp = 0; for (let k = 0; k < ca.length; k += 3) if (Math.abs(ca[k] - .875) < .05 && Math.abs(ca[k + 1] - .902) < .05 && Math.abs(ca[k + 2] - .937) < .05) snoTopp++;
+          const bk = Paint.mesh.bakke.material.map, bi = bk.image, bd = bi.getContext ? bi.getContext('2d').getImageData(0, 0, bi.width, bi.height).data : null; let bl = 0; if (bd) { for (let k = 0; k < bd.length; k += 16) bl += (.2126 * bd[k] + .7152 * bd[k + 1] + .0722 * bd[k + 2]) / 255; bl /= bd.length / 16; }
+          const amb = R.post.uniforms.uAmbient.value;
+          return { vaer: F.vaer, T, n, dekke: +(lys / Math.max(1, n)).toFixed(3), maks, snoFarge: sf, over: +(over / Math.max(1, nb)).toFixed(3), inne: +(inne / Math.max(1, nb)).toFixed(3), nb,
+            snoVegger: sv.length, stil: hk && hk.userData.veggStil, topp12: +topp12.toFixed(3), snoTopp, bakke: +bl.toFixed(3), bakkeRute: +((F.W + 48) / bk.repeat.x).toFixed(2), amb: '#' + amb.getHexString() }; }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        fro = await pg.evaluate(V52)
+        m52 = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), S = window._v52, ut = {};
+          const bygg = async s => { G.run.seed = s; G.run.dromVent = 0; startFloor(1, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(150); };
+          await bygg(S.sno); ut.sno = (""" + MAAL52 + """)(); await bygg(S.regn); ut.regn = (""" + MAAL52 + """)();
+          R.lowTex = true; await bygg(S.sno); ut.lett = (""" + MAAL52 + """)(); R.lowTex = false;
+          const st = G.meta.settings; st.simple = true; applySettings(); await bygg(S.sno); ut.enkel = (""" + MAAL52 + """)(); st.simple = false; applySettings();
+          // byggetiden: samme frø med og uten snø, beste av tre
+          const gf = generateFloor, tid = v => { generateFloor = (...a) => { const F = gf(...a); F.vaer = v; return F; }; try { G.run.seed = S.sno; G.run.dromVent = 0; const t0 = performance.now(); startFloor(1, false); return performance.now() - t0; } finally { generateFloor = gf; } };
+          const med = [], uten = []; for (let k = 0; k < 3; k++) { uten.push(tid('regn')); await vent(100); med.push(tid('sno')); await vent(100); }
+          ut.tid = [Math.round(Math.min(...med)), Math.round(Math.min(...uten))];
+          await bygg(S.sno); const P = G.player, r = G.F.rooms.find(r => r.template === 'liggehall'); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null;
+          P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.invuln = 999; R.snapCamera(P.x, P.z); return ut; }""")
+        s5, r5, l5, e5 = m52['sno'], m52['regn'], m52['lett'], m52['enkel']
+        sjekk('vinter: frøene finnes (Parken med snø og liggehall, og Parken i regn)', fro['sno'] is not None and fro['regn'] is not None and s5['vaer'] == 'sno' and r5['vaer'] == 'regn', fro)
+        sjekk('vinter: snøen dekker minst 70 % av uterutene (lysstyrke over .72), og ingen punkter er helt hvite', s5['n'] == 400 and s5['dekke'] >= .7 and s5['maks'] < 250, s5)
+        sjekk('vinter: ingen kutt langs rutene (forskjellen over 200 rutegrenser er høyst 1,5 ganger den midt i rutene)', s5['nb'] == 200 and s5['over'] <= 1.5 * s5['inne'], (s5['over'], s5['inne'], s5['nb']))
+        sjekk('vinter: veggene mot snøen har snøbånd (øverste 12 punkter lyse) og hvit topp', s5['snoVegger'] > 0 and s5['topp12'] > .8 and s5['snoTopp'] > 0, (s5['snoVegger'], s5['stil'], s5['topp12'], s5['snoTopp']))
+        sjekk('vinter: bakken ute er snø, gjentatt hver tiende rute, og lyset er kaldere', s5['bakke'] > .7 and abs(s5['bakkeRute'] - 10) < .01 and s5['amb'] != r5['amb'], (s5['bakke'], s5['bakkeRute'], s5['amb'], r5['amb']))
+        sjekk('vinter: en Parken uten snø har ingen snøfarger, snøvegger, snøtopper eller snøbakke', r5['snoFarge'] <= 2 and r5['snoVegger'] == 0 and r5['snoTopp'] == 0 and r5['bakke'] < .5 and abs(r5['bakkeRute'] - 5) < .01, r5)
+        sjekk('vinter: lette teksturer og Enkel grafikk har også snøen', l5['T'] == 16 and l5['dekke'] >= .6 and l5['maks'] < 250 and e5['dekke'] >= .7 and e5['snoVegger'] > 0, (l5['T'], l5['dekke'], e5['dekke'], e5['snoVegger']))
+        sjekk('vinter: etasjen med snø bygges på høyst 1,3 ganger tiden uten (samme frø, beste av tre)', m52['tid'][0] <= 1.3 * m52['tid'][1], m52['tid'])
+        await pg.wait_for_timeout(800); await pg.screenshot(path='/tmp/e_52_vinter_2d.png')
+        sjekk('ingen konsollfeil (vinter, 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: kaldt lys fra snøen, lavere relieff, lys tåke, og snøetasjer bygget på nytt holder grafikkminnet i ro
+        for vp, navn in (({'width': 1280, 'height': 720}, '1280'), ({'width': 390, 'height': 844}, '390x844')):
+            pg = await ny_side(b, viewport=vp, **({'is_mobile': True, 'has_touch': True} if vp['width'] < 600 else {}))
+            await start_lop(pg, url=URL3D)
+            await pg.evaluate(V52)
+            d3 = await pg.evaluate("""async (mobil) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), S = window._v52, ut = {};
+              const bygg = async s => { G.run.seed = s; G.run.dromVent = 0; startFloor(1, false); await vent(300); };
+              const lys = () => { const h = D3.ting.find(o => o.isHemisphereLight), g = Paint.mesh.gulv.material; return { hemi: h && '#' + h.groundColor.getHexString(), mane: D3.mane && +D3.mane.intensity.toFixed(2), bump: g.bumpScale, farge: g.color && '#' + g.color.getHexString(), type: g.type }; };
+              await bygg(S.regn); ut.regn = lys(); await bygg(S.sno); ut.sno = lys();
+              if (!mobil) { const mem = () => R.renderer.info.memory, m0 = [mem().textures, mem().geometries]; for (const s of [S.regn, S.sno, S.regn, S.sno]) await bygg(s); ut.minne = [mem().textures - m0[0], mem().geometries - m0[1]]; }
+              const P = G.player, r = G.F.rooms.find(r => r.template === 'liggehall'); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null;
+              P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.invuln = 999; R.snapCamera(P.x, P.z); ut.d3 = D3.on; return ut; }""", vp['width'] < 600)
+            if vp['width'] > 600:
+                sjekk('vinter i 3D: blått lys fra snøen, sterkere måne, lavere relieff og dempet gulv, og regnværet er som før', d3['d3'] and d3['sno']['hemi'] == '#4a5470' and d3['sno']['mane'] > d3['regn']['mane'] and abs(d3['sno']['bump'] - .45) < .01 and d3['sno']['farge'] != '#ffffff' and d3['regn']['hemi'] == '#2a1a14' and abs(d3['regn']['bump'] - .7) < .01 and d3['regn']['farge'] == '#ffffff', d3)
+                sjekk('vinter i 3D: snøetasjer bygget på nytt holder grafikkminnet i ro', d3['minne'][0] <= 6 and d3['minne'][1] <= 12, d3['minne'])
+            await pg.evaluate("async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1 && performance.now() - t0 < 20000) await new Promise(r => setTimeout(r, 50)); }")
+            await pg.screenshot(path=f'/tmp/e_52_vinter_{navn}.png')
+            sjekk(f'ingen konsollfeil (vinter, 3D {navn})', not pg.errs, pg.errs[:6])
+            await pg.close()
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

@@ -153,7 +153,7 @@ function clearFloor() {
 function decorateLevel() {
   const F = G.F, rng = mulberry32(F.seed || 7);
   // det skjulte rommet (48_skjult.js): borte til veggen er slått inn, og null hvis Paint måtte bygge etasjen som før
-  Paint.level(F, G.th); G.skjult = Paint.skjult && F.skjult ? Uint8Array.from(F.skjult) : null; G.kartAnelse = G.sprekkKjent = false; if (Paint.decals) Paint.decals(F, Math.round(F.W * F.H / 70)); R.setGrade(G.th);
+  Paint.level(F, G.th); G.skjult = Paint.skjult && F.skjult ? Uint8Array.from(F.skjult) : null; G.kartAnelse = G.sprekkKjent = false; if (Paint.decals) Paint.decals(F, Math.round(F.W * F.H / 70)); R.setGrade(Paint.tema(G.th, F));
   spawnProps();
   const isF = (x, z) => x >= 0 && z >= 0 && x < F.W && z < F.H && F.tiles[z * F.W + x] > 0;
   for (const r of F.rooms) {
