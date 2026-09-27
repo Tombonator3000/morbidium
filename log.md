@@ -934,3 +934,9 @@ Alle tidspunkt er UTC.
   8. Nye fiender: «Havet under huset» (Avløpsarmen, Kapellanen, Draugpleieren, Kraken) og «Skinnlauget av 1887» (Lærlingen, Klokkeren, Holdningssøsteren, Oldermann Nålepute). Skinnlauget er en parodi på cenobittene: høflige lærhåndverkere med reimer, spenner, kroker og dagsorden. Ikke noe seksuelt, og ingen navn eller sitater fra filmene.
 - Arbeidet deles i fire spor som går samtidig i hver sin arbeidskopi, med en egen skeptiker som sjekker og retter hvert punkt: A (varsler, lekkasjen, partikler og nedslag), D (tekster og stempler, blodet på skjermen, hårrullene med kontrollene fra GRAFIKKLEVERANSE.md, og snøfallet), B (vegger og bakke fra ChatGPT med tegnelister 11 og 12, det skjulte rommet og vinter i teksturene) og C (de nye fiendene).
 - Grunnlaget før sporene: fem nye filer i bygget (46_blekk.js, 47_sno.js, 48_skjult.js, 49_havet.js og 50_skinnlauget.js, etter 43_vaatt.js og før 44_testmodus.js), fillista i AGENTS.md, kontrakten mellom sporene i memory.md, og test 28 teller typene glød i stedet for å vente åtte (to spor legger til nye typer).
+
+## 2026-09-27 01:24 Sporene stoppet på bruksgrensen, og startet igjen
+- Alle fire sporene stoppet rundt 00:15 UTC fordi bruksgrensen for økta var nådd. De første agentene i hvert spor (A1, A2, B1 og C3) var kommet langt, men hadde ikke committet. Endringene deres ligger i arbeidskopiene.
+- Sporene er startet på nytt. Agentene som kommer nå, ser gjennom det som ligger igjen, beholder det som er riktig og gjør ferdig. De committer også underveis, så et nytt avbrudd koster lite.
+- Et spor stopper nå med én gang hvis en agent faller ut, i stedet for å prøve resten av punktene og feile på hvert av dem.
+- Agentene tenker på «high» i stedet for «max», så runden bruker mindre av grensen.
