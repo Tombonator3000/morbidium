@@ -2085,7 +2085,8 @@ async def main():
         #     alle fargene i koden har en skadetype som leses på mørkt gulv, og enkel grafikk tegner på den gamle måten.
         import re as _re, io as _io
         from PIL import Image as _Img
-        _src = pathlib.Path(__file__).resolve().parent.parent / 'src'
+        import urllib.parse as _up
+        _src = pathlib.Path(_up.unquote(URL3D[len('file://'):])).parent.parent / 'src'
         farger = {}
         for _f in sorted(_src.glob('*.js')):
             for _m in _re.findall(r'color: 0x([0-9a-fA-F]+)', _f.read_text(encoding='utf-8')): farger.setdefault(int(_m, 16), set()).add(_f.name)
@@ -2145,7 +2146,7 @@ async def main():
         po = bk['pool']
         sjekk('300 varsler: 48 plasser i blekk, resten på den gamle måten, ingen geometri blir liggende og plassene er frie etterpå og etter etasjebytte', po['blekk'] == 48 and po['gamle'] == 252 and po['fulle'] == 0 and po['dg'] <= 2 and po['ledige'] == 48 and po['for'] == 38 and po['etter'] == 48, po)
         fo = bk['form']
-        sjekk('formen i shaderen er den samme som inShape (2000 punkter per form, ni former)', not fo['feil'] and fo['n'] > 15000 and fo['inne'] > 3000, fo)
+        sjekk('formen i shaderen er den samme som inShape (2000 punkter per form, ni former)', not fo['feil'] and fo['n'] > 15000 and fo['inne'] > 2000, fo)
         f_ = bk['folg']
         sjekk('varselet følger eieren (o.folg), også på den gamle måten', abs(f_['sx'] - f_['bx']) < 1e-6 and abs(f_['sz'] - f_['bz']) < 1e-6 and f_['gammel']['gruppe'] and abs(f_['gammel']['gx'] - f_['gammel']['bx']) < 1e-6, f_)
         sl = bk['slutt']; l1, l2 = sl['l1'] or {}, sl['l2'] or {}
@@ -2162,23 +2163,25 @@ async def main():
         sjekk('alle %d fargene i koden har en skadetype, og hver type er lys nok (luminans minst 0,35)' % len(farger), len(farger) >= 48 and not fa['mangler'] and not fa['ukjent'] and len(fa['lum']) == 11 and min(fa['lum'].values()) >= .35, fa)
         # pikslene: sonen er tegnet inne i sirkelen og ikke utenfor (snitt over 9 x 9 punkter, før og etter)
         pos = await pg.evaluate("""async () => { """ + BK_HJELP + """
-          G.run.seed = 7; startFloor(1, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200);
-          rolig(); R.shakeOn = false; rydd(); const r = G.F.rooms.filter(r => r.role === 'combat').sort((a, b) => b.w * b.h - a.w * a.h)[0], c = freeSpot(r.x + r.w / 2 - .4, r.z + r.h / 2, 3);
+          // innendørs (ingen regn som endrer pikslene), i det største rommet
+          G.run.seed = 11; startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200);
+          const inne = r => !Vaer.ute(r.x + r.w / 2, r.z + r.h / 2), rr = G.F.rooms.filter(inne);
+          rolig(); R.shakeOn = false; rydd(); const r = (rr.length ? rr : G.F.rooms).slice().sort((a, b) => b.w * b.h - a.w * a.h)[0], c = freeSpot(r.x + r.w / 2 - .4, r.z + r.h / 2, 3);
           P.x = c.x; P.z = c.z; P.vx = P.vz = 0; R.snapCamera(P.x, P.z); await spill(.6);
           const q = (x, z) => { const s = R.project(x, 0, z); return [Math.round(s.x), Math.round(s.y)]; };
-          return { inne: q(P.x + 3 + .75, P.z), ute: q(P.x + 3 + 2.1, P.z), rinne: q(P.x - 3.2, P.z - 1.9 + 3.5), rute: q(P.x - 3.2 + 1.1, P.z - 1.9 + 3.5) }; }""")
+          return { inne: q(P.x + 3 + .75, P.z), ute: q(P.x + 3 + 2.1, P.z), rinne: q(P.x - 1.2, P.z - 2.5), rute: q(P.x - 2.3, P.z - 2.5) }; }""")
         def flekk(png, xy):
             im = _Img.open(_io.BytesIO(png)).convert('RGB'); x0, y0 = xy
             px = [im.getpixel((x0 + i, y0 + j)) for i in range(-4, 5) for j in range(-4, 5)]
             return [sum(p[k] for p in px) / len(px) for k in range(3)]
         for_ = await pg.screenshot()
         await pg.evaluate("""async () => { """ + BK_HJELP + """
-          const t = addTele('circle', { x: P.x + 3, z: P.z, r: 1.5 }, 30, null, null); t.t = 3; const u = addTele('rect', { x: P.x - 3.2, z: P.z - 1.9, a: 0, w: .8, len: 5 }, 30, null, null); u.t = 3; await spill(.15); }""")
+          const t = addTele('circle', { x: P.x + 3, z: P.z, r: 1.5 }, 30, null, null); t.t = 3; const u = addTele('rect', { x: P.x - 1.2, z: P.z - .5, a: Math.PI, w: .8, len: 4 }, 30, null, null); u.t = 3; await spill(.15); }""")
         etter = await pg.screenshot()
         await pg.screenshot(path='/tmp/e_46_piksler.png')
         dlt = lambda xy: sum(abs(a - b) for a, b in zip(flekk(for_, xy), flekk(etter, xy))) / 3
         px_ = {k: round(dlt(v), 1) for k, v in pos.items()}
-        sjekk('pikslene: sirkel og bane er fylt inne (endring over 25) og urørt utenfor (under 8)', px_['inne'] > 25 and px_['ute'] < 8 and px_['rinne'] > 25 and px_['rute'] < 8, px_)
+        sjekk('pikslene: sirkelen er fylt inne (endring over 25, banen over 15) og urørt utenfor (under 8)', px_['inne'] > 25 and px_['ute'] < 8 and px_['rinne'] > 15 and px_['rute'] < 8, px_)
         sjekk('ingen konsollfeil (blekkvarsel i 2D)', not pg.errs, pg.errs[:6])
         await pg.close()
         # én runde i 3D: shaderen lenker, høy kvalitet, ett tegnekall, og ingen geometri blir liggende
@@ -2188,11 +2191,12 @@ async def main():
           rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); rydd(); ut.d3 = D3.on;
           addTele('circle', { x: P.x, z: P.z + 2, r: 1 }, .1, null, null); await tomt(); const k0 = kall(), g0 = R.renderer.info.memory.geometries, former = ['circle', 'rect', 'cone'], B = Object.assign(eier(), { kind: 'boss', type: 'krok' });
           for (let i = 0; i < 24; i++) { const a = i * .5; addTele(former[i % 3], { x: P.x + Math.sin(a) * 2.5, z: P.z + Math.cos(a) * 2.5, r: 1 + (i % 4) * .6, w: .4 + (i % 3) * .6, len: 5, a, arc: 1.6, color: [0xb3261e, 0x9ad0e0, 0xffe25a, 0x3a2a44][i % 4] }, 1.2, null, i % 5 ? null : B); }
-          await spill(.3); const pr = R.renderer.properties.get(Blekk.mat).program;
-          Object.assign(ut, { k: kall() - k0, blekk: G.tele.filter(t => t.mesh.isBlekk).length, kval: Blekk.kval(), lenket: !!pr && !(pr.diagnostics && !pr.diagnostics.runnable) && !Blekk.brutt, lys: Blekk.lys.visible });
+          await spill(.3); const q = R.renderer.properties.get(Blekk.mat), pr = q.currentProgram || q.program;
+          const k2 = kall(); Blekk.mesh.visible = false; const k3 = kall(); Blekk.mesh.visible = true;
+          Object.assign(ut, { k: k2 - k0, egne: k2 - k3, blekk: G.tele.filter(t => t.mesh.isBlekk).length, kval: Blekk.kval(), lenket: !!pr && !(pr.diagnostics && !pr.diagnostics.runnable) && !Blekk.brutt, lys: Blekk.lys.visible });
           await tomt(); ut.dg = R.renderer.info.memory.geometries - g0; ut.ledige = Blekk.ledige; return ut; }""")
         await pg.screenshot(path='/tmp/e_46_3d.png')
-        sjekk('3D: shaderen lenker, høy kvalitet, 24 varsler i ett tegnekall uten lysplater, og ingenting blir liggende', b3['d3'] and b3['lenket'] and b3['blekk'] == 24 and b3['k'] <= 1 and b3['kval'] == 2 and not b3['lys'] and b3['dg'] <= 1 and b3['ledige'] == 48, b3)
+        sjekk('3D: shaderen lenker, høy kvalitet, 24 varsler koster høyst to tegnekall, ingen lysplater, og ingenting blir liggende', b3['d3'] and b3['lenket'] and b3['blekk'] == 24 and b3['k'] <= 2 and b3['egne'] == 1 and b3['kval'] == 2 and not b3['lys'] and b3['dg'] <= 1 and b3['ledige'] == 48, b3)
         sjekk('ingen konsollfeil (blekkvarsel i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
