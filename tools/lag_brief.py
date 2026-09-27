@@ -80,7 +80,7 @@ MISC = {
   'prop_madrass': 'a thin striped mattress lying on the floor, stained', 'prop_tvangstroye': 'an empty straitjacket hanging on a coat stand', 'prop_papirhaug': 'a knee-high heap of loose papers and files',
   'prop_forbannet': 'a cursed floor sigil: a red glowing occult circle scratched into the floor, seen from above (flat on the floor)', 'celle': 'a padded cell corner: quilted white walls, two tiles wide',
   'arkivhylle3': 'a tall dark archive shelf stuffed with folders and boxes, three tiles wide', 'medisinskap': 'a white enamel medicine cabinet with glass doors and bottles inside',
-  'offeralter': 'a sacrificial altar of dark stone with a bowl of blood and red candles', 'sprekkvegg': 'a cracked section of wall with light shining through the crack',
+  'offeralter': 'a sacrificial altar of dark stone with a bowl of blood and red candles', 'sprekkvegg': 'a wall bursting open: plaster and bricks breaking apart with light shining through the crack, a split-second burst frame when the secret wall breaks',
   'kortplukk': 'an ability card lying on the floor, slightly tilted, face down with a purple back (pickup)',
   'portierhode': "the doorman's severed head carried as an object: pale and surprised, big mustache, green doorman's cap with a gold band, a little blood at the neck",
   'hjul_trille_f': 'ONE big wooden wheelchair wheel with spokes and a rubber tire, seen straight from the side (the game spins it)',
