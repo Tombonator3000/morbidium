@@ -121,7 +121,9 @@ async def main():
           const r = G.F.rooms.filter(r => r.role === 'combat').sort((a, b) => b.w * b.h - a.w * a.h)[0]; const c = freeSpot(r.x + r.w / 2, r.z + r.h / 2, 3); P.x = c.x; P.z = c.z; R.snapCamera(P.x, P.z);
           const types = ['tvang', 'byrakrat', 'narkose', 'rotte', 'oyeblomst']; types.forEach((t, i) => { const a = i / types.length * Math.PI * 2, s = freeSpot(P.x + Math.sin(a) * 3.2, P.z + Math.cos(a) * 3.2, 2); spawnEnemy(t, s.x, s.z, false, 3); }); }""")
         await pg.wait_for_timeout(1400); await pg.screenshot(path='/tmp/e_8fiender.png')
-        await pg.wait_for_timeout(5000); await pg.screenshot(path='/tmp/e_9fiender_kamp.png')
+        # til fiendene har rukket å slå: spilletid og ikke sanntid, for programvaregrafikken på en travel maskin kan gå på en åttendedel av full fart
+        await pg.evaluate("async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 6 && G.player.hp >= 400 && performance.now() - t0 < 90000) await new Promise(r => setTimeout(r, 100)); }")
+        await pg.screenshot(path='/tmp/e_9fiender_kamp.png')
         st = await pg.evaluate("() => ({ n: MORBIDIUM.enemies.filter(e => e.alive).length, types: [...new Set(MORBIDIUM.enemies.map(e => e.type))], hp: Math.round(MORBIDIUM.player.hp), gas: MORBIDIUM.zones.filter(z => z.kind === 'gas').length })")
         sjekk('nye fiender lever og rotter kom i flokk', st['n'] >= 7 and len(st['types']) == 5, st)
         sjekk('fiendene gjorde skade', st['hp'] < 400, st['hp'])
@@ -724,7 +726,7 @@ async def main():
         # 28) Effekter og shadere: sjokkbølger, zoom, negativ og lyn i etterbehandlingen, glød fra ting, lynet, teslaspolen, regnringer og drømmesløret
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await start_lop(pg)
-        ef = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, u = R.post.uniforms, ut = {};
+        ef = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, u = R.post.uniforms, ut = {};
           rolig(); P.hp = P.maxHp = 9999;
           // etterbehandlingen: alt slår inn neste bilde og dør ut av seg selv
           R.sjokk(P.x, P.z, 1.2); R.zoomStot(P.x, P.z, .8); R.negativ(.1); R.fx.lyn = 1; await vent(120);
@@ -771,7 +773,7 @@ async def main():
         # 29) Kombo: treffkjeden med nivåer, flerdrap, overkill, miljødrap, perfekt unnvikelse, tredje slag, kortkjede, sjefdrap og fanfarer
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await start_lop(pg, url=URL + '?2d')
-        ko = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, T = Kombo.tall, ut = {};
+        ko = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, T = Kombo.tall, ut = {};
           Sound.init(); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.face = 0;
           const lag = (dx, dz, hp = 1e6) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy('pleier', s.x, s.z, false, 1); e.hp = e.max = hp; e.stun = 99; e.state = 'chase'; return e; };
           // treffkjeden: 22 treff gir tredje nivå, telleren og den brennende kanten
@@ -1996,6 +1998,83 @@ async def main():
         sjekk('et panel som er åpent når etasjen byttes, lukkes, og kartets lerret frigjøres', gj['kart'] and gj['lukket'], gj)
         sjekk('lappen for å snakke ligger over kortene i TV-modus', gj['lapp']['over'], gj['lapp'])
         sjekk('ingen konsollfeil (etter flettingen)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 44) Varsler og slag uten lekkasje
+        #     Varsler som går av, avbrytes eller ryddes bort når etasjen byttes, og hugg legger ikke igjen geometri på skjermkortet,
+        #     shaderne bygges ikke på nytt for hvert angrep, og R.kastTele får vite hvorfor varselet kastes.
+        #     Før rettingen: +1500 geometrier for 300 varsler, +101 for 20 avbrutte og +60 for 60 hugg.
+        VL_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
+            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            // til ingen varsler eller hugg er igjen: spillet må gå, men taket i sanntid er romslig, for mange varsler samtidig er tungt i programvaregrafikk
+            tomt = async () => { const t0 = performance.now(); while ((G.tele.length || VFX.slashes.length) && performance.now() - t0 < 120000) await vent(50); await spill(.1); },
+            ramme = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))),
+            info = R.renderer.info.memory, former = ['circle', 'rect', 'cone'], buer = [1.2, 1.6, 2.2, Math.PI * 2 - .01], ut = {};
+          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3);
+          // oppvarming: ett varsel av hver form og ett hugg per bue, så det som lages én gang (ringene til huggene og shaderne), er laget
+          for (let i = 0; i < 4; i++) { addTele(former[i % 3], { x: P.x + 2, z: P.z, r: 1.2, w: .6, len: 3, a: i, arc: 1.4 }, .2, null, null); slashFx(P.x, P.z, i, 1.4, buer[i], i % 2 === 0); }
+          await tomt();"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        vl = await pg.evaluate("""async () => { """ + VL_HJELP + """
+          // shaderne telles rett på WebGL: et materiale som kastes, tar shaderen med seg når ingen andre bruker den, og da bygges den på nytt neste gang
+          const gl = R.renderer.getContext(), lp = gl.linkProgram; let lenk = 0; gl.linkProgram = function (p) { lenk++; return lp.call(this, p); };
+          // 300 varsler som går av: sirkel, rektangel og kjegle om hverandre. Toppen viser at de faktisk kom på skjermkortet
+          const g0 = info.geometries;
+          for (let i = 0; i < 300; i++) { const a = i * .37; addTele(former[i % 3], { x: P.x + Math.sin(a) * 2, z: P.z + Math.cos(a) * 2, r: 1 + (i % 5) * .3, w: .6, len: 4, a, arc: 1.4, color: [0xff4a22, 0x9ad0e0, 0xb36be0][i % 3] }, .3, null, null); }
+          await ramme(); const topp = info.geometries - g0; await tomt(); await spill(.5);
+          ut.fyr = { topp, dg: info.geometries - g0, igjen: G.tele.length };
+          // 20 varsler på én eier, som så stanses: de går ikke av og frigjøres
+          const g1 = info.geometries, eier = { alive: true, stun: 0, sleep: 0 }; let fyrt = 0;
+          for (let i = 0; i < 20; i++) addTele(former[i % 3], { x: P.x + 1, z: P.z + (i % 4) * .5, r: 1.2, w: .6, len: 3, a: i, arc: 1.2 }, 5, () => fyrt++, eier);
+          await ramme(); const midt = info.geometries - g1; cancelTeles(eier); await spill(.3);
+          ut.avbrutt = { midt, dg: info.geometries - g1, igjen: G.tele.length, eier: eier.teles.length, fyrt };
+          // 60 hugg: ringen deles av alle hugg med samme bue, og materialene brukes om igjen
+          const g2 = info.geometries;
+          for (let i = 0; i < 60; i++) { slashFx(P.x + (i % 3) - 1, P.z, i * .3, 1 + (i % 5) * .4, buer[i % 4], i % 2 === 0); if (i % 10 === 9) await ramme(); }
+          await tomt(); ut.hugg = { dg: info.geometries - g2, igjen: VFX.slashes.length };
+          // ringen er like stor som før: indre radius 0,68 r, ytre r, buen rundet til 0,05 (helt rundt som før) og midt foran
+          slashFx(P.x, P.z, 0, 2, 1.62, false); slashFx(P.x, P.z, 1, 3, 1.6, false); slashFx(P.x, P.z, 2, 3.8, Math.PI * 2 - .01, true);
+          const S = VFX.slashes.slice(-3), maal = s => { const q = s.m.geometry.parameters, k = s.m.scale.x; return [q.innerRadius * k, q.outerRadius * k, q.thetaLength, q.thetaStart + q.thetaLength / 2].map(v => +v.toFixed(3)); };
+          ut.maal = { a: maal(S[0]), b: maal(S[1]), c: maal(S[2]), delt: S[0].m.geometry === S[1].m.geometry }; await tomt();
+          // hugg og varsler én og én, hvert ferdig før det neste kommer: ingen shader bygges på nytt
+          lenk = 0;
+          for (let i = 0; i < 8; i++) { slashFx(P.x, P.z, i, 1.5, buer[i % 4], i % 2 === 0); await tomt(); }
+          for (let i = 0; i < 6; i++) { addTele(former[i % 3], { x: P.x + 2, z: P.z, r: 1.3, w: .6, len: 3, a: i, arc: 1.4, color: 0x9ad0e0 }, .2, null, null); await tomt(); }
+          ut.lenk = lenk;
+          // hvorfor varselet kastes: 'fyr' når angrepet går av, 'avbryt' når eieren er stanset eller stoppes, og 'rydd' når etasjen byttes
+          const hvorfor = [], _k = R.kastTele; R.kastTele = function (g, how) { hvorfor.push(how); return _k.apply(this, arguments); };
+          const e1 = { alive: true, stun: 0, sleep: 0 }, e2 = { alive: true, stun: 0, sleep: 0 }, e3 = { alive: true, stun: 0, sleep: 0 }, gikk = [];
+          addTele('circle', { x: P.x + 2, z: P.z, r: 1 }, .2, () => gikk.push(1), e1); addTele('circle', { x: P.x - 2, z: P.z, r: 1 }, .2, () => gikk.push(2), e2); e2.stun = 5;
+          addTele('rect', { x: P.x, z: P.z + 1, a: 0, w: .6, len: 3 }, 5, () => gikk.push(3), e3); await ramme(); cancelTeles(e3); await tomt();
+          ut.hvorfor = { liste: hvorfor.slice().sort(), gikk }; hvorfor.length = 0;
+          // etasjen byttes med varsler og hugg i lufta: alt tas ut, og geometrien til varselet frigjøres
+          const t = addTele('circle', { x: P.x, z: P.z + 2, r: 1.5 }, 5, null, null); for (let i = 0; i < 5; i++) slashFx(P.x, P.z, i, 1.5, 1.6, true); await ramme();
+          let n = 0, kastet = 0; t.mesh.traverse(o => { if (o.geometry) { n++; o.geometry.addEventListener('dispose', () => kastet++); } });
+          startFloor(G.depth, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200);
+          ut.rydd = { hvorfor: hvorfor.slice(), n, kastet, ute: !t.mesh.parent, tele: G.tele.length, hugg: VFX.slashes.length };
+          R.kastTele = _k; gl.linkProgram = lp;
+          return ut; }""")
+        sjekk('300 varsler som går av, legger ikke igjen geometri på skjermkortet', vl['fyr']['topp'] >= 1000 and vl['fyr']['dg'] <= 2 and vl['fyr']['igjen'] == 0, vl['fyr'])
+        sjekk('20 varsler på en eier som stanses, går ikke av og legger ikke igjen geometri', vl['avbrutt']['midt'] >= 60 and vl['avbrutt']['dg'] <= 2 and vl['avbrutt']['igjen'] == 0 and vl['avbrutt']['eier'] == 0 and vl['avbrutt']['fyrt'] == 0, vl['avbrutt'])
+        naer = lambda a, b: len(a) == len(b) and all(abs(x - y) < .002 for x, y in zip(a, b))
+        m = vl['maal']
+        sjekk('60 hugg legger høyst igjen to geometrier, og ringen deles og er like stor som før', vl['hugg']['dg'] <= 2 and vl['hugg']['igjen'] == 0 and m['delt'] and naer(m['a'], [1.36, 2, 1.6, -1.571]) and naer(m['b'], [2.04, 3, 1.6, -1.571]) and naer(m['c'], [2.584, 3.8, 6.273, -1.571]), {'hugg': vl['hugg'], 'maal': m})
+        sjekk('shaderne til varsler og hugg bygges ikke på nytt for hvert angrep', vl['lenk'] <= 2, vl['lenk'])
+        r_ = vl['rydd']
+        sjekk('varselet kastes med fyr, avbryt (stanset eier og cancelTeles) og rydd når etasjen byttes, og bare det som går av, treffer', vl['hvorfor'] == {'liste': ['avbryt', 'avbryt', 'fyr'], 'gikk': [1]} and 'rydd' in r_['hvorfor'] and r_['n'] == 4 and r_['kastet'] == 4 and r_['ute'] and r_['tele'] == 0 and r_['hugg'] == 0, {'hvorfor': vl['hvorfor'], 'rydd': r_})
+        sjekk('ingen konsollfeil (varsler og hugg i 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # én runde i 3D
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        v3 = await pg.evaluate("""async () => { """ + VL_HJELP + """
+          ut.d3 = D3.on; const g0 = info.geometries;
+          for (let i = 0; i < 60; i++) { const a = i * .41; addTele(former[i % 3], { x: P.x + Math.sin(a) * 2, z: P.z + Math.cos(a) * 2, r: 1 + (i % 4) * .3, w: .6, len: 4, a, arc: 1.4 }, .4, null, null); if (i % 3 === 0) slashFx(P.x, P.z, a, 1.6, buer[i % 4], i % 2 === 0); }
+          await ramme(); ut.topp = info.geometries - g0; await tomt(); await spill(.5); ut.dg = info.geometries - g0;
+          return ut; }""")
+        sjekk('3D: 60 varsler og 20 hugg legger ikke igjen geometri', v3['d3'] and v3['topp'] >= 200 and v3['dg'] <= 2, v3)
+        sjekk('ingen konsollfeil (varsler og hugg i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
         await b.close()
