@@ -488,17 +488,22 @@ Object.assign(Laug, {
     });
     return this._st;
   },
-  /* to reimer fra hendene hennes til pasienten. Bare det tegnede: skaden kommer fra ringen. Ingen i Enkel grafikk, og ikke over taket */
+  /* to reimer fra hendene hennes til pasienten. Bare det tegnede: skaden kommer fra ringen. Ingen i Enkel grafikk, og ikke over taket.
+     Reimene sitter i hendene hennes (følger henne) og holdes stramme så lenge pasienten er snørt, så han ser hva som holder ham igjen */
   reimer(e) {
     if (R.safe || !R.scene || Kjeder.liste.length + 2 > this.KJEDER_MAKS) return 0;
-    const P = G.player; let n = 0;
+    const P = G.player; let n = 0; e.reimK = [];
     for (const s of [-1, 1]) {
-      const a = e.face + s * .6, fra = { x: e.x + Math.sin(a) * .35, y: 1.25, z: e.z + Math.cos(a) * .35 };
+      const fra = { get x() { return e.x + Math.sin(e.face + s * .6) * .35; }, y: 1.25, get z() { return e.z + Math.cos(e.face + s * .6) * .35; } };
       const K = Kjeder.slag(fra, () => ({ x: P.x + s * .15, y: .95, z: P.z }), { inn: .2, hold: .45, ut: .28, bredde: .13 });
-      if (K) { K.m.material.map = this.reimTex(); K.krok.material.map = this.spenneTex(); K.krok.center.set(.3, .5); K.krok.scale.set(.5, .5, 1); K.reim = true; n++; }
+      if (K) { K.m.material.map = this.reimTex(); K.krok.material.map = this.spenneTex(); K.krok.center.set(.3, .5); K.krok.scale.set(.5, .5, 1); K.reim = true; e.reimK.push(K); n++; }
     }
     return n;
   },
+  /* reimene holdes stramme i t sekunder til, eller slippes og går tilbake med en gang */
+  stram(e, t) { for (const K of e.reimK || []) if (Kjeder.liste.includes(K)) K.hold = Math.max(K.hold, Math.max(0, K.t - K.inn) + t); },
+  slipp(e) { for (const K of e.reimK || []) if (Kjeder.liste.includes(K)) K.hold = Math.min(K.hold, Math.max(0, K.t - K.inn)); e.reimK = null; },
+  slippAlle() { for (const e of G.enemies) if (e.reimK) this.slipp(e); },
   /* snøringen: en brun ring der pasienten står. Treffer den, blir pasienten SNØRT, og lauget i nærheten slår hardere */
   snor(e, T, toT) {
     const tid = 1, o = { x: T.x, z: T.z, r: 1.25, color: 0x8a5a2a, type: 'fysisk' };
@@ -507,7 +512,7 @@ Object.assign(Laug, {
     addTele('circle', o, tid, () => {
       const P = G.player; Sound.play('spenne', .7, .8);
       if (!this.treff('circle', o, e.dmg * .5, { type: 'holdning', x: o.x, z: o.z }) || P.stunT > 0) return;
-      this.snoer(P, this.SNORT); this.rett(e);
+      this.snoer(P, this.SNORT); this.stram(e, this.SNORT); this.rett(e);
     }, e);
     bossLaterE(e, tid - .2, () => { if (e.state === 'wind' && !(e.stun > 0)) this.reimer(e); });
     e.cd = rnd(2.6, 3.6);
@@ -515,7 +520,7 @@ Object.assign(Laug, {
   SNORT: 2.5, RETT: 4, RETT_K: 1.25, MEDLEMMER: { laerling: 1, klokker: 1, holdning: 1, oldermann: 1 },
   snoer(P, t) { P.snortT = Math.max(P.snortT || 0, t); P.mokkT = Math.max(P.mokkT || 0, .05); statusOrd(P, 'SNØRT'); },
   /* rullet løs: snøret ryker */
-  los(P) { P.snortT = 0; P.mokkT = 0; statusOrd(P, 'LØS'); Sound.play('rive', .6, 1.4); },
+  los(P) { P.snortT = 0; P.mokkT = 0; this.slippAlle(); statusOrd(P, 'LØS'); Sound.play('rive', .6, 1.4); },
   /* «Rett ryggen!»: laugets folk innen åtte ruter slår 25 prosent hardere i fire sekunder. Skaden lagres og settes tilbake nøyaktig */
   rett(e) {
     let n = 0;
@@ -551,13 +556,14 @@ Object.assign(Grotesk.ai, {
 /* snøret: pasienten går tregere (P.mokkT, som myr) så lenge P.snortT varer, og en rulle løser det med en gang */
 { const _up = updatePlayer; updatePlayer = function (dt, A) {
   const P = G.player;
-  if (P && P.snortT > 0) { P.snortT -= dt; if (P.snortT > 0 && P.alive) P.mokkT = Math.max(P.mokkT || 0, dt + .02); else P.snortT = 0; }
+  if (P && P.snortT > 0) { P.snortT -= dt; if (P.snortT > 0 && P.alive) P.mokkT = Math.max(P.mokkT || 0, dt + .02); else { P.snortT = 0; Laug.slippAlle(); } }
   const r = _up(dt, A);
   if (P && P.snortT > 0 && P.roll > 0) Laug.los(P);
   return r;
 }; }
 /* «Rett ryggen!» går ut: skaden tilbake nøyaktig, eller faktoren tas ut av det som står hvis noe annet har endret den underveis */
 { const _ue = updateEnemy; updateEnemy = function (e, dt) {
+  if (e.reimK && (!e.alive || e.stun > 0 || e.sleep > 0)) Laug.slipp(e); // slått ut eller død: reimene går slakke og tilbake
   if (e.rettet) {
     e.rettetT -= dt;
     if (e.rettetT <= 0 || !e.alive) { const V = e.rettet; e.dmg = e.dmg === V.satt ? V.dmg : e.dmg / Laug.RETT_K; e.rettet = null; }
