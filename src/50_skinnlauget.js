@@ -599,7 +599,7 @@ Object.assign(LYD_KART, {
   naaler: { s: [['swing', .35, 1.9], ['stikk', .2, 1.6]], syn: .4 }
 });
 Object.assign(FIENDESTEMME, { oldermann: ['knirk', .85] });
-Object.assign(ENEMIES, { oldermann: { name: 'Oldermann Nålepute', hp: 340, speed: 2.2, r: .55, dmg: 13, xp: 60, teeth: [22, 32], bubbleH: 4.3, mini: true, weapon: 'klubbe', skygge: .6, blood: 0x9a1a1a, tittel: 'Takk for tålmodigheten', fraDybde: 2 } });
+Object.assign(ENEMIES, { oldermann: { name: 'Oldermann Nålepute', hp: 340, speed: 2.2, r: .55, dmg: 13, xp: 60, teeth: [22, 32], bubbleH: 4.9, mini: true, weapon: 'klubbe', skygge: .6, blood: 0x9a1a1a, tittel: 'Takk for tålmodigheten', fraDybde: 2 } });
 Object.assign(LINES, { oldermann: ['Møtet er satt.', 'Sak én: Deres smerte. Sak to: Eventuelt.', 'Forslaget er vedtatt mot én stemme. Deres.', 'Skinnlauget takker for tålmodigheten.', 'Overlege Krok er æresmedlem. Han kommer aldri på møtene.',
   'Forstanderen? Vårt fineste arbeid. Dobbel søm, 1887.', 'Referatet sendes Journalen.', 'Puta? Rød fløyel og hundre og tolv nåler. Jeg teller dem hver morgen.', 'Frakken er hel oksehud. Den har vært på alle møtene siden 1887.'] });
 Object.assign(DEATH_CAUSES, { oldermann: ['Vedtatt behandlet, mot én stemme.', 'Ført i protokollen under «Eventuelt».', 'Stukket av en nålepute med stemmerett.', 'Møtet ble hevet. Det samme ble pasienten.'] });
@@ -766,7 +766,7 @@ const Oldermann = {
     if (k === 'eventuelt' && !D.ev) D.ev = pick(['naal', 'kjede', 'klubbe']);
     let s = k === 'eventuelt' ? D.ev : k;
     const klar = s === 'naal' ? dist <= 9 && sikt : s === 'kjede' ? dist <= 10 && sikt : s === 'klubbe' ? dist <= 3.4 : true;
-    if (!klar && (D.vent === null || G.time - D.vent < 2.5)) { if (D.vent === null) D.vent = G.time; e.cd = .25; return; }
+    if (!klar && (D.vent === null || G.time - D.vent < 2.5)) { if (D.vent === null) D.vent = G.time; e.cd = .25; const it = FX.items.find(i => i.klem && i.target === e); if (it) it.life = Math.max(it.life, .6); return; } // dagsorden blir stående mens han venter
     D.vent = null; const nr = D.i++, ref = e.referat[e.referat.length - 1]; ref.utfort.push(k); if (k === 'eventuelt') ref.ev = D.ev;
     Sound.play('klubbe', .85); e.face = toT;
     let sitat = null;
@@ -847,12 +847,19 @@ const Oldermann = {
     });
   }
 };
-// boblen med dagsorden skyves inn fra kanten (han står ofte utenfor bildet på en stående telefon)
-{ const _u = FX.update; FX.update = function (dt) {
+// boblen med dagsorden skyves inn fra kanten (han står ofte utenfor bildet på en stående telefon),
+// og ned under panelet, minisjeflinja, knappene og kompasset når den ville havnet bak dem (liggende telefon, eller han står nord for pasienten)
+{ const _u = FX.update, HINDER = ['badge', 'miniBar', 'bossBar', 'tools', 'mapring']; FX.update = function (dt) {
   _u.call(this, dt);
   for (const it of this.items) if (it.klem) {
     const el = it.el, fx = el.parentNode, w = el.offsetWidth, h = el.offsetHeight; if (!fx || !w) continue;
-    el.style.left = clamp(parseFloat(el.style.left) || 0, w / 2 + 6, Math.max(w / 2 + 6, fx.clientWidth - w / 2 - 6)) + 'px'; el.style.top = Math.max(parseFloat(el.style.top) || 0, h + 6) + 'px';
+    const x = clamp(parseFloat(el.style.left) || 0, w / 2 + 6, Math.max(w / 2 + 6, fx.clientWidth - w / 2 - 6)); let y = Math.max(parseFloat(el.style.top) || 0, h + 6);
+    for (let n = 0; n < 3; n++) {
+      let flytt = false;
+      for (const id of HINDER) { const b = $(id), r = b && b.getBoundingClientRect(); if (r && r.width && r.height && x - w / 2 < r.right && x + w / 2 > r.left && y - h < r.bottom && y > r.top) { y = r.bottom + h + 4; flytt = true; } }
+      if (!flytt) break;
+    }
+    el.style.left = x + 'px'; el.style.top = y + 'px';
   }
 }; }
 Object.assign(Grotesk.keep, { oldermann: 2.6 });
