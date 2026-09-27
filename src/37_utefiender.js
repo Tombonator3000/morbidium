@@ -265,7 +265,7 @@ Object.assign(Grotesk.ai, {
   huldra(e, T, dist, toT) {
     const P = G.player;
     if (dist < 2.2) {
-      e.state = 'wind'; e.t = .8; e.face = toT + Math.PI; const o = { x: e.x, z: e.z, r: 2.1, color: 0x6a5038 };
+      e.state = 'wind'; e.t = .8; e.face = toT + Math.PI; const o = { x: e.x, z: e.z, r: 2.1, color: 0x6a5038, folg: e };
       addTele('circle', o, .55, () => { o.x = e.x; o.z = e.z; hitShape('circle', o, e.dmg, { type: 'huldra', x: e.x, z: e.z, kb: 7 }, 'enemy'); Sound.play('bonk', .7, .7); puff(e.x, e.z, 4, 1.2, '#5a4a2a'); }, e);
       e.cd = rnd(1.8, 2.6); return;
     }
@@ -370,7 +370,7 @@ Object.assign(BOSS_MOVES, {
   /* digre hagesakser: to klipp foran seg og et langt stikk */
   saks(B, dist, toP, dmg) {
     B.t = B.atkDur = 1.8; FX.bubble(B, pick(['Klipp!', 'Rett linje!', 'Litt av toppen?']), 1.2, 'boss');
-    const snipp = (d, r) => bossLater(B, d, () => { const P = G.player, a = Math.atan2(P.x - B.x, P.z - B.z), o = { x: B.x, z: B.z, a, r, arc: 1.5, color: 0xb8c8a8 }; addTele('cone', o, .45, () => { o.x = B.x; o.z = B.z; hitShape('cone', o, dmg, { type: 'boss', x: B.x, z: B.z, kb: 8 }, 'enemy'); slashFx(B.x, B.z, o.a, r, 1.5, false, 0xe8f0e0); Sound.play('saks'); R.shake(.2); }, B); });
+    const snipp = (d, r) => bossLater(B, d, () => { const P = G.player, a = Math.atan2(P.x - B.x, P.z - B.z), o = { x: B.x, z: B.z, a, r, arc: 1.5, color: 0xb8c8a8, folg: B }; addTele('cone', o, .45, () => { o.x = B.x; o.z = B.z; hitShape('cone', o, dmg, { type: 'boss', x: B.x, z: B.z, kb: 8 }, 'enemy'); slashFx(B.x, B.z, o.a, r, 1.5, false, 0xe8f0e0); Sound.play('saks'); R.shake(.2); }, B); });
     snipp(0, 3.2); snipp(.6, 3.2);
     bossLater(B, 1.1, () => { const P = G.player, a = Math.atan2(P.x - B.x, P.z - B.z), o = { x: B.x, z: B.z, a, w: 1.2, len: 7.5, color: 0xb8c8a8 }; addTele('rect', o, .5, () => { hitShape('rect', o, dmg * 1.1, { type: 'boss', x: B.x, z: B.z, kb: 10 }, 'enemy'); beam(o.x, o.z, o.x + Math.sin(o.a) * o.len, o.z + Math.cos(o.a) * o.len, 0xd8e0d0, .25, .25, 1.2); Sound.play('saks', 1, .7); }, B); });
   },
@@ -456,7 +456,7 @@ Object.assign(BOSS_MOVES, {
   },
   /* svinger geviret rundt seg */
   gevir(B, dist, toP, dmg) {
-    B.t = B.atkDur = 1.5; B.aapen = 1; const o = { x: B.x, z: B.z, r: 3.8, color: 0xe8dcc0 };
+    B.t = B.atkDur = 1.5; B.aapen = 1; const o = { x: B.x, z: B.z, r: 3.8, color: 0xe8dcc0, folg: B };
     addTele('circle', o, .85, () => { o.x = B.x; o.z = B.z; hitShape('circle', o, dmg, { type: 'boss', x: B.x, z: B.z, kb: 12 }, 'enemy'); slashFx(B.x, B.z, 0, 3.8, TAU - .01, true, 0xf4f0e8); Sound.play('swingHeavy', 1, .6); R.shake(.35); B.aapen = 0; }, B);
   },
   /* rødt månelys faller ned der du står, flere ganger */

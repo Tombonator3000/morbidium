@@ -86,7 +86,7 @@ const BOSS_MOVES = {
   /* Krok: kjettingen svinges rundt ham */
   chainspin(B, dist, toP, dmg) {
     B.t = B.atkDur = 1.4; FX.bubble(B, 'Kjetting er et livssyn.', 1.2, 'boss');
-    const spin = r => { const o = { x: B.x, z: B.z, r }; addTele('circle', o, .95, () => { o.x = B.x; o.z = B.z; hitShape('circle', o, dmg, { type: 'boss', x: B.x, z: B.z, kb: 10 }, 'enemy'); slashFx(B.x, B.z, 0, r, TAU - .01, true, 0xc8ccd0); Sound.play('chain'); Sound.play('swingHeavy', .8, .6); R.shake(.35); }, B); };
+    const spin = r => { const o = { x: B.x, z: B.z, r, folg: B }; addTele('circle', o, .95, () => { o.x = B.x; o.z = B.z; hitShape('circle', o, dmg, { type: 'boss', x: B.x, z: B.z, kb: 10 }, 'enemy'); slashFx(B.x, B.z, 0, r, TAU - .01, true, 0xc8ccd0); Sound.play('chain'); Sound.play('swingHeavy', .8, .6); R.shake(.35); }, B); };
     spin(3.3); if (B.enraged) bossLater(B, .7, () => spin(4.3));
   },
   /* Rust: fyller rommet med vann og setter strøm på */

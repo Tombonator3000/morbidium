@@ -99,7 +99,7 @@ function beam(x0, z0, x1, z1, color, w = .12, life = .2, y = .8) {
 
 /* ---------- varsler (telegrafer) ---------- */
 function addTele(shape, o, dur, fire, owner) {
-  const mesh = R.telegraph(shape, o), t = { mesh, t: dur, max: dur, fire, owner, o, shape };
+  const mesh = R.telegraph(shape, o, dur, owner), t = { mesh, t: dur, max: dur, fire, owner, o, shape };
   G.tele.push(t); if (owner) (owner.teles || (owner.teles = [])).push(t);
   Sound.play('tele', .6); return t;
 }
@@ -108,7 +108,8 @@ function updateTele(dt) {
   for (let i = G.tele.length - 1; i >= 0; i--) {
     const t = G.tele[i];
     if (t.dead) { G.tele.splice(i, 1); continue; }
-    t.t -= dt; t.mesh.userData.update(1 - Math.max(0, t.t) / t.max);
+    t.t -= dt; if (t.o.folg) { t.o.x = t.o.folg.x; t.o.z = t.o.folg.z; } // o.folg: varselet følger eieren, som treffet gjør når det går av
+    t.mesh.userData.update(1 - Math.max(0, t.t) / t.max);
     if (t.t <= 0) {
       G.tele.splice(i, 1);
       if (t.owner && t.owner.teles) t.owner.teles = t.owner.teles.filter(x => x !== t);
