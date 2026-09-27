@@ -530,26 +530,79 @@ const Particles = {
   clear() { this.n = 0; if (this.mesh) this.mesh.count = 0; }
 };
 
-/* ---------- flytende tekst og snakkebobler (HTML over lerretet) ---------- */
+/* ---------- flytende tekst og snakkebobler (HTML over lerretet) ----------
+   Tekstene legges ut på nytt hvert bilde, fra størrelser som måles én gang: de viktigste først (krit og stempel, så skade på
+   pasienten, tall og til sist info), og eldre før nyere. En tekst som ville dekket en annen tekst eller en snakkeboble, går dit
+   den må flyttes minst (helst opp) og glir dit. Samme ord på samme sted på et øyeblikk blir ett («BONK ×2»), og høyst tre store
+   ord lever samtidig. Alt flyttes med transform, så telefonen slipper å legge ut siden på nytt for hver tekst i hvert bilde. */
 const FX = {
-  items: [],
+  items: [], n: 0, M: 4, MAKS: 28,
   text(x, y, z, str, cls = '', life = .9) {
+    const now = G.time;
+    for (const it of this.items) if (it.kind === 'text' && it.str === str && it.cls === cls && now - it.tSist < .4 && Math.hypot(it.x - x, it.z - z) < 2) {
+      it.ant++; it.tSist = now; it.life = it.max = Math.max(it.max, life); it.pop = 1; it.ut = false; it.malt = false; it.el.textContent = str + ' ×' + it.ant; this.tak(); return it;
+    }
     const el = document.createElement('div'); el.className = 'dmg ' + cls; el.textContent = str; $('fx').appendChild(el);
-    this.items.push({ el, x, y, z, life, max: life, vy: 1.6, kind: 'text' });
+    const pri = /\b(crit|stamp)\b/.test(cls) ? 3 : /\bhurt\b/.test(cls) ? 2 : /\binfo\b/.test(cls) ? 0 : 1;
+    const it = { el, x, y, z, life, max: life, vy: 1.6, kind: 'text', str, cls, pri, tSist: now, n: ++this.n, ant: 1, rot: pri === 3 ? rnd(-6, 6) : 0, pop: 0, ox: 0, oy: 0, mx: 0, my: 0, ny: true, tall: !/\b(info|stamp)\b/.test(cls) };
+    this.items.push(it); this.proj(it); this.skriv(it); if (pri === 3) this.tak(); return it;
   },
+  /* høyst tre store ord (krit og stempel) samtidig: de eldste blekner fort */
+  tak() { const s = this.items.filter(it => it.pri === 3 && !it.ut).sort((a, b) => a.tSist - b.tSist || a.n - b.n); for (let i = 0; i < s.length - 3; i++) { s[i].life = Math.min(s[i].life, .2); s[i].ut = true; } },
+  fjern(f) { for (let i = this.items.length - 1; i >= 0; i--) { const it = this.items[i]; if (it.kind === 'text' && f(it)) { it.el.remove(); this.items.splice(i, 1); } } },
   bubble(target, str, life = 2.6, cls = '') {
     for (const it of this.items) if (it.target === target && it.kind === 'bubble') it.life = 0;
     const el = document.createElement('div'); el.className = 'bubble ' + cls; el.textContent = str; $('fx').appendChild(el);
-    this.items.push({ el, target, life, max: life, kind: 'bubble', h: target.bubbleH || 2.6 });
+    const it = { el, target, life, max: life, kind: 'bubble', h: target.bubbleH || 2.6 }; this.items.push(it); this.proj(it); this.skriv(it);
+  },
+  proj(it, W = innerWidth, H = innerHeight) {
+    const t = it.kind === 'text', v = (this._v || (this._v = new THREE.Vector3())).set(t ? it.x : it.target.x, t ? it.y : it.h, t ? it.z : it.target.z).project(R.camera);
+    it.px = (v.x + 1) / 2 * W; it.py = (1 - v.y) / 2 * H;
+  },
+  /* boksen rundt teksten slik den står på skjermen: skrå stempelord tar mer plass i høyden */
+  maal(it) { const w = it.el.offsetWidth, h = it.el.offsetHeight, r = (it.rot || 0) * Math.PI / 180, c = Math.abs(Math.cos(r)), s = Math.abs(Math.sin(r)); it.bw = w * c + h * s; it.bh = w * s + h * c; it.malt = true; },
+  /* boblene står der de står. Så legges tekstene ut én for én: treffer en tekst noe som alt ligger der, prøves plassene over, under
+     og ved siden av hver av dem, og den som flytter teksten minst, vinner (opp koster minst, ned mest). Litt bonus for å bli der den
+     var, så to like gode plasser ikke bytter hvert bilde. Tekster helt utenfor skjermen er ikke med. */
+  legg(W, H, uT, uB) {
+    const M = this.M, lagt = [];
+    for (const it of this.items) if (it.kind === 'bubble' && !uB && it.malt) lagt.push([it.px - it.bw / 2 - M / 2, it.py - it.bh - M / 2, it.px + it.bw / 2 + M / 2, it.py + 13 + M / 2]);
+    const T = this.items.filter(it => it.kind === 'text' && it.malt && !(uT && it.tall)).sort((a, b) => b.pri - a.pri || a.n - b.n);
+    for (const it of T) {
+      const hw = it.bw / 2 + M / 2, hh = it.bh / 2 + M / 2, x0 = it.px, y0 = it.py, fx = it.mx, fy = it.my; it.mx = it.my = 0;
+      if (x0 + hw < 0 || x0 - hw > W || y0 + hh < 0 || y0 - hh > H || lagt.length >= this.MAKS) continue; // i en stor slåsskamp står de minst viktige der de er, så telefonen holder farten
+      const inn = (x, y) => [clamp(x, hw, Math.max(hw, W - hw)), clamp(y, hh, Math.max(hh, H - hh))];
+      const fri = p => { for (const b of lagt) if (p[0] - hw < b[2] && p[0] + hw > b[0] && p[1] - hh < b[3] && p[1] + hh > b[1]) return false; return true; };
+      let p = inn(x0, y0);
+      if (!fri(p)) {
+        let bc = 1e9, best = null;
+        const prov = (x, y) => { const q = inn(x, y); if (!fri(q)) return; const dx = q[0] - x0, dy = q[1] - y0; let c = Math.abs(dx) * 1.5 + (dy < 0 ? -dy : dy * 2); if (Math.abs(dx - fx) + Math.abs(dy - fy) < 4) c -= 12; if (c < bc) { bc = c; best = q; } };
+        for (const b of lagt) { prov(x0, b[1] - hh); prov(x0, b[3] + hh); prov(b[0] - hw, y0); prov(b[2] + hw, y0); prov(b[0] - hw, b[1] - hh); prov(b[2] + hw, b[1] - hh); }
+        if (best) p = best;
+      }
+      lagt.push([p[0] - hw, p[1] - hh, p[0] + hw, p[1] + hh]); it.mx = p[0] - x0; it.my = p[1] - y0;
+    }
+  },
+  skriv(it) {
+    let t = 'translate3d(' + Math.round(it.px + (it.ox || 0)) + 'px,' + Math.round(it.py + (it.oy || 0)) + 'px,0) translate(-50%,' + (it.kind === 'text' ? '-50%)' : '-100%)');
+    if (it.rot) t += ' rotate(' + it.rot.toFixed(1) + 'deg)'; if (it.pop > 0) t += ' scale(' + (1 + it.pop * it.pop * .35).toFixed(3) + ')';
+    if (t !== it.tf) { it.tf = t; it.el.style.transform = t; }
+    if (it.kind === 'text') { const o = Math.min(1, it.life / it.max * 2.5).toFixed(2); if (o !== it.op) { it.op = o; it.el.style.opacity = o; } }
   },
   update(dt) {
+    const W = innerWidth, H = innerHeight, cl = document.body.classList, uT = cl.contains('uten-tall'), uB = cl.contains('uten-bobler'), k = Math.min(1, dt * 18);
     for (let i = this.items.length - 1; i >= 0; i--) {
       const it = this.items[i]; it.life -= dt;
       if (it.life <= 0 || (it.target && it.target.alive === false)) { it.el.remove(); this.items.splice(i, 1); continue; }
-      let p;
-      if (it.kind === 'text') { it.y += it.vy * dt; it.vy *= .96; p = R.project(it.x, it.y, it.z); it.el.style.opacity = Math.min(1, it.life / it.max * 2.5); }
-      else p = R.project(it.target.x, it.h, it.target.z);
-      it.el.style.left = p.x + 'px'; it.el.style.top = p.y + 'px';
+      if (it.kind === 'text') { it.y += it.vy * dt; it.vy *= .96; if (it.pop > 0) it.pop = Math.max(0, it.pop - dt * 6); }
+      this.proj(it, W, H);
+    }
+    // nye og endrede tekster måles samlet (én utlegging av siden), så regnes plassene ut uten å lese noe fra siden
+    for (const it of this.items) if (!it.malt && !(it.kind === 'text' ? uT && it.tall : uB)) this.maal(it);
+    this.legg(W, H, uT, uB);
+    for (const it of this.items) {
+      if (it.kind === 'text') { if (it.ny) { it.ox = it.mx; it.oy = it.my; it.ny = false; } else { it.ox += (it.mx - it.ox) * k; it.oy += (it.my - it.oy) * k; } }
+      this.skriv(it);
     }
   },
   clear() { for (const it of this.items) it.el.remove(); this.items = []; }
