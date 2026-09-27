@@ -68,7 +68,10 @@ class Ribbon {
     this.c.set(INK);
     for (const s of this.strokes) { if (s.circle) this.disc(s.x, s.y, s.r + outline, s.z); else this.strip(s.pts, s.w + outline * 2, s.z); }
     for (const s of this.strokes) { this.c.set(s.color); if (s.circle) this.disc(s.x, s.y, s.r, s.z + .001); else this.strip(s.pts, s.w, s.z + .001); }
-    this.geo.setDrawRange(0, this.n); this.geo.attributes.position.needsUpdate = true; this.geo.attributes.color.needsUpdate = true;
+    this.geo.setDrawRange(0, this.n);
+    // bare den tegnede delen sendes til skjermkortet (en figur bruker rundt 1300 av 3200 punkter). Et tomt bånd (blobfiendene foran)
+    // sendes ikke i det hele tatt: ingenting tegnes, og 0 i updateRange betyr hele tabellen i WebGL2. three nullstiller området etter hver opplasting
+    if (this.n) { const A = this.geo.attributes, c = this.n * 3; A.position.updateRange.count = A.color.updateRange.count = c; A.position.needsUpdate = A.color.needsUpdate = true; }
   }
 }
 /* bøyd lem: kvadratisk kurve fra a til b med albue/kne forskjøvet sideveis */

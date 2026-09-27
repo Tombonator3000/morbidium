@@ -1998,6 +1998,100 @@ async def main():
         sjekk('ingen konsollfeil (etter flettingen)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 58) Grunnarbeid for nye fiender: den som ligger under vann (e.dukket), kan ikke treffes eller siktes på, Journalen låner ikke
+        #     trekk som bare virker hos sjefen selv, strekbåndene sender bare det som er tegnet, og statusordene legger seg ikke oppå hverandre
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        gr = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
+            til = async (f, t = 4, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
+            spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }),
+            iKastere = e => Dybde.kastere().some(k => k.k === e);
+          startFloor(5, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 7 && r.h >= 7) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.face = 0;
+          // Nøkken under vannet: ingen lykteskygge, ikke nærmest, og nærkampslaget går rett gjennom (spion på Items.onHit, som kalles for hver fiende slaget treffer)
+          const s = freeSpot(P.x + 2.5, P.z, 3), n = spawnEnemy('nokken', s.x, s.z, false, 5); n.cd = 99; n.stille = 99; n.hp = n.max = 1e6;
+          ut.nede = await til(() => n.dukket === true && !n.doll.root.visible);
+          const slag = () => { n.x = P.x + Math.sin(P.face) * .9; n.z = P.z + Math.cos(P.face) * .9; const oh = Items.onHit, rammet = []; Items.onHit = function (e) { rammet.push(e); return oh.apply(Items, arguments); }; const h0 = n.hp; try { meleeHit({ combo: 0, heavy: false, charge: 0 }); } finally { Items.onHit = oh; } return { rammet: rammet.includes(n), skade: n.hp < h0 }; };
+          ut.under = { skygge: iKastere(n), naermest: nearestEnemy(n.x, n.z, 99) === n, medFilter: nearestEnemy(n.x, n.z, 99, e => e.type === 'nokken') === n, slag: slag() };
+          // kontroll: oppe av vannet er han med overalt igjen
+          n.dukket = false; n.opp = 99; ut.oppe = await til(() => n.doll.root.visible);
+          ut.over = { skygge: iKastere(n), naermest: nearestEnemy(n.x, n.z, 99) === n, slag: slag() };
+          killEntity(n, {});
+          // hvilken som helst fiende, ikke bare Nøkken: hurt gir 0, uten treffkjede eller blod, og strøm i pytten og snubletråd biter ikke
+          const s2 = freeSpot(P.x - 2.5, P.z, 3), p = spawnEnemy('pleier', s2.x, s2.z, false, 5); p.stun = 99; p.hp = p.max = 1e6; await til(() => p.state !== 'spawn');
+          const bt = Blod.treff, blod = []; Blod.treff = function (e) { blod.push(e); return bt.apply(Blod, arguments); };
+          p.dukket = true; let k0 = Kombo.n; const h0 = p.hp; ut.pleierUnder = { skade: hurt(p, 30, { from: 'player' }), hp: p.hp === h0, kjede: Kombo.n === k0, blod: blod.includes(p), naermest: nearestEnemy(p.x, p.z, 99) === p };
+          const pud = addPuddle(p.x, p.z, 'wet', 1.6, 30), trad = { kind: 'trip', x0: p.x - 1.5, z0: p.z, x1: p.x + 1.5, z1: p.z, t: 30 }; if (pud) pud.elec = 30; G.zones.push(trad); p.zapT = undefined; p.slip = 0;
+          let rort = false; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.2 && performance.now() - t0 < 20000) { if (p.zapT !== undefined || p.slip > 0) rort = true; await vent(50); } }
+          Object.assign(ut.pleierUnder, { rort, hp2: p.hp === h0, pytt: !!pud });
+          p.dukket = false; k0 = Kombo.n; ut.pleierOppe = { skade: hurt(p, 30, { from: 'player' }) > 0, kjede: Kombo.n > k0, blod: blod.includes(p) }; ut.pleierOppe.zapp = await til(() => p.zapT !== undefined, 1.5); ut.pleierOppe.skli = await til(() => p.slip > 0, 1.5);
+          Blod.treff = bt; if (pud) pud.elec = 0; G.zones.splice(G.zones.indexOf(trad), 1); killEntity(p, {});
+          // Journalen låner ikke rull, storm eller dypdykk: alle sjefene i puljen er møtt, pluss en prøvesjef med et eget trekk som Krakens dypdykk
+          const BM = BOSS_MOVES, orig = {}, valgt = {}, tell = k => () => { valgt[k] = (valgt[k] || 0) + 1; };
+          for (const k of Object.keys(BM)) if (k !== 'rewrite') { orig[k] = BM[k]; BM[k] = tell(k); }
+          BM.dypdykk = tell('dypdykk'); BM.favn = tell('favn'); SJEF_DATA.provesjef = { attacks: ['dypdykk', 'favn', 'favn', 'favn'], egne: ['dypdykk'] };
+          const s0 = G.run.sjefer; G.run.sjefer = { 1: 'krok', 2: 'rust', 3: 'arkivar', 4: 'klumpen', 5: 'hjort', 6: 'journalen', 7: 'hekk', 8: 'provesjef' };
+          const liste = typeof laanbareTrekk === 'function' ? laanbareTrekk() : null, J = { x: P.x, z: P.z, alive: true, bubbleH: 3 };
+          try { for (let i = 0; i < 200; i++) BM.rewrite(J, 3, 0, 10); } finally { for (const k in orig) BM[k] = orig[k]; delete BM.dypdykk; delete BM.favn; delete SJEF_DATA.provesjef; G.run.sjefer = s0; J.alive = false; }
+          ut.laan = { valgt, liste: liste && !liste.some(k => ['rull', 'storm', 'dypdykk'].includes(k)) && ['favn', 'gevir', 'klem', 'hookpull', 'saks', 'isolate', 'jet'].every(k => liste.includes(k)) };
+          // strekbåndene: bare det som er tegnet, sendes, og et tomt bånd sendes ikke
+          const d = new Doll('pleier', {}); d.update(1 / 60, { speed: 2 }); const Af = d.front.geo.attributes, Ab = d.back.geo.attributes;
+          ut.baand = { n: d.front.n, omraade: d.front.n > 0 && Af.position.updateRange.count === d.front.n * 3 && Af.color.updateRange.count === d.front.n * 3 && Ab.position.updateRange.count === d.back.n * 3 && Ab.color.updateRange.count === d.back.n * 3 };
+          const v0 = Af.position.version; d.update(1 / 60, { speed: 2 }); ut.baand.sendes = Af.position.version === v0 + 1; d.dispose();
+          const bl = new Doll('yngel', {}); bl.update(1 / 60, {}); const bf = bl.front.geo.attributes, bv = [bf.position.version, bf.color.version], bb = bl.back.geo.attributes.position.version;
+          for (let i = 0; i < 10; i++) bl.update(1 / 60, {}); ut.baand.tomt = bl.front.n === 0 && bf.position.version === bv[0] && bf.color.version === bv[1]; ut.baand.bakSendes = bl.back.n > 0 && bl.back.geo.attributes.position.version === bb + 10; bl.dispose();
+          // det samme i spillet, over ti bilder: yngelen (en blob) sender ikke det tomme båndet, pleieren sender sine
+          const s3 = freeSpot(P.x, P.z + 2.5, 3), y = spawnEnemy('yngel', s3.x, s3.z, false, 5), pl = spawnEnemy('pleier', s3.x + 1, s3.z, false, 5); for (const e of [y, pl]) { e.stun = 99; e.hp = e.max = 1e6; }
+          await til(() => y.state !== 'spawn' && pl.state !== 'spawn'); await bilder(2); const yv = y.doll.front.geo.attributes.position.version, pv = pl.doll.front.geo.attributes.position.version, gt = G.time;
+          await bilder(10); ut.baand.spill = { tomt: y.doll.front.geo.attributes.position.version === yv, pleier: pl.doll.front.geo.attributes.position.version > pv, tid: G.time > gt };
+          killEntity(y, {}); killEntity(pl, {}); await spill(.8);
+          // statusord: samme ord over samme figur høyst én gang per cd sekunder, et annet ord løftes over det første, og etter cd kommer ordet igjen
+          const ord = t => [...document.querySelectorAll('#fx .dmg')].filter(el => el.textContent.startsWith(t));
+          if (typeof statusOrd === 'function') {
+            const a = statusOrd(P, 'GREPET'), a2 = statusOrd(P, 'GREPET'), c = statusOrd(P, 'DØPT'); await bilder(2);
+            const rg = ord('GREPET')[0], rd = ord('DØPT')[0], mid = el => { const q = el.getBoundingClientRect(); return (q.top + q.bottom) / 2; };
+            ut.ord = { a, a2, c, grepet: ord('GREPET').length, dopt: ord('DØPT').length, crit: !!rg && rg.classList.contains('crit'), over: rg && rd ? Math.round(mid(rg) - mid(rd)) : null };
+            await spill(1.3); ut.ord.igjen = statusOrd(P, 'GREPET');
+          }
+          // en sjef som dykker (som Kraken skal): heller ingen skade, skygge eller sikte
+          const B = spawnBoss(5, P.x + 3, P.z - 2); await til(() => !!B.doll); B.dukket = true; const bh = B.hp;
+          ut.sjef = { skade: hurt(B, 50, { from: 'player' }), hp: B.hp === bh, skygge: iKastere(B), naermest: nearestEnemy(B.x, B.z, 99) === B };
+          B.dukket = false; ut.sjefOppe = { skygge: iKastere(B), naermest: nearestEnemy(B.x, B.z, 99) === B }; killEntity(B, {});
+          return ut; }""")
+        u, o = gr['under'], gr['over']
+        sjekk('Nøkken under vannet kaster ingen lykteskygge, er ikke nærmeste fiende (heller ikke med filter), og nærkampslaget går gjennom ham', gr['nede'] and not u['skygge'] and not u['naermest'] and not u['medFilter'] and not u['slag']['rammet'] and not u['slag']['skade'], [gr['nede'], u])
+        sjekk('oppe av vannet kaster han skygge, er nærmest og blir truffet (kontroll)', gr['oppe'] and o['skygge'] and o['naermest'] and o['slag']['rammet'] and o['slag']['skade'], o)
+        pu, po = gr['pleierUnder'], gr['pleierOppe']
+        sjekk('en hvilken som helst fiende under vann tar ingen skade, gir ingen treffkjede eller blod, siktes ikke på, og verken strøm i pytten eller snubletråd biter', pu['skade'] == 0 and pu['hp'] and pu['kjede'] and not pu['blod'] and not pu['naermest'] and pu['pytt'] and not pu['rort'] and pu['hp2'], pu)
+        sjekk('oppe av vannet gir slaget skade, treffkjede og blod, og strømmen og snubletråden biter (kontroll)', po['skade'] and po['kjede'] and po['blod'] and po['zapp'] and po['skli'], po)
+        sjekk('en sjef under vann tar ingen skade, kaster ingen skygge og siktes ikke på, men oppe gjør han det', gr['sjef']['skade'] == 0 and gr['sjef']['hp'] and not gr['sjef']['skygge'] and not gr['sjef']['naermest'] and gr['sjefOppe']['skygge'] and gr['sjefOppe']['naermest'], [gr['sjef'], gr['sjefOppe']])
+        v = gr['laan']['valgt']
+        sjekk('Journalen låner aldri rull, storm eller dypdykk på 200 forsøk, men de andre trekkene til de samme sjefene', not any(k in v for k in ['rull', 'storm', 'dypdykk']) and all(v.get(k, 0) > 0 for k in ['favn', 'gevir', 'klem']) and sum(v.values()) == 200 and gr['laan']['liste'], gr['laan'])
+        ba = gr['baand']
+        sjekk('strekbåndene sender bare den tegnede delen (updateRange er n * 3), og et tomt bånd sendes ikke, heller ikke i spillet over ti bilder', ba['omraade'] and ba['sendes'] and ba['tomt'] and ba['bakSendes'] and ba['spill']['tomt'] and ba['spill']['pleier'] and ba['spill']['tid'], ba)
+        od = gr.get('ord') or {}
+        sjekk('statusord: samme ord vises én gang innen cd, et nytt ord løftes over det forrige, og etter cd kommer ordet igjen', od.get('a') is True and od.get('a2') is False and od.get('c') is True and od.get('grepet') == 1 and od.get('dopt') == 1 and od.get('crit') and (od.get('over') or 0) >= 15 and od.get('igjen') is True, od)
+        await pg.screenshot(path='/tmp/e_58_grunnarbeid.png')
+        sjekk('ingen konsollfeil (grunnarbeid for nye fiender)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: Nøkken under vannet mister lykteskyggen også der, og strekbåndene tegnes som før (én runde, 3D er tungt i programvaregrafikk)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
+            til = async (f, t = 4, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(100); return !!f(); };
+          startFloor(5, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; ut.d3 = D3.on;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 7 && r.h >= 7) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
+          const s = freeSpot(P.x + 1.8, P.z + .6, 3), n = spawnEnemy('nokken', s.x, s.z, false, 5); n.cd = 99; n.stille = 99;
+          const s2 = freeSpot(P.x - 1.8, P.z + .4, 3), p = spawnEnemy('pleier', s2.x, s2.z, false, 5); p.stun = 99; p.hp = p.max = 1e6;
+          ut.nede = await til(() => n.dukket === true && !n.doll.root.visible && p.state !== 'spawn'); await til(() => false, .6);
+          ut.skyggeNede = Dybde.skygger.has(n); ut.skyggePleier = Dybde.skygger.has(p); ut.baand = p.doll.front.n > 0;
+          return ut; }""")
+        sjekk('i 3D kaster Nøkken under vannet ingen lykteskygge, mens pleieren ved siden av gjør det', d3['d3'] and d3['nede'] and not d3['skyggeNede'] and d3['skyggePleier'] and d3['baand'], d3)
+        await pg.screenshot(path='/tmp/e_58_grunnarbeid_3d.png')
+        sjekk('ingen konsollfeil (grunnarbeid i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
