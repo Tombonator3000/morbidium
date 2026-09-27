@@ -993,3 +993,12 @@ Alle tidspunkt er UTC.
 - Test 49 (Nedslag): nedslag når et varsel går av og ikke når det avbrytes eller har o.stille, lyn for strøm, blaff for baner og skrensemerker for løp, 40 store angrep med høyst 12 merker i ett tegnekall og gjenbruk, partiklene borte innen 5 s, geometrien vokser ikke, enkel grafikk, tunge og lette treff, lynet i regnværet, skyggen under et prosjektil i bue, piksler midt i et merke og utenfor, og en runde i 3D. På bygget før A6 stopper den på at Nedslag ikke finnes.
 - Bilder: r5_bilder/49_nedslag_stor, _lop og _gnist, i 2D og 3D, og _for_ fra bygget før A6 (samme frø, sted og øyeblikk).
 - Del 28, 29, 36, 46, 48 og 49 er grønne. Del 46 fant fargen på skyggematerialet i lista over farger i koden, så den skrives som new THREE.Color.
+
+## 2026-09-27 09:39 A6 sjekket: korskriket sprekker ikke hele rommet, ingen støv i veggen
+- Gikk gjennom A6 mot planen, kontrakten og bildene, og tok egne bilder av korskriket (r 6,2) i 2D og 3D og av et stort angrep og strøm på telefon stående og liggende (r5_bilder/v6_ og v6b_).
+- Korskriket til Hviskekoret (en minisjef, så hvert skrik er et stort angrep) la et merke på 13 skritt: sprekkene fra en tegning på 128 punkter ble tykke og uskarpe og gikk over hele rommet og ut i mørket, hvert tredje sekund. Merket blir nå høyst 6,5 skritt (Nedslag.maksMerke), omtrent som et stort sjefsangrep fra før.
+- Partiklene langs omrisset havnet inne i veggene og ute i mørket når ringen gikk forbi rommet. Nedslag.sprut hopper nå over punkter der solid() er sant.
+- Del 46 i 3D telte geometrien etter 24 varsler og fikk 2 i stedet for høyst 1, fordi nedslagene (merkene første gang og lynene på kanten) nå lager sitt. Varslene i den prøven får o.stille, siden nedslagene prøves i del 49.
+- Ny sjekk i del 49: et stort angrep som når inn i veggen gir ingen partikler i veggen, og merket blir høyst 6,5 skritt.
+- Del 48 feilet én gang på at 900 partikler ikke var borte (3 igjen), men gikk igjennom neste gang, og en prøve av en rolig etasje i 4 s viste ingen andre som lager partikler. Ser ut som travelhet på maskinen.
+- Del 28, 29, 36, 46, 48 og 49 er grønne.
