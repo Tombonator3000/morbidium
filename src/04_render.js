@@ -424,11 +424,7 @@ const R = {
   /* ---------- varsler på gulvet ---------- */
   telegraph(shape, o) {
     const g = new THREE.Group(); g.position.set(o.x, .035 + Math.random() * .01, o.z); g.rotation.y = o.a || 0;
-    const col = o.color || 0xff4a22;
-    const edge = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .95, depthWrite: false });
-    const ink = new THREE.MeshBasicMaterial({ color: 0x2a1a14, transparent: true, opacity: .8, depthWrite: false });
-    const fillM = new THREE.MeshBasicMaterial({ color: col, map: this.tex.hatch, transparent: true, opacity: .55, depthWrite: false }); fillM.map.repeat.set(3, 3);
-    const back = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .16, depthWrite: false });
+    const { edge, ink, fillM, back } = this.teleMat(o.color || 0xff4a22);
     const flat = m => { m.rotation.x = -Math.PI / 2; g.add(m); return m; };
     let fill;
     if (shape === 'circle') {
@@ -448,6 +444,25 @@ const R = {
       g.userData.update = p => fill.scale.setScalar(Math.max(.01, p));
     }
     g.userData.update(0); g.renderOrder = 3; this.dyn.add(g); return g;
+  },
+  /* materialene til varslene deles per farge og blir liggende (userData.delt). Ble de kastet med varselet, måtte skjermkortet bygge
+     shaderen på nytt for hvert varsel, fordi ingen andre bruker den (målt: én ny lenking per varsel) */
+  teleMat(col) {
+    const M = this.teleMats || (this.teleMats = new Map()), k = (this.teleC || (this.teleC = new THREE.Color())).set(col).getHex(); let m = M.get(k);
+    if (!m) {
+      const lag = (c, opacity, map) => { const x = new THREE.MeshBasicMaterial(Object.assign({ color: c, transparent: true, opacity, depthWrite: false }, map ? { map } : {})); x.userData.delt = true; return x; };
+      this.tex.hatch.repeat.set(3, 3); if (!this.teleInk) this.teleInk = lag(0x2a1a14, .8);
+      M.set(k, m = { edge: lag(k, .95), ink: this.teleInk, fillM: lag(k, .55, this.tex.hatch), back: lag(k, .16) });
+    }
+    return m;
+  },
+  /* varselet er ferdig: how er 'fyr' (angrepet går av), 'avbryt' (eieren ble stanset eller døde) eller 'rydd' (etasjen rives).
+     Tar det ut og frigjør geometrien, ellers blir bufrene liggende på skjermkortet (r128 slipper dem bare ved dispose). Materialer frigjøres
+     også, men ikke det som er merket userData.delt, og aldri teksturene (R.tex.hatch). Trygt å kalle to ganger. */
+  kastTele(g, how, t) {
+    if (!g || g.userData.kastet) return; g.userData.kastet = true; this.remove(g);
+    const delt = x => x.userData && x.userData.delt;
+    g.traverse(o => { if (delt(o)) return; if (o.geometry && !delt(o.geometry)) o.geometry.dispose(); if (o.material && !delt(o.material)) o.material.dispose(); });
   },
   /* ---------- kamera ---------- */
   updateCamera(tx, tz, dt) {
@@ -484,31 +499,118 @@ const R = {
 /* ---------- partikler ----------
    Fast kapasitet i én InstancedMesh, med tett bytte ved fjerning: den siste levende
    partikkelen flyttes inn i hullet. Mønsteret er hentet fra
-   scottstts/Threejs-Awesome-Graphics-Agent-Skills (MIT), threejs-procedural-vfx. */
+   scottstts/Threejs-Awesome-Graphics-Agent-Skills (MIT), threejs-procedural-vfx.
+   Blekk og papir: hver partikkel er en flate som vender mot kameraet (fast vinkel, CAM_PITCH) og snurrer rundt seg selv,
+   med en av fire tegninger fra et lite ark på 128 x 128 som lages én gang: gnist (strekes ut langs farten), blekkdråpe
+   med omriss, papirbit som vender seg, og støvdott. Arket har fyll i rødt, blekk i grønt og høylys i blått, så fargen
+   til partikkelen legges på fyllet og blekket blir mørkt. Formen velges med o.form ('gnist', 'drape', 'papir', 'stov')
+   eller gjettes fra fargen og o.flat. Alle koster fortsatt ett tegnekall. Med enkel grafikk (R.safe), eller om shaderen
+   ikke lenker, blir det de gamle klossene. */
+const PART_FORM = { gnist: 0, drape: 1, papir: 2, stov: 3 }, PART_STR = [.34, .3, .24, .4];
+const PART_VS = `attribute vec2 aForm; varying vec2 vUv; varying vec3 vCol; varying float vA;
+void main() {
+  float f = aForm.x; vUv = vec2(mod(f, 2.0), 1.0 - floor(f / 2.0)) * 0.5 + uv * 0.5;
+  #ifdef USE_INSTANCING_COLOR
+  vCol = instanceColor;
+  #else
+  vCol = vec3(1.0);
+  #endif
+  vA = aForm.y; gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+}`;
+const PART_FS = `uniform sampler2D uArk; uniform vec3 uBlekk; varying vec2 vUv; varying vec3 vCol; varying float vA;
+void main() {
+  vec3 t = texture2D(uArk, vUv).rgb; float dekk = max(t.r, t.g), a = dekk * vA; if (a < 0.03) discard;
+  vec3 c = mix(vCol, vec3(1.0, 0.98, 0.9), t.b * 0.85); c = mix(c, uBlekk, t.g / max(dekk, 0.001));
+  gl_FragColor = vec4(c, a);
+}`;
 const Particles = {
-  max: 900, n: 0, d: [], mesh: null, dummy: null, col: null,
+  max: 900, n: 0, d: [], mesh: null, dummy: null, col: null, blekk: false, brutt: false, ark: null, aForm: null, hsl: {},
   init() {
     if (this.mesh) return;
-    this.mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(.12, .12, .12), new THREE.MeshBasicMaterial({ color: 0xffffff }), this.max);
-    this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.mesh.frustumCulled = false; this.mesh.count = 0;
-    this.col = new THREE.Color(); for (let i = 0; i < this.max; i++) { this.mesh.setColorAt(i, this.col.set(0xffffff)); this.d.push({}); }
-    this.dummy = new THREE.Object3D(); R.scene.add(this.mesh);
+    this.col = new THREE.Color(); for (let i = 0; i < this.max; i++) this.d.push({});
+    this.dummy = new THREE.Object3D(); this.bygg();
+  },
+  kanBlekk() { return !R.safe && !this.brutt; },
+  /* lager meshen på nytt når enkel grafikk slås av eller på (klosser eller blekk). Arket lages én gang og blir liggende */
+  bygg() {
+    const blekk = this.kanBlekk(), gml = this.mesh; let geo, mat;
+    if (gml) { R.scene.remove(gml); gml.geometry.dispose(); gml.material.dispose(); if (gml.dispose) gml.dispose(); }
+    if (blekk) {
+      geo = new THREE.PlaneGeometry(1, 1); this.aForm = new THREE.InstancedBufferAttribute(new Float32Array(this.max * 2), 2); this.aForm.setUsage(THREE.DynamicDrawUsage); geo.setAttribute('aForm', this.aForm);
+      mat = new THREE.ShaderMaterial({ name: 'Blekkpartikler', uniforms: { uArk: { value: this.lagArk() }, uBlekk: { value: new THREE.Color(0x1c1410) } }, vertexShader: PART_VS, fragmentShader: PART_FS, transparent: true, depthWrite: false });
+    } else { geo = new THREE.BoxGeometry(.12, .12, .12); mat = new THREE.MeshBasicMaterial({ color: 0xffffff }); this.aForm = null; }
+    // fargene lages for alle plassene: setColorAt lager dem ellers etter count, som er 0 her, og da ble alle partiklene svarte
+    const m = this.mesh = new THREE.InstancedMesh(geo, mat, this.max); this.blekk = blekk; m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(this.max * 3), 3); m.instanceColor.setUsage(THREE.DynamicDrawUsage);
+    m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.count = this.n; m.renderOrder = blekk ? 5 : 0;
+    for (let i = 0; i < this.max; i++) m.setColorAt(i, this.col.set(i < this.n ? this.d[i].c : 0xffffff));
+    if (blekk) { m.onAfterRender = () => this.sjekk(); this.sjekket = false; }
+    R.scene.add(m);
+  },
+  /* lenket shaderen? Ellers blir det klosser */
+  sjekk() {
+    if (this.sjekket) return; this.sjekket = true;
+    try { const q = R.renderer.properties.get(this.mesh.material), pr = q.currentProgram || q.program; if (pr && pr.diagnostics && !pr.diagnostics.runnable) this.brutt = true; } catch (e) { }
+  },
+  /* arket med de fire tegningene: rødt er fyll (får partikkelens farge), grønt er blekk og blått er høylys */
+  lagArk() {
+    if (this.ark) return this.ark;
+    const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+    x.fillStyle = '#000'; x.fillRect(0, 0, 128, 128); x.globalCompositeOperation = 'lighter'; x.lineJoin = x.lineCap = 'round';
+    const F = 'rgb(255,0,0)', B = 'rgb(0,255,0)', H = 'rgb(0,0,255)', celle = (i, f) => { x.save(); x.translate((i % 2) * 64 + 32, (i >> 1) * 64 + 32); f(); x.restore(); };
+    const linse = (l0, l1, h) => { x.beginPath(); x.moveTo(l0, 0); x.bezierCurveTo(l0 * .3, -h * .9, l1 * .55, -h * 1.1, l1, 0); x.bezierCurveTo(l1 * .55, h * 1.1, l0 * .3, h * .9, l0, 0); x.closePath(); };
+    // gnist: en spiss strek med tykkere hode, hvitglødende kjerne og tynt blekkomriss
+    celle(0, () => { linse(-29, 27, 8); x.fillStyle = F; x.fill(); x.strokeStyle = B; x.lineWidth = 2.5; x.stroke(); linse(-18, 22, 3.2); x.fillStyle = H; x.fill(); });
+    // blekkdråpe: rundt hode foran og spiss hale bak (farten peker mot +x), omriss og et lite høylys
+    celle(1, () => {
+      x.beginPath(); x.arc(9, 0, 14, -2.2, 2.2); x.quadraticCurveTo(-8, 7, -27, 0); x.quadraticCurveTo(-8, -7, 9 + Math.cos(-2.2) * 14, Math.sin(-2.2) * 14); x.closePath();
+      x.fillStyle = F; x.fill(); x.strokeStyle = B; x.lineWidth = 3.2; x.stroke();
+      x.beginPath(); x.ellipse(13, -5, 4, 2.4, -.5, 0, TAU); x.fillStyle = H; x.fill();
+      x.beginPath(); x.arc(-24, 9, 3, 0, TAU); x.fillStyle = F; x.fill(); x.strokeStyle = B; x.lineWidth = 2; x.stroke();
+    });
+    // papirbit: revet kant på den ene siden, blekkomriss og to linjer fra en journalside
+    celle(2, () => {
+      x.rotate(-.18); x.beginPath(); x.moveTo(-22, -16); x.lineTo(21, -18); x.lineTo(24, 15);
+      for (let k = 0; k <= 8; k++) x.lineTo(24 - k * 5.8, 15 + (k % 2 ? 5 : -1) + (k % 3) * 1.5);
+      x.closePath(); x.fillStyle = F; x.fill(); x.strokeStyle = B; x.lineWidth = 2.2; x.stroke();
+      x.strokeStyle = 'rgb(0,120,0)'; x.lineWidth = 1.6; for (const y of [-6, 3]) { x.beginPath(); x.moveTo(-16, y); x.lineTo(17, y - .8); x.stroke(); }
+      x.strokeStyle = 'rgb(0,70,0)'; x.beginPath(); x.moveTo(-12, -16); x.lineTo(-13, 16); x.stroke();
+    });
+    // støvdott: myke skyer med noen blekkprikker og korte skraveringer
+    celle(3, () => {
+      for (const [a, b, r] of [[0, 0, 19], [-10, 5, 13], [11, 4, 14], [3, -9, 12], [-6, -7, 10]]) { const g = x.createRadialGradient(a, b, 0, a, b, r); g.addColorStop(0, 'rgba(255,0,0,.8)'); g.addColorStop(.6, 'rgba(255,0,0,.45)'); g.addColorStop(1, 'rgba(255,0,0,0)'); x.fillStyle = g; x.beginPath(); x.arc(a, b, r, 0, TAU); x.fill(); }
+      x.strokeStyle = 'rgb(0,150,0)'; x.lineWidth = 1.8; for (const [a, b, r, v0, v1] of [[0, 0, 20, 3.4, 5.2], [-10, 5, 14, 1.7, 3.1], [11, 4, 15, .1, 1.3]]) { x.beginPath(); x.arc(a, b, r, v0, v1); x.stroke(); }
+      x.strokeStyle = 'rgb(0,130,0)'; x.lineWidth = 1.4; for (const [a, b] of [[-12, -2], [-5, 6], [4, -4], [10, 5]]) { x.beginPath(); x.moveTo(a, b); x.lineTo(a + 5, b - 5); x.stroke(); }
+      x.fillStyle = 'rgb(0,200,0)'; for (const [a, b, r] of [[-15, 8, 1.6], [14, -8, 1.3], [2, 12, 1.5], [-4, -13, 1.1], [17, 9, 1]]) { x.beginPath(); x.arc(a, b, r, 0, TAU); x.fill(); }
+    });
+    const t = this.ark = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearMipmapLinearFilter; return t;
+  },
+  /* formen: o.form, ellers papir for o.flat, støv for grått og brunt, dråper for blod, vann og mørke farger, gnister for hvitt, gult og oransje */
+  form(o) {
+    if (o.form !== undefined) return typeof o.form === 'number' ? o.form & 3 : PART_FORM[o.form] ?? 0;
+    if (o.flat) return 2;
+    const H = this.col.getHSL(this.hsl), h = H.h, s = H.s, l = H.l;
+    if (l > .25 && l < .8 && s < .4 && (h < .17 || h > .9 || s < .12)) return 3;
+    if (l <= .25 || (h > .45 && h < .62 && s > .4 && l < .85) || ((h < .04 || h > .9) && s > .35 && l < .7)) return 1;
+    if (l >= .7 || (h < .2 && s > .6 && l > .5)) return 0;
+    return (o.speed || 4) >= 6 ? 0 : 1;
   },
   spawn(x, y, z, n, color, o = {}) {
     if (!this.mesh) return;
+    this.col.set(color); const f = this.form(o);
     for (let k = 0; k < n; k++) {
       if (this.n >= this.max) break;
       const i = this.n++, p = this.d[i];
       const a = Math.random() * TAU, sp = (o.speed || 4) * (.4 + Math.random() * .8);
       p.x = x; p.y = y; p.z = z; p.vx = Math.cos(a) * sp + (o.vx || 0); p.vz = Math.sin(a) * sp + (o.vz || 0); p.vy = (o.up || 4) * (.5 + Math.random());
       p.life = p.max = (o.life || .6) * (.6 + Math.random() * .6); p.g = o.g === undefined ? 14 : o.g; p.s = (o.size || 1) * (.6 + Math.random() * .8);
-      p.flat = !!o.flat; p.rx = Math.random() * 3; p.ry = Math.random() * 3; p.spin = rnd(-12, 12); p.c = color;
+      p.flat = !!o.flat; p.rx = Math.random() * 3; p.ry = Math.random() * 3; p.spin = rnd(-12, 12); p.c = color; p.f = f; p.ang = a;
       this.mesh.setColorAt(i, this.col.set(color));
     }
     this.mesh.instanceColor.needsUpdate = true;
   },
   update(dt) {
     if (!this.mesh) return;
+    if (this.blekk !== this.kanBlekk()) this.bygg();
     let swapped = false;
     for (let i = this.n - 1; i >= 0; i--) {
       const p = this.d[i]; p.life -= dt;
@@ -517,15 +619,40 @@ const Particles = {
       if (p.y < .05) { p.y = .05; p.vy *= -.35; p.vx *= .6; p.vz *= .6; }
       p.rx += p.spin * dt; p.ry += p.spin * .7 * dt;
     }
-    const D = this.dummy;
-    for (let i = 0; i < this.n; i++) {
-      const p = this.d[i], sc = p.s * Math.min(1, p.life / p.max * 2);
-      D.position.set(p.x, p.y, p.z); D.rotation.set(p.rx, p.ry, 0);
-      if (p.flat) D.scale.set(sc * 1.4, sc * .15, sc); else D.scale.setScalar(sc);
-      D.updateMatrix(); this.mesh.setMatrixAt(i, D.matrix);
+    if (this.blekk) this.skrivBlekk(); else {
+      const D = this.dummy;
+      for (let i = 0; i < this.n; i++) {
+        const p = this.d[i], sc = p.s * Math.min(1, p.life / p.max * 2);
+        D.position.set(p.x, p.y, p.z); D.rotation.set(p.rx, p.ry, 0);
+        if (p.flat) D.scale.set(sc * 1.4, sc * .15, sc); else D.scale.setScalar(sc);
+        D.updateMatrix(); this.mesh.setMatrixAt(i, D.matrix);
+      }
     }
-    this.mesh.count = this.n; this.mesh.instanceMatrix.needsUpdate = true;
+    // bare de levende plassene sendes til skjermkortet
+    const IM = this.mesh.instanceMatrix; IM.updateRange.offset = 0; IM.updateRange.count = this.n * 16; this.mesh.count = this.n; IM.needsUpdate = true;
     if (swapped) this.mesh.instanceColor.needsUpdate = true;
+  },
+  /* flatene skrives rett inn i matrisene: x og y ligger i skjermplanet (høyre og opp for kameraet), z peker mot kameraet.
+     Flyttet 0,25 mot kameraet, så de ikke skjæres av gulvet når de ligger der */
+  skrivBlekk() {
+    const A = this.mesh.instanceMatrix.array, F = this.aForm.array, cp = Math.cos(CAM_PITCH), sp = Math.sin(CAM_PITCH), L = .25;
+    for (let i = 0; i < this.n; i++) {
+      const p = this.d[i], f = p.f, liv = p.life / p.max, fr = Math.min(1, liv * 2), sc = p.s * PART_STR[f];
+      let sx = sc, sy = sc, ang, al = 1;
+      if (f < 2) {
+        // gnister og dråper peker dit de flyr (farten sett fra kameraet) og strekkes ut med farten
+        const ux = p.vx, uy = p.vy * cp - p.vz * sp, v = Math.hypot(ux, uy); if (v > .4) p.ang = Math.atan2(uy, ux);
+        const k = f === 0 ? Math.min(2.6, 1 + v * .16) : Math.min(1.7, 1 + v * .07); ang = p.ang; sx *= k * fr; sy *= f === 0 ? fr : fr / Math.sqrt(k);
+      } else if (f === 2) { ang = p.rx * .5; sx *= fr; sy *= fr * (.18 + .82 * Math.abs(Math.cos(p.ry))); } // papiret vender seg i lufta
+      else { ang = p.rx * .15; const vokst = 1 + (1 - liv) * .8; sx *= vokst; sy *= vokst; al = Math.min(1, liv * 1.7) * .9; } // støvet vokser og blekner
+      const c = Math.cos(ang), s = Math.sin(ang), o = i * 16;
+      A[o] = c * sx; A[o + 1] = s * sx * cp; A[o + 2] = -s * sx * sp; A[o + 3] = 0;
+      A[o + 4] = -s * sy; A[o + 5] = c * sy * cp; A[o + 6] = -c * sy * sp; A[o + 7] = 0;
+      A[o + 8] = 0; A[o + 9] = sp; A[o + 10] = cp; A[o + 11] = 0;
+      A[o + 12] = p.x; A[o + 13] = p.y + sp * L; A[o + 14] = p.z + cp * L; A[o + 15] = 1;
+      F[i * 2] = f; F[i * 2 + 1] = al;
+    }
+    this.aForm.updateRange.offset = 0; this.aForm.updateRange.count = this.n * 2; this.aForm.needsUpdate = true;
   },
   clear() { this.n = 0; if (this.mesh) this.mesh.count = 0; }
 };

@@ -941,6 +941,14 @@ Alle tidspunkt er UTC.
 - Et spor stopper nå med én gang hvis en agent faller ut, i stedet for å prøve resten av punktene og feile på hvert av dem.
 - Agentene tenker på «high» i stedet for «max», så runden bruker mindre av grensen.
 
+## 2026-09-27 02:09 Spor A, A1: varsler og hugg lekker ikke lenger på skjermkortet
+- Hvert varsel på gulvet lagde fire til sju nye geometrier og like mange materialer, og hvert hugg en ny ring. Ingenting ble frigjort, bare tatt ut av scenen, så bufrene ble liggende på skjermkortet til siden ble lukket. 300 varsler ga 1500 geometrier som aldri forsvant.
+- Nytt: R.kastTele(g, how, t) ved siden av R.telegraph. Den tar varselet ut og frigjør geometrien, men ikke noe som er merket userData.delt og aldri teksturen med skraveringen. how er 'fyr' når angrepet går av, 'avbryt' når eieren er død, lammet, sover eller cancelTeles stanser den, og 'rydd' når clearFloor river etasjen. Blekkvarselet (A3) kan henge seg på den.
+- Materialene til varslene deles per farge og blir liggende. Planen sa at de skulle kastes, men da måtte skjermkortet lenke shaderen på nytt for hvert varsel, fordi ingen andre bruker akkurat den. Varslene endrer aldri materialene sine (bare skalaen på fyllet), så det ser helt likt ut.
+- Huggene: ringen lages én gang per bue (rundet til 0,05, helt rundt som før) i R.geo og skaleres med rekkevidden, så størrelsen er den samme som før. Materialene legges i en liten pott og brukes om igjen, av samme grunn som over.
+- Test 44 (Varsler og slag uten lekkasje): 300 varsler som går av, 20 som avbrytes, 60 hugg, ingen nye shaderlenkinger, riktig grunn til R.kastTele og rydding ved etasjebytte, pluss én runde i 3D. På bygget fra før gir den +1500, +101 og +60 geometrier. Før og etter i r5_bilder/44_varsler_*.png er like.
+- Del 5, 28 og 29 ventet i sanntid og feilet på en maskin der programvaregrafikken gikk på en åttendedel av full fart (også på bygget fra før). Del 5 venter nå på spilletid eller første treff, og taket for spill() i 28 og 29 er hevet fra 20 til 60 sekunder. Del 4, 5, 19, 28, 29, 36 og 44 er grønne.
+
 ## 2026-09-27 02:12 Tekstene legger seg ikke oppå hverandre, og stemplene står i kø (A2, «IKKBONKG»)
 - Det Tom så i 6.png: en perfekt unnvikelse av trillepasienten gir «IKKE I DAG» og «bom» på pasienten, og når stolen treffer veggen like etter, kommer «BONK» på nesten samme sted. Ordene ble liggende oppå hverandre og leste «IKKBONKG».
 - De flytende tekstene (FX i 04_render.js) legges nå ut på nytt hvert bilde. Store ord (krit og stempel) går først, så skade på pasienten, så tall og til sist info, og eldre før nyere. En tekst som ville dekket en annen tekst eller en snakkeboble, flyttes dit den må flyttes minst (helst opp) og glir dit. Planen sa «skyv opp inntil fire ganger, så til siden»; å prøve plassene rundt hver tekst som alt ligger der og ta den nærmeste gir samme resultat og hopper ikke fram og tilbake.
@@ -951,6 +959,12 @@ Alle tidspunkt er UTC.
 - Ny testdel 45 (Tekster og stempler), på PC 1280x720, liggende telefon 844x390 og én gang i 3D. Alle sjekkene feiler på bygget fra før (1ff4a4f). Del 24, 26, 29, 36 og 45 er grønne.
 - Skjermbilder til Tom: 45_tekst_for.png og 45_tekst_etter.png (6.png laget på nytt i liggehallen i Parken), og 45_stempler_etter_844x390.png med tre stempler på en gang.
 
+## 2026-09-27 02:49 Spor A, A1 sjekket av skeptikeren
+- Gikk gjennom R.kastTele, updateTele (fyr og avbryt), cancelTeles, clearFloor og huggene: alle stedene som tar ut et varsel, går nå gjennom R.kastTele, ingen andre filer holder på varselet eller endrer materialene, fargene er faste tall (så lista over delte materialer vokser ikke), og ringene og materialene til huggene deles uten å bli kastet ved en feil. Treffene er som før: bare det som går av, treffer.
+- Test 44 er ikke tom: toppen er +1500 geometrier for 300 varsler og +101 for 20 avbrutte, og etterpå 0. Del 36 (grafikkminnet) holder seg innenfor. Bildene før og etter er like, som planen sier (A1 skal ikke endre utseendet; det gjør A3).
+- Del 28 feilet én gang av fire: fienden i lynprøven ble av og til en pansret mester (Oppskrift.mester, rustning 0,75) og tok 34 i stedet for 45. Ikke fra A1. Testen setter nå e.mArmor = 1.
+- Del 4, 5, 19, 28, 29, 36 og 44 er grønne.
+
 ## 2026-09-27 02:53 Skeptikeren på A2: stemplene og lappen holder seg over evnekortene
 - Sjekket planpunktet, testdel 45 og skjermbildene, og tok egne bilder av tre stempler på en gang på PC (1280x720), TV (1920x1080), liggende telefon (844x390) og stående telefon (390x844). Tekstene over pasienten (45_tekst_etter.png) er klart bedre: BONK over IKKE I DAG, og «bom» borte.
 - Feil 1: lappen (toast) la seg oppå evnekortene når et stempel sto. På PC dekket forklaringen tallene på kortene (lappen 520 til 626, kortene fra 614), og på liggende telefon lå hele lappen og bunnen av det store stempelet over kortene, så forklaringen ikke kunne leses (det gamle 45_stempler_etter_844x390.png). Stempel.plass legger nå stemplene og lappen under hverandre og måler toppen av kortene (16 punkter ekstra for tallene og myntene som stikker opp). Går det ikke, skyves stakken opp, og er det fortsatt ikke plass, krymper stemplene (ikke lappen, den har forklaringen). Når et stempel går, blir de andre stående der de er, som før.
@@ -960,6 +974,15 @@ Alle tidspunkt er UTC.
 - 45_stempler_etter_844x390.png er tatt på nytt. Del 24, 26, 29, 36 og 45 kjøres.
 - Del 24, 26, 36 og 45 grønne (60 av 61). Del 29 feilet én gang på «kjeden slutter av seg selv» mens maskinen hadde last 9 på 4 kjerner: testen venter på spilltid med et tak på 20 sekunder ekte tid. Alene gikk del 29 gjennom.
 - Del 45 sjekker nå også at de tre stemplene slutter over evnekortene (på bygget før rettingen lå lappen 309 til 386 og kortene fra 284 på liggende telefon). Del 45 grønn.
+
+## 2026-09-27 03:52 Spor A, A3 Blekkvarsel: angrepsvarslene i én blekkshader
+- Toms punkt 1 og 7.webp: varslene var flate røde striper og små ringer. Nå tegnes alle varsler av én shader i 46_blekk.js (Blekk): ett InstancedBufferGeometry med 48 plasser og én ShaderMaterial som ligger i scenen fra første varsel, som partiklene. 30 varsler koster ett tegnekall i 3D og to uten 3D (varslene og lysplatene), og ingenting lages per varsel.
+- Formene er avstandsfelt som følger inShape: sirkel, boks fra 0 til len og kjegle (kakestykke pluss en skive på 0,6). Lagene: papirkant utenfor streken så varselet leses på mørke gulv, grunnfarge, skravur i verdensrom bak fronten (kryss etter 0,6), glød innenfra kanten som pulserer fortere mot slutten, vinkler som ruller mot målet på brede baner og streker i prosjektilbaner, en pil ytterst på banene, sigillring og sprekker på store angrep (radius 2,2 eller mer, sjefer og minisjefer), lys front, blekkstreken som tegner seg selv den første fjerdedelen, og låsen de siste 0,12 sekundene. Når angrepet går av, ligger et hvitglødende etterbilde i 0,18 s. Stanses eieren, løses varselet opp i grått på 0,15 s.
+- Fargen følger skadetypen (TELE_TYPE: fysisk, morb, strøm, gass, vann, gift, ild, lys, papir, natur, lenke), fra o.type, så fargen i TELE_FARGE (alle 48 fargene som står i koden), så eieren (TELE_EIER, oppasserens sprøyte er gift), så fargetonen, ellers fysisk. Fiendens egen farge brukes i skravuren. Alle typefargene har luminans minst 0,35, så de mørke fargene (0x2a1a30, 0x3a2a44, 0x3a3a4a og de andre) forsvinner ikke lenger på mørke gulv. Strøm har taggete kant, gass og vann boblende, lys glimt, papir dobbel stempelring og lenke kjettingledd.
+- Kvalitet: lav og R.lowTex tegner kant, fyll, front og puls, middels, telefon og 2D også inntegning, skravur og vinkler, og høy også blekk som flyter, sigiller og sprekker. Den gamle tegningen brukes med enkel grafikk (R.safe), uten instansiering, når shaderen ikke lenker og når alle 48 plassene er tatt, nå med typefargen. Slås enkel grafikk på midt i et angrep, går varselet over til den gamle tegningen.
+- o.folg: varselet følger eieren. Lagt inn i de fem angrepene der treffet flyttes til eieren når det går av (22_sjefer.js:89, 29_monstre.js:591, 37_utefiender.js:268, 373 og 459), og updateTele flytter o med eieren, så det som tegnes og det som treffer er det samme.
+- addTele gir nå R.telegraph varigheten og eieren. clearFloor og updateTele pakkes inn i 46_blekk.js. Test 44 måler den gamle tegningen (Blekk.av), siden blekket ikke lager geometri.
+- Test 46 (Blekkvarsel): tegnekall, 300 varsler (48 i blekk og 252 på den gamle måten, ingen geometri igjen), plassene frie etter bruk og etasjebytte, formen mot inShape på 18 000 punkter, følge eieren, etterbildet og oppløsningen, skadetypene, fargene, enkel grafikk, piksler inne og utenfor en sirkel og en bane, og en runde i 3D. På bygget fra før stopper den på at Blekk ikke finnes. Bilder i r5_bilder/46_varsel_*.png. Del 4, 5, 19, 20, 27, 28, 36, 44 og 46 er grønne.
 
 ## 2026-09-27 04:18 Blodet på glasset renner som blod (A4)
 - Det Tom så i 10.png: tynne, rette røde streker fra toppen av skjermen og helt ned. Det var sporene etter bloddråpene på glasset (43_vaatt.js). Hvert spor var ett strøk med samme bredde og styrke hele veien, dråpene mistet nesten ingen masse og rant hele skjermen, alderen på sporet ble nullstilt for hvert nytt punkt, og de tunge treffene la dråper helt oppe i kanten.
@@ -972,6 +995,12 @@ Alle tidspunkt er UTC.
 - Ikke gjort: tørking i den blå kanalen (valgfritt i planen). Blå kanal er fortsatt ledig.
 - Ny testdel 47 (Blod som renner), på PC og stående telefon og én gang i 3D. Den lengste loddrette stripen med blod etter et tungt treff er nå 49 av 216 punkter (194 før), en enkelt dråpe renner 42 punkter (178 før), og sporene smalner og slingrer. Alle sjekkene unntatt de uten konsollfeil og 3D-sjekken feiler på bygget fra før (1ff4a4f). Del 17, 18, 34, 36 og 47 er grønne.
 - Skjermbilder til Tom: 47_blod_for.png og 47_blod_etter.png (tungt treff og 3 sekunder spilltid i liggehallen i Parken, samme frø og utsnitt), og 47_blod_etter_390x844.png.
+
+## 2026-09-27 04:51 Spor A, A3 sjekket av skeptikeren
+- Gikk gjennom 46_blekk.js mot planen: formene i shaderen (sirkel, boks fra 0 til len, kjegle med skiven på 0,6) er de samme som inShape, også for kjegler bredere enn en halv sirkel og for r under 0,6. Plassene frigjøres ved fyr, avbryt, rydd og etasjebytte, bare de endrede delene sendes til skjermkortet, og ingenting lages per varsel. Enkel grafikk, shader som ikke lenker, full pott og enkel grafikk slått på midt i et angrep går til den gamle tegningen. De fem folg-linjene er riktige, og updateTele flytter o før tegningen.
+- Egne bilder i 2D, 3D, lav, enkel grafikk og uten lys, pluss ekte kamp (oppasser, narkose, pleier, kultist) på PC, liggende telefon (844 x 390, berøring) og stående telefon i 3D: varslene leses godt, typefargene skilles, vinklene viser retningen, og ingen konsollfeil. Den grå oppløsningen og etterbildet ser ut som planen sier.
+- I 2D med lys blir varsler nær pasienten og lamper bleke (narkoseringen nesten hvit), og låsen de siste 0,12 s blir en hvit flate. Det kommer av at 2D-lyset ganger hele bildet (også før A3). Prøvde svakere lysplater: nesten ingen forskjell, så endringen ble ikke tatt med.
+- Del 4, 5, 19, 20, 27, 28, 36, 44 og 46: 76 av 76.
 
 ## 2026-09-27 04:55 Skeptikeren på A4 (blod som renner)
 - Sjekket planpunktet, koden i 43_vaatt.js, testdel 47 og skjermbildene. Etterbildene er klart bedre: sporene slingrer, smalner og perler seg, og de rette strekene fra toppen er borte, også på stående telefon.
@@ -989,6 +1018,16 @@ Alle tidspunkt er UTC.
 - Resten startet 06:22 UTC: A5 og A6, C1 og C2, B3, B4 og B6, C5, C6, C7 og C8.
 - B5 (gulv i full oppløsning med egne fliser) er tatt ut av denne runden. Det er en stor endring i hvordan gulvet tegnes, og den trengs først når Tom skal bestille gulv (liste 12). Veggprøven i liste 11 kommer først uansett.
 
+## 2026-09-27 06:31 Spor A, A5 Blekkpartikler: flater i blekk og papir i stedet for klosser
+- Toms punkt 1: partiklene var små klosser på 0,12, og alle var svarte. Fargelista til InstancedMesh ble laget av setColorAt mens count var 0, så den fikk lengde 0 og hver partikkel ble tegnet uten farge. Det gjaldt alle 44 stedene som lager partikler.
+- Nå er hver partikkel en flate som vender mot kameraet (fast vinkel, CAM_PITCH), med en av fire tegninger fra ett lite ark på 128 x 128 som lages én gang og blir liggende: gnist (spiss strek med lys kjerne, strekkes ut langs farten), blekkdråpe med omriss og høylys (peker dit den flyr), papirbit med revet kant og journallinjer (vender seg i lufta) og støvdott (vokser og blekner). Arket har fyll, blekk og høylys i hver sin kanal, så partikkelens farge legges på fyllet og omrisset blir mørkt blekk.
+- Formen velges med o.form ('gnist', 'drape', 'papir', 'stov') eller gjettes fra fargen: o.flat gir papir, grått og brunt gir støv, blod, vann og mørke farger gir dråper, hvitt, gult og oransje gir gnister. Ingen av stedene som lager partikler er endret.
+- Fortsatt én InstancedMesh med 900 plasser, samme spawn og samme bytte ved fjerning, og ett tegnekall. Matrisene skrives rett inn i lista, og bare de levende plassene sendes til skjermkortet. Fargelista lages for alle plassene.
+- Enkel grafikk (R.safe), og en shader som ikke lenker, gir de gamle klossene (nå med farge). Slås enkel grafikk av eller på, bygges meshen om på neste bilde, og den gamle frigjøres. Arket frigjøres aldri.
+- Test 48 (Blekkpartikler): flate med formattributt og egen shader, 900 partikler i ett tegnekall, fargen kommer fram, formen gjettes riktig, gnisten strekkes langs farten og vender mot kameraet, 900 partikler lever ut og blir borte, enkel grafikk fram og tilbake uten at geometri eller tekstur blir liggende, røde piksler på skjermen, og en runde i 3D. På bygget før A5 (med Particles eksportert) er det klosser og en tom fargeliste, så første sjekk feiler og testen stopper.
+- Bilder: r5_bilder/48_partikler_for.png og 48_partikler_etter.png (fem drap i et rolig rom, 2D, samme frø og øyeblikk) og 48_partikler_etter_3d.png. Før er det svarte klosser, etter er det røde dråper, gule gnister, papirbiter og støv.
+- Del 17, 18, 28, 29, 36 og 48 er grønne.
+
 ## 2026-09-27 06:58 Papiljottene sitter på hodet, og kontrollene i grafikkleveransen (C1)
 - Det Tom så i 8.png: papiljottene svevde som en glorie over hodet på dødskortet. Tallene i PAS_PYNT var stilt inn for det tegnede reservehodet (issen på .88), men spillet bruker hodene fra ChatGPT, der den tette issen når .78 over festepunktet. Papiljottene fra ChatGPT er i tillegg bredere og høyere enn tegningen, så bare 0 til 2 prosent av dem lå over hodet.
 - PAS_PYNT har fått et valgfritt felt skala (papiljotter .75, hårnett .9, hjelm .92) og nye tall for papiljotter, hårnett, hjelm, sløyfe og nattlue. Hornene og svulsten i LOOKS er senket. Nå ligger minst 20 prosent av all pynt over hodet (papiljottene 56 prosent), for begge kjønn forfra, fra siden og bakfra.
@@ -1001,11 +1040,31 @@ Alle tidspunkt er UTC.
 - Ny testdel 56 (Hår og pynt på hodet). Alle sjekkene unntatt den uten konsollfeil feiler på bygget fra før (1ff4a4f). Del 8, 9, 10, 11, 27, 36 og 56 er grønne.
 - Skjermbilder til Tom: 56_papiljotter_for.png og 56_papiljotter_etter.png (dødskortet), 56_kontakt.png og 56_kontakt_for.png (all pynt på begge kjønn i f, s og b), 56_kontakt_oppskrift_for.png og 56_kontakt_oppskrift_etter.png (hatter, frisyrer og tilbehør på personalet), 56_hjort_for.png og 56_hjort_etter.png (2D og 3D, samme frø og plass), og 56_fiender_kontroll.png.
 
+## 2026-09-27 07:05 Spor A, A5 sjekket av skeptikeren
+- Gikk gjennom Particles mot planen: samme InstancedMesh, spawn, 900 plasser og bytte ved fjerning. Flaten vender mot kameraet (normalen er (0, sin, cos) av CAM_PITCH, som kameraet i updateCamera), vinkelen på skjermen regnes riktig fra farten, cellene i arket stemmer med flipY, formen og p.f følger med ved byttet, og fargelista har plass til alle 900. three er r128, så updateRange finnes og ShaderMaterial får instanceColor. Ingen tåke i scenen, så shaderen mangler ikke noe der. Enkel grafikk bygger om meshen og frigjør den gamle, arket lages én gang, og ingen andre filer bruker Particles.mesh. Alle 44 stedene bruker faste farger og size under 1,2.
+- Egne bilder på stående telefon i 3D (390 x 844, berøring), liggende telefon i 2D (844 x 390), enkel grafikk i 2D og lav i 3D: dråpene, gnistene og papiret leses også på telefon, enkel grafikk gir fargede klosser, og ingen konsollfeil. Før og etter er klart forskjellige: svarte klosser mot røde blekkdråper med omriss, gule gnister og papirbiter.
+- Tok bildene 48_partikler_for.png, 48_partikler_etter.png og 48_partikler_etter_3d.png på nytt uten snakkebobla, som dekket midten av etter-bildet (v48_bilder_tom.py).
+- Planen sier at enkel grafikk satt før init gir klosser, men test 48 sjekket bare bytte etterpå. Ny sjekk i test 48: meshen rives, R.safe settes, init gir klosser, og blekket kommer når den slås av.
+- Del 17, 18, 28, 29, 36 og 48 er grønne (del 18 trenger siden fra del 17).
+
 ## 2026-09-27 07:18 Skeptikeren på C1 (papiljottene og kontrollene i grafikkleveransen)
 - Gått gjennom: PAS_PYNT med skala, hodeTopp, deler(), placeAddons og placeLook (dreiingen), HUD-portrettet, LOOKS, frisyrene og ansiktstilbehøret på personalet (Oppskrift.kleDeler), og løftet av hjortens kropp. Sett på dødskortet, kontaktarkene (pynt på begge kjønn i f, s og b, hatter, hår og tilbehør på personalet), reservehodet uten bilder, hjorten i 2D og 3D, trillepasienten og speilpasienten, og spilldukken med papiljotter i 3D på PC, stående og liggende telefon (ingen konsollfeil). Papiljottene sitter i håret i alle rendererne, og hjorten står på beina.
 - Ingen feil funnet som måtte rettes. Testdel 56 feiler på den gamle koden (dreiingen, hjorten, dekningen), så den er ikke tom.
 - Ikke rettet (fra før): eyeliner fra siden stikker foran ansiktet, fordi tegningen har to øyne. 28_oppskrift.js står ikke i noe spors liste, men er endret her (frisyrene og TILBEHOR_FESTE), så det må med i flettingen.
 - Del 9, 10, 11, 27, 36 og 56 grønne.
+
+## 2026-09-27 08:12 Spor A, A6 Nedslag: angrepene lander med tyngde
+- Toms punkt 1: når et angrep gikk av, forsvant varselet og det skjedde nesten ingenting. Nå lander hvert angrep med Nedslag i 46_blekk.js. R.kastTele med 'fyr' legger varselet i en kø (ikke med o.stille), og køen tas i updateTele rett etter at fire har gått, så vi vet om fienden stormer.
+- Partikler langs omrisset av formen (sirkel, bane og kjegle, pluss noen inne i formen på store angrep) med blekkpartiklene fra A5, etter skadetypen: støv og gulvflis (fysisk), gule gnister og to eller tre korte lyn på kanten (strøm), blå sky (gass), dråper og sky (vann og gift), fiolette gløder som stiger (morb), gløder og røyk (ild), papirbiter (papir), blad og støv (natur) og metallgnister (lenke). Antallet er 8 pluss 2,4 per kvadratenhet, høyst 60, ganger Glod.kvote(), som er 0 med enkel grafikk og lav tekstur.
+- Store angrep (r 2,2 eller mer, en sjef eller en minisjef, ikke smale baner som krokene) setter et merke i gulvet: sprekk (fysisk, papir, natur, lenke), svimerke (ild, strøm, lys) eller blekksøl i typefargen (morb, gass, vann, gift). Merkene er 12 plasser i én InstancedMesh med et eget ark på 256 x 256 som lages én gang, stemples inn og blekner over 5 s, og den som har bleknet helt brukes først, ellers den eldste. De gir også en sjokkbølge på 0,35 til 0,6 (følger Forvrengning) og rister skjermen etter avstanden fra kanten av angrepet til pasienten (ingenting over 14 skritt, og ristingen legges ikke oppå den angrepet selv gir).
+- Et løp (pleieren, tvangstrøya, trillepasienten og de andre som stormer) gir støv som sparkes bakover og skrensemerker der fienden tok sats. En prosjektilbane gir bare et lite blaff der skuddet går ut.
+- Tunge treff på pasienten (over 15 % av livet) fryser bildet 0,05 s og viser treffstjerna, gjennom en innpakning av hurtPlayer.
+- Fra A7 (tatt med fordi den var liten): prosjektilene har en liten skygge på gulvet, én InstancedMesh med 64 plasser og delt geometri, som krymper med høyden, så kast i bue viser hvor de lander.
+- Lynet i regnværet har sitt eget nedslag, så varselet får o.stille (Uvaer.varsel pakkes inn). Ingen andre filer er endret.
+- Ingenting lages per nedslag: arket, meshen for merkene og skyggene lages første gang og blir liggende. Lyn på kanten bruker Lyn.slag, som frigjør seg selv. Med enkel grafikk kommer ingen partikler, lyn, merker, sjokkbølger eller skygger, men ristingen og frysen er med.
+- Test 49 (Nedslag): nedslag når et varsel går av og ikke når det avbrytes eller har o.stille, lyn for strøm, blaff for baner og skrensemerker for løp, 40 store angrep med høyst 12 merker i ett tegnekall og gjenbruk, partiklene borte innen 5 s, geometrien vokser ikke, enkel grafikk, tunge og lette treff, lynet i regnværet, skyggen under et prosjektil i bue, piksler midt i et merke og utenfor, og en runde i 3D. På bygget før A6 stopper den på at Nedslag ikke finnes.
+- Bilder: r5_bilder/49_nedslag_stor, _lop og _gnist, i 2D og 3D, og _for_ fra bygget før A6 (samme frø, sted og øyeblikk).
+- Del 28, 29, 36, 46, 48 og 49 er grønne. Del 46 fant fargen på skyggematerialet i lista over farger i koden, så den skrives som new THREE.Color.
 
 ## 2026-09-27 08:25 Snøfall som ligner snø (C2)
 - Det Tom så i 6.png: snøen som faller, var 220 harde firkanter på to til tre punkter i en fast boks som ikke fulgte kameraet. På stående telefon kom det aldri snø i den nederste femtedelen av skjermen, alle fnuggene slengte i takt, og det var ingen vind eller dybde.
@@ -1027,3 +1086,12 @@ Alle tidspunkt er UTC.
 - Rettet: med lette teksturer (R.lowTex) er det ikke noe snøfall, og da sang sirissene igjen på snøetasjene. Nå tier de når etasjen har snøvær, uansett grafikk.
 - Skjermbildene 57_sno_etter_1280.png, 57_sno_etter_390x844.png og 57_sno_etter_2d.png er tatt på nytt.
 - Del 24, 36, 37, 39 og 57 er grønne. Del 28 feiler på at Morbidium-gløden ikke er borte etter pytten, likt på bygget fra før, så det kommer ikke fra snøen.
+
+## 2026-09-27 09:39 A6 sjekket: korskriket sprekker ikke hele rommet, ingen støv i veggen
+- Gikk gjennom A6 mot planen, kontrakten og bildene, og tok egne bilder av korskriket (r 6,2) i 2D og 3D og av et stort angrep og strøm på telefon stående og liggende (r5_bilder/v6_ og v6b_).
+- Korskriket til Hviskekoret (en minisjef, så hvert skrik er et stort angrep) la et merke på 13 skritt: sprekkene fra en tegning på 128 punkter ble tykke og uskarpe og gikk over hele rommet og ut i mørket, hvert tredje sekund. Merket blir nå høyst 6,5 skritt (Nedslag.maksMerke), omtrent som et stort sjefsangrep fra før.
+- Partiklene langs omrisset havnet inne i veggene og ute i mørket når ringen gikk forbi rommet. Nedslag.sprut hopper nå over punkter der solid() er sant.
+- Del 46 i 3D telte geometrien etter 24 varsler og fikk 2 i stedet for høyst 1, fordi nedslagene (merkene første gang og lynene på kanten) nå lager sitt. Varslene i den prøven får o.stille, siden nedslagene prøves i del 49.
+- Ny sjekk i del 49: et stort angrep som når inn i veggen gir ingen partikler i veggen, og merket blir høyst 6,5 skritt.
+- Del 48 feilet én gang på at 900 partikler ikke var borte (3 igjen), men gikk igjennom neste gang, og en prøve av en rolig etasje i 4 s viste ingen andre som lager partikler. Ser ut som travelhet på maskinen.
+- Del 28, 29, 36, 46, 48 og 49 er grønne.
