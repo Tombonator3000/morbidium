@@ -2092,6 +2092,88 @@ async def main():
         sjekk('ingen konsollfeil (teksturer i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 51) Det skjulte rommet
+        #     Gangen og rommet bak den sprukne veggen er ikke der før veggen er slått inn: sprekken er vanlig vegg, gulvet, lysene og tingene
+        #     bak står skjult, kartet viser det ikke gjennom veggen, og hendelser, dekaler og lyn havner ikke der. Et tungt slag åpner det
+        SKJ51 = """() => { const G = MORBIDIUM; let s0 = null;
+          for (let s = 1; s < 400; s++) { const F = generateFloor(s * 7919, 2, {}); if (F.rooms.some(r => r.role === 'cursed') && F.rooms.some(r => r.role === 'offer')) { s0 = s; G.run.seed = s * 7919 - 2 * 7919; startFloor(2, false); break; } }
+          const F = G.F, P = G.player; for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; G.rooms.forEach(s => s.cleared = true); Bygg.alt();
+          const c = Spesial.cracks[Math.floor(Spesial.cracks.length / 2)], hemm = F.rooms.find(r => r.role === 'secret'), par = F.rooms[hemm.parent];
+          const tx = Math.floor(c.x), tz = Math.floor(c.z); let ix = tx, iz = tz; if (tz === par.z - 1) iz = tz + 1; else if (tz === par.z + par.h) iz = tz - 1; else if (tx === par.x - 1) ix = tx + 1; else ix = tx - 1;
+          P.x = ix + .5; P.z = iz + .5; P.face = Math.atan2(c.x - P.x, c.z - P.z); P.hp = P.maxHp; R.snapCamera(P.x, P.z); G.seen.fill(0); return s0; }"""
+        # tilstanden: hva som synes, lysene i rommet, tellingen av firkanter per del og kartet
+        TILST51 = """() => { const G = MORBIDIUM, F = G.F, PM = Paint.mesh, hemm = F.rooms.find(r => r.role === 'secret'), S = F.skjult;
+          const del = d => [...(PM.vegger || []), ...(PM.toppEkstra || [])].filter(m => m.userData.del === d);
+          const lysSum = L => { const c = L.material.color; return c.r + c.g + c.b; };
+          const ting = G.props.filter(o => o.room === hemm.id), pd = Items.pedestals.filter(p => Math.floor(p.x) >= hemm.x && Math.floor(p.x) < hemm.x + hemm.w && Math.floor(p.z) >= hemm.z && Math.floor(p.z) < hemm.z + hemm.h);
+          const fyll = R.levelL.children.filter(L => L.userData.fyll && Math.floor(L.position.x) >= hemm.x && Math.floor(L.position.x) < hemm.x + hemm.w && Math.floor(L.position.z - .3) >= hemm.z && Math.floor(L.position.z - .3) < hemm.z + hemm.h);
+          const lys = [...ting.filter(o => o.light).map(o => o.light), ...pd.filter(p => p.light).map(p => p.light), ...fyll];
+          let synlige = 0, skjulte = 0; for (let i = 0; i < F.tiles.length; i++) if (F.tiles[i]) { if (S && S[i]) skjulte++; else synlige++; }
+          let iSett = 0; if (S) for (let i = 0; i < S.length; i++) if (S[i] && G.seen[i]) iSett++;
+          return { harSkjult: !!S, gSkjult: !!G.skjult, gulvSkjult: PM.gulvSkjult ? PM.gulvSkjult.visible : null, gulvFirk: PM.gulv.geometry.attributes.position.count / 6, synlige, skjulte,
+            aapen: del('aapen').map(m => m.visible), lukket: del('lukket').concat(del('sprekk')).map(m => m.visible), nSprekk: del('sprekk').length,
+            veggPaaSprekk: F.crack.every(i => Paint.wallH[i] > 0), ting: ting.length, tingSynlig: ting.filter(o => o.g.visible).length, pd: pd.length, pdSynlig: pd.filter(p => p.g.visible).length,
+            lys: lys.length, lysSum: +lys.reduce((a, L) => a + lysSum(L), 0).toFixed(3), lysMin: lys.length ? +Math.min(...lys.map(lysSum)).toFixed(3) : 0, iSett, secrets: G.run.secrets || 0,
+            block: F.crack.map(i => F.block[i]), brutt: Spesial.cracks.every(c => c.broken), gTid: +G.time.toFixed(2) }; }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        s51 = await pg.evaluate(SKJ51)
+        await pg.wait_for_timeout(600)
+        t0 = await pg.evaluate(TILST51)
+        sjekk('det skjulte: generatoren merker gangen og rommet, og etasjen bygges lukket (skjult gulv, åpne deler skjult, sprekken er vegg)', s51 is not None and t0['harSkjult'] and t0['gSkjult'] and t0['gulvSkjult'] is False and t0['aapen'] and not any(t0['aapen']) and t0['lukket'] and all(t0['lukket']) and t0['nSprekk'] >= 1 and t0['veggPaaSprekk'], t0)
+        sjekk('det skjulte: hovedgulvet har bare de synlige rutene', t0['gulvFirk'] == t0['synlige'] and t0['skjulte'] > 20, (t0['gulvFirk'], t0['synlige'], t0['skjulte']))
+        sjekk('det skjulte: tingene og glasset i rommet synes ikke, og lysene der er slukket', t0['ting'] > 0 and t0['tingSynlig'] == 0 and t0['pdSynlig'] == 0 and t0['lys'] >= 2 and t0['lysSum'] == 0, t0)
+        # to sekunder spilltid ved sprekken: ingen skjult rute kommer på kartet
+        sett = await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 2 && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 50));
+          let n = 0; for (let i = 0; i < G.skjult.length; i++) if (G.skjult[i] && G.seen[i]) n++; let naer = 0; for (let i = 0; i < G.seen.length; i++) if (G.seen[i]) naer++; return { n, naer, tid: +(G.time - g0).toFixed(2) }; }""")
+        sjekk('det skjulte: står du ved sprekken i to sekunder, kommer ingenting bak veggen på kartet', sett['n'] == 0 and sett['naer'] > 40 and sett['tid'] >= 2, sett)
+        steder = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, S = G.skjult, ut = { gang: 0, vegg: 0, iSkjult: 0 }; const akt = Hendelse.aktive; Hendelse.aktive = [];
+          for (const pl of ['gang', 'vegg']) for (let k = 0; k < 50; k++) { const st = Hendelse.finnSted(pl, () => (k + .5) / 50); if (!st) continue; ut[pl]++; const tz = Math.floor(pl === 'vegg' ? st.vz : st.z), i = tz * F.W + Math.floor(st.x); if (S[i]) ut.iSkjult++; }
+          Hendelse.aktive = akt; let lyn = 0; for (let k = 0; k < 400; k++) { const i = Math.floor(Math.random() * F.tiles.length); if (S[i] && gulvSynlig(i)) lyn++; }
+          return Object.assign(ut, { lyn, pytt: !!addPuddle(F.crack[0] % F.W + .5, (F.crack[0] / F.W | 0) + .5, 'wet', 1, 5) }); }""")
+        sjekk('det skjulte: hendelser, lyn og pytter havner ikke bak veggen', steder['gang'] + steder['vegg'] > 0 and steder['iSkjult'] == 0 and steder['lyn'] == 0 and not steder['pytt'], steder)
+        kart = await pg.evaluate("""() => { const G = MORBIDIUM; visHeleKartet(); const t = Kart.tall()[0][1]; let n = 0; for (let i = 0; i < G.skjult.length; i++) if (G.skjult[i] && G.seen[i]) n++; const a = G.kartAnelse; Kart.apne(); const leg = [...document.querySelectorAll('#kartark .kleg li')].map(l => l.textContent); closePanel(); G.seen.fill(0); return { t, n, a, leg }; }""")
+        sjekk('det skjulte: hele kartet (kartpillen, plantegningen) gir 100 % uten rommet bak veggen, bare en anelse', kart['t'] == '100 %' and kart['n'] == 0 and kart['a'] and any('visket ut' in l for l in kart['leg']), kart)
+        await pg.evaluate("() => { const G = MORBIDIUM; G.kartAnelse = false; R.snapCamera(G.player.x, G.player.z); }")
+        await pg.wait_for_timeout(500); await pg.screenshot(path='/tmp/e_51_skjult_for.png')
+        # et tungt slag som i del 6: veggen faller, og innen halvannet sekund spilltid er rommet der, med lys
+        await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time; startSwing(true, 1); for (let i = 0; i < 400 && !Spesial.cracks.every(c => c.broken) && G.time - g0 < 5; i++) await new Promise(r => setTimeout(r, 50)); }""")
+        t1 = await pg.evaluate(TILST51)
+        await pg.evaluate("async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.5 && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 50)); }")
+        t2 = await pg.evaluate(TILST51)
+        sjekk('det skjulte: et tungt slag knuser veggen med en gang (c.broken, F.block, G.run.secrets)', t1['brutt'] and t1['secrets'] == 1 and not any(t1['block']) and not t1['gSkjult'], t1)
+        sjekk('det skjulte: etter innbruddet er gulvet, de åpne delene, tingene og glasset der, og lysene tent', t2['gulvSkjult'] is True and all(t2['aapen']) and not any(t2['lukket']) and t2['tingSynlig'] == t2['ting'] and t2['pdSynlig'] == t2['pd'] and t2['lysMin'] > 0, t2)
+        tenner = await pg.evaluate("() => MORBIDIUM.pickups.filter(k => k.kind === 'tooth' || k.kind === 'cons').length")
+        sjekk('det skjulte: tennene og pillen ligger der inne etter innbruddet', tenner >= 4, tenner)
+        await pg.wait_for_timeout(500); await pg.screenshot(path='/tmp/e_51_skjult_etter.png')
+        # firkantene: felles pluss lukket er det samme som et vanlig bygg der det skjulte er tomrom, og felles pluss åpen det samme som et bygg uten skjul
+        firk = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, PM = () => Paint.mesh, n = m => m.geometry.attributes.position.count / 6;
+          const tell = () => { const d = {}; for (const m of [PM().topp, ...(PM().toppEkstra || []), ...PM().vegger]) { const k = m.userData.del || ''; d[k] = (d[k] || 0) + n(m); } return d; };
+          const delt = tell(); const S = F.skjult;
+          const Fl = Object.assign({}, F, { tiles: F.tiles.map((t, i) => S[i] ? 0 : t), skjult: null }); Paint.level(Fl, G.th); const lukket = tell()[''];
+          const Fa = Object.assign({}, F, { skjult: null }); Paint.level(Fa, G.th); const aapen = tell()[''];
+          Paint.level(F, G.th); return { delt, lukket, aapen }; }""")
+        d = firk['delt']
+        sjekk('det skjulte: felles pluss lukket og felles pluss åpen gir like mange vegg- og toppfirkanter som vanlige bygg av hver', d.get('', 0) + d.get('lukket', 0) + d.get('sprekk', 0) == firk['lukket'] and d.get('', 0) + d.get('aapen', 0) == firk['aapen'] and d.get('aapen', 0) > 0, firk)
+        sjekk('ingen konsollfeil (det skjulte, 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: listene på sprekken er egne og forsvinner, tåka ligger ikke over det skjulte, og gulvet der blir toon som resten
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        await pg.evaluate(SKJ51)
+        await pg.wait_for_timeout(1500)
+        d3a = await pg.evaluate("""() => { const G = MORBIDIUM, S = G.skjult, PM = Paint.mesh, tm = D3.taakeMask; let taake = 0; if (tm) for (let i = 0; i < S.length; i++) if (S[i] && tm.image.data[i]) taake++;
+          return { on: D3.on, gulv: PM.gulvSkjult.material.type, synlig: PM.gulvSkjult.visible, taake, harTaake: !!tm, lister: (D3.sprekkDeler || []).length, listerSynlig: (D3.sprekkDeler || []).filter(m => m.visible).length }; }""")
+        await pg.screenshot(path='/tmp/e_51_skjult_for3d.png')
+        await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time; startSwing(true, 1); for (let i = 0; i < 600 && !Spesial.cracks.every(c => c.broken) && G.time - g0 < 5; i++) await new Promise(r => setTimeout(r, 50));
+          const g1 = G.time, t0 = performance.now(); while (G.time - g1 < 1.5 && performance.now() - t0 < 40000) await new Promise(r => setTimeout(r, 50)); }""")
+        d3b = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, PM = Paint.mesh, tm = D3.taakeMask; let taake = 0; if (tm) for (let i = 0; i < F.tiles.length; i++) if (F.skjult[i] && tm.image.data[i]) taake++;
+          return { skjult: !!G.skjult, synlig: PM.gulvSkjult.visible, taake, listerSynlig: (D3.sprekkDeler || []).filter(m => m.visible).length, secrets: G.run.secrets || 0 }; }""")
+        await pg.screenshot(path='/tmp/e_51_skjult_etter3d.png')
+        sjekk('det skjulte i 3D: gulvet bak er toon og skjult, tåka ligger ikke der, og listene på sprekken er egne', d3a['on'] and d3a['gulv'] == 'MeshToonMaterial' and d3a['synlig'] is False and d3a['taake'] == 0 and d3a['lister'] == d3a['listerSynlig'], d3a)
+        sjekk('det skjulte i 3D: etter innbruddet er gulvet der, tåka dekker det, og listene på sprekken er borte', not d3b['skjult'] and d3b['synlig'] and d3b['listerSynlig'] == 0 and d3b['secrets'] == 1 and (not d3a['harTaake'] or d3b['taake'] > 0), d3b)
+        sjekk('ingen konsollfeil (det skjulte, 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

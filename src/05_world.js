@@ -214,7 +214,7 @@ function slowMo(t, s) {
 /* ---------- pytter og strøm ---------- */
 const CONDUCTIVE = { wet: 1, soup: 1, vomit: 1, blod: 1, mokk: 1, myr: 1, tjern: 1 };
 function addPuddle(x, z, kind, r = 1, life = 16) {
-  if (tIdx(x, z) < 0 || !G.F.tiles[tIdx(x, z)]) return null;
+  if (!gulvSynlig(tIdx(x, z))) return null;
   for (const p of G.puddles) if (p.kind === kind && d2(p.x, p.z, x, z) < (p.r * .7) * (p.r * .7)) { p.r = Math.min(2.6, Math.max(p.r, r) + .15); p.life = Math.max(p.life, life); p.mesh.scale.set(p.r * 2, p.r * 2, 1); return p; }
   if (G.puddles.length > 46) { const old = G.puddles.shift(); R.remove(old.mesh); }
   const p = { x, z, kind, r, life, max: life, elec: 0, mesh: R.puddleMesh(kind, r) };
@@ -321,7 +321,7 @@ function breakProp(o, src) {
 function hitProps(x, z, face, range, arc, dmg, kb) {
   let n = 0;
   for (const o of G.props) {
-    if (!o.alive) continue;
+    if (!o.alive || o.skjult) continue;
     const dx = o.x - x, dz = o.z - z, d = Math.hypot(dx, dz);
     if (d > range + .45) continue;
     if (d > .7 && Math.abs(angDiff(Math.atan2(dx, dz), face)) > arc / 2) continue;
@@ -339,7 +339,7 @@ function updateProps(dt) {
   const P = G.player;
   for (const o of G.props) {
     if (o.dying !== undefined) { o.dying -= dt; if (o.U) o.U.uDissolve.value = 1 - Math.max(0, o.dying) / .4; if (o.dying <= 0 && o.g.parent) R.remove(o.g); continue; }
-    if (!o.alive) continue;
+    if (!o.alive || o.skjult) continue; // det skjulte rommet: lysene står slukket til veggen er slått inn (48_skjult.js)
     if (o.flashT > 0) { o.flashT -= dt; o.U.uFlash.value = o.flashT > 0 ? 1 : 0; }
     if (o.kind === 'lamp') {
       const side = Math.sin(o.fallA || 0) >= 0 ? 1 : -1;
@@ -393,8 +393,8 @@ function updatePickups(dt) {
     if (k.y > .25 || k.vy > 0) { k.vy -= 16 * dt; k.y += k.vy * dt; k.x += k.vx * dt; k.z += k.vz * dt; if (solid(Math.floor(k.x), Math.floor(k.z))) { k.x -= k.vx * dt; k.z -= k.vz * dt; k.vx *= -.5; k.vz *= -.5; } if (k.y < .25) { k.y = .25; k.vy = Math.abs(k.vy) > 2 ? -k.vy * .35 : 0; k.vx *= .5; k.vz *= .5; } }
     const auto = k.kind === 'tooth' || k.kind === 'morb' || k.kind === 'heart';
     const d = Math.hypot(P.x - k.x, P.z - k.z);
-    const mag = Lomme.has('tannspeil') ? 5.2 : 2.6;
-    if (auto && P.alive && k.t > .35 && d < mag && (k.kind !== 'heart' || P.hp < P.maxHp)) { const s = (1 - d / mag) * 14 + 3; k.x += (P.x - k.x) / (d || 1) * s * dt; k.z += (P.z - k.z) / (d || 1) * s * dt; }
+    const mag = Lomme.has('tannspeil') ? 5.2 : 2.6; // trekkes ikke gjennom vegger: ruta midt mellom må være fri
+    if (auto && P.alive && k.t > .35 && d < mag && (k.kind !== 'heart' || P.hp < P.maxHp) && !solid(Math.floor((k.x + P.x) / 2), Math.floor((k.z + P.z) / 2))) { const s = (1 - d / mag) * 14 + 3; k.x += (P.x - k.x) / (d || 1) * s * dt; k.z += (P.z - k.z) / (d || 1) * s * dt; }
     k.mesh.position.set(k.x, k.y + Math.abs(Math.sin(k.t * 4)) * .08, k.z); k.mesh.userData.m.rotation.z = (k.kind === 'weapon' ? -1.1 : 0) + Math.sin(k.t * 3) * .12;
     if (auto && P.alive && k.t > .35 && d < .55 && (k.kind !== 'heart' || P.hp < P.maxHp)) {
       if (k.kind === 'tooth') { P.teeth += k.val || 1; Sound.play('tooth', .7, 1 + Math.random() * .2); }

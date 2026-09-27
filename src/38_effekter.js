@@ -266,7 +266,7 @@ const Uvaer = {
     const kand = G.enemies.filter(e => e.alive && e.state !== 'spawn' && Vaer.ute(e.x, e.z) && d2(e.x, e.z, P.x, P.z) < 110 && d2(e.x, e.z, P.x, P.z) > 4);
     let x, z;
     if (kand.length && Math.random() < .5) { const e = pick(kand); x = e.x; z = e.z; }
-    else for (let k = 0; k < 10; k++) { const a = Math.random() * TAU, r = rnd(3, 8), xx = P.x + Math.sin(a) * r, zz = P.z + Math.cos(a) * r; if (Vaer.ute(xx, zz) && tIdx(xx, zz) >= 0 && G.F.tiles[tIdx(xx, zz)]) { x = xx; z = zz; break; } }
+    else for (let k = 0; k < 10; k++) { const a = Math.random() * TAU, r = rnd(3, 8), xx = P.x + Math.sin(a) * r, zz = P.z + Math.cos(a) * r; if (Vaer.ute(xx, zz) && gulvSynlig(tIdx(xx, zz))) { x = xx; z = zz; break; } }
     if (x === undefined) return;
     this.varsel(x, z);
   },
@@ -295,7 +295,7 @@ const Regnringer = {
   start(F) {
     this.stopp(); if (R.safe || R.lowTex || !F) return;
     const data = new Uint8Array(F.W * F.H);
-    for (let z = 0; z < F.H; z++) for (let x = 0; x < F.W; x++) { const i = z * F.W + x; data[i] = F.tiles[i] > 0 && Vaer.ute(x + .5, z + .5) ? 255 : 0; }
+    for (let z = 0; z < F.H; z++) for (let x = 0; x < F.W; x++) { const i = z * F.W + x; data[i] = gulvSynlig(i) && Vaer.ute(x + .5, z + .5) ? 255 : 0; }
     const mask = this.mask = new THREE.DataTexture(data, F.W, F.H, THREE.LuminanceFormat); mask.magFilter = mask.minFilter = THREE.LinearFilter; mask.generateMipmaps = false; mask.needsUpdate = true;
     const mat = new THREE.ShaderMaterial({
       uniforms: { uTid: Glod.tid, uMask: { value: mask }, uSize: { value: new THREE.Vector2(F.W, F.H) } },

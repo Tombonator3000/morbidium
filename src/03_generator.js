@@ -139,6 +139,8 @@ function buildFloor(seed, depth, opts) {
       const inX = x >= par.x && x < par.x + par.w, inZ = z >= par.z && z < par.z + par.h;
       if ((inX && (z === par.z - 1 || z === par.z + par.h)) || (inZ && (x === par.x - 1 || x === par.x + par.w))) { F.crack.push(i); F.block[i] = 1; }
     }
+    // det skjulte: gangen som ble hugget ut hit (med sprekken) og selve rommet. Tegnes ikke før veggen er slått inn (48_skjult.js). Ingen trekk fra rng
+    F.skjult = new Uint8Array(W * H); for (let i = 0; i < W * H; i++) if ((F.tiles[i] === T_COR && before[i] === T_VOID) || F.roomId[i] === secret.id) F.skjult[i] = 1;
   }
   // 7) dører: korridorruter som grenser til rommet
   for (const r of F.rooms) {

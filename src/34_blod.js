@@ -89,7 +89,7 @@ const Blod = {
   sprut(x, z, a, col, n = 6, kraft = 1) {
     for (let k = 0; k < n; k++) {
       const d = rnd(.25, 1.1) * (.6 + kraft * .5), b = a + rnd(-.45, .45), px = x + Math.sin(b) * d, pz = z + Math.cos(b) * d;
-      if (solid(Math.floor(px), Math.floor(pz))) continue;
+      if (solid(Math.floor(px), Math.floor(pz)) || !gulvSynlig(tIdx(px, pz))) continue;
       const s = rnd(.14, .3) * (1.3 - d * .35);
       if (Math.random() < .55) this.legg('sprut', px, pz, b - Math.PI / 2, s * 2.4, s * .7, col); else this.legg('drape', px, pz, Math.random() * TAU, s, s, col);
     }
@@ -97,10 +97,10 @@ const Blod = {
   /* ---------- blod på veggen, med dråper som renner ned ---------- */
   veggVed(x, z) {
     const F = G.F, wh = Paint.wallH; if (!F || !wh) return null;
-    const W = F.W, tx = Math.floor(x), tz = Math.floor(z), gulv = (xx, zz) => xx >= 0 && zz >= 0 && xx < W && zz < F.H && F.tiles[zz * W + xx] > 0;
+    const W = F.W, tx = Math.floor(x), tz = Math.floor(z), gulv = (xx, zz) => xx >= 0 && zz >= 0 && xx < W && zz < F.H && gulvSynlig(zz * W + xx);
     for (let k = 0; k < 2; k++) {
       const zf = tz - k; if (zf < 1 || !gulv(tx, zf)) return null;
-      if (wh[(zf - 1) * W + tx] > 2) { if (Paint.opptatt && Paint.opptatt.has(tx + ',' + zf)) return null; return z - zf < 1.5 ? { zf } : null; }
+      if (wh[(zf - 1) * W + tx] > 2) { if ((Paint.opptatt && Paint.opptatt.has(tx + ',' + zf)) || (G.skjult && G.skjult[(zf - 1) * W + tx])) return null; return z - zf < 1.5 ? { zf } : null; } // ikke på sprekken, den faller
       if (!gulv(tx, zf - 1)) return null;
     }
     return null;
@@ -207,7 +207,7 @@ const Blod = {
   takTick(dt) {
     const d = G.depth, P = G.player; if (!(d === 3 || d === 6) || G.state !== 'play') return; // vann i underetasjen, blod i Dypet
     this.takT -= dt; if (this.takT > 0) return; this.takT = rnd(.5, 1.6);
-    const x = P.x + rnd(-7, 7), z = P.z + rnd(-4, 5); if (solid(Math.floor(x), Math.floor(z))) return;
+    const x = P.x + rnd(-7, 7), z = P.z + rnd(-4, 5); if (solid(Math.floor(x), Math.floor(z)) || !gulvSynlig(tIdx(x, z))) return;
     const blod = d === 6, mat = blod ? (this.mB || (this.mB = new THREE.MeshBasicMaterial({ color: '#5a0610' }))) : (this.mV || (this.mV = new THREE.MeshBasicMaterial({ color: '#9ad8f0', transparent: true, opacity: .8 })));
     const m = new THREE.Mesh(R.geo('takdrape', () => new THREE.SphereGeometry(.045, 6, 4)), mat); m.scale.set(1, 2.2, 1); m.position.set(x, 3.4, z); R.dyn.add(m);
     this.fall.push({ m, x, z, y: 3.4, vy: 0, blod });
@@ -232,7 +232,7 @@ const Blod = {
       this.oyeT = rnd(2.5, 6);
       const kand = [];
       for (let z = Math.floor(P.z) - 6; z <= Math.floor(P.z) + 2; z++) for (let x = Math.floor(P.x) - 8; x <= Math.floor(P.x) + 8; x++) {
-        if (x < 0 || z < 1 || x >= F.W || z >= F.H || !(F.tiles[z * F.W + x] > 0) || !(wh[(z - 1) * F.W + x] > 2) || (Paint.opptatt && Paint.opptatt.has(x + ',' + z))) continue;
+        if (x < 0 || z < 1 || x >= F.W || z >= F.H || !gulvSynlig(z * F.W + x) || !(wh[(z - 1) * F.W + x] > 2) || (G.skjult && G.skjult[(z - 1) * F.W + x]) || (Paint.opptatt && Paint.opptatt.has(x + ',' + z))) continue;
         if (d2(x + .5, z, P.x, P.z) < 9 || this.oyne.some(o => Math.abs(o.x - x - .5) < 1.2 && Math.abs(o.z - z) < .5)) continue;
         kand.push([x, z]);
       }

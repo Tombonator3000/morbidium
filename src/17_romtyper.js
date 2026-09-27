@@ -405,20 +405,22 @@ const Landskap = {
     Paint.mesh.bakke = m; Paint.owned.push(tex, m.material, m.geometry);
   },
   /* trær og busker utenfor hekkene, så parken og skogen fortsetter inn i mørket */
+  /* det skjulte rommet er tomrom til veggen er slått inn, så trærne står også der; de på og ved det skjulte tas bort ved innbruddet (skjulteTraer) */
   traer(F) {
-    const W = F.W, H = F.H, wh = Paint.wallH || [], avst = new Uint8Array(W * H).fill(99), q = [];
-    for (let i = 0; i < W * H; i++) if (F.tiles[i]) { avst[i] = 0; q.push(i); }
+    const W = F.W, H = F.H, wh = Paint.wallH || [], avst = new Uint8Array(W * H).fill(99), q = [], S = G.skjult; this.skjulteTraer = [];
+    const vedSkjult = (x, z) => { if (!S) return false; for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) { const nx = x + dx, nz = z + dz; if (nx >= 0 && nz >= 0 && nx < W && nz < H && S[nz * W + nx]) return true; } return false; };
+    for (let i = 0; i < W * H; i++) if (F.tiles[i] && !(S && S[i])) { avst[i] = 0; q.push(i); }
     for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W, z = (i / W) | 0; if (avst[i] >= 8) continue; for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, nz = z + dz; if (nx < 0 || nz < 0 || nx >= W || nz >= H) continue; const j = nz * W + nx; if (avst[j] > avst[i] + 1) { avst[j] = avst[i] + 1; q.push(j); } } }
     const rng = mulberry32((F.seed || 3) * 17 + 5), skog = F.depth === 5, tetthet = skog ? .32 : .16, ut = [];
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
-      const i = z * W + x; if (F.tiles[i] || wh[i] || avst[i] < 2 || avst[i] > 7 || rng() > tetthet) continue;
-      ut.push([x + .5 + (rng() - .5) * .6, z + .5 + (rng() - .5) * .6, rng()]);
+      const i = z * W + x; if (avst[i] === 0 || wh[i] || avst[i] < 2 || avst[i] > 7 || rng() > tetthet) continue;
+      ut.push([x + .5 + (rng() - .5) * .6, z + .5 + (rng() - .5) * .6, rng(), vedSkjult(x, z)]);
     }
     ut.sort((a, b) => a[2] - b[2]);
     const tint = new THREE.Color(skog ? '#6a7898' : '#7a8aa8');
-    for (const [x, z, r] of ut.slice(0, skog ? 140 : 90)) {
+    for (const [x, z, r, skjult] of ut.slice(0, skog ? 140 : 90)) {
       const k = skog ? (r < .55 ? 'gran' : 'bjork') : (r < .45 ? 'tre' : r < .85 ? 'busk' : 'gran');
-      const g = propSprite(null, x, z, { P: ROM_ART[k]({}), shadow: false }); g.userData.U.uTint.value.copy(tint); g.userData.m.scale.multiplyScalar(.85 + r * .35); R.level.add(g);
+      const g = propSprite(null, x, z, { P: ROM_ART[k]({}), shadow: false }); g.userData.U.uTint.value.copy(tint); g.userData.m.scale.multiplyScalar(.85 + r * .35); R.level.add(g); if (skjult) this.skjulteTraer.push(g);
     }
   }
 };
@@ -506,6 +508,6 @@ const UTGANGER = {
 const Romtyper = {
   tick(dt) {
     Vaer.tick(dt);
-    for (const o of G.props || []) if (o.flakker && o.light && o.alive !== false) { o.flakT = (o.flakT || 0) - dt; if (o.flakT <= 0) { o.flakT = rnd(.05, .14); R.setLight(o.light, o.lysBase * (o.kind === 'spole' && Math.random() < .3 ? .2 : rnd(.78, 1.12))); } }
+    for (const o of G.props || []) if (o.flakker && o.light && o.alive !== false && !o.skjult) { o.flakT = (o.flakT || 0) - dt; if (o.flakT <= 0) { o.flakT = rnd(.05, .14); R.setLight(o.light, o.lysBase * (o.kind === 'spole' && Math.random() < .3 ? .2 : rnd(.78, 1.12))); } }
   }
 };
