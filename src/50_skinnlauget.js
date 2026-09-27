@@ -298,7 +298,7 @@ const Laug = {
   kall(e) {
     const s = freeSpot(e.x + rnd(-1.4, 1.4), e.z + rnd(-1.4, 1.4), 2);
     e.kallT = G.time + 12; e.state = 'wind'; e.t = .9; e.positur = { navn: 'ringe', t: 0, dur: .8 }; FX.bubble(e, pick(['Lærling! Besøk!', 'Besøkstiden er over.', 'Gutt! Reima!']), 1.3); Sound.play('bjelle', .3, 1.5);
-    addTele('circle', { x: s.x, z: s.z, r: .6, color: 0x8a5a2a, type: 'fysisk' }, .8, () => {
+    addTele('circle', { x: s.x, z: s.z, r: .6, color: 0x8a5a2a, type: 'fysisk', stille: true }, .8, () => { // bare der lærlingen kommer, ikke et slag
       if (G.enemies.filter(f => f.alive).length >= 14) return;
       const l = spawnEnemy('laerling', s.x, s.z, false, G.depth); l.face = Math.atan2(G.player.x - l.x, G.player.z - l.z); l.positur = { navn: 'bukk', t: 0, dur: .8 }; FX.bubble(l, 'Til tjeneste!', 1.2); Sound.play('bukk', .6);
     }, e);
