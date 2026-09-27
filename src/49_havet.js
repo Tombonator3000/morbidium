@@ -214,17 +214,18 @@ MONSTER_ART.kapellan = {
   },
   kropp: v => g => {
     const top = -.5, Kj = HAV.kjole, KL = HAV.kjoleL;
-    // prestekragen: en hvit møllesteinskrage med folder rundt halsen
+    // prestekragen: en hvit møllesteinskrage med bølgete, plissert kant rundt halsen, bred nok til å stikke fram på begge sider av skjegget
     const krage = (cx, cy, rx, ry) => {
-      A.cel(g, A.ell(cx, cy, rx, ry), HAV.krage, { lw: .03, sk: .86 });
-      for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, c = Math.cos(a), s = Math.sin(a); A.line(g, [[cx + c * rx * .38, cy + s * ry * .38], [cx + c * rx * .95, cy + s * ry * .95]], .01, '#b8b0a0'); }
-      A.flat(g, A.ell(cx, cy - ry * .15, rx * .34, ry * .32), '#d8d0c0', .015);
+      const n = 24, kant = []; for (let i = 0; i < n; i++) { const a = i / n * TAU, k = i % 2 ? .9 : 1; kant.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]); }
+      A.cel(g, A.blob(kant), HAV.krage, { lw: .032, sk: .86 });
+      for (let i = 0; i < n; i += 2) { const a = (i + 1) / n * TAU, c = Math.cos(a), s = Math.sin(a); A.line(g, [[cx + c * rx * .36, cy + s * ry * .36], [cx + c * rx * .86, cy + s * ry * .86]], .012, '#a8a090'); }
+      A.flat(g, A.ell(cx, cy - ry * .15, rx * .32, ry * .32), '#d8d0c0', .015);
     };
     if (v === 'b') {
       A.cel(g, A.blob([[-.2, top + .06], [-.26, top + .22], [-.3, 0], [-.38, .34], [0, .37], [.38, .34], [.3, 0], [.26, top + .22], [.2, top + .06], [0, top]]), Kj, { line: '#0e0a14', sk: .75 });
       A.line(g, [[0, top + .1], [0, .34]], .014, KL); A.curve(g, [-.2, .02], [-.24, .2], [-.3, .32], .012, KL); A.curve(g, [.18, .04], [.22, .2], [.28, .32], .012, KL);
       A.line(g, [[-.18, top + .12], [.2, .0]], .03, '#5a3a20');
-      krage(0, top + .02, .3, .1);
+      krage(0, top + .03, .4, .14);
       return;
     }
     if (v === 's') {
@@ -232,7 +233,7 @@ MONSTER_ART.kapellan = {
       for (let i = 0; i < 5; i++) A.dot(g, .15, top + .16 + i * .09, .016, KL);
       A.line(g, [[.08, top + .12], [-.12, .02]], .03, '#5a3a20');
       A.cel(g, A.rr(-.26, -.04, .14, .13, .02), '#7a4a28', { lw: .022, hi: false }); A.line(g, [[-.22, -.01], [-.16, -.01]], .016, '#d4a83a'); // kollektbøssa
-      krage(0, top + .02, .26, .08);
+      krage(0, top + .03, .32, .11);
       return;
     }
     A.cel(g, A.blob([[-.2, top + .06], [-.26, top + .22], [-.3, 0], [-.38, .34], [-.2, .37], [0, .35], [.2, .37], [.38, .34], [.3, 0], [.26, top + .22], [.2, top + .06], [0, top]]), Kj, { line: '#0e0a14', sk: .75 });
@@ -244,7 +245,7 @@ MONSTER_ART.kapellan = {
     // kollektbøssa i en reim over brystet
     A.line(g, [[.18, top + .12], [-.18, -.02]], .03, '#5a3a20');
     A.cel(g, A.rr(-.3, -.06, .16, .14, .02), '#7a4a28', { lw: .024, hi: false }); A.line(g, [[-.26, -.03], [-.18, -.03]], .016, '#d4a83a'); A.flat(g, A.rr(-.3, .04, .16, .025, .005), '#d4a83a', .01);
-    krage(0, top + .02, .35, .11);
+    krage(0, top + .03, .45, .15);
   }
 };
 WEAPON_ART.avgud = [.5, .8, .25, .1];
@@ -276,14 +277,15 @@ const Havet = {
   armer() { return G.enemies.filter(e => e.alive && e.type === 'avlopsarm').length; },
   /* en rist uten arm i: ingen annen levende arm har den som hjem */
   ledig(p, selv) { return !G.enemies.some(e => e !== selv && e.alive && e.type === 'avlopsarm' && e.hjem && d2(e.hjem.x, e.hjem.z, p.x, p.z) < .36); },
-  slukNaer(x, z, maks, selv, rom) {
+  slukNaer(x, z, maks, selv, rom, sikt) {
     let best = null, bd = maks * maks;
-    for (const p of G.props) if (p.kind === 'drain' && (rom === undefined || p.room === rom) && this.ledig(p, selv)) { const d = d2(p.x, p.z, x, z); if (d < bd) { bd = d; best = p; } }
+    for (const p of G.props) if (p.kind === 'drain' && (rom === undefined || p.room === rom) && this.ledig(p, selv) && (!sikt || los(x, z, p.x, p.z))) { const d = d2(p.x, p.z, x, z); if (d < bd) { bd = d; best = p; } }
     return best;
   },
-  /* armen finner sitt sted: risten nærmest i rommet, ellers en rute under en høy vegg (med en sprekk), ellers slår den hull i gulvet */
+  /* armen finner sitt sted: risten nærmest i rommet, ellers en rute under en høy vegg (med en sprekk), ellers slår den hull i gulvet.
+     Aldri en rist i et annet rom: dørene er stengt under kampen, og en arm bak veggen kan ikke nås (rommet blir aldri ryddet) */
   plasser(e) {
-    const rom = roomAt(e.x, e.z), s = this.slukNaer(e.x, e.z, 14, e, rom >= 0 ? rom : undefined) || this.slukNaer(e.x, e.z, 5, e);
+    const rom = roomAt(e.x, e.z), s = rom >= 0 ? this.slukNaer(e.x, e.z, 14, e, rom) : this.slukNaer(e.x, e.z, 5, e, undefined, true);
     if (s) { e.x = s.x; e.z = s.z; e.hjem = { x: s.x, z: s.z }; e.sted = 'sluk'; }
     else {
       const v = this.vegg(e, rom);
@@ -310,7 +312,7 @@ const Havet = {
   flytt(e) {
     if (e.sted !== 'sluk') return; const P = G.player, rom = roomAt(e.hjem.x, e.hjem.z);
     let best = null, bd = 1e9;
-    for (const p of G.props) if (p.kind === 'drain' && (p.room === rom || d2(p.x, p.z, e.x, e.z) < 100) && this.ledig(p, e)) { const d = d2(p.x, p.z, P.x, P.z); if (d < bd) { bd = d; best = p; } }
+    for (const p of G.props) if (p.kind === 'drain' && (rom >= 0 ? p.room === rom : d2(p.x, p.z, e.x, e.z) < 100) && this.ledig(p, e)) { const d = d2(p.x, p.z, P.x, P.z); if (d < bd) { bd = d; best = p; } }
     if (best) { e.x = best.x; e.z = best.z; e.hjem = { x: best.x, z: best.z }; }
   },
   start(e) {
@@ -387,7 +389,8 @@ const Havet = {
   velsign(e) {
     let n = 0;
     for (const f of G.enemies) if (f !== e && f.alive && d2(f.x, f.z, e.x, e.z) < 36) {
-      if (!f.velsignet) { f.velsignet = { sp: f.sp }; f.sp = f.sp * 1.2; }
+      // baseSp er farten under treghet (frost, surkål i 25_items.js), som settes tilbake når tregheten går ut: den får samme faktor
+      if (!f.velsignet) { f.velsignet = { sp: f.sp, satt: f.sp * 1.2 }; f.sp = f.velsignet.satt; if (f.baseSp) f.baseSp *= 1.2; }
       f.velsignetT = 6; n++; Particles.spawn(f.x, 1.2, f.z, 6, 0x3a8a7a, { speed: 1.2, up: 3, g: 0, life: .9, size: .8 });
     }
     if (n) { FX.bubble(e, pick(['Amen.', 'Gå i fred. Og bit.', 'Velsignet være dere, våte og tørre.']), 1.2); Sound.play('hvisk', .5, .7); }
@@ -449,7 +452,7 @@ Object.assign(Grotesk.ai, {
   },
   /* kaller armer, preker for de andre, eller døper pasienten */
   kapellan(e, T, dist, toT) {
-    if (G.time >= (e.kallT || 0) && Havet.armer() < Havet.MAKS_ARMER && G.enemies.filter(f => f.alive).length < 14) { const s = Havet.slukNaer(e.x, e.z, 8); if (s) { Havet.kall(e, s); return; } }
+    if (G.time >= (e.kallT || 0) && Havet.armer() < Havet.MAKS_ARMER && G.enemies.filter(f => f.alive).length < 14) { const s = Havet.slukNaer(e.x, e.z, 8, null, roomAt(e.x, e.z)); if (s) { Havet.kall(e, s); return; } }
     if (G.time >= (e.prekenT || 0) && G.enemies.some(f => f !== e && f.alive && d2(f.x, f.z, e.x, e.z) < 36)) { Havet.preken(e); return; }
     if (dist < 9) { Havet.daap(e, T, toT); return; }
     e.cd = .4;
@@ -483,8 +486,8 @@ Object.assign(Grotesk.tick, {
   /* preken avbrytes når han blir slått (15 prosent av helsa) eller mister pusten */
   kapellan(e) {
     if (!e.preken) return null;
-    if (e.state !== 'wind') Havet.avbrytPreken(e, false);
-    else if (e.hp <= e.preken.hp0 - .15 * e.max) Havet.avbrytPreken(e, true);
+    if (e.hp <= e.preken.hp0 - .15 * e.max) Havet.avbrytPreken(e, true); // før staten: et slag som også slår ham ut av preken, gir «Amen?!»
+    else if (e.state !== 'wind') Havet.avbrytPreken(e, false);
     else if (Math.random() < .25) for (const f of G.enemies) if (f !== e && f.alive && d2(f.x, f.z, e.x, e.z) < 36) Particles.spawn(f.x + rnd(-.3, .3), .3, f.z + rnd(-.3, .3), 1, 0x3a8a7a, { speed: .3, up: 2.2, g: 0, life: .8, size: .8 });
     return null;
   }
@@ -501,7 +504,8 @@ Object.assign(Grotesk.tick, {
 { const _ue = updateEnemy; updateEnemy = function (e, dt) {
   if (e.velsignet) {
     e.velsignetT -= dt; if (e.alive) e.cd -= dt * .5;
-    if (e.velsignetT <= 0 || !e.alive) { e.sp = e.velsignet.sp; e.velsignet = null; }
+    // nøyaktig tilbake når ingen andre har rørt farten; ble den treg (eller fri fra treghet) underveis, tas faktoren ut av det som står
+    if (e.velsignetT <= 0 || !e.alive) { const V = e.velsignet; e.sp = e.sp === V.satt ? V.sp : e.sp / 1.2; if (e.baseSp) e.baseSp /= 1.2; e.velsignet = null; }
     else if (Math.random() < dt * 2.5) Particles.spawn(e.x + rnd(-.3, .3), 1.4, e.z + rnd(-.3, .3), 1, 0x3a8a7a, { speed: .3, up: 1.5, g: 0, life: .7, size: .7 });
   }
   const r = _ue(e, dt);

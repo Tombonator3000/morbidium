@@ -2253,8 +2253,9 @@ async def main():
               steder: new Set(armer.map(e => e.hjem.x.toFixed(2) + ',' + e.hjem.z.toFixed(2))).size };
             for (const e of seks) killEntity(e, {}); await spill(.8);
             // uten ledig rist: armen tar en vegg (med sprekk) eller slår hull i gulvet, og hullet eller sprekken er borte når den dør
-            const props = G.props; G.props = props.filter(p => p.kind !== 'drain'); let ah; try { ah = spawnEnemy('avlopsarm', s.x, s.z, false, 4); } finally { G.props = props; }
-            const hull = ah.hull, sprekk = ah.mesh; ut.uten = { sted: ah.sted, hull: !!hull && G.puddles.includes(hull), sprekk: !!sprekk && !!sprekk.parent };
+            //  (en rist halvannen rute unna i et annet rom teller ikke: dørene er stengt, og armen der kunne ikke nås)
+            const props = G.props; G.props = props.filter(p => p.kind !== 'drain').concat([{ kind: 'drain', x: s.x + 1.5, z: s.z, room: -99 }]); let ah; try { ah = spawnEnemy('avlopsarm', s.x, s.z, false, 4); } finally { G.props = props; }
+            const hull = ah.hull, sprekk = ah.mesh; ut.uten = { sted: ah.sted, hull: !!hull && G.puddles.includes(hull), sprekk: !!sprekk && !!sprekk.parent, fremmed: Math.hypot(ah.x - s.x - 1.5, ah.z - s.z) < .05 };
             killEntity(ah, {}); ut.uten.ryddet = (!hull || !G.puddles.includes(hull)) && (!sprekk || !sprekk.parent); await spill(.8);
             // Kapellanen preker for en pleier: farten ganges med 1,2 og kommer nøyaktig tilbake etter seks sekunder, og en ny velsignelse ganger ikke to ganger
             const s1 = ved(s, 3), k = spawnEnemy('kapellan', s1.x, s1.z, false, 4), s2 = freeSpot(s1.x + 1.5, s1.z, 2), pl = spawnEnemy('pleier', s2.x, s2.z, false, 4);
@@ -2263,6 +2264,10 @@ async def main():
             ut.preken.underveis = pl.velsignet ? 'for tidlig' : 'ok'; await til(() => !!pl.velsignet, 3); await spill(.1);
             ut.preken.fart = pl.sp / sp0; Havet.velsign(k); ut.preken.toGanger = pl.sp / sp0; k.cd = 99;
             await til(() => !pl.velsignet, 7.5); ut.preken.tilbake = pl.sp - sp0; ut.preken.flagg = !pl.velsignet;
+            // treghet (frost, surkål) og velsignelse om hverandre: begge virker samtidig, og farten er tilbake når begge har gått ut
+            const frost = async forst => { k.x = pl.x + 1; k.z = pl.z; if (forst) { pl.slowT = 3; await spill(.2); Havet.velsign(k); } else { Havet.velsign(k); await spill(.2); pl.slowT = 3; }
+              await spill(.3); const midt = pl.sp / sp0; await til(() => !pl.velsignet && !(pl.slowT > 0) && !pl.baseSp, 9); await spill(.2); const slutt = pl.sp - sp0; pl.sp = sp0; return { midt, slutt }; };
+            ut.frost = { velsignetForst: await frost(false), tregForst: await frost(true) };
             // avbrutt preken: 20 prosent av helsa midt i gir «Amen?!» og ingen velsignelse
             k.state = 'chase'; k.stun = 0; Havet.preken(k); k.prekenT = 1e9; await spill(.5); hurt(k, 20, { from: 'player' }); await spill(.25);
             const amen = [...document.querySelectorAll('#fx .bubble')].some(b => b.textContent === 'Amen?!') && k.preken === null;
@@ -2272,7 +2277,7 @@ async def main():
             // (han har gått mot pasienten langt unna, så han settes tilbake ved risten)
             const kultS = freeSpot(k.x + 1.2, k.z + 1, 2), kult = spawnEnemy('kultist', kultS.x, kultS.z, false, 4); kult.cd = 99; kult.speechT = 1e9;
             await til(() => kult.state !== 'spawn'); P.x = s.x + 30; P.z = s.z + 30; k.state = 'chase'; k.stun = 0; k.cd = 99; k.kallT = 0; k.prekenT = 1e9; k.x = s1.x; k.z = s1.z;
-            const fri = Havet.slukNaer(k.x, k.z, 8); { const [dist, v] = mot(k); Grotesk.ai.kapellan(k, P, dist, v); } const kt = k.teles[k.teles.length - 1];
+            const fri = Havet.slukNaer(k.x, k.z, 8, null, G.F.roomId[Math.floor(k.z) * G.F.W + Math.floor(k.x)]); { const [dist, v] = mot(k); Grotesk.ai.kapellan(k, P, dist, v); } const kt = k.teles[k.teles.length - 1];
             ut.kall = { fri: !!fri, varsel: !!kt && kt.shape === 'circle' && fri && Math.hypot(kt.o.x - fri.x, kt.o.z - fri.z) < .05 };
             await til(() => G.enemies.some(e => e.alive && e.type === 'avlopsarm'), 3); const ny = G.enemies.find(e => e.alive && e.type === 'avlopsarm');
             ut.kall.arm = !!ny && !!fri && Math.hypot(ny.x - fri.x, ny.z - fri.z) < .05; ut.kall.oppe = !!ny && ny.fase === 'opp' && !ny.dukket;
@@ -2306,8 +2311,10 @@ async def main():
             ue = hv['uten']
             sjekk('uten ledig rist tar armen en vegg med sprekk eller slår hull i gulvet, og det er ryddet bort når den dør', (ue['sted'] == 'vegg' and ue['sprekk']) or (ue['sted'] == 'gulv' and ue['hull']), ue)
             sjekk('sprekken eller hullet etter armen er borte når den dør', ue['ryddet'], ue)
+            sjekk('armen tar aldri en rist i et annet rom', not ue['fremmed'], ue)
             pk = hv['preken']
             sjekk('en fullført preken gir pleieren 1,2 ganger farten, en ny velsignelse ganger ikke to ganger, og etter seks sekunder er farten nøyaktig tilbake', pk['kanal'] and pk['underveis'] == 'ok' and abs(pk['fart'] - 1.2) < 1e-6 and abs(pk['toGanger'] - 1.2) < 1e-6 and abs(pk['tilbake']) < 1e-6 and pk['flagg'], pk)
+            sjekk('treghet og velsignelse om hverandre: 0,55 ganger 1,2 mens begge virker, og farten nøyaktig tilbake etterpå (uansett hvem som kom først)', all(abs(x['midt'] - .66) < 1e-6 and abs(x['slutt']) < 1e-6 for x in hv['frost'].values()), hv['frost'])
             sjekk('en preken som blir avbrutt av 20 prosent skade, gir ingen velsignelse', hv['avbrutt']['fart'] == 0 and not hv['avbrutt']['flagg'] and hv['avbrutt']['amen'], hv['avbrutt'])
             sjekk('kall fra dypet: ringen på en ledig rist, og så kommer en arm opp akkurat der', hv['kall']['fri'] and hv['kall']['varsel'] and hv['kall']['arm'] and hv['kall']['oppe'], hv['kall'])
             sjekk('når Kapellanen dør, står kultisten ved siden av og ser etter ham', hv['dod']['pose'], hv['dod'])
