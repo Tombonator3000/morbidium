@@ -628,7 +628,8 @@ const Particles = {
         D.updateMatrix(); this.mesh.setMatrixAt(i, D.matrix);
       }
     }
-    this.mesh.count = this.n; this.mesh.instanceMatrix.needsUpdate = true;
+    // bare de levende plassene sendes til skjermkortet
+    const IM = this.mesh.instanceMatrix; IM.updateRange.offset = 0; IM.updateRange.count = this.n * 16; this.mesh.count = this.n; IM.needsUpdate = true;
     if (swapped) this.mesh.instanceColor.needsUpdate = true;
   },
   /* flatene skrives rett inn i matrisene: x og y ligger i skjermplanet (høyre og opp for kameraet), z peker mot kameraet.
@@ -651,7 +652,7 @@ const Particles = {
       A[o + 12] = p.x; A[o + 13] = p.y + sp * L; A[o + 14] = p.z + cp * L; A[o + 15] = 1;
       F[i * 2] = f; F[i * 2 + 1] = al;
     }
-    this.aForm.needsUpdate = true;
+    this.aForm.updateRange.offset = 0; this.aForm.updateRange.count = this.n * 2; this.aForm.needsUpdate = true;
   },
   clear() { this.n = 0; if (this.mesh) this.mesh.count = 0; }
 };
