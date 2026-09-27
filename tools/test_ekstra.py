@@ -2199,6 +2199,151 @@ async def main():
         sjekk('ingen konsollfeil (Skinnlauget i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 60) Havet under huset: Avløpsarmen ligger under risten og kan ikke treffes der, er aldri lenge under når pasienten står nær,
+        #     det er aldri mer enn tre av dem, grepet drar pasienten til risten, og Kapellanens preken, avbrutte preken, kall og død
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        hv = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} },
+            til = async (f, t = 4, maks = 120000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
+            spill = async (t, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            iKastere = e => Dybde.kastere().some(k => k.k === e), sluk = r => G.props.filter(p => p.kind === 'drain' && p.room === r.id);
+          if (typeof Havet !== 'object') return { mangler: true };
+          const skade = {}, _ht = Havet.treff; Havet.treff = function (shape, o, dmg, src) { const r = _ht.apply(Havet, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
+          // et kamprom med rist, og et fritt sted et stykke unna risten (med sikt)
+          const rom = () => { const rs = G.F.rooms.filter(r => r.role === 'combat' && r.w >= 7 && r.h >= 7 && sluk(r).length).sort((a, b) => b.w * b.h - a.w * a.h); return rs[0] || G.F.rooms.find(r => sluk(r).length) || G.F.rooms[0]; };
+          const ved = (s, d) => { for (let i = 0; i < 24; i++) { const v = i / 24 * Math.PI * 2, x = s.x + Math.sin(v) * d, z = s.z + Math.cos(v) * d; if (!solid(Math.floor(x), Math.floor(z)) && !solid(Math.floor(x + .3), Math.floor(z)) && !solid(Math.floor(x - .3), Math.floor(z)) && los(s.x, s.z, x, z)) return { x, z }; } return freeSpot(s.x + d, s.z, 3); };
+          const mot = e => [Math.hypot(P.x - e.x, P.z - e.z), Math.atan2(P.x - e.x, P.z - e.z)];
+          try {
+            // hver type der den hører hjemme: legger an innen 6 sekunder spilltid og skader en pasient med 400 i helse innen 20
+            for (const d of [3, 4, 6]) {
+              startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); const r = rom(), s = sluk(r)[0]; if (!s) { ut.etasjer[d] = { utenSluk: true }; continue; }
+              P.hp = P.maxHp = 400; P.invuln = 0; for (const k in skade) delete skade[k];
+              const a = spawnEnemy('avlopsarm', s.x, s.z, false, d), p0 = ved(s, 2.4); P.x = p0.x; P.z = p0.z;
+              let k = null; if (d >= 4) { const ks = ved(s, 5); k = spawnEnemy('kapellan', ks.x, ks.z, false, d); k.kallT = 1e9; }
+              const g0 = G.time, t0 = performance.now(), E = { a: {}, k: {} };
+              while (G.time - g0 < 20 && performance.now() - t0 < 150000) { await vent(60); const t = G.time - g0; if (P.hp < 150) P.hp = 400; P.x = p0.x; P.z = p0.z;
+                if (a.state === 'wind' && E.a.wind === undefined) E.a.wind = t; if (skade.avlopsarm && E.a.skade === undefined) E.a.skade = t;
+                if (k) { if (k.state === 'wind' && E.k.wind === undefined) E.k.wind = t; if (skade.kapellan && E.k.skade === undefined) E.k.skade = t; }
+                if (E.a.skade !== undefined && (!k || E.k.skade !== undefined)) break; }
+              if (!k) delete E.k; ut.etasjer[d] = E; for (const e of [a, k]) if (e && e.alive) killEntity(e, {}); await spill(.3);
+            }
+            startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6;
+            const r = rom(), s = sluk(r)[0];
+            // under risten: ingen skade, ingen lykteskygge, ikke nærmest. Pasienten langt unna, så den blir liggende
+            P.x = s.x + 30; P.z = s.z + 30; const a = spawnEnemy('avlopsarm', s.x, s.z, false, 4); a.hp = a.max = 1e6; await til(() => a.state !== 'spawn');
+            const hu = a.hp; ut.under = { dukket: a.dukket === true, skjult: !a.doll.root.visible, skade: hurt(a, 30, { from: 'player' }), hp: a.hp === hu, skygge: iKastere(a), naermest: nearestEnemy(a.x, a.z, 99) === a, iSluk: Math.hypot(a.x - s.x, a.z - s.z) < .05 };
+            // pasienten kommer nær: opp innen litt over et halvt sekund, og da biter slagene
+            const p1 = ved(s, 2.5); P.x = p1.x; P.z = p1.z; P.invuln = 999; const tOpp = G.time; ut.oppe = { kom: await til(() => !a.dukket, 3) }; ut.oppe.tid = G.time - tOpp;
+            await til(() => false, .2); Object.assign(ut.oppe, { skade: hurt(a, 30, { from: 'player' }) > 0, skygge: iKastere(a), naermest: nearestEnemy(a.x, a.z, 99) === a, synlig: a.doll.root.visible, baand: [a.doll.back.n, a.doll.front.n] });
+            // armen lever: tuppen flytter seg selv når armen står stille
+            a.cd = 99; await til(() => !a.anim && a.state === 'chase', 3); const tp = a.doll.deler[0].m.position, t1 = [tp.x, tp.y]; await spill(.4); ut.oppe.lever = Math.hypot(tp.x - t1[0], tp.y - t1[1]);
+            // med pasienten innen fem ruter er den aldri under lenger enn 2,6 sekunder spilltid, og den dykker og kommer opp igjen
+            a.cd = 0; let under = 0, maksUnder = 0, dykk = 0, sist = a.dukket; { const g0 = G.time, t0 = performance.now(); let gt = G.time;
+              while (G.time - g0 < 14 && performance.now() - t0 < 120000) { await vent(40); const dt = G.time - gt; gt = G.time; P.x = p1.x; P.z = p1.z; P.hp = 1e6;
+                if (a.dukket) { under += dt; maksUnder = Math.max(maksUnder, under); } else under = 0; if (a.dukket && !sist) dykk++; sist = a.dukket; } }
+            ut.rettferdig = { maksUnder, dykk, avstand: Math.hypot(p1.x - s.x, p1.z - s.z) };
+            // grepet: armen oppe, pasienten fem ruter unna med sikt, og etter treffet er pasienten nærmere risten
+            await til(() => !a.dukket && a.fase === 'opp' && a.state !== 'wind', 4); a.faseT = .5; a.cd = 99; const hj = a.hjem, p2 = ved(hj, 5); P.x = p2.x; P.z = p2.z; P.invuln = 0; P.iframe = 0; P.hp = 1e6; skade.avlopsarm = 0;
+            const [dist, vinkel] = mot(a); Havet.grip(a, vinkel); const t = a.teles[a.teles.length - 1], d0 = Math.hypot(P.x - hj.x, P.z - hj.z);
+            await til(() => !G.tele.includes(t), 3); await spill(.6); ut.grep = { varsel: !!t, rect: t && t.shape === 'rect', traff: skade.avlopsarm > 0, d0, d1: Math.hypot(P.x - hj.x, P.z - hj.z), ord: !!(P.statusT && P.statusT.GREPET !== undefined) };
+            killEntity(a, {}); await spill(.8);
+            // høyst tre armer: seks forsøk gir tre armer (hver på sitt sted) og yngel for resten
+            P.x = s.x + 30; P.z = s.z + 30; const seks = []; for (let i = 0; i < 6; i++) seks.push(spawnEnemy('avlopsarm', s.x + (i % 2) * .5, s.z, false, 4));
+            const armer = seks.filter(e => e.type === 'avlopsarm'); ut.maks = { armer: armer.length, levende: G.enemies.filter(e => e.alive && e.type === 'avlopsarm').length, yngel: seks.filter(e => e.type === 'yngel').length,
+              steder: new Set(armer.map(e => e.hjem.x.toFixed(2) + ',' + e.hjem.z.toFixed(2))).size };
+            for (const e of seks) killEntity(e, {}); await spill(.8);
+            // uten ledig rist: armen tar en vegg (med sprekk) eller slår hull i gulvet, og hullet eller sprekken er borte når den dør
+            const props = G.props; G.props = props.filter(p => p.kind !== 'drain'); let ah; try { ah = spawnEnemy('avlopsarm', s.x, s.z, false, 4); } finally { G.props = props; }
+            const hull = ah.hull, sprekk = ah.mesh; ut.uten = { sted: ah.sted, hull: !!hull && G.puddles.includes(hull), sprekk: !!sprekk && !!sprekk.parent };
+            killEntity(ah, {}); ut.uten.ryddet = (!hull || !G.puddles.includes(hull)) && (!sprekk || !sprekk.parent); await spill(.8);
+            // Kapellanen preker for en pleier: farten ganges med 1,2 og kommer nøyaktig tilbake etter seks sekunder, og en ny velsignelse ganger ikke to ganger
+            const s1 = ved(s, 3), k = spawnEnemy('kapellan', s1.x, s1.z, false, 4), s2 = freeSpot(s1.x + 1.5, s1.z, 2), pl = spawnEnemy('pleier', s2.x, s2.z, false, 4);
+            P.x = s.x + 30; P.z = s.z + 30; k.kallT = 1e9; k.hp = k.max = 100; pl.stun = 99; pl.hp = pl.max = 1e6; await til(() => k.state !== 'spawn' && pl.state !== 'spawn');
+            const sp0 = pl.sp; k.state = 'chase'; Havet.preken(k); k.prekenT = 1e9; ut.preken = { kanal: k.state === 'wind' && !!k.preken };
+            ut.preken.underveis = pl.velsignet ? 'for tidlig' : 'ok'; await til(() => !!pl.velsignet, 3); await spill(.1);
+            ut.preken.fart = pl.sp / sp0; Havet.velsign(k); ut.preken.toGanger = pl.sp / sp0; k.cd = 99;
+            await til(() => !pl.velsignet, 7.5); ut.preken.tilbake = pl.sp - sp0; ut.preken.flagg = !pl.velsignet;
+            // avbrutt preken: 20 prosent av helsa midt i gir «Amen?!» og ingen velsignelse
+            k.state = 'chase'; k.stun = 0; Havet.preken(k); k.prekenT = 1e9; await spill(.5); hurt(k, 20, { from: 'player' }); await spill(.25);
+            const amen = [...document.querySelectorAll('#fx .bubble')].some(b => b.textContent === 'Amen?!') && k.preken === null;
+            await spill(2); ut.avbrutt = { fart: pl.sp - sp0, flagg: !!pl.velsignet, amen };
+            killEntity(pl, {});
+            // kall fra dypet: ringen på risten, og så kommer en arm opp der
+            // (han har gått mot pasienten langt unna, så han settes tilbake ved risten)
+            const kultS = freeSpot(k.x + 1.2, k.z + 1, 2), kult = spawnEnemy('kultist', kultS.x, kultS.z, false, 4); kult.cd = 99; kult.speechT = 1e9;
+            await til(() => kult.state !== 'spawn'); P.x = s.x + 30; P.z = s.z + 30; k.state = 'chase'; k.stun = 0; k.cd = 99; k.kallT = 0; k.prekenT = 1e9; k.x = s1.x; k.z = s1.z;
+            const fri = Havet.slukNaer(k.x, k.z, 8); { const [dist, v] = mot(k); Grotesk.ai.kapellan(k, P, dist, v); } const kt = k.teles[k.teles.length - 1];
+            ut.kall = { fri: !!fri, varsel: !!kt && kt.shape === 'circle' && fri && Math.hypot(kt.o.x - fri.x, kt.o.z - fri.z) < .05 };
+            await til(() => G.enemies.some(e => e.alive && e.type === 'avlopsarm'), 3); const ny = G.enemies.find(e => e.alive && e.type === 'avlopsarm');
+            ut.kall.arm = !!ny && !!fri && Math.hypot(ny.x - fri.x, ny.z - fri.z) < .05; ut.kall.oppe = !!ny && ny.fase === 'opp' && !ny.dukket;
+            if (ny) killEntity(ny, {});
+            // døden: kultisten ved siden av står og ser etter ham (pose tar dobbel skade)
+            const kd = freeSpot(k.x + 1, k.z, 2); kult.x = kd.x; kult.z = kd.z; kult.state = 'chase'; await spill(.1); killEntity(k, {}); ut.dod = { pose: kult.state === 'pose' && kult.pose > 0 }; killEntity(kult, {}); await spill(.8);
+            // Enkel grafikk: arm og kapellan i kamp uten feil
+            R.safe = true; const sa = spawnEnemy('avlopsarm', s.x, s.z, false, 4), sk = spawnEnemy('kapellan', ved(s, 4).x, ved(s, 4).z, false, 4); const p3 = ved(s, 2.4); P.x = p3.x; P.z = p3.z; P.hp = 1e6; P.invuln = 999;
+            const S = {}; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 5 && performance.now() - t0 < 40000) { await vent(60); S[sa.state] = 1; S['k' + sk.state] = 1; } } ut.safe = S; R.safe = false;
+            for (const e of [sa, sk]) if (e.alive) killEntity(e, {});
+          } finally { Havet.treff = _ht; R.safe = false; }
+          ut.info = ['avlopsarm', 'kapellan'].every(t => (FIENDE_INFO[t] || [])[0] && FIENDE_INFO[t][1] && FIENDE_REKKE.includes(t) && MESTER_TITTEL[t] && FIENDESTEMME[t] && LINES[t] && DEATH_CAUSES[t]) && !ROLLER.avlopsarm && !ROLLER.kapellan;
+          ut.bilde = ['avlopsarm', 'kapellan'].map(t => { const c = fiendeBilde(t, 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); });
+          const tell = (d, t) => DEPTH_ENEMIES[d].filter(x => x === t).length;
+          ut.pulje = { 3: [tell(3, 'avlopsarm'), tell(3, 'kapellan')], 4: [tell(4, 'avlopsarm'), tell(4, 'kapellan')], 6: [tell(6, 'avlopsarm'), tell(6, 'kapellan')] };
+          return ut; }""")
+        sjekk('Havet under huset finnes (Havet i 49_havet.js)', not hv.get('mangler'), hv.get('mangler', ''))
+        if not hv.get('mangler'):
+            E = hv['etasjer']
+            sjekk('Avløpsarmen legger an innen 6 og skader innen 20 sekunder spilltid på etasje 3, 4 og 6, Kapellanen på 4 og 6', all(not E[d].get('utenSluk') and all(E[d][t].get('wind') is not None and E[d][t]['wind'] <= 6 and E[d][t].get('skade') is not None and E[d][t]['skade'] <= 20 for t in E[d]) for d in ['3', '4', '6']) and 'k' in E['4'] and 'k' in E['6'], E)
+            u, o = hv['under'], hv['oppe']
+            sjekk('under risten er armen skjult, tar ingen skade, kaster ingen lykteskygge og er ikke nærmest', u['dukket'] and u['skjult'] and u['skade'] == 0 and u['hp'] and not u['skygge'] and not u['naermest'] and u['iSluk'], u)
+            sjekk('når pasienten kommer nær, er armen oppe innen et sekund, og da tar den skade, kaster skygge og er nærmest', o['kom'] and o['tid'] <= 1.0 and o['skade'] and o['skygge'] and o['naermest'] and o['synlig'], o)
+            sjekk('tentakkelen tegnes i begge strekbåndene innenfor plassen, og tuppen beveger seg selv når armen står stille', 0 < o['baand'][0] < 3200 and 0 < o['baand'][1] < 3200 and o['lever'] > .01, o)
+            rf = hv['rettferdig']
+            sjekk('med pasienten innen fem ruter er armen aldri under lenger enn 2,6 sekunder spilltid, og den dykker og kommer opp igjen', rf['avstand'] <= 5 and rf['dykk'] >= 1 and rf['maksUnder'] <= 2.6, rf)
+            g = hv['grep']
+            sjekk('grepet (en smal stripe) treffer og drar pasienten minst en rute nærmere risten, med GREPET', g['varsel'] and g['rect'] and g['traff'] and g['d1'] < g['d0'] - 1 and g['ord'], g)
+            m = hv['maks']
+            sjekk('seks forsøk gir høyst tre armer, hver på sitt sted, og resten blir yngel', m['armer'] == 3 and m['levende'] == 3 and m['yngel'] == 3 and m['steder'] == 3, m)
+            ue = hv['uten']
+            sjekk('uten ledig rist tar armen en vegg med sprekk eller slår hull i gulvet, og det er ryddet bort når den dør', (ue['sted'] == 'vegg' and ue['sprekk']) or (ue['sted'] == 'gulv' and ue['hull']), ue)
+            sjekk('sprekken eller hullet etter armen er borte når den dør', ue['ryddet'], ue)
+            pk = hv['preken']
+            sjekk('en fullført preken gir pleieren 1,2 ganger farten, en ny velsignelse ganger ikke to ganger, og etter seks sekunder er farten nøyaktig tilbake', pk['kanal'] and pk['underveis'] == 'ok' and abs(pk['fart'] - 1.2) < 1e-6 and abs(pk['toGanger'] - 1.2) < 1e-6 and abs(pk['tilbake']) < 1e-6 and pk['flagg'], pk)
+            sjekk('en preken som blir avbrutt av 20 prosent skade, gir ingen velsignelse', hv['avbrutt']['fart'] == 0 and not hv['avbrutt']['flagg'] and hv['avbrutt']['amen'], hv['avbrutt'])
+            sjekk('kall fra dypet: ringen på en ledig rist, og så kommer en arm opp akkurat der', hv['kall']['fri'] and hv['kall']['varsel'] and hv['kall']['arm'] and hv['kall']['oppe'], hv['kall'])
+            sjekk('når Kapellanen dør, står kultisten ved siden av og ser etter ham', hv['dod']['pose'], hv['dod'])
+            sjekk('i Enkel grafikk kjemper begge uten feil (armen legger an)', hv['safe'].get('wind') == 1, hv['safe'])
+            sjekk('fiendeindeksen, replikker, stemmer, dødsårsaker og mestertitler for begge, og ingen av dem i ROLLER', hv['info'], hv)
+            sjekk('fiendeBilde tegner begge', all(x > .06 for x in hv['bilde']), hv['bilde'])
+            sjekk('Avløpsarmen i Underetasjen (to), Kjelleren og Dypet (to), Kapellanen i Kjelleren og Dypet', hv['pulje'] == {'3': [2, 0], '4': [1, 1], '6': [2, 1]}, hv['pulje'])
+        await pg.screenshot(path='/tmp/e_60_havet.png')
+        sjekk('ingen konsollfeil (Havet under huset)', not pg.errs, pg.errs[:6])
+        # håndbokssiden med begge: får plass, og kortene har bilde (vent på tittelen, ellers lukker den håndboka)
+        await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+        hb = await pg.evaluate("""() => { if (!FIENDE_REKKE.includes('avlopsarm')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'fiender'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(FIENDE_REKKE.indexOf('avlopsarm') / per));
+          return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
+        await pg.wait_for_timeout(300)
+        hb['plass'] = await pg.evaluate(HB_PLASS) if not hb.get('mangler') else False
+        sjekk('håndboka har en side med Avløpsarmen og Kapellanen, og den får plass', 'Avløpsarmen' in hb.get('navn', []) and 'Kapellanen' in hb.get('navn', []) and hb['plass'], hb)
+        await pg.screenshot(path='/tmp/e_60_handbok.png')
+        sjekk('ingen konsollfeil (Havet i håndboka)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: armen kommer opp av risten og legger an, og Kapellanen preker (én runde, 3D er tungt i programvaregrafikk)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          if (typeof Havet !== 'object') return { mangler: true };
+          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; ut.d3 = D3.on;
+          const r = G.F.rooms.filter(r => r.role === 'combat' && G.props.some(p => p.kind === 'drain' && p.room === r.id)).sort((a, b) => b.w * b.h - a.w * a.h)[0] || G.F.rooms[0], s = G.props.find(p => p.kind === 'drain' && p.room === r.id) || { x: r.x + r.w / 2, z: r.z + r.h / 2 };
+          const p0 = freeSpot(s.x - 2.2, s.z + .3, 2); P.x = p0.x; P.z = p0.z; R.snapCamera(P.x, P.z);
+          const a = spawnEnemy('avlopsarm', s.x, s.z, false, 4), ks = freeSpot(s.x - 3, s.z - 2.5, 3), k = spawnEnemy('kapellan', ks.x, ks.z, false, 4); k.kallT = 1e9;
+          const S = { a: {}, k: {} }, g0 = G.time, t0 = performance.now(); let baand = 0;
+          while (G.time - g0 < 14 && performance.now() - t0 < 150000) { await vent(80); P.hp = 1e6; P.invuln = 999; S.a[a.fase + ':' + a.state] = 1; if (k.preken) S.k.preken = 1; baand = Math.max(baand, a.doll.back.n); if (S.a['opp:wind'] && S.k.preken) break; }
+          ut.S = S; ut.baand = baand; return ut; }""")
+        sjekk('i 3D kommer armen opp av risten og legger an, og Kapellanen preker', not d3.get('mangler') and d3.get('d3') and d3['S']['a'].get('opp:wind') and d3['S']['k'].get('preken') and 0 < d3['baand'] < 3200, d3)
+        await pg.screenshot(path='/tmp/e_60_havet_3d.png')
+        sjekk('ingen konsollfeil (Havet under huset i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
