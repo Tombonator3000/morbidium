@@ -162,7 +162,7 @@ function decorateLevel() {
     // Uterom har ingen taklampe, bare et svakt blått skjær: månen og gasslyktene får jobben
     const fyll = r.ute ? R.light(cx, cz + .3, Math.max(r.w, r.h) * .7, '#8aa0d8', .22, R.levelL)
       : R.light(cx, cz + .3, Math.max(r.w, r.h) * .62, r.role === 'boss' ? '#ff9a6a' : G.th.pool || '#ffe6a0', r.role === 'boss' ? .55 : .5, R.levelL);
-    fyll.userData.fyll = true; if (G.skjult && r.role === 'secret') { R.setLight(fyll, 0); fyll.userData.skjult = true; } // tennes når veggen er slått inn
+    fyll.userData.fyll = true; if (G.skjult && r.role === 'secret') Skjult.slukk(fyll); // tennes når veggen er slått inn (48_skjult.js)
     const wallOK = x => !isF(x, r.z - 1) && !isF(x + 1, r.z - 1) && !isF(x - 1, r.z - 1);
     if (r.role === 'service') { for (let x = r.x + 1; x < r.x + r.w - 2; x++) if (wallOK(x) && wallOK(x + 1)) { Paint.door(x + 1, r.z, SERVICES[r.service].name.replace(/^(Den|Det) /, '').toUpperCase().slice(0, 12)); break; } }
     else if (!r.ute && !G.drom && rng() < .7) { const x = r.x + 2 + Math.floor(rng() * Math.max(1, r.w - 4)); if (wallOK(x) && r.role !== 'secret') Paint.poster(POSTERS[Math.floor(rng() * POSTERS.length)], x + .5, r.z); }

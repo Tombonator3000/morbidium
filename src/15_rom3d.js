@@ -103,7 +103,7 @@ const D3 = {
     // skyggeflekkene får full styrke igjen i 2D, der de er den eneste skyggen figurene har
     for (const d of this.dukker) { if (d.U && d.U.tint0) d.U.uTint.value.copy(d.U.tint0); utenKant(d.U); if (d.shadow) { d.shadowA = 1; Doll.bakke(d); } } this.dukker.clear();
     if (G.props) for (const o of G.props) { o.d3 = false; if (o.U && o.U.tint0) o.U.uTint.value.copy(o.U.tint0); utenKant(o.U); }
-    this.lamper = []; this.morkeT = 0; this.mf = 1; this.taakeLys = null;
+    this.lamper = []; this.morkeT = 0; this.mf = 1; this.taakeLys = null; this.taakeMask = null; this.sprekkDeler = [];
     if (R.post) R.post.uniforms.uLights.value = R.lightsOn ? 1 : 0;
     if (R.renderer) R.renderer.shadowMap.autoUpdate = true;
     this.bygd = false;
