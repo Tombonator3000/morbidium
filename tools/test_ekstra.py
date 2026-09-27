@@ -2039,7 +2039,7 @@ async def main():
           // alle tre på en gang: det store stempelet, kombostempelet og lappen står under hverandre (målt når kombostempelet har landet)
           stampBig('RYDDET', 'Rommet er friskmeldt'); Kombo.stempel('KIRURGISK', '20 treff på rad'); toast('Test', 'Lappen'); ut.lappStraks = t.textContent === 'TestLappen';
           for (let i = 0; i < 80; i++) { if (k.getAnimations().every(a => a.currentTime >= 350) && !b.getAnimations().length) break; await vent(25); }
-          const S = [t, k, b].map(rute); ut.tre = { kryss: kryss(S), inni: inni(S), lav: t.classList.contains('lav'), S: kort(S) };
+          const S = [t, k, b].map(rute), kt = $('cards').getBoundingClientRect().top; ut.tre = { kryss: kryss(S), inni: inni(S), lav: t.classList.contains('lav'), overKort: S.every(a => a.y1 <= kt + 1), kortTopp: Math.round(kt), S: kort(S) };
           // køen: RYDDET står, DIAGNOSE venter til RYDDET har stått i 0,7 sekunder
           await borte(); const t0 = performance.now(); stampBig('RYDDET'); stampBig('DIAGNOSE', 'Hypokondri'); const straks = b.textContent;
           for (let i = 0; i < 400 && !b.textContent.startsWith('DIAGNOSE'); i++) await vent(20);
@@ -2063,7 +2063,7 @@ async def main():
             if navn == 'PC':
                 await pg.evaluate(TRE45); await pg.screenshot(path='/tmp/e_45_tekst.png')
             st = await pg.evaluate(STEMPEL45)
-            sjekk(f'{navn}: det store stempelet, kombostempelet og lappen står under hverandre uten å overlappe, og lappen får teksten med en gang', st['lappStraks'] and not st['tre']['kryss'] and st['tre']['inni'] and st['tre']['lav'], st['tre'])
+            sjekk(f'{navn}: det store stempelet, kombostempelet og lappen står under hverandre uten å overlappe og over evnekortene, og lappen får teksten med en gang', st['lappStraks'] and not st['tre']['kryss'] and st['tre']['inni'] and st['tre']['lav'] and st['tre']['overKort'], st['tre'])
             ko = st['ko']
             sjekk(f'{navn}: et nytt stort stempel venter til det forrige har stått i 0,7 sekunder, og står selv minst like lenge', ko['straks'] == 'RYDDET' and ko['diag'] == 'DIAGNOSEHypokondri' and 680 <= ko['ryddet'] < 8000 and ko['diagnose'] >= 700, ko)
             sjekk(f'{navn}: like stempler hoppes over, høyst tre venter, og lappen er tilbake oppe når stemplene er borte', st['koen'] == ['B', 'C', 'D'] and st['lappOppe'], (st['koen'], st['lappOppe']))

@@ -953,3 +953,4 @@ Alle tidspunkt er UTC.
 - Ikke rettet: fanfaren for SYNERGI og FORVANDLING spilles når stampBig kalles, også når stempelet står i kø og vises opptil 0,7 sekunder senere. Test 29 venter fanfaren med en gang, så det er latt være.
 - 45_stempler_etter_844x390.png er tatt på nytt. Del 24, 26, 29, 36 og 45 kjøres.
 - Del 24, 26, 36 og 45 grønne (60 av 61). Del 29 feilet én gang på «kjeden slutter av seg selv» mens maskinen hadde last 9 på 4 kjerner: testen venter på spilltid med et tak på 20 sekunder ekte tid. Alene gikk del 29 gjennom.
+- Del 45 sjekker nå også at de tre stemplene slutter over evnekortene (på bygget før rettingen lå lappen 309 til 386 og kortene fra 284 på liggende telefon). Del 45 grønn.
