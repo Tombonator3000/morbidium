@@ -2123,7 +2123,7 @@ async def main():
             }
             rolig(); rom(); P.hp = P.maxHp = 9999; P.invuln = 0;
             // laugets stans: av tre på under to sekunder får pasienten bare den første, og etter nedkjølingen kommer den igjen
-            const o = { x: P.x, z: P.z, r: 1 }, stans = [];
+            const o = { x: P.x, z: P.z, r: 1 }, stans = []; G.laugStunT = 0; // en stans fra kampene over kan ligge under to sekunder bak
             for (let i = 0; i < 3; i++) { P.invuln = 0; P.iframe = 0; P.stunT = 0; Laug.treff('circle', o, 1, { type: 'laerling', x: P.x, z: P.z }, .6, 'SPENT FAST'); stans.push(P.stunT > 0); await spill(.3); }
             await spill(2.2); P.invuln = 0; P.stunT = 0; Laug.treff('circle', o, 1, { type: 'klokker', x: P.x, z: P.z }, .35, 'HEKTET'); stans.push(P.stunT > 0); ut.stans = stans;
             // bjella: lyden kommer først, sølvringen treffer den som står i den, og ikke den som har gått to ruter ut av den
@@ -2173,7 +2173,8 @@ async def main():
         await pg.screenshot(path='/tmp/e_59_laug.png')
         sjekk('ingen konsollfeil (Skinnlauget)', not pg.errs, pg.errs[:6])
         # håndbokssiden med begge: får plass, og kortene har bilde
-        await pg.goto(URL); await pg.wait_for_timeout(2000)
+        # tittelen kommer når bildene er lastet og ville lukket håndboka (og bildet viste tittelen), så vent på den først
+        await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
         hb = await pg.evaluate("""() => { if (!FIENDE_REKKE.includes('laerling')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'fiender'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(FIENDE_REKKE.indexOf('laerling') / per));
           return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
         await pg.wait_for_timeout(300)
