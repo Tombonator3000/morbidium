@@ -2077,6 +2077,61 @@ async def main():
         sjekk('ingen konsollfeil (tekster og stempler i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 47) Blod som renner
+        #     Blodet på glasset renner som ekte blod (10.png): ingen lange, rette streker fra toppen, sporene smalner og slingrer, en dråpe
+        #     renner et stykke og stanser, høyst seks bloddråper renner samtidig, og lerretet lastes opp annethvert bilde når ingenting renner.
+        RENN47 = """async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
+          for (const e of G.enemies) if (e.alive) killEntity(e, {}); P.hp = P.maxHp = 100; P.invuln = 999; Sound.vaerType = null; G.F.ute = false; Vaatt.tom(); await vent(200);
+          const V = Vaatt, mr = Math.random; let fr = 4747; Math.random = () => { fr |= 0; fr = fr + 0x6D2B79F5 | 0; let t = Math.imul(fr ^ fr >>> 15, 1 | fr); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+          try {
+            // et tungt treff og 8 sekunder: den lengste loddrette stripen med blod i en kolonne av lerretet, målt hvert sekund
+            V.tom(); Blod.treff(P, { x: P.x + 2, z: P.z }, 80); const k = V.kk(), W = V.W, H = V.H, alle = new Set(); let stripe = 0, maksGlir = 0;
+            for (let i = 1; i <= 160; i++) {
+              V.fysikk(.05); V.tegn(); for (const s of V.spor) if (s.blod) alle.add(s); maksGlir = Math.max(maksGlir, V.draper.filter(d => d.glir && d.blod).length);
+              if (i % 20 === 0) { const D = V.g.getImageData(0, 0, W, H).data; for (let x = 0; x < W; x++) { let n = 0; for (let y = 0; y < H; y++) { n = D[(y * W + x) * 4 + 1] > 20 ? n + 1 : 0; if (n > stripe) stripe = n; } } }
+            }
+            // sporene med minst seks punkter: smalere nederst enn øverst, og de slingrer
+            const lange = [...alle].filter(s => s.p.length >= 24).map(s => { const p = s.p, xs = p.filter((_, i) => i % 4 === 0); return { forst: p[2], sist: p[p.length - 2], bredde: Math.max(...xs) - Math.min(...xs) }; });
+            ut.tungt = { stripe, H, maksGlir, spor: alle.size, lange: lange.length, smalner: lange.every(s => s.sist <= .8 * s.forst), slingrer: lange.every(s => s.bredde >= 1.5 * k), minBredde: +(Math.min(...lange.map(s => s.bredde)) / k).toFixed(2), punkter: [...alle].every(s => s.p.length % 4 === 0) };
+            // 30 enkeltdråper på r = 3,5 k: hvor langt de renner før de stanser
+            const L = []; for (let n = 0; n < 30; n++) { V.tom(); const d = V.ny(W * (.1 + .8 * n / 29), H * .2, 3.5 * k, true); d.ny = 0; const y0 = d.y; for (let i = 0; i < 400 && (i < 3 || d.glir); i++) V.fysikk(.05); L.push(d.y - y0); }
+            L.sort((a, b) => a - b); ut.enkle = { median: +((L[14] + L[15]) / 2).toFixed(1), maks: +L[29].toFixed(1), min: +L[0].toFixed(1), H, stanset: L.length === 30 };
+          } finally { Math.random = mr; }
+          // opplastingen: annethvert bilde når sporene bare blekner, hvert bilde når noe renner
+          V.tom(); await ramme(3); const t0 = V.tick; let n = 0; V.tick = function (dt) { n++; return t0.call(this, dt); };
+          try {
+            V.spor.push({ p: [50, 20, 3, V.klokke, 52, 60, 3, V.klokke], blod: true, id: 1 }); await ramme(2); n = 0; let v0 = V.tex.version; await ramme(24); ut.blekner = +((V.tex.version - v0) / Math.max(1, n)).toFixed(2);
+            const d = V.ny(V.W * .5, V.H * .1, 6 * V.kk(), true); d.ny = 0; await ramme(3); n = 0; v0 = V.tex.version; await ramme(12); ut.renner = +((V.tex.version - v0) / Math.max(1, n)).toFixed(2); ut.glir = d.glir;
+          } finally { V.tick = t0; }
+          V.tom(); return ut; }"""
+        UA47 = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        for navn, kw in (('PC', {'viewport': {'width': 1280, 'height': 720}}), ('stående telefon', {'viewport': {'width': 390, 'height': 844}, 'has_touch': True, 'is_mobile': True, 'device_scale_factor': 2, 'user_agent': UA47})):
+            pg = await ny_side(b, **kw)
+            await start_lop(pg)
+            ut = await pg.evaluate(RENN47)
+            t = ut['tungt']
+            sjekk(f'{navn}: et tungt treff gir ingen lange, rette streker på glasset (lengste stripe under halve høyden)', t['stripe'] < .5 * t['H'] and t['spor'] > 0, t)
+            sjekk(f'{navn}: sporene smalner mot dråpen og slingrer, punktene har bredde og alder, og høyst seks bloddråper renner samtidig', t['lange'] > 0 and t['smalner'] and t['slingrer'] and t['punkter'] and 0 < t['maksGlir'] <= 6, t)
+            e = ut['enkle']
+            if navn == 'PC':
+                sjekk('en enkelt dråpe renner et stykke og stanser (median 25 til 60 punkter, ingen over 0,6 av høyden)', e['stanset'] and 25 <= e['median'] <= 60 and e['maks'] < .6 * e['H'], e)
+            else:
+                sjekk(f'{navn}: en enkelt dråpe renner et stykke og stanser (ingen over 0,6 av høyden)', e['stanset'] and e['min'] > 0 and e['maks'] < .6 * e['H'], e)
+            sjekk(f'{navn}: lerretet lastes opp annethvert bilde når sporene bare blekner, og hvert bilde når noe renner', .3 <= ut['blekner'] <= .7 and ut['renner'] >= .9 and ut['glir'], [ut['blekner'], ut['renner'], ut['glir']])
+            sjekk(f'ingen konsollfeil (blod som renner, {navn})', not pg.errs, pg.errs[:6])
+            await pg.close()
+        # og en gang i 3D: et tungt treff og 3 sekunder spilltid
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        ut = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t));
+          rolig(); P.hp = P.maxHp = 100; P.invuln = 999; Sound.vaerType = null; Vaatt.tom(); await vent(200); Blod.treff(P, { x: P.x + 2, z: P.z }, 80);
+          const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 3 && performance.now() - t0 < 60000) await vent(50);
+          return { u: R.post.uniforms.uVaatt.value, spor: Vaatt.spor.length, draper: Vaatt.draper.length, tid: +(G.time - g0).toFixed(2) }; }""")
+        await pg.screenshot(path='/tmp/e_47_blod.png')
+        sjekk('3D: blodet ligger på glasset etter et tungt treff og 3 sekunder', ut['u'] == 1 and ut['draper'] > 0, ut)
+        sjekk('ingen konsollfeil (blod som renner i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

@@ -1,8 +1,11 @@
 /* ============================================================
    VÅTT PÅ SKJERMEN  -  blod og vann som treffer glasset og renner nedover
    En liten simulering av dråper på en flate som står på skrå foran kameraet:
-   - Dråpene klistrer seg fast til de blir tunge nok. Da sklir de nedover, vingler litt til sidene,
-     legger igjen et spor og små dråper bak seg, og tar med seg dråpene de møter på veien.
+   - Dråpene klistrer seg fast til de blir tunge nok. Da sklir de nedover i rykk og napp, følger ripene i
+     glasset (et felt som er likt for alle dråper i etasjen), og tar med seg dråpene de møter på veien.
+   - Sporet tar litt av dråpen for hver piksel den renner, så den blir mindre og stanser etter et stykke.
+     Hvert punkt i sporet har sin egen bredde og alder: sporet smalner mot dråpen, toppen renner av først,
+     og det gamle sporet trekker seg sammen til en rad små perler.
    - Blodet er seigt: det sklir sakte, legger igjen tykke, mørke spor og blir lenge. Vannet renner fort
      og tørker på noen sekunder.
    - Hver dråpe tegnes som en liten kuppel i en høydekart-tekstur (rødt er vann, grønt er blod).
@@ -13,10 +16,17 @@
    Enkel grafikk har ingen etterbehandling, og da er det heller ikke noe vått.
    ============================================================ */
 const Vaatt = {
-  on: true, draper: [], spor: [], W: 0, H: 0, cv: null, g: null, tex: null, spr: null, styrke: 0, regnT: 0, tomT: 0, tall: { blod: 0, vann: 0, sklidd: 0, slatt: 0 },
+  on: true, draper: [], spor: [], W: 0, H: 0, klokke: 0, fro: 0, bilde: false, cv: null, g: null, tex: null, spr: null, styrke: 0, regnT: 0, tomT: 0, tall: { blod: 0, vann: 0, sklidd: 0, slatt: 0 },
   MAKS: 110,
   /* skala for dråpestørrelse og fart: den korteste siden, så dråpene er like store på stående mobil som på PC */
   kk() { return Math.min(this.W, this.H) / 135; },
+  /* glatt støy i 0..1, og ripene i glasset: et felt i -1..1 som er likt for alle dråper i etasjen */
+  hs(n) { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); },
+  st1(x) { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return this.hs(i) * (1 - u) + this.hs(i + 1) * u; },
+  flyt(x, y) {
+    const i = Math.floor(x), j = Math.floor(y), ux = x - i, uy = y - j, sx = ux * ux * (3 - 2 * ux), sy = uy * uy * (3 - 2 * uy), h = (a, b) => this.hs(a * 57.3 + b * 113.9 + this.fro);
+    return ((h(i, j) * (1 - sx) + h(i + 1, j) * sx) * (1 - sy) + (h(i, j + 1) * (1 - sx) + h(i + 1, j + 1) * sx) * sy) * 2 - 1;
+  },
   sett(on) { this.on = on !== false; if (!this.on) this.tom(); },
   aktiv() { return this.on && !R.safe && !!R.post; },
   blodOk() { return typeof Blod !== 'object' || Blod.on; },
@@ -68,8 +78,8 @@ const Vaatt = {
     const x = side < 0 ? .06 + Math.random() * .3 : .64 + Math.random() * .3, y = .12 + Math.random() * .6;
     this.sprut(x, y, Math.round(4 + kraft * 8), true, .6 + kraft * .45);
     // og noen store som blir tunge nok til å renne med en gang
-    const k = this.kk(); if (kraft > .7) for (let i = 0, n = Math.round(kraft * 1.5); i < n; i++) this.ny(clamp(x + (Math.random() - .5) * .3, .03, .97) * this.W, clamp(y + (Math.random() - .5) * .4, .03, .9) * this.H, (3.2 + Math.random() * 2 * kraft) * k, true);
-    if (kraft > 1.2) this.sprut(side < 0 ? .5 - Math.random() * .4 : .5 + Math.random() * .4, .04 + Math.random() * .12, 5, true, .8); // tunge treff: noe når toppen og renner lenge
+    const k = this.kk(); if (kraft > .7) for (let i = 0, n = Math.round(kraft * 1.5); i < n; i++) this.ny(clamp(x + (Math.random() - .5) * .3, .03, .97) * this.W, clamp(y + (Math.random() - .5) * .4, .1, .9) * this.H, (3.2 + Math.random() * 2 * kraft) * k, true);
+    if (kraft > 1.2) this.sprut(side < 0 ? .5 - Math.random() * .4 : .5 + Math.random() * .4, .15 + Math.random() * .2, 5, true, .8); // tunge treff: noe havner høyt oppe, men ikke helt i kanten
   },
   /* noe døde tett ved pasienten */
   naert(x, z, mengde = 1) {
@@ -93,32 +103,42 @@ const Vaatt = {
     this.ny(Math.random() * this.W, Math.random() * this.H * .95, (1 + Math.random() * 1.6) * k, false);
     this.tall.vann++;
   },
-  tom() { this.draper = []; this.spor = []; this.styrke = 0; if (R.post && R.post.uniforms.uVaatt) R.post.uniforms.uVaatt.value = 0; },
+  tom() { this.draper = []; this.spor = []; this.styrke = 0; this.fro = Math.random() * 1000; if (R.post && R.post.uniforms.uVaatt) R.post.uniforms.uVaatt.value = 0; },
   /* ---------- per bilde ---------- */
   tick(dt) {
     if (!this.aktiv()) { if (this.styrke) this.tom(); return; }
     this.regn(dt);
     if (!this.draper.length && !this.spor.length) { if (this.styrke) this.tom(); return; }
     if (!this.init()) return;
-    dt = Math.min(dt, .05); this.fysikk(dt); this.tegn(dt);
-    this.styrke = 1; R.post.uniforms.uVaatt.value = 1; this.tex.needsUpdate = true;
+    dt = Math.min(dt, .05); this.fysikk(dt);
+    // når ingenting renner og sporene bare blekner, tegnes og lastes lerretet opp annethvert bilde
+    this.bilde = !this.bilde; if (this.bilde || !this.styrke || this.draper.some(d => d.glir)) { this.tegn(); this.tex.needsUpdate = true; }
+    this.styrke = 1; R.post.uniforms.uVaatt.value = 1;
   },
   fysikk(dt) {
-    const D = this.draper, k = this.kk(), S = this.spor;
+    const D = this.draper, k = this.kk(), S = this.spor, T = (this.klokke += dt);
+    // høyst seks bloddråper renner samtidig, resten blir hengende
+    let blodGlir = 0; for (const d of D) if (d.glir && d.blod) blodGlir++;
     for (const d of D) {
       d.t += dt; if (d.ny > 0) d.ny -= dt;
-      const grense = (d.blod ? 3.0 : 2.3) * k;
-      if (!d.glir && d.r > grense && d.ny <= 0) { d.glir = true; d.sporI = { p: [d.x, d.y], blod: d.blod, w: Math.min(d.r * (d.blod ? .42 : .35), (d.blod ? 2.4 : 1.6) * k), t: 0 }; S.push(d.sporI); this.tall.sklidd++; }
+      const grense = (d.blod ? 3.0 : 2.3) * k, bw = d.blod ? .42 : .35, wm = (d.blod ? 2.4 : 1.6) * k;
+      if (!d.glir && d.r > grense && d.ny <= 0 && !(d.blod && blodGlir >= 6)) {
+        d.glir = true; d.vx = 0; d.vj = 0; d.sd = Math.random() * 97; if (d.blod) blodGlir++;
+        d.sporI = { p: [d.x, d.y, Math.min(d.r * bw, wm), T], blod: d.blod, id: Math.random() * 97 }; S.push(d.sporI); this.tall.sklidd++;
+      }
       if (d.glir) {
-        // fart etter vekt: vannet renner, blodet siger
-        const maal = d.blod ? Math.min(40, 6 + 9 * (d.r / k - 2.6)) : Math.min(115, 20 + 30 * (d.r / k - 2.0));
+        // fart etter vekt: vannet renner, blodet siger, og begge i rykk og napp (glasset er ikke like glatt overalt)
+        const maal = (d.blod ? Math.min(40, 6 + 9 * (d.r / k - 2.6)) : Math.min(115, 20 + 30 * (d.r / k - 2.0))) * (.35 + .65 * this.st1(d.y / k * .12 + d.sd));
         d.vy += (maal * k - d.vy) * Math.min(1, dt * (d.blod ? 2.5 : 6));
-        d.vx += ((Math.random() - .5) * (d.blod ? 16 : 48) * k - d.vx * 3) * dt;
-        d.x += d.vx * dt; d.y += d.vy * dt;
-        // sporet, og små dråper som blir liggende bak
-        const P = d.sporI.p; if (d.y - P[P.length - 1] > 1.6 * k) { P.push(d.x, d.y); d.sporI.t = 0; }
+        // til sidene: ripene i glasset, dråpens egen slingring, og litt skjelving
+        const hell = this.flyt(d.x / k * .035, d.y / k * .035) * .3 + (this.st1(d.y / k * .09 + d.sd + 31) - .5) * .8;
+        d.vj += ((Math.random() - .5) * (d.blod ? 16 : 48) * k - d.vj * 3) * dt; d.vx = d.vy * hell + d.vj;
+        const y0 = d.y; d.x += d.vx * dt; d.y += d.vy * dt;
+        // sporet tar med seg litt av dråpen for hver piksel den renner
+        d.r = Math.sqrt(Math.max(0, d.r * d.r - .2 * d.r * bw * Math.max(0, d.y - y0)));
+        const P = d.sporI.p; if (d.y - P[P.length - 3] > 1.6 * k) P.push(d.x, d.y, Math.min(d.r * bw, wm), T);
         if (d.y - d.py > (d.blod ? 9 : 6) * k) { d.py = d.y; if (Math.random() < (d.blod ? .25 : .4)) { const r0 = d.r * (.28 + Math.random() * .14); d.r = Math.sqrt(Math.max(0, d.r * d.r - r0 * r0)); const b = this.ny(d.x - d.vx * .02, d.y - d.r * 1.2, r0, d.blod); b.ny = .6; } }
-        if (d.r < grense * .8) { d.glir = false; d.vy = 0; d.vx = 0; }
+        if (d.r < grense * .8) { d.glir = false; d.vy = 0; d.vx = 0; if (d.blod) blodGlir--; }
       } else {
         // tørker: vannet på noen sekunder, blodet blir hengende en stund og forsvinner så
         d.r -= dt * (d.blod ? (d.t > 8 ? .3 : .03) : (d.t > 5 ? .3 : .1)) * k;
@@ -135,18 +155,34 @@ const Vaatt = {
       }
     }
     this.draper = D.filter(d => d.r > .45 * k && d.y - d.r < this.H);
-    for (const s of S) { s.t += dt; if (s.blod && !this.blodOk()) s.t = 99; }
-    this.spor = S.filter(s => s.t < (s.blod ? 12 : 3.5));
+    // et spor er borte når også det nyeste punktet er gammelt (blod 8 s, vann 3,5 s)
+    const bok = this.blodOk(); this.spor = S.filter(s => (bok || !s.blod) && T - s.p[s.p.length - 1] < (s.blod ? 8 : 3.5));
   },
   tegn() {
-    const g = this.g, W = this.W, H = this.H; g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, W, H);
-    g.globalCompositeOperation = 'lighter'; g.lineCap = g.lineJoin = 'round';
-    // sporene: et tynt lag som blir tynnere med alderen
+    const g = this.g, W = this.W, H = this.H, T = this.klokke, perler = [];
+    // svart og helt dekkende bunn, så svakere strøk og perler faktisk blir svakere når lerretet lastes opp
+    g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    // sporene: hver bit som et bredt, svakt strøk og en smal kjerne, så sporet får en rund rygg som lyset glinser i.
+    // «lighten» tar det høyeste, så leddene og sporene som krysser hverandre ikke blir dobbelt så tykke
+    g.globalCompositeOperation = 'lighten'; g.lineCap = 'round';
     for (const s of this.spor) {
-      const P = s.p; if (P.length < 4) continue; const liv = s.blod ? 12 : 3.5, a = clamp(1 - s.t / liv, 0, 1) * (s.blod ? .42 : .45);
-      g.strokeStyle = s.blod ? `rgba(0,${Math.round(255 * a)},0,1)` : `rgba(${Math.round(255 * a)},0,0,1)`; g.lineWidth = Math.max(.8, s.w);
-      g.beginPath(); g.moveTo(P[0], P[1]); for (let i = 2; i < P.length; i += 2) g.lineTo(P[i], P[i + 1]); g.stroke();
+      const P = s.p, liv = s.blod ? 8 : 3.5, b = s.blod ? .42 : .45, p0 = s.blod ? 2 : 1, p1 = s.blod ? 3 : 1.8;
+      for (let i = 4; i < P.length; i += 4) {
+        const alder = T - P[i + 3], l = clamp(1 - alder / liv, 0, 1); if (l <= .02) continue;
+        const w = Math.max(.8, (P[i - 2] + P[i + 2]) / 2 * (.6 + .4 * l)), f = clamp((alder - p0) / (p1 - p0), 0, 1), a = l * b * (1 - f);
+        if (a > .01) for (const [ww, aa] of [[w, .5 * a], [w * .45, a]]) {
+          const c = Math.round(255 * aa); g.strokeStyle = s.blod ? `rgb(0,${c},0)` : `rgb(${c},0,0)`; g.lineWidth = Math.max(.7, ww);
+          g.beginPath(); g.moveTo(P[i - 4], P[i - 3]); g.lineTo(P[i], P[i + 1]); g.stroke();
+        }
+        // det gamle sporet trekker seg sammen til små perler, faste steder langs sporet så de ikke flimrer
+        if (f > 0) {
+          const dx = P[i] - P[i - 4], dy = P[i + 1] - P[i - 3], h1 = this.hs(i * 7.31 + s.id), h2 = this.hs(i * 3.17 + s.id + 5), h3 = this.hs(i * 1.93 + s.id + 11);
+          if (h1 < Math.hypot(dx, dy) / (2.5 * w)) perler.push(s.blod, P[i - 4] + dx * h3, P[i - 3] + dy * h3, w * (.45 + .35 * h2), f * l * .85);
+        }
+      }
     }
+    g.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < perler.length; i += 5) { const r = perler[i + 3]; g.globalAlpha = perler[i + 4]; g.drawImage(perler[i] ? this.spr.b : this.spr.v, perler[i + 1] - r, perler[i + 2] - r, r * 2, r * 2); }
     // dråpene: kupler, strukket litt i fartsretningen, med tyngden nederst
     for (const d of this.draper) {
       const spr = d.blod ? this.spr.b : this.spr.v, s = d.glir ? 1 + Math.min(.35, d.vy / (90 * this.kk())) : 1, h = d.r * 2 * s;
