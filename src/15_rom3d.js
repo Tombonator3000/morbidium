@@ -81,7 +81,7 @@ const D3 = {
     const topper = [PM.topp, ...(PM.toppEkstra || [])].filter(Boolean); // toppEkstra: veggene rundt det skjulte rommet, lukket og åpen (12_paint.js)
     for (const m of [PM.gulv, PM.gulvSkjult, PM.bakke, ...topper, ...vegger]) if (m && !m.geometry.attributes.normal) m.geometry.computeVertexNormals(); // den malte stilen trenger ikke normaler, lys gjør det
     // snøen er så lys at lykta brente den helt hvit: gulvet dempes litt og blir kaldere, så klattene og skyggene synes også i lyset
-    for (const g of [PM.gulv, PM.gulvSkjult]) if (g) { bytt(g, this.toon({ map: g.material.map, bumpMap: g.material.map, bumpScale: sno ? this.BUMP_SNO : this.BUMP, vertexColors: true, color: sno ? 0xc4cad6 : 0xffffff })); g.receiveShadow = true; }
+    for (const g of [PM.gulv, PM.gulvSkjult]) if (g) { bytt(g, this.toon({ map: g.material.map, bumpMap: g.material.map, bumpScale: sno ? this.BUMP_SNO : this.BUMP, vertexColors: true, color: sno ? 0xb8bfcc : 0xffffff })); g.receiveShadow = true; }
     for (const t of topper) { bytt(t, this.toon({ vertexColors: true, side: THREE.DoubleSide })); t.castShadow = true; }
     // én mesh per veggstil (17_romtyper.js); gjerder og ruiner er utklipp og kaster ikke skygge som en mur
     for (const v of vegger) { const b = v.material; bytt(v, this.toon({ map: b.map, side: THREE.DoubleSide, transparent: b.transparent, alphaTest: b.alphaTest, depthWrite: b.depthWrite })); v.castShadow = !b.transparent; v.receiveShadow = true; }

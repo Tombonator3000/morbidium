@@ -143,9 +143,9 @@ const Paint = {
     const W = F.W, H = F.H, lett = R.lowTex, sk = ((F.seed || 1) * 131 + 17) | 0, rng = mulberry32((F.seed || 1) * 53 + 29);
     const ute = (x, z) => isF(x, z) && !!UTE[z * W + x], is = (x, z) => STIL[z * W + x] === 'is';
     const vn = (x, z) => { const ix = Math.floor(x), iz = Math.floor(z), fx = x - ix, fz = z - iz, u = fx * fx * (3 - 2 * fx), v = fz * fz * (3 - 2 * fz), a = hRute(ix, iz, sk), b = hRute(ix + 1, iz, sk), c = hRute(ix, iz + 1, sk), d = hRute(ix + 1, iz + 1, sk); return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v; };
-    const bas = (x, z) => vn(x * .45, z * .45) * .65 + vn(x * 1.2 + 17.3, z * 1.2 + 5.1) * .35;
+    const bas = (x, z) => vn(x * .22, z * .22) * .7 + vn(x * .7 + 17.3, z * .7 + 5.1) * .3;
     // terskelen: 16 % av uterutene (utenom isen) blir bare
-    const ss = []; for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) if (ute(x, z) && !is(x, z)) for (const [a, b] of [[.25, .25], [.75, .25], [.25, .75], [.75, .75]]) ss.push(bas(x + a, z + b));
+    const ss = []; for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) if (ute(x, z) && !is(x, z)) ss.push(bas(x + .37, z + .61)); // støyen er så rolig at ett punkt per rute holder
     if (!ss.length) return null;
     ss.sort((a, b) => a - b); const thr = ss[Math.floor(ss.length * .16)];
     const ild = []; for (const r of F.rooms || []) for (const p of r.props || []) { const r0 = { baal: 1.9, vedovn: 1.3, kjele: 1.4 }[p.k]; if (r0 && ute(Math.floor(p.x), Math.floor(p.z))) ild.push([p.x, p.z, r0]); }
@@ -165,26 +165,35 @@ const Paint = {
       if (nMidt) { const d = sorpe(x, z); if (d < .5) f -= .8 * sm(.5, .26, d); }
       return f;
     };
-    // klattene: to og to per rute, større jo dypere snøen er, så kanten blir klumpete og midten tett
-    const n = lett ? 1 : 2, st = 1 / n, klatt = new Path2D(), fonn = new Path2D(), omr = new Path2D();
+    // klattene: to per rute på skrå, så de ligger i et skrått rutenett, større jo dypere snøen er, så kanten blir
+    // klumpete og midten tett. En rute der snøen er dyp i den og de fire naboene, blir et rektangel: bare kanten av snøen synes.
+    // Hjørnene mot en skrå nabo uten dyp snø (øverst til venstre og nederst til høyre) er det bare rutas egen klatt som runder av, så den blir med.
+    // Lette teksturer: én klatt midt i ruta. Hver klatt koster like mye å fylle, så de er så få som kanten tåler
+    const MF = .1, klatt = new Path2D(), fonn = new Path2D(), omr = new Path2D(), pr = [], dyp = new Uint8Array(W * H), kl = lett ? [[.5, .5]] : [[.25, .25], [.75, .75]];
+    const ell = (p, cx, cy, rx, ry) => { const c = .5523; p.moveTo(cx + rx, cy); p.bezierCurveTo(cx + rx, cy + ry * c, cx + rx * c, cy + ry, cx, cy + ry); p.bezierCurveTo(cx - rx * c, cy + ry, cx - rx, cy + ry * c, cx - rx, cy); p.bezierCurveTo(cx - rx, cy - ry * c, cx - rx * c, cy - ry, cx, cy - ry); p.bezierCurveTo(cx + rx * c, cy - ry, cx + rx, cy - ry * c, cx + rx, cy); };
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
-      if (!ute(x, z)) continue;
-      omr.rect(x * T, z * T, T, T);
-      for (let b = 0; b < n; b++) for (let a = 0; a < n; a++) {
-        const wx = x + (a + .5 + (rng() - .5) * .7) * st, wz = z + (b + .5 + (rng() - .5) * .7) * st, j = rng(), f = felt(wx, wz); if (f <= 0) continue;
-        const r = T * (lett ? .75 : (.26 + .47 * Math.min(1, f / .1)) * (.85 + j * .3)), cx = wx * T, cy = wz * T;
-        klatt.moveTo(cx + r, cy); klatt.ellipse(cx, cy, r, r * .8, 0, 0, TAU);
-      }
-      if (lett) continue;
-      // fonner mot nord- og vestveggene (og hekkene), der skyggen males
-      if (kant(x, z, x, z - 1)) for (let k = 0; k < 4; k++) { const cx = (x + (k + .5) / 4) * T, cy = z * T + T * (.1 + hRute(x * 4 + k, z, sk + 3) * .14), r = T * (.24 + hRute(x * 4 + k, z, sk + 4) * .14); fonn.moveTo(cx + r, cy); fonn.ellipse(cx, cy, r, r * .75, 0, 0, TAU); }
-      if (kant(x, z, x - 1, z)) for (let k = 0; k < 4; k++) { const cy = (z + (k + .5) / 4) * T, cx = x * T + T * (.04 + hRute(x, z * 4 + k, sk + 5) * .08), r = T * (.15 + hRute(x, z * 4 + k, sk + 6) * .1); fonn.moveTo(cx + r, cy); fonn.ellipse(cx, cy, r, r * .9, 0, 0, TAU); }
+      if (!ute(x, z)) continue; let d = !lett;
+      for (const [a, b] of kl) { const wx = x + a + (rng() - .5) * .35, wz = z + b + (rng() - .5) * .35, j = rng(), f = felt(wx, wz); if (f < MF) d = false; if (f > 0) pr.push(x, z, wx, wz, j, f, a < .5 ? -1 : 1); }
+      if (d) dyp[z * W + x] = 1;
     }
-    // Art.cel for en hel sti: blekk forskjøvet ned, blågrå skygge, og snøen forskjøvet opp til venstre innenfor, så skyggen blir en sigd nede til høyre
-    const cel = (p, dx, dy) => {
-      g.save(); g.translate(T * .03, T * .075); g.fillStyle = 'rgba(42,26,20,.3)'; g.fill(p); g.restore();
+    const erDyp = (x, z) => x >= 0 && z >= 0 && x < W && z < H && dyp[z * W + x] === 1, inne = (x, z) => erDyp(x, z) && erDyp(x - 1, z) && erDyp(x + 1, z) && erDyp(x, z - 1) && erDyp(x, z + 1);
+    // ruter i rad blir ett rektangel: hver bit i en sti koster like mye å fylle, stor eller liten
+    const rader = (p, ok) => { for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) { if (!ok(x, z)) continue; const x0 = x; while (x + 1 < W && ok(x + 1, z)) x++; p.rect(x0 * T, z * T, (x + 1 - x0) * T, T); } };
+    const inneR = new Uint8Array(W * H); for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) if (inne(x, z)) inneR[z * W + x] = 1;
+    rader(klatt, (x, z) => inneR[z * W + x] === 1); rader(omr, ute);
+    for (let k = 0; k < pr.length; k += 7) { const x = pr[k], z = pr[k + 1], h = pr[k + 6]; if (inneR[z * W + x] && erDyp(x + h, z + h)) continue; const f = pr[k + 5], r = T * (lett ? .75 : (.3 + .54 * Math.min(1, f / MF)) * (.85 + pr[k + 4] * .3)); ell(klatt, pr[k + 2] * T, pr[k + 3] * T, r, r * .8); }
+    if (!lett) for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
+      if (!ute(x, z)) continue;
+      // fonner mot nord- og vestveggene (og hekkene), der skyggen males
+      if (kant(x, z, x, z - 1)) for (let k = 0; k < 2; k++) { const cx = (x + (k + .5) / 2 + (hRute(x * 2 + k, z, sk + 7) - .5) * .2) * T, cy = z * T + T * (.08 + hRute(x * 2 + k, z, sk + 3) * .14), r = T * (.36 + hRute(x * 2 + k, z, sk + 4) * .16); ell(fonn, cx, cy, r, r * .75); }
+      if (kant(x, z, x - 1, z)) for (let k = 0; k < 2; k++) { const cy = (z + (k + .5) / 2 + (hRute(x, z * 2 + k, sk + 8) - .5) * .2) * T, cx = x * T + T * (.02 + hRute(x, z * 2 + k, sk + 5) * .06), r = T * (.3 + hRute(x, z * 2 + k, sk + 6) * .1); ell(fonn, cx, cy, r * .5, r); }
+    }
+    // Art.cel for en hel sti: blekk forskjøvet ned, blågrå skygge, og snøen forskjøvet opp til venstre, så skyggen blir en sigd nede til høyre.
+    // Snøen klippes ikke til skyggen (det kostet like mye som en fylling til); den blir bare et par punkter større oppe til venstre
+    const cel = (p, dx, dy, blekk = true) => {
+      if (blekk) { g.save(); g.translate(T * .03, T * .075); g.fillStyle = 'rgba(42,26,20,.3)'; g.fill(p); g.restore(); }
       g.fillStyle = '#b3bfd2'; g.fill(p);
-      g.save(); g.clip(p); g.translate(-dx, -dy); g.fillStyle = '#e4ebf3'; g.fill(p); g.restore();
+      g.save(); g.translate(-dx, -dy); g.fillStyle = '#e4ebf3'; g.fill(p); g.restore();
     };
     g.save(); g.clip(omr);
     g.fillStyle = 'rgba(96,100,108,.24)'; g.fill(omr); // bakken der snøen ikke ligger, er vinterbleik
@@ -197,7 +206,7 @@ const Paint = {
         if (erMidt(x + 1, z)) { sp.moveTo(cx, cy); sp.lineTo(cx + T, cy); for (const s of [-e, e]) { spor.moveTo(cx, cy + s); spor.lineTo(cx + T, cy + s); } }
         if (erMidt(x, z + 1)) { sp.moveTo(cx, cy); sp.lineTo(cx, cy + T); for (const s of [-e, e]) { spor.moveTo(cx + s, cy); spor.lineTo(cx + s, cy + T); } }
       }
-      g.lineCap = 'round'; g.strokeStyle = 'rgba(141,138,128,.55)'; g.lineWidth = T * .95; g.stroke(sp); g.strokeStyle = '#8d8a80'; g.lineWidth = T * .66; g.stroke(sp);
+      g.lineCap = 'round'; g.strokeStyle = '#8d8a80'; g.lineWidth = T * .7; g.stroke(sp); // snøkanten ligger over sørpa og gjør kanten myk
       g.strokeStyle = 'rgba(62,58,52,.55)'; g.lineWidth = T * .07; g.stroke(spor);
       g.save(); g.translate(0, -T * .035); g.strokeStyle = 'rgba(200,208,220,.25)'; g.lineWidth = T * .03; g.stroke(spor); g.restore();
     }
@@ -205,18 +214,20 @@ const Paint = {
     for (const [ix, iz, r0] of ild) { g.fillStyle = 'rgba(30,24,20,.14)'; g.beginPath(); g.ellipse(ix * T, iz * T, r0 * .8 * T, r0 * .68 * T, 0, 0, TAU); g.fill(); g.strokeStyle = 'rgba(38,30,26,.22)'; g.lineWidth = T * .2; g.stroke(); }
     cel(klatt, T * .05, T * .07);
     if (!lett) {
-      // vindriller i snøen: tynne blå buer med et lyst streif over
-      g.save(); g.clip(klatt); g.lineWidth = Math.max(1, T * .022);
+      // vindriller i snøen: tynne blå buer med et lyst streif over, samlet i to stier (hver for seg ble det tusen strøk)
+      const ril = new Path2D(), lysR = new Path2D();
       for (let k = 0; k < W * H / 4; k++) {
-        const x = rng() * W, z = rng() * H, r = T * (.25 + rng() * .4), b = (rng() - .5) * .5; if (felt(x, z) < .08) continue;
-        const px = x * T, py = z * T; g.strokeStyle = 'rgba(140,158,192,.4)'; g.beginPath(); g.moveTo(px - r, py + r * b); g.quadraticCurveTo(px, py - r * .28, px + r, py - r * b); g.stroke();
-        g.strokeStyle = 'rgba(246,248,249,.5)'; g.beginPath(); g.moveTo(px - r * .7, py + r * b * .7 - T * .03); g.quadraticCurveTo(px, py - r * .28 - T * .03, px + r * .7, py - r * b * .7 - T * .03); g.stroke();
+        const x = rng() * W, z = rng() * H, r = T * (.25 + rng() * .4), b = (rng() - .5) * .5; if (felt(x, z) < .08 || felt(x - r / T, z) < .03 || felt(x + r / T, z) < .03) continue;
+        const px = x * T, py = z * T; ril.moveTo(px - r, py + r * b); ril.quadraticCurveTo(px, py - r * .28, px + r, py - r * b);
+        lysR.moveTo(px - r * .7, py + r * b * .7 - T * .03); lysR.quadraticCurveTo(px, py - r * .28 - T * .03, px + r * .7, py - r * b * .7 - T * .03);
       }
-      g.restore();
-      cel(fonn, T * .04, T * .06);
+      g.lineWidth = Math.max(1, T * .022); g.strokeStyle = 'rgba(140,158,192,.4)'; g.stroke(ril); g.strokeStyle = 'rgba(246,248,249,.5)'; g.stroke(lysR);
+      cel(fonn, T * .04, T * .06, false); // fonnene ligger oppå snøen; skyggen er kant nok
       // glitter: små prikker med blå skygge
       const s = Math.max(1, T * .025);
-      for (let k = 0, nG = Math.round(W * H / 3); k < nG; k++) { const x = rng() * W, z = rng() * H; if (felt(x, z) <= .02) continue; const px = x * T, py = z * T; g.fillStyle = 'rgba(110,130,175,.5)'; g.fillRect(px + s * .7, py + s * .7, s, s); g.fillStyle = '#f2f6f9'; g.fillRect(px, py, s, s); }
+      const gs = new Path2D(), gl = new Path2D();
+      for (let k = 0, nG = Math.round(W * H / 3); k < nG; k++) { const x = rng() * W, z = rng() * H; if (felt(x, z) <= .02) continue; const px = x * T, py = z * T; gs.rect(px + s * .7, py + s * .7, s, s); gl.rect(px, py, s, s); }
+      g.fillStyle = 'rgba(110,130,175,.5)'; g.fill(gs); g.fillStyle = '#f2f6f9'; g.fill(gl);
     }
     g.restore();
     return (x, z) => felt(x, z) > 0;
