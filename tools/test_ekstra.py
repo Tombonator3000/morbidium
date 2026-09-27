@@ -2389,11 +2389,11 @@ async def main():
             ut.lege = { torr, vaat, strom, tak, max: dr.max }; killEntity(dr, {}); await spill(.8);
             // froskehoppet: ring på 1,3 ved pasienten, dukken letter, kroppen står stille i sammenkrøkingen og lander der ringen var, i et nytt tjern
             rolig(); rom(); nullstill(); const sh = ved(5.5), dh = spawnEnemy('draug', sh.x, sh.z, false, 6); await til(() => dh.state !== 'spawn'); dh.cd = 1e9;
-            { dh.state = 'chase'; const [dist, a] = mot(dh); const x0 = dh.x, z0 = dh.z; skade.draug = 0; Havet.hopp(dh, P, a); const t = dh.teles[dh.teles.length - 1], mal = { x: t.o.x, z: t.o.z };
+            { dh.state = 'chase'; const [dist, a] = mot(dh); const x0 = dh.x, z0 = dh.z; skade.draug = 0; const p0 = { x: P.x, z: P.z }; Havet.hopp(dh, P, a); const t = dh.teles[dh.teles.length - 1], mal = { x: t.o.x, z: t.o.z };
               let maksY = 0, stilleVed = null; const g1 = G.time, t1 = performance.now();
               while (G.tele.includes(t) && performance.now() - t1 < 60000) { await vent(25); maksY = Math.max(maksY, dh.doll.plane.position.y); if (G.time - g1 > .6 && stilleVed === null) stilleVed = Math.hypot(dh.x - x0, dh.z - z0); }
               await spill(.1); const tj = G.puddles.find(p => p.kind === 'tjern' && Math.hypot(p.x - mal.x, p.z - mal.z) < .3);
-              ut.hopp = { sirkel: t.shape === 'circle' && t.o.r === 1.3, naerPas: Math.hypot(mal.x - P.x, mal.z - P.z) < 1.2, positur: true, maksY, stilleVed, fra: Math.hypot(dh.x - mal.x, dh.z - mal.z), start: Math.hypot(x0 - mal.x, z0 - mal.z), fritt: !solid(Math.floor(dh.x), Math.floor(dh.z)), tjern: !!tj && tj.r >= 1.2, traff: skade.draug > 0 }; }
+              ut.hopp = { sirkel: t.shape === 'circle' && t.o.r === 1.3, naerPas: Math.hypot(mal.x - p0.x, mal.z - p0.z) < 1.2, positur: true, maksY, stilleVed, fra: Math.hypot(dh.x - mal.x, dh.z - mal.z), start: Math.hypot(x0 - mal.x, z0 - mal.z), fritt: !solid(Math.floor(dh.x), Math.floor(dh.z)), tjern: !!tj && tj.r >= 1.2, traff: skade.draug > 0 }; }
             // hoppet mot en vegg: draugen stopper ved veggen og står aldri inne i den
             { await spill(.8); dh.state = 'chase'; dh.cd = 1e9; const r = rom(), vx = r.x + r.w; let zc = Math.floor(r.z + r.h / 2); for (let z = r.z + 1; z < r.z + r.h - 1; z++) if (solid(vx, z) && solid(vx, z - 1) && solid(vx, z + 1) && !solid(vx - 1, z) && !solid(vx - 3, z)) { zc = z; break; }
               const T = { x: vx + 3, z: zc + .5 }; dh.x = vx - 2.5; dh.z = zc + .5; P.x = r.x + 1.5; P.z = zc + .5; P.invuln = 999;
@@ -2406,14 +2406,17 @@ async def main():
               await spill(.7); ut.skvett.varer = { vaat: P.vaatT, mokk: P.mokkT }; }
             killEntity(dh, {}); await spill(.8);
             // Holdningssøsteren snører: SNØRT varer (selv om myra bare gir et øyeblikk), lauget slår 25 prosent hardere i fire sekunder og nøyaktig tilbake etterpå
-            rolig(); rom(); nullstill(); const s1 = ved(4.5), hs = spawnEnemy('holdning', s1.x, s1.z, false, 4), s2 = freeSpot(s1.x + 1.2, s1.z + .8, 2), la = spawnEnemy('laerling', s2.x, s2.z, false, 4), s3 = ved(-1), pl = spawnEnemy('pleier', P.x + 30, P.z + 30, false, 4);
+            // pyttene fra draugen tas bort først, ellers kan søsteren skli i dem og miste snøringen (enemySlip avbryter varselet)
+            rolig(); rom(); nullstill(); for (const p of G.puddles.splice(0)) R.remove(p.mesh); const s1 = ved(4.5), hs = spawnEnemy('holdning', s1.x, s1.z, false, 4), s2 = freeSpot(s1.x + 1.2, s1.z + .8, 2), la = spawnEnemy('laerling', s2.x, s2.z, false, 4), s3 = ved(-1), pl = spawnEnemy('pleier', P.x + 30, P.z + 30, false, 4);
             await til(() => hs.state !== 'spawn' && la.state !== 'spawn'); la.stun = 1e9; pl.stun = 1e9; hs.cd = 1e9;
             const d0 = { hs: hs.dmg, la: la.dmg, pl: pl.dmg }, sp = Sound.play; let reimer = 0; const _rm = Laug.reimer; Laug.reimer = function () { const n = _rm.apply(Laug, arguments); reimer += n; return n; };
             { hs.state = 'chase'; const [dist, a] = mot(hs); Laug.snor(hs, P, a); const t = hs.teles[hs.teles.length - 1]; await til(() => !G.tele.includes(t), 3); await spill(.05);
-              ut.snor = { sirkel: t.shape === 'circle' && t.o.r === 1.25, snort: P.snortT, ord: !!(P.statusT && P.statusT['SNØRT'] !== undefined), la: la.dmg / d0.la, hs: hs.dmg / d0.hs, pl: pl.dmg / d0.pl, reimer, reimTegnet: Kjeder.liste.filter(K => K.reim).length };
-              await spill(1.2); ut.snor.varer = { snort: P.snortT, mokk: P.mokkT };
+              ut.snor = { sirkel: t.shape === 'circle' && t.o.r === 1.25, snort: P.snortT, ord: !!(P.statusT && P.statusT['SNØRT'] !== undefined), la: la.dmg / d0.la, hs: hs.dmg / d0.hs, pl: pl.dmg / d0.pl, reimer, reimTegnet: Kjeder.liste.filter(K => K.reim).length, tilstand: [hs.state, +(hs.slip > 0), +(hs.stun > 0), +(hs.sleep > 0)], pytter: G.puddles.length };
+              const stramme = () => Kjeder.liste.filter(K => K.reim && K.t >= K.inn && K.t < K.inn + K.hold).length;
+              await spill(1.2); ut.snor.varer = { snort: P.snortT, mokk: P.mokkT, stramme: stramme() };
               // en rulle løser snøret med en gang
-              P.roll = .34; P.rollA = 0; await spill(.05); ut.snor.rulle = { snort: P.snortT, mokk: P.mokkT, ord: !!P.statusT['LØS'] };
+              P.roll = .34; P.rollA = 0; await spill(.05); ut.snor.rulle = { snort: P.snortT, mokk: P.mokkT, ord: !!P.statusT['LØS'], stramme: stramme() };
+              await spill(.5); ut.snor.rulle.reimIgjen = Kjeder.liste.filter(K => K.reim).length;
               await til(() => !la.rettet && !hs.rettet, 5); await spill(.1); ut.snor.tilbake = { la: la.dmg - d0.la, hs: hs.dmg - d0.hs, flagg: !la.rettet && !hs.rettet }; }
             // aldri på en pasient som er slått ut: ingen snøring når han er slått ut, og en som blir slått ut før ringen går av, blir ikke snørt
             { nullstill(); P.stunT = 3; let brune = 0; for (let i = 0; i < 12; i++) { hs.state = 'chase'; hs.stun = 0; const n0 = hs.teles.length, [dist, a] = mot(hs); Grotesk.ai.holdning(hs, P, dist, a); brune += hs.teles.slice(n0).filter(t => t.shape === 'circle').length; hs.state = 'chase'; }
@@ -2450,8 +2453,8 @@ async def main():
             sn = ds['snor']
             sjekk('snøringen (ring på 1,25) gir SNØRT i 2,5 sekunder, og to lærreimer fra hendene hennes', sn['sirkel'] and 2.2 < sn['snort'] <= 2.5 and sn['ord'] and sn['reimer'] == 2 and sn['reimTegnet'] == 2, sn)
             sjekk('mens pasienten er snørt, slår lauget innen åtte ruter 25 prosent hardere, men ikke pleieren utenfor lauget', abs(sn['la'] - 1.25) < 1e-9 and abs(sn['hs'] - 1.25) < 1e-9 and sn['pl'] == 1, sn)
-            sjekk('snøret varer: over et sekund senere er pasienten fortsatt treg', sn['varer']['snort'] > .8 and sn['varer']['mokk'] > 0, sn['varer'])
-            sjekk('en rulle løser snøret med en gang (LØS)', sn['rulle']['snort'] == 0 and sn['rulle']['mokk'] <= 0 and sn['rulle']['ord'], sn['rulle'])
+            sjekk('snøret varer: over et sekund senere er pasienten fortsatt treg, og de to reimene holder ham fortsatt', sn['varer']['snort'] > .8 and sn['varer']['mokk'] > 0 and sn['varer']['stramme'] == 2, sn['varer'])
+            sjekk('en rulle løser snøret med en gang (LØS), og reimene slipper og er borte et halvt sekund etter', sn['rulle']['snort'] == 0 and sn['rulle']['mokk'] <= 0 and sn['rulle']['ord'] and sn['rulle']['stramme'] == 0 and sn['rulle']['reimIgjen'] == 0, sn['rulle'])
             sjekk('etter fire sekunder er laugets skade nøyaktig tilbake', abs(sn['tilbake']['la']) < 1e-9 and abs(sn['tilbake']['hs']) < 1e-9 and sn['tilbake']['flagg'], sn['tilbake'])
             sjekk('hun snører aldri en pasient som er slått ut, heller ikke når han blir slått ut før ringen går av', ds['slaatt']['brune'] == 0 and not ds['slaatt']['snort'] and not ds['slaatt']['underveis'], ds['slaatt'])
             sjekk('tommestokken på kloss hold: en kjegle på 2,2 som treffer', ds['linjal']['kjegle'] and ds['linjal']['traff'], ds['linjal'])
