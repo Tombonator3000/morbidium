@@ -314,4 +314,257 @@ R.telegraph = function (shape, o, dur, eier) { return Blekk.ta(shape, o, dur, ei
   const _cf = clearFloor; clearFloor = function () { const r = _cf.apply(this, arguments); Blekk.tom(); return r; };
 }
 
-Object.assign(window, { addTele, cancelTeles, updateTele, inShape, slashFx, VFX, Blekk, TELE_TYPE, TELE_FARGE, teleType, Particles, PART_FORM }); // til testene
+/* ============================================================
+   NEDSLAG  -  angrepet lander med tyngde
+   Når et varsel går av (R.kastTele med 'fyr', ikke o.stille), sprutes blekkpartikler langs omrisset etter skadetypen:
+   støv og gulvflis (fysisk), gnister og korte lyn på kanten (strøm), en blå sky (gass og vann), fiolette gløder som stiger
+   (morb), gløder og røyk (ild), papirbiter (papir) og så videre. Antallet følger arealet og Glod.kvote(), som er 0 med
+   enkel grafikk og lav tekstur. Store angrep (r 2,2 eller mer, eller en sjef) setter et merke i gulvet (sprekk, svimerke
+   eller blekksøl, 12 plasser i én InstancedMesh som blekner over 5 s), en sjokkbølge (følger Forvrengning) og rister
+   skjermen etter avstanden til spilleren. Et løp (fienden stormer langs banen) gir støv bakover og skrensemerker,
+   en prosjektilbane bare et lite munningsblaff. Tunge treff på spilleren (over 15 % av livet) fryser bildet 0,05 s og
+   viser treffstjerna. Prosjektilene får en liten skygge på gulvet, så kast i bue viser hvor de lander.
+   Alt lages én gang og blir liggende (arket, meshen for merkene og skyggene), ingenting per nedslag.
+   ============================================================ */
+/* partiklene per type: [form, farge, andel, fart ut, opp, tyngde, liv, størrelse] */
+const NED_TYPE = {
+  fysisk: [['stov', 0xcbbba2, .6, 2.4, 1.4, 1.2, .9, 1.4], ['papir', 0x4a3a2c, .4, 4.6, 5, 16, .7, .55]],
+  strom: [['gnist', 0xfff2a0, .8, 6.5, 3.5, 9, .35, .8], ['stov', 0xd8e4f0, .2, 1.6, 1, 0, .6, 1]],
+  gass: [['stov', 0x9fdcec, 1, 1.8, 1.2, -1.2, 1.1, 1.8]],
+  vann: [['drape', 0x7ec4f2, .55, 4, 4.5, 14, .6, .8], ['stov', 0xbfe2f4, .45, 1.8, 1, 0, .9, 1.5]],
+  gift: [['drape', 0x9fcf3a, .6, 3.6, 4, 13, .6, .8], ['stov', 0xb8d890, .4, 1.6, 1, -.5, 1, 1.5]],
+  morb: [['gnist', 0xc88af0, .7, 1.4, 2.2, -3, 1.1, .7], ['stov', 0x8a5aa8, .3, 1.4, 1, -.8, 1, 1.4]],
+  ild: [['gnist', 0xffa040, .6, 2.6, 3.5, -2, .9, .7], ['stov', 0x3a3230, .4, 1.2, 1.6, -1.5, 1.2, 1.6]],
+  lys: [['gnist', 0xfff8e0, .8, 5, 3, 6, .4, .7], ['stov', 0xf4ecd8, .2, 1.6, 1, -.5, .8, 1.4]],
+  papir: [['papir', 0xefe4c4, .75, 3.4, 5, 5, 1.1, .9], ['stov', 0xd8ccb0, .25, 1.8, 1, 1, .8, 1.3]],
+  natur: [['papir', 0x8fb85a, .5, 3, 4.5, 6, 1, .8], ['stov', 0xb8a888, .5, 2, 1.4, 1, .9, 1.4]],
+  lenke: [['gnist', 0xeef2fa, .6, 5.5, 3.5, 12, .35, .6], ['stov', 0xc8ccd8, .4, 2, 1.2, 1, .8, 1.3]]
+};
+/* merket i gulvet per type: 0 sprekk, 1 svimerke, 2 blekksøl (3 er skrensemerker etter et løp) */
+const NED_MERKE = { fysisk: 0, papir: 0, natur: 0, lenke: 0, ild: 1, strom: 1, lys: 1, morb: 2, gass: 2, vann: 2, gift: 2 };
+const NED_VS = `attribute vec2 aDek; varying vec2 vUv; varying vec3 vCol; varying float vA;
+void main() {
+  float f = aDek.x; vUv = vec2(mod(f, 2.0), 1.0 - floor(f / 2.0)) * 0.5 + uv * 0.5;
+  #ifdef USE_INSTANCING_COLOR
+  vCol = instanceColor;
+  #else
+  vCol = vec3(1.0);
+  #endif
+  vA = aDek.y; gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+}`;
+const NED_FS = `uniform sampler2D uArk; uniform vec3 uBlekk; varying vec2 vUv; varying vec3 vCol; varying float vA;
+void main() {
+  vec3 t = texture2D(uArk, vUv).rgb; float dekk = max(t.r, t.g), a = dekk * vA; if (a < 0.02) discard;
+  gl_FragColor = vec4(mix(vCol, uBlekk, t.g / max(dekk, 0.001)), a);
+}`;
+const Nedslag = {
+  N: 12, M: [], mesh: null, aDek: null, skygger: null, ko: [], tall: { land: 0, partikler: 0, merker: 0, gjenbruk: 0, sjokk: 0, lyn: 0, tunge: 0, lop: 0, baner: 0 },
+  /* hvor mange merker som synes nå */
+  get levende() { let n = 0; for (const m of this.M) if (m.t < m.liv) n++; return n; },
+  kan() { return !R.safe && !!R.scene && !!Particles.mesh; },
+  /* meshen for merkene og arket med de fire tegningene lages første gang et stort angrep lander, og blir liggende */
+  init() {
+    if (this.mesh) return true; if (this.brutt) return false;
+    try {
+      const N = this.N, g = new THREE.PlaneGeometry(1, 1), a = this.aDek = new THREE.InstancedBufferAttribute(new Float32Array(N * 2), 2); a.setUsage(THREE.DynamicDrawUsage); g.setAttribute('aDek', a);
+      const mat = new THREE.ShaderMaterial({ name: 'Nedslagsmerker', uniforms: { uArk: { value: this.ark() }, uBlekk: { value: new THREE.Color(0x1c1410) } }, vertexShader: NED_VS, fragmentShader: NED_FS, transparent: true, depthWrite: false });
+      const m = this.mesh = new THREE.InstancedMesh(g, mat, N); m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(N * 3), 3); m.instanceColor.setUsage(THREE.DynamicDrawUsage);
+      m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.renderOrder = 1; m.count = 0; R.scene.add(m);
+      for (let i = 0; i < N; i++) this.M.push({ i, t: 99, liv: 0 });
+      this.dummy = new THREE.Object3D(); this.c = new THREE.Color();
+    } catch (e) { this.brutt = true; return false; }
+    return true;
+  },
+  /* arket på 256 x 256: rødt er fyll (får typefargen), grønt er blekk. Sprekk, svimerke, blekksøl og skrensemerker */
+  ark() {
+    const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); let fro = 7;
+    const rng = () => (fro = (fro * 16807) % 2147483647) / 2147483647, celle = (i, f) => { x.save(); x.translate((i % 2) * 128 + 64, (i >> 1) * 128 + 64); f(); x.restore(); };
+    x.fillStyle = '#000'; x.fillRect(0, 0, 256, 256); x.globalCompositeOperation = 'lighter'; x.lineJoin = x.lineCap = 'round';
+    const sky = (r, rgb, a0) => { const g = x.createRadialGradient(0, 0, 0, 0, 0, r); g.addColorStop(0, `rgba(${rgb},${a0})`); g.addColorStop(.6, `rgba(${rgb},${a0 * .5})`); g.addColorStop(1, `rgba(${rgb},0)`); x.fillStyle = g; x.beginPath(); x.arc(0, 0, r, 0, TAU); x.fill(); };
+    const rift = (r0, r1, a, w, gren) => { let r = r0, v = a; x.beginPath(); x.moveTo(Math.cos(v) * r, Math.sin(v) * r); while (r < r1) { r += 5 + rng() * 7; v += (rng() - .5) * .5; x.lineTo(Math.cos(v) * r, Math.sin(v) * r); if (gren && rng() < .25) { const s = x.lineWidth; x.stroke(); x.lineWidth = s * .55; x.beginPath(); x.moveTo(Math.cos(v) * r, Math.sin(v) * r); x.lineTo(Math.cos(v + .5) * (r + 12), Math.sin(v + .5) * (r + 12)); x.stroke(); x.lineWidth = s; x.beginPath(); x.moveTo(Math.cos(v) * r, Math.sin(v) * r); } } x.stroke(); };
+    // sprekk: støvring med typefargen, knust midte og sprekker med greiner i blekk
+    celle(0, () => {
+      sky(60, '255,0,0', .35); x.strokeStyle = 'rgb(0,255,0)';
+      for (let k = 0; k < 9; k++) { x.lineWidth = 2.6 + rng() * 1.6; rift(6 + rng() * 6, 40 + rng() * 20, k / 9 * TAU + rng() * .4, 0, true); }
+      x.lineWidth = 1.6; x.beginPath(); for (let k = 0; k <= 12; k++) { const v = k / 12 * TAU, r = 13 + rng() * 5; k ? x.lineTo(Math.cos(v) * r, Math.sin(v) * r) : x.moveTo(Math.cos(v) * r, Math.sin(v) * r); } x.stroke();
+      x.fillStyle = 'rgb(0,200,0)'; for (let k = 0; k < 14; k++) { const v = rng() * TAU, r = 18 + rng() * 40; x.beginPath(); x.arc(Math.cos(v) * r, Math.sin(v) * r, .8 + rng() * 1.6, 0, TAU); x.fill(); }
+    });
+    // svimerke: sot i midten, glør i typefargen rundt og korte svidde stråler
+    celle(1, () => {
+      sky(58, '255,0,0', .5); sky(40, '0,255,0', .85); x.strokeStyle = 'rgb(0,200,0)';
+      for (let k = 0; k < 16; k++) { x.lineWidth = 1.2 + rng() * 2; rift(24 + rng() * 8, 46 + rng() * 14, rng() * TAU, 0, false); }
+      x.fillStyle = 'rgb(255,0,0)'; for (let k = 0; k < 10; k++) { const v = rng() * TAU, r = 30 + rng() * 22; x.beginPath(); x.arc(Math.cos(v) * r, Math.sin(v) * r, 1 + rng() * 2, 0, TAU); x.fill(); }
+    });
+    // blekksøl: en klatt i typefargen med blekkomriss, sprut og noen dråper utenfor
+    celle(2, () => {
+      x.beginPath(); for (let k = 0; k <= 24; k++) { const v = k / 24 * TAU, r = 30 + rng() * 14 + (k % 5 === 0 ? 10 : 0); k ? x.lineTo(Math.cos(v) * r, Math.sin(v) * r) : x.moveTo(Math.cos(v) * r, Math.sin(v) * r); } x.closePath();
+      x.fillStyle = 'rgba(255,0,0,.85)'; x.fill(); x.strokeStyle = 'rgb(0,255,0)'; x.lineWidth = 3; x.stroke();
+      for (let k = 0; k < 12; k++) { const v = rng() * TAU, r = 46 + rng() * 14, s = 1.5 + rng() * 3.5; x.beginPath(); x.arc(Math.cos(v) * r, Math.sin(v) * r, s, 0, TAU); x.fillStyle = 'rgb(255,0,0)'; x.fill(); x.lineWidth = 1.2; x.stroke(); }
+      x.fillStyle = 'rgb(0,110,0)'; x.beginPath(); x.arc(-8, -6, 9, 0, TAU); x.fill();
+    });
+    // skrensemerker: to svarte gummistriper som blir tynnere bakover, og litt støv
+    celle(3, () => {
+      sky(52, '255,0,0', .22);
+      for (const s of [-20, 20]) { for (let k = 0; k < 3; k++) { x.strokeStyle = `rgba(0,255,0,${.55 - k * .12})`; x.lineWidth = 9 - k * 2.5; x.beginPath(); x.moveTo(s + (rng() - .5) * 3, 58); x.quadraticCurveTo(s + (rng() - .5) * 8, 0, s * .8 + (rng() - .5) * 4, -56); x.stroke(); } }
+    });
+    const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearMipmapLinearFilter; return t;
+  },
+  /* et punkt på omrisset til varselet: u fra 0 til 1 rundt, med normalen ut */
+  kant(sh, o, u) {
+    const a = o.a || 0, fx = Math.sin(a), fz = Math.cos(a);
+    if (sh === 'rect') {
+      const L = 2 * o.len + o.w, s = u * L, w2 = o.w / 2;
+      if (s < o.len) return { x: o.x + fx * s - fz * w2, z: o.z + fz * s + fx * w2, nx: -fz, nz: fx };
+      if (s < o.len + o.w) { const q = s - o.len - w2; return { x: o.x + fx * o.len + fz * q, z: o.z + fz * o.len - fx * q, nx: fx, nz: fz }; }
+      const q = o.len - (s - o.len - o.w); return { x: o.x + fx * q + fz * w2, z: o.z + fz * q - fx * w2, nx: fz, nz: -fx };
+    }
+    if (sh === 'cone' && o.arc < TAU - .05) {
+      const buen = o.r * o.arc, L = 2 * o.r + buen, s = u * L, h = o.arc / 2;
+      if (s < buen) { const v = a - h + s / o.r; return { x: o.x + Math.sin(v) * o.r, z: o.z + Math.cos(v) * o.r, nx: Math.sin(v), nz: Math.cos(v) }; }
+      const side = s < buen + o.r ? -1 : 1, d = side < 0 ? s - buen : s - buen - o.r, v = a + side * h;
+      return { x: o.x + Math.sin(v) * d, z: o.z + Math.cos(v) * d, nx: Math.sin(v + side * Math.PI / 2), nz: Math.cos(v + side * Math.PI / 2) };
+    }
+    const v = u * TAU; return { x: o.x + Math.sin(v) * o.r, z: o.z + Math.cos(v) * o.r, nx: Math.sin(v), nz: Math.cos(v) };
+  },
+  /* et tilfeldig punkt inne i formen */
+  inne(sh, o) {
+    const a = o.a || 0;
+    if (sh === 'rect') { const l = Math.random() * o.len, q = (Math.random() - .5) * o.w; return { x: o.x + Math.sin(a) * l + Math.cos(a) * q, z: o.z + Math.cos(a) * l - Math.sin(a) * q }; }
+    const d = Math.sqrt(Math.random()) * o.r, v = sh === 'cone' && o.arc < TAU - .05 ? a + (Math.random() - .5) * o.arc : Math.random() * TAU;
+    return { x: o.x + Math.sin(v) * d, z: o.z + Math.cos(v) * d };
+  },
+  areal(sh, o) { return sh === 'rect' ? o.w * o.len : sh === 'cone' ? .5 * Math.min(TAU, o.arc) * o.r * o.r : Math.PI * o.r * o.r; },
+  /* én partikkel av typen, med retningen ut (nx, nz) */
+  sprut(x, z, nx, nz, def, fart = 1) {
+    const [form, farge, , v, opp, g, liv, str] = def, k = v * fart * (.55 + Math.random() * .7);
+    Particles.spawn(x, .12, z, 1, farge, { form, speed: .01, vx: nx * k, vz: nz * k, up: Math.max(.05, opp), g, life: liv, size: str });
+  },
+  velg(D) { let r = Math.random(); for (const d of D) { r -= d[2]; if (r <= 0) return d; } return D[D.length - 1]; },
+  /* R.kastTele med 'fyr': nedslaget tas etter at fire har gått (da vet vi om fienden stormer) */
+  land(t) { if (t && t.o && !t.o.stille && this.ko.length < 64) this.ko.push(t); },
+  tick(dt) {
+    if (this.ko.length) { const K = this.ko; this.ko = []; for (const t of K) { try { this.slag(t); } catch (e) { this.feil = String(e && e.stack || e); } } }
+    if (!this.mesh) return;
+    const vis = !R.safe; this.mesh.visible = vis; if (!vis) return;
+    let maks = -1; const D = this.aDek.array;
+    for (const m of this.M) {
+      if (m.t >= m.liv) { if (D[m.i * 2 + 1]) D[m.i * 2 + 1] = 0; continue; }
+      m.t += dt; const p = m.t / m.liv, inn = Math.min(1, m.t / .08);
+      D[m.i * 2 + 1] = m.a0 * (p < .35 ? 1 : Math.max(0, 1 - (p - .35) / .65)) * inn; maks = m.i;
+      if (m.t < .12) this.plasser(m, .82 + .18 * Math.min(1, m.t / .1));
+    }
+    this.mesh.count = maks + 1; this.aDek.needsUpdate = true;
+  },
+  /* merket skaleres litt opp de første hundredelene, som et stempel som treffer */
+  plasser(m, k) {
+    const M = this.dummy; M.position.set(m.x, .018 + m.i * .0004, m.z); M.rotation.set(-Math.PI / 2, 0, m.rot); M.scale.set(m.sx * k, m.sz * k, 1); M.updateMatrix();
+    this.mesh.setMatrixAt(m.i, M.matrix); this.mesh.instanceMatrix.needsUpdate = true;
+  },
+  /* et merke i gulvet: en som har bleknet helt brukes først, ellers den eldste */
+  merke(x, z, celle, farge, sx, sz, rot, a0 = .9) {
+    if (!this.init()) return null;
+    let m = this.M.find(m => m.t >= m.liv);
+    if (m) { if (m.brukt) this.tall.gjenbruk++; } else m = this.M.reduce((a, b) => (b.t / b.liv > a.t / a.liv ? b : a));
+    Object.assign(m, { x, z, sx, sz, rot, t: 0, liv: 5, a0, brukt: true });
+    this.aDek.array[m.i * 2] = celle; this.aDek.array[m.i * 2 + 1] = 0; this.plasser(m, .82);
+    this.mesh.setColorAt(m.i, this.c.set(farge)); this.mesh.instanceColor.needsUpdate = true; this.tall.merker++;
+    return m;
+  },
+  slag(t) {
+    const o = t.o, sh = t.shape, eier = t.owner, P = G.player; if (!o || o.x == null) return;
+    this.tall.land++;
+    const typ = teleType(o, eier), D = NED_TYPE[typ] || NED_TYPE.fysisk, kv = this.kan() ? Glod.kvote() : 0, T = TELE_TYPE[typ];
+    const stor = (o.r || 0) >= 2.2 || !!(eier && (eier.kind === 'boss' || eier.mini)), a = o.a || 0, fx = Math.sin(a), fz = Math.cos(a);
+    const lop = sh === 'rect' && eier && eier.state === 'charge', bane = sh === 'rect' && !lop && o.w < .6;
+    const n0 = Particles.n;
+    if (bane) { // en prosjektilbane: bare et lite blaff der skuddet går ut
+      this.tall.baner++;
+      for (let i = 0, n = Math.round(7 * kv); i < n; i++) { const q = (Math.random() - .5) * 1.1; this.sprut(o.x + fx * .5, o.z + fz * .5, fx * Math.cos(q) + fz * Math.sin(q), fz * Math.cos(q) - fx * Math.sin(q), D[0], .7); }
+      this.tall.partikler += Particles.n - n0; return;
+    }
+    const ar = this.areal(sh, o), n = Math.round(Math.min(60, 8 + ar * 2.4) * kv);
+    if (lop) { // fienden stormer: støv som sparkes bakover og ut til sidene, og skrensemerker der den tok sats
+      this.tall.lop++; const st = NED_TYPE.fysisk[0];
+      for (let i = 0, m = Math.round(Math.min(16, n * .5)); i < m; i++) { const q = (Math.random() - .5) * 2.2; this.sprut(o.x + fx * .3 + (Math.random() - .5) * o.w * .6, o.z + fz * .3, -fx * Math.cos(q) + fz * Math.sin(q), -fz * Math.cos(q) - fx * Math.sin(q), st, 1.1); }
+      const del = .6 * o.len / (2 * o.len + o.w); // de første 60 prosentene av sidene, fra der den tar sats
+      for (let i = 0, m = Math.round(n * .45); i < m; i++) { const u = Math.random() * del, p = this.kant(sh, o, Math.random() < .5 ? u : 1 - u); this.sprut(p.x, p.z, p.nx + fx * .6, p.nz + fz * .6, this.velg(D), .8); }
+      if (this.kan()) { const k = Math.min(1.8, o.len * .3); this.merke(o.x + fx * (k * .5 + .2), o.z + fz * (k * .5 + .2), 3, 0x8a7a64, Math.max(.9, o.w * .9), k, a, .75); }
+      this.rist(o.x, o.z, .12, 0); this.tall.partikler += Particles.n - n0; return;
+    }
+    // langs omrisset, og noen inne i formen på store angrep
+    const inni = stor ? .22 : .08;
+    for (let i = 0; i < n; i++) {
+      const d = this.velg(D);
+      if (Math.random() < inni) { const p = this.inne(sh, o), v = Math.random() * TAU; this.sprut(p.x, p.z, Math.sin(v) * .35, Math.cos(v) * .35, d, .8); }
+      else { const p = this.kant(sh, o, Math.random()); this.sprut(p.x, p.z, p.nx, p.nz, d, 1); }
+    }
+    this.tall.partikler += Particles.n - n0;
+    // strøm: to eller tre korte buer på kanten
+    if (typ === 'strom' && kv > 0 && typeof Lyn === 'object') {
+      for (let k = 0, m = 2 + (Math.random() < .5 ? 1 : 0); k < m; k++) {
+        const u = Math.random(), p1 = this.kant(sh, o, u), p2 = this.kant(sh, o, (u + .05 + Math.random() * .06) % 1);
+        if (Lyn.slag(p1.x, .08, p1.z, p2.x, .25 + Math.random() * .3, p2.z, { farge: 0xfff2a0, bredde: .05, liv: .2, grener: 1, amp: .3 })) this.tall.lyn++;
+      }
+    }
+    // store angrep (ikke smale baner, som krokene til sjefen): et merke i gulvet, sjokkbølge og risting etter avstanden til spilleren
+    if (!stor || (sh === 'rect' && o.w < 1.2)) { if (stor) this.rist(o.x, o.z, .12, 0); return; }
+    if (this.kan()) {
+      const cel = NED_MERKE[typ] ?? 0, fc = new THREE.Color(T.farge), farge = cel === 1 ? fc.clone().lerp(new THREE.Color(0xff7a2a), .4).getHex() : cel === 0 ? fc.clone().lerp(new THREE.Color(0x8a7a64), .55).getHex() : T.farge;
+      if (sh === 'rect') this.merke(o.x + fx * o.len / 2, o.z + fz * o.len / 2, cel, farge, o.w + .5, o.len * .95, a, .8);
+      else if (sh === 'cone' && o.arc < TAU - .05) { const r = o.r * .55; this.merke(o.x + fx * r, o.z + fz * r, cel, farge, o.r * 1.2, o.r * 1.2, Math.random() * TAU); }
+      else this.merke(o.x, o.z, cel, farge, o.r * 2.1, o.r * 2.1, Math.random() * TAU);
+    }
+    const R0 = sh === 'rect' ? Math.max(o.w, o.len * .4) : o.r;
+    if (!R.safe) { R.sjokk(o.x, o.z, .35 + .25 * clamp((R0 - 2.2) / 4, 0, 1), { y: .1 }); this.tall.sjokk++; }
+    this.rist(o.x, o.z, .3 + .15 * clamp((R0 - 2.2) / 4, 0, 1), R0);
+  },
+  /* skjermristing som dør ut med avstanden fra kanten av angrepet til spilleren (ingenting over 14 skritt) */
+  rist(x, z, k, r) {
+    const P = G.player; if (!P) return; const d = Math.max(0, Math.hypot(P.x - x, P.z - z) - r), f = Math.max(0, 1 - d / 14);
+    if (f > 0) R.trauma = Math.min(1, Math.max(R.trauma, k * f));
+  },
+  /* tunge treff på spilleren: bildet fryser et øyeblikk og treffstjerna kommer */
+  tungt(d) {
+    const P = G.player; if (!P || !(d > .15 * P.maxHp)) return;
+    G.hitstop = Math.max(G.hitstop, .05); this.tall.tunge++;
+    if (typeof starBurst === 'function') starBurst(P.x, 1.4, P.z + .1, 1.35);
+  },
+  /* skyggene under prosjektilene: én flekk per prosjektil som krymper og blekner med høyden */
+  skygge() {
+    const S = this.skygger, L = G.projectiles || [];
+    if (R.safe || !R.scene || !L.length) { if (S) S.count = 0; return; }
+    if (!S) {
+      if (this.skyggeBrutt) return;
+      try {
+        const tex = R.canvasTex(32, 32, g => { const gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(.55, 'rgba(0,0,0,.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); });
+        const m = this.skygger = new THREE.InstancedMesh(R.plane1(), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, color: 0x1c1410 }), 64);
+        m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.renderOrder = 1; m.count = 0; R.scene.add(m); this.sd = new THREE.Object3D();
+      } catch (e) { this.skyggeBrutt = true; return; }
+      return this.skygge();
+    }
+    let k = 0; const M = this.sd;
+    for (const p of L) {
+      if (k >= 64) break; if (!p.alive || !p.mesh) continue;
+      const h = Math.max(0, (p.y ?? .9) - .5), s = (p.r || .22) * 2.6 * Math.max(.45, 1 - h * .18);
+      M.position.set(p.x, .017, p.z); M.rotation.set(-Math.PI / 2, 0, 0); M.scale.set(s, s * .8, 1); M.updateMatrix(); S.setMatrixAt(k++, M.matrix);
+    }
+    S.count = k; S.instanceMatrix.needsUpdate = true;
+  },
+  tom() { this.ko = []; for (const m of this.M) m.t = m.liv; if (this.mesh) { this.mesh.count = 0; this.aDek.array.fill(0); this.aDek.needsUpdate = true; } if (this.skygger) this.skygger.count = 0; }
+};
+{
+  const _kast = R.kastTele;
+  R.kastTele = function (g, how, t) {
+    const ny = !!g && !(g.isBlekk ? g.kastet : g.userData && g.userData.kastet), r = _kast.call(this, g, how, t);
+    if (ny && how === 'fyr') Nedslag.land(t);
+    return r;
+  };
+  const _ut = updateTele; updateTele = function (dt) { _ut(dt); Nedslag.tick(dt); };
+  const _up = updateProjectiles; updateProjectiles = function (dt) { _up(dt); Nedslag.skygge(); };
+  const _cf = clearFloor; clearFloor = function () { const r = _cf.apply(this, arguments); Nedslag.tom(); return r; };
+  const _hp = hurtPlayer; hurtPlayer = function (dmg, src) { const d = _hp.apply(this, arguments); Nedslag.tungt(d); return d; };
+  // lynet i regnværet har sitt eget nedslag (38_effekter.js)
+  if (typeof Uvaer === 'object') { const _uv = Uvaer.varsel; Uvaer.varsel = function (x, z) { const n = G.tele.length; _uv.call(this, x, z); if (G.tele.length > n) G.tele[G.tele.length - 1].o.stille = true; }; }
+}
+
+Object.assign(window, { addTele, cancelTeles, updateTele, inShape, slashFx, VFX, Blekk, TELE_TYPE, TELE_FARGE, teleType, Particles, PART_FORM, Nedslag, NED_TYPE, addProj }); // til testene

@@ -2292,6 +2292,109 @@ async def main():
         sjekk('ingen konsollfeil (blekkpartikler i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 49) Nedslag
+        #     Angrepene lander med tyngde (Nedslag i 46_blekk.js): partikler langs omrisset når et varsel går av (ikke når det avbrytes
+        #     eller har o.stille), korte lyn på kanten for strøm, merker i gulvet på store angrep (høyst 12, de som har bleknet brukes
+        #     om igjen), skrensemerker når en fiende stormer, bare et blaff for prosjektilbaner, partiklene er borte innen 5 s,
+        #     ingen ny geometri per nedslag, ingenting med enkel grafikk, tunge treff på spilleren fryser bildet, lynet i regnværet
+        #     beholder sitt eget nedslag, og prosjektilene har en skygge på gulvet.
+        import io as _io49
+        from PIL import Image as _Img49
+        NS_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
+            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            tomt = async () => { const t0 = performance.now(); while (G.tele.length && performance.now() - t0 < 120000) await vent(50); await spill(.1); },
+            rydd = () => { for (const t of G.tele) R.kastTele(t.mesh, 'rydd', t); G.tele = []; Blekk.tom(); },
+            kall = () => { const i = R.renderer.info; i.autoReset = false; i.reset(); R.render(0); const n = i.render.calls; i.autoReset = true; return n; },
+            eier = (o = {}) => Object.assign({ alive: true, stun: 0, sleep: 0 }, o), T = () => Object.assign({}, Nedslag.tall), ut = {};"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ns = await pg.evaluate("""async () => { """ + NS_HJELP + """
+          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); rydd(); Particles.clear(); Nedslag.tom();
+          // går av: partikler langs omrisset. Avbrutt eller o.stille: ingenting
+          let t0 = T(), n0 = Particles.n; const E = eier();
+          addTele('circle', { x: P.x + 2, z: P.z, r: 1.4 }, .1, null, null); addTele('circle', { x: P.x - 2, z: P.z, r: 1.4 }, 5, null, E); addTele('circle', { x: P.x, z: P.z + 2, r: 1.4, stille: true }, .1, null, null);
+          await spill(.02); cancelTeles(E); await tomt(); let t1 = T();
+          ut.land = { d: t1.land - t0.land, part: t1.partikler - t0.partikler, kvote: Glod.kvote(), merker: t1.merker - t0.merker };
+          // strøm: gnister og to eller tre lyn på kanten
+          t0 = T(); addTele('circle', { x: P.x + 2, z: P.z, r: 1.8, color: 0xffe25a }, .1, null, null); await tomt(); t1 = T(); ut.strom = { lyn: t1.lyn - t0.lyn, part: t1.partikler - t0.partikler };
+          // en prosjektilbane: bare et lite blaff og ingen merker. Et løp: skrensemerker
+          t0 = T(); addTele('rect', { x: P.x, z: P.z, a: 1, w: .35, len: 10 }, .1, null, eier()); await tomt(); t1 = T(); ut.bane = { baner: t1.baner - t0.baner, part: t1.partikler - t0.partikler, merker: t1.merker - t0.merker };
+          const L = eier({ state: 'wind' }); t0 = T(); addTele('rect', { x: P.x, z: P.z, a: 2, w: 1.3, len: 7 }, .1, () => { L.state = 'charge'; }, L); await tomt(); t1 = T();
+          const sk = Nedslag.M.filter(m => m.t < m.liv).map(m => Nedslag.aDek.array[m.i * 2]);
+          ut.lop = { lop: t1.lop - t0.lop, merker: t1.merker - t0.merker, skrens: sk.includes(3), part: t1.partikler - t0.partikler };
+          Nedslag.tom();
+          // 40 store angrep av alle typene: høyst 12 merker, de som har bleknet brukes om igjen, ingen geometri blir liggende, partiklene er borte innen 5 s
+          const info = R.renderer.info.memory, g0 = info.geometries, typer = Object.keys(TELE_TYPE); let maks = 0; t0 = T(); n0 = Particles.n;
+          for (let i = 0; i < 40; i++) { const a = i * .9; addTele('circle', { x: P.x + Math.sin(a) * 3, z: P.z + Math.cos(a) * 3, r: 2.2 + (i % 3) * .6, type: typer[i % typer.length] }, .05 + (i % 10) * .02, null, i % 4 ? null : eier({ kind: 'boss' })); if (i % 10 === 9) { await tomt(); maks = Math.max(maks, Nedslag.levende); } }
+          t1 = T(); const nTopp = Particles.n; await spill(5.3, 240000);
+          ut.stor = { merker: t1.merker - t0.merker, maks, sjokk: t1.sjokk - t0.sjokk, nTopp, n5: Particles.n, n0, levende: Nedslag.levende, dg: info.geometries - g0 };
+          t0 = T(); addTele('circle', { x: P.x + 3, z: P.z, r: 2.5 }, .05, null, null); await tomt(); t1 = T(); ut.stor.gjenbruk = t1.gjenbruk - t0.gjenbruk; ut.stor.dg2 = info.geometries - g0;
+          const k1 = kall(); Nedslag.mesh.visible = false; const k0 = kall(); Nedslag.mesh.visible = true; ut.stor.kall = k1 - k0; Nedslag.tom(); await spill(.1);
+          // enkel grafikk: ingen partikler og ingen merker, og meshen vises ikke
+          Particles.clear(); R.safe = true; await spill(.05); t0 = T(); n0 = Particles.n;
+          addTele('circle', { x: P.x + 2, z: P.z, r: 3, color: 0xffe25a }, .05, null, eier({ kind: 'boss' })); addTele('rect', { x: P.x, z: P.z, a: 2, w: .35, len: 6 }, .05, null, null); await tomt(); t1 = T();
+          ut.safe = { land: t1.land - t0.land, part: t1.partikler - t0.partikler, merker: t1.merker - t0.merker, lyn: t1.lyn - t0.lyn, synlig: Nedslag.mesh.visible, sjokk: t1.sjokk - t0.sjokk };
+          R.safe = false; await spill(.1);
+          // tunge treff: over 15 % av livet fryser bildet og viser treffstjerna, et lite treff gjør det ikke
+          P.hp = P.maxHp = 100; P.invuln = 0; P.iframe = 0; G.hitstop = 0; const s0 = VFX.stars.length; t0 = T(); const d1 = hurt(P, 20, { type: 'test' }); const hs1 = G.hitstop, st1 = VFX.stars.length - s0;
+          P.invuln = 0; P.iframe = 0; G.hitstop = 0; const d2_ = hurt(P, 5, { type: 'test' }); const hs2 = G.hitstop;
+          ut.tungt = { d1, hs1, st1, d2: d2_, hs2, tunge: T().tunge - t0.tunge }; P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.1);
+          // lynet i regnværet har sitt eget nedslag
+          const nT = G.tele.length; Uvaer.varsel(P.x + 4, P.z); ut.lyn = { stille: G.tele.length > nT && !!G.tele[G.tele.length - 1].o.stille }; rydd();
+          // skygge under prosjektilene, også en som går i bue
+          const pr = addProj({ type: 'glob', from: 'enemy', x: P.x + 3, z: P.z, arc: true, tx: P.x + 6, tz: P.z, dur: 20, h: 3, dmg: 0 }); await spill(.1);
+          ut.skygge = { n: Nedslag.skygger ? Nedslag.skygger.count : -1 }; pr.alive = false; await spill(.1); ut.skygge.etter = Nedslag.skygger.count;
+          return ut; }""")
+        la = ns['land']
+        sjekk('et varsel som går av, gir et nedslag med partikler langs omrisset, men ikke et som avbrytes eller har o.stille', la['d'] == 1 and la['part'] >= 8 and la['kvote'] > 0 and la['merker'] == 0, la)
+        sjekk('strøm gir gnister og to eller tre korte lyn på kanten', 2 <= ns['strom']['lyn'] <= 3 and ns['strom']['part'] >= 8, ns['strom'])
+        sjekk('en prosjektilbane gir bare et lite blaff, et løp gir skrensemerker', ns['bane']['baner'] == 1 and 1 <= ns['bane']['part'] <= 8 and ns['bane']['merker'] == 0 and ns['lop']['lop'] == 1 and ns['lop']['merker'] == 1 and ns['lop']['skrens'] and ns['lop']['part'] >= 4, [ns['bane'], ns['lop']])
+        st = ns['stor']
+        sjekk('40 store angrep: høyst 12 merker (ett tegnekall), sjokkbølger, merker som har bleknet brukes om igjen, partiklene er borte innen 5 s og geometrien vokser høyst 2',
+              st['merker'] == 40 and st['maks'] == 12 and st['sjokk'] >= 40 and st['nTopp'] > 100 and st['n5'] <= st['n0'] and st['levende'] == 0 and st['gjenbruk'] == 1 and st['dg'] <= 2 and st['dg2'] <= 2 and st['kall'] == 1, st)
+        sa = ns['safe']
+        sjekk('enkel grafikk: nedslaget telles, men ingen partikler, lyn, merker eller sjokkbølger', sa['land'] == 2 and sa['part'] == 0 and sa['merker'] == 0 and sa['lyn'] == 0 and not sa['synlig'] and sa['sjokk'] == 0, sa)
+        tu = ns['tungt']
+        sjekk('et tungt treff (over 15 % av livet) fryser bildet minst 0,04 s og viser treffstjerna, et lite gjør det ikke', tu['d1'] > 15 and tu['hs1'] >= .04 and tu['st1'] == 1 and tu['tunge'] == 1 and tu['d2'] > 0 and tu['hs2'] == 0, tu)
+        sjekk('lynet i regnværet beholder sitt eget nedslag (o.stille)', ns['lyn']['stille'], ns['lyn'])
+        sjekk('prosjektilene har en skygge på gulvet, også i bue, og den er borte med prosjektilet', ns['skygge'] == {'n': 1, 'etter': 0}, ns['skygge'])
+        # pikslene: blekksølet etter et stort angrep synes i gulvet midt i sirkelen og ikke utenfor (snitt over 9 x 9 punkter, før og etter)
+        pos = await pg.evaluate("""async () => { """ + NS_HJELP + """
+          G.run.seed = 11; startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200);
+          const inne = r => !Vaer.ute(r.x + r.w / 2, r.z + r.h / 2), rr = G.F.rooms.filter(inne);
+          rolig(); R.shakeOn = false; rydd(); P.hp = P.maxHp = 1e6; P.invuln = 999; const r = (rr.length ? rr : G.F.rooms).slice().sort((a, b) => b.w * b.h - a.w * a.h)[0], c = freeSpot(r.x + r.w / 2 - .4, r.z + r.h / 2, 3);
+          P.x = c.x; P.z = c.z; P.vx = P.vz = 0; R.snapCamera(P.x, P.z); await spill(.6); Particles.clear();
+          const q = (x, z) => { const s = R.project(x, 0, z); return [Math.round(s.x), Math.round(s.y)]; };
+          return { midt: q(P.x + 3.2, P.z), ute: q(P.x + 3.2 + 4.3, P.z) }; }""")
+        def flekk49(png, xy):
+            im = _Img49.open(_io49.BytesIO(png)).convert('RGB'); x0, y0 = xy
+            px = [im.getpixel((x0 + i, y0 + j)) for i in range(-4, 5) for j in range(-4, 5)]
+            return [sum(q[k] for q in px) / len(px) for k in range(3)]
+        for49 = await pg.screenshot()
+        await pg.evaluate("""async () => { """ + NS_HJELP + """
+          addTele('circle', { x: P.x + 3.2, z: P.z, r: 2.4, color: 0xb36be0 }, .05, null, null); await tomt(); await spill(1.4); }""")
+        etter49 = await pg.screenshot()
+        await pg.screenshot(path='/tmp/e_49_merke.png')
+        dl49 = lambda xy: round(sum(abs(a - b) for a, b in zip(flekk49(for49, xy), flekk49(etter49, xy))) / 3, 1)
+        px49 = {k: dl49(v) for k, v in pos.items()}
+        sjekk('pikslene: merket synes midt i sirkelen (endring over 25) og ikke utenfor (under 8)', px49['midt'] > 25 and px49['ute'] < 8, px49)
+        sjekk('ingen konsollfeil (nedslag i 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # én runde i 3D: merkene lenker, ett tegnekall for 12 merker, og ingenting blir liggende
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        n3 = await pg.evaluate("""async () => { """ + NS_HJELP + """
+          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); rydd(); Nedslag.tom(); ut.d3 = D3.on; const g0 = R.renderer.info.memory.geometries, t0 = T();
+          for (let i = 0; i < 14; i++) { const a = i * .45; addTele(i % 5 ? 'circle' : 'cone', { x: P.x + Math.sin(a) * 3, z: P.z + Math.cos(a) * 3, r: 2.4, a, arc: 1.6, type: Object.keys(TELE_TYPE)[i % 11] }, .1 + (i % 7) * .03, null, null); }
+          await tomt(); const q = R.renderer.properties.get(Nedslag.mesh.material), pr = q.currentProgram || q.program;
+          const k1 = kall(); Nedslag.mesh.visible = false; const k0 = kall(); Nedslag.mesh.visible = true;
+          Object.assign(ut, { merker: T().merker - t0.merker, levende: Nedslag.levende, kall: k1 - k0, lenket: !!pr && !(pr.diagnostics && !pr.diagnostics.runnable) });
+          await spill(5.3, 240000); ut.dg = R.renderer.info.memory.geometries - g0; ut.etter = Nedslag.levende; return ut; }""")
+        await pg.screenshot(path='/tmp/e_49_3d.png')
+        sjekk('3D: merkene lenker, 12 merker koster ett tegnekall, de blekner, og geometrien vokser høyst 2', n3['d3'] and n3['lenket'] and n3['merker'] == 14 and n3['levende'] == 12 and n3['kall'] == 1 and n3['etter'] == 0 and n3['dg'] <= 2, n3)
+        sjekk('ingen konsollfeil (nedslag i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
