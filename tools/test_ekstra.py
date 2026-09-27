@@ -2191,14 +2191,16 @@ async def main():
         # dekket, kuttene langs rutene, veggene, toppene og bakken i etasjen som står
         MAAL52 = """() => { const G = MORBIDIUM, F = G.F, c = Paint.mesh.gulv.material.map.image, T = c.width / F.W, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, cw = c.width;
           const lum = k => (.2126 * d[k] + .7152 * d[k + 1] + .0722 * d[k + 2]) / 255, ute = i => { if (!F.tiles[i]) return false; const rid = F.roomId[i]; return rid >= 0 ? !!F.rooms[rid].ute : !!F.ute; };
+          const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
           const snoFarge = k => Math.abs(d[k] - 228) + Math.abs(d[k + 1] - 235) + Math.abs(d[k + 2] - 243) < 12 || Math.abs(d[k] - 179) + Math.abs(d[k + 1] - 191) + Math.abs(d[k + 2] - 210) < 8;
           const r1 = mulberry32(5); let n = 0, lys = 0, maks = 0, sf = 0;
           for (let t = 0; t < 100000 && n < 400; t++) { const x = r1() * F.W, z = r1() * F.H; if (!ute(Math.floor(z) * F.W + Math.floor(x))) continue; const k = (Math.floor(z * T) * cw + Math.floor(x * T)) * 4; n++; if (lum(k) > .72) lys++; if (snoFarge(k)) sf++; maks = Math.max(maks, d[k], d[k + 1], d[k + 2]); }
-          // 200 rutegrenser mellom to uteruter: forskjellen over grensen mot forskjellen mellom to kolonner midt i ruta
-          const r2 = mulberry32(9); let over = 0, inne = 0, nb = 0;
+          // 200 rutegrenser mellom to uteruter: forskjellen over grensen mot forskjellen mellom to kolonner midt i ruta. Bare par der minst
+          // ett punkt er snø (lysstyrke over .72) telles: bar bakke har sine egne fuger langs rutene, og det er ikke snøen som er kuttet
+          const r2 = mulberry32(9), d2 = (a, b) => { const x = lum(a), y = lum(b); return Math.max(x, y) > .72 ? Math.abs(x - y) : 0; }; let over = 0, inne = 0, nb = 0;
           for (let t = 0; t < 50000 && nb < 200; t++) { const x = 1 + Math.floor(r2() * (F.W - 1)), z = 1 + Math.floor(r2() * (F.H - 1)), i = z * F.W + x, loddrett = nb % 2 === 0, j = loddrett ? i - 1 : i - F.W; if (!ute(i) || !ute(j)) continue;
-            for (let k = 2; k < T - 2; k++) { if (loddrett) { const y = z * T + k, p = (y * cw + x * T - 1) * 4, q = (y * cw + x * T + T / 2 - 1) * 4; over += Math.abs(lum(p) - lum(p + 4)); inne += Math.abs(lum(q) - lum(q + 4)); }
-              else { const xx = x * T + k, p = ((z * T - 1) * cw + xx) * 4, q = ((z * T + T / 2 - 1) * cw + xx) * 4; over += Math.abs(lum(p) - lum(p + cw * 4)); inne += Math.abs(lum(q) - lum(q + cw * 4)); } }
+            for (let k = 2; k < T - 2; k++) { if (loddrett) { const y = z * T + k, p = (y * cw + x * T - 1) * 4, q = (y * cw + x * T + T / 2 - 1) * 4; over += d2(p, p + 4); inne += d2(q, q + 4); }
+              else { const xx = x * T + k, p = ((z * T - 1) * cw + xx) * 4, q = ((z * T + T / 2 - 1) * cw + xx) * 4; over += d2(p, p + cw * 4); inne += d2(q, q + cw * 4); } }
             nb++; }
           const sv = Paint.mesh.vegger.filter(m => m.userData.sno), hk = sv.find(m => m.userData.veggStil === 'hekk') || sv.find(m => !(VEGG[m.userData.veggStil] || {}).alfa);
           let topp12 = 0; if (hk) { const im = hk.material.map.image, dd = im.getContext('2d').getImageData(0, 0, im.width, 12).data; for (let k = 0; k < dd.length; k += 4) topp12 += (.2126 * dd[k] + .7152 * dd[k + 1] + .0722 * dd[k + 2]) / 255; topp12 /= dd.length / 4; }
@@ -2215,10 +2217,13 @@ async def main():
           await bygg(S.sno); ut.sno = (""" + MAAL52 + """)(); await bygg(S.regn); ut.regn = (""" + MAAL52 + """)();
           R.lowTex = true; await bygg(S.sno); ut.lett = (""" + MAAL52 + """)(); R.lowTex = false;
           const st = G.meta.settings; st.simple = true; applySettings(); await bygg(S.sno); ut.enkel = (""" + MAAL52 + """)(); st.simple = false; applySettings();
-          // byggetiden: samme frø med og uten snø, beste av tre
-          const gf = generateFloor, tid = v => { generateFloor = (...a) => { const F = gf(...a); F.vaer = v; return F; }; try { G.run.seed = S.sno; G.run.dromVent = 0; const t0 = performance.now(); startFloor(1, false); return performance.now() - t0; } finally { generateFloor = gf; } };
-          const med = [], uten = []; for (let k = 0; k < 3; k++) { uten.push(tid('regn')); await vent(100); med.push(tid('sno')); await vent(100); }
-          ut.tid = [Math.round(Math.min(...med)), Math.round(Math.min(...uten))];
+          // byggetiden: hele startFloor med snø, og Paint.level (gulvet, veggene og bakken, der snøen males) med og uten snø på samme etasje.
+          // Uten snø er startFloor minus forskjellen; beste av fem (maskinen er delt, så ett av tre kunne bli forstyrret)
+          const ts = [], ls = [], lr = [], ferdig = () => Paint.mesh.gulv.material.map.image.getContext('2d').getImageData(0, 0, 1, 1); // lerretet tegnes først når det leses
+          for (let k = 0; k < 5; k++) { G.run.seed = S.sno; G.run.dromVent = 0; let t0 = performance.now(); startFloor(1, false); ferdig(); ts.push(performance.now() - t0); await vent(100);
+            const Fr = Object.assign({}, G.F, { vaer: 'regn' }); t0 = performance.now(); Paint.level(Fr, G.th); ferdig(); lr.push(performance.now() - t0); await vent(50);
+            t0 = performance.now(); Paint.level(G.F, G.th); ferdig(); ls.push(performance.now() - t0); await vent(100); }
+          const a = Math.min(...ts), b = Math.min(...ls), c = Math.min(...lr); ut.tid = [Math.round(a), Math.round(a - (b - c)), Math.round(b), Math.round(c)];
           await bygg(S.sno); const P = G.player, r = G.F.rooms.find(r => r.template === 'liggehall'); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null;
           P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.invuln = 999; R.snapCamera(P.x, P.z); return ut; }""")
         s5, r5, l5, e5 = m52['sno'], m52['regn'], m52['lett'], m52['enkel']
@@ -2229,7 +2234,7 @@ async def main():
         sjekk('vinter: bakken ute er snø, gjentatt hver tiende rute, og lyset er kaldere', s5['bakke'] > .7 and abs(s5['bakkeRute'] - 10) < .01 and s5['amb'] != r5['amb'], (s5['bakke'], s5['bakkeRute'], s5['amb'], r5['amb']))
         sjekk('vinter: en Parken uten snø har ingen snøfarger, snøvegger, snøtopper eller snøbakke', r5['snoFarge'] <= 2 and r5['snoVegger'] == 0 and r5['snoTopp'] == 0 and r5['bakke'] < .5 and abs(r5['bakkeRute'] - 5) < .01, r5)
         sjekk('vinter: lette teksturer og Enkel grafikk har også snøen', l5['T'] == 16 and l5['dekke'] >= .6 and l5['maks'] < 250 and e5['dekke'] >= .7 and e5['snoVegger'] > 0, (l5['T'], l5['dekke'], e5['dekke'], e5['snoVegger']))
-        sjekk('vinter: etasjen med snø bygges på høyst 1,3 ganger tiden uten (samme frø, beste av tre)', m52['tid'][0] <= 1.3 * m52['tid'][1], m52['tid'])
+        sjekk('vinter: etasjen med snø bygges på høyst 1,3 ganger tiden uten (samme frø, beste av fem: startFloor, uten snø, Paint.level med og uten)', m52['tid'][0] <= 1.3 * m52['tid'][1], m52['tid'])
         await pg.wait_for_timeout(800); await pg.screenshot(path='/tmp/e_52_vinter_2d.png')
         sjekk('ingen konsollfeil (vinter, 2D)', not pg.errs, pg.errs[:6])
         await pg.close()
