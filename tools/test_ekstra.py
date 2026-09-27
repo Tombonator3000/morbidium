@@ -2084,15 +2084,20 @@ async def main():
           for (const e of G.enemies) if (e.alive) killEntity(e, {}); P.hp = P.maxHp = 100; P.invuln = 999; Sound.vaerType = null; G.F.ute = false; Vaatt.tom(); await vent(200);
           const V = Vaatt, mr = Math.random; let fr = 4747; Math.random = () => { fr |= 0; fr = fr + 0x6D2B79F5 | 0; let t = Math.imul(fr ^ fr >>> 15, 1 | fr); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
           try {
-            // et tungt treff og 8 sekunder: den lengste loddrette stripen med blod i en kolonne av lerretet, målt hvert sekund
-            V.tom(); Blod.treff(P, { x: P.x + 2, z: P.z }, 80); const k = V.kk(), W = V.W, H = V.H, alle = new Set(); let stripe = 0, maksGlir = 0;
-            for (let i = 1; i <= 160; i++) {
-              V.fysikk(.05); V.tegn(); for (const s of V.spor) if (s.blod) alle.add(s); maksGlir = Math.max(maksGlir, V.draper.filter(d => d.glir && d.blod).length);
-              if (i % 20 === 0) { const D = V.g.getImageData(0, 0, W, H).data; for (let x = 0; x < W; x++) { let n = 0; for (let y = 0; y < H; y++) { n = D[(y * W + x) * 4 + 1] > 20 ? n + 1 : 0; if (n > stripe) stripe = n; } } }
+            // tolv tunge treff med hvert sitt frø og 8 sekunder etter hvert: den lengste loddrette stripen med blod i en kolonne av lerretet, målt hvert sekund.
+            // Ett treff alene gir en håndfull spor, og hvor mange av dem som slingrer og smalner, avhenger av frøet og av hvor mye Blod.treff trakk fra Math.random før
+            // (etasjen), så ett treff med «alle sporene» feilet omtrent hver tredje gang. Andelene over tolv treff er stabile.
+            V.tom(); V.init(); const k = V.kk(), W = V.W, H = V.H, alle = new Set(); let stripe = 0, maksGlir = 0;
+            for (let h = 0; h < 12; h++) {
+              fr = 4747 + 131 * h; V.tom(); Blod.treff(P, { x: P.x + 2, z: P.z }, 80);
+              for (let i = 1; i <= 160; i++) {
+                V.fysikk(.05); for (const s of V.spor) if (s.blod) alle.add(s); maksGlir = Math.max(maksGlir, V.draper.filter(d => d.glir && d.blod).length);
+                if (i % 20 === 0) { V.tegn(); const D = V.g.getImageData(0, 0, W, H).data; for (let x = 0; x < W; x++) { let n = 0; for (let y = 0; y < H; y++) { n = D[(y * W + x) * 4 + 1] > 20 ? n + 1 : 0; if (n > stripe) stripe = n; } } }
+              }
             }
-            // sporene med minst seks punkter: smalere nederst enn øverst, og de slingrer
-            const lange = [...alle].filter(s => s.p.length >= 24).map(s => { const p = s.p, xs = p.filter((_, i) => i % 4 === 0); return { forst: p[2], sist: p[p.length - 2], bredde: Math.max(...xs) - Math.min(...xs) }; });
-            ut.tungt = { stripe, H, maksGlir, spor: alle.size, lange: lange.length, smalner: lange.every(s => s.sist <= .8 * s.forst), slingrer: lange.every(s => s.bredde >= 1.5 * k), minBredde: +(Math.min(...lange.map(s => s.bredde)) / k).toFixed(2), punkter: [...alle].every(s => s.p.length % 4 === 0) };
+            // sporene med minst seks punkter: smalere nederst enn øverst, og de slingrer (andelen av alle sporene, og hvor mye de smalner i midten)
+            const lange = [...alle].filter(s => s.p.length >= 24).map(s => { const p = s.p, xs = p.filter((_, i) => i % 4 === 0); return { forst: p[2], sist: p[p.length - 2], bredde: Math.max(...xs) - Math.min(...xs) }; }), n = Math.max(1, lange.length), fh = lange.map(s => s.sist / s.forst).sort((a, b) => a - b);
+            ut.tungt = { stripe, H, maksGlir, spor: alle.size, lange: lange.length, smalner: +(lange.filter(s => s.sist <= .8 * s.forst).length / n).toFixed(2), slingrer: +(lange.filter(s => s.bredde >= 1.5 * k).length / n).toFixed(2), forhold: +(fh[fh.length >> 1] || 1).toFixed(2), punkter: [...alle].every(s => s.p.length % 4 === 0) };
             // 30 enkeltdråper på r = 3,5 k: hvor langt de renner før de stanser
             const L = []; for (let n = 0; n < 30; n++) { V.tom(); const d = V.ny(W * (.1 + .8 * n / 29), H * .2, 3.5 * k, true); d.ny = 0; const y0 = d.y; for (let i = 0; i < 400 && (i < 3 || d.glir); i++) V.fysikk(.05); L.push(d.y - y0); }
             L.sort((a, b) => a - b); ut.enkle = { median: +((L[14] + L[15]) / 2).toFixed(1), maks: +L[29].toFixed(1), min: +L[0].toFixed(1), H, stanset: L.length === 30 };
@@ -2110,8 +2115,8 @@ async def main():
             await start_lop(pg)
             ut = await pg.evaluate(RENN47)
             t = ut['tungt']
-            sjekk(f'{navn}: et tungt treff gir ingen lange, rette streker på glasset (lengste stripe under halve høyden)', t['stripe'] < .5 * t['H'] and t['spor'] > 0, t)
-            sjekk(f'{navn}: sporene smalner mot dråpen og slingrer, punktene har bredde og alder, og høyst seks bloddråper renner samtidig', t['lange'] > 0 and t['smalner'] and t['slingrer'] and t['punkter'] and 0 < t['maksGlir'] <= 6, t)
+            sjekk(f'{navn}: tunge treff gir ingen lange, rette streker på glasset (lengste stripe under halve høyden)', t['stripe'] < .5 * t['H'] and t['spor'] > 0, t)
+            sjekk(f'{navn}: minst tre av fire spor smalner mot dråpen og slingrer, punktene har bredde og alder, og høyst seks bloddråper renner samtidig', t['lange'] >= 20 and t['smalner'] >= .75 and t['slingrer'] >= .75 and t['forhold'] <= .8 and t['punkter'] and 0 < t['maksGlir'] <= 6, t)
             e = ut['enkle']
             if navn == 'PC':
                 sjekk('en enkelt dråpe renner et stykke og stanser (median 25 til 60 punkter, ingen over 0,6 av høyden)', e['stanset'] and 25 <= e['median'] <= 60 and e['maks'] < .6 * e['H'], e)
