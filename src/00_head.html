@@ -210,8 +210,8 @@ body.touch #kombo{ top:calc(150px + env(safe-area-inset-top,0px)); }
 @keyframes kslam{ 0%{ opacity:0; transform:translate(-50%,-50%) scale(3.2) rotate(-14deg); } 12%{ opacity:1; transform:translate(-50%,-50%) scale(.92) rotate(-6deg); } 20%{ transform:translate(-50%,-50%) scale(1.05) rotate(-7deg); } 80%{ opacity:1; transform:translate(-50%,-50%) scale(1) rotate(-7deg); } 100%{ opacity:0; transform:translate(-50%,-50%) scale(1.1) rotate(-7deg); } }
 @media (max-width:700px){ #kstempel{ font-size:46px; } #kombo b{ font-size:40px; } #kombo span{ font-size:16px; } }
 @media (prefers-reduced-motion: reduce){ #kstempel.on{ animation:none; opacity:1; } #kombo.pang b{ animation:none; } }
-#toast{ top:22%; font-size:40px; text-align:center; }
-#toast small{ display:block; font-family:var(--body); font-weight:800; font-size:18px; color:var(--parch-l); -webkit-text-stroke:0; text-shadow:2px 2px 0 var(--ink); }
+#toast{ top:22%; font-size:40px; text-align:center; width:max-content; max-width:94vw; }
+#toast small{ display:block; font-family:var(--body); font-weight:800; font-size:18px; color:var(--parch-l); -webkit-text-stroke:0; text-shadow:2px 2px 0 var(--ink); white-space:normal; } /* en lang forklaring brytes innenfor skjermen på telefonen */
 #toast.lav{ top:70%; } /* et stempel står: lappen legger seg i nedre tredjedel, under stemplene (Stempel.plass i 39_kombo.js regner ut hvor) */
 /* liggende telefon: stemplene og lappen blir mindre, så alle tre får plass under hverandre */
 @media (orientation:landscape) and (max-height:500px){
