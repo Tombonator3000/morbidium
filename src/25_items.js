@@ -317,7 +317,7 @@ const Items = {
       s.g.position.set(s.x, .85 + Math.sin(G.time * 18 + i) * .04, s.z);
       let dead = false;
       for (const e of all) {
-        if (!e.alive || s.hit.has(e) || d2(s.x, s.z, e.x, e.z) > (s.r + e.r) * (s.r + e.r)) continue;
+        if (!e.alive || e.dukket || s.hit.has(e) || d2(s.x, s.z, e.x, e.z) > (s.r + e.r) * (s.r + e.r)) continue;
         s.hitAny = true; this.hitShot(s, e);
         if (s.pierce-- <= 0 && !s.boomer) { dead = true; break; }
       }

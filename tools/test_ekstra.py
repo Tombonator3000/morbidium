@@ -2025,7 +2025,11 @@ async def main():
           const pud = addPuddle(p.x, p.z, 'wet', 1.6, 30), trad = { kind: 'trip', x0: p.x - 1.5, z0: p.z, x1: p.x + 1.5, z1: p.z, t: 30 }; if (pud) pud.elec = 30; G.zones.push(trad); p.zapT = undefined; p.slip = 0;
           let rort = false; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.2 && performance.now() - t0 < 20000) { if (p.zapT !== undefined || p.slip > 0) rort = true; await vent(50); } }
           Object.assign(ut.pleierUnder, { rort, hp2: p.hp === h0, pytt: !!pud });
-          p.dukket = false; k0 = Kombo.n; ut.pleierOppe = { skade: hurt(p, 30, { from: 'player' }) > 0, kjede: Kombo.n > k0, blod: blod.includes(p) }; ut.pleierOppe.zapp = await til(() => p.zapT !== undefined, 1.5); ut.pleierOppe.skli = await til(() => p.slip > 0, 1.5);
+          // skudd og kast går over vannet: de stopper ikke der han ligger (før forsvant de i tomt vann), men oppe treffer de
+          const skudd = () => { const sh = Items.fire(p.x, p.z - .05, 0, 1), pr = addProj({ type: 'pill', from: 'player', x: p.x, z: p.z - .05, vx: 0, vz: .1, life: 1, dmg: 1 }); const hs = p.hp; Items.updateShots(1 / 60); updateProjectiles(1 / 60);
+            const r = { skudd: !Items.shots.includes(sh) || sh.hit.has(p), kast: !pr.alive, skade: p.hp < hs }; if (Items.shots.includes(sh)) Items.popShot(sh, Items.shots.indexOf(sh)); pr.alive = false; return r; };
+          ut.pleierUnder.skudd = skudd();
+          p.dukket = false; k0 = Kombo.n; ut.pleierOppe = { skade: hurt(p, 30, { from: 'player' }) > 0, kjede: Kombo.n > k0, blod: blod.includes(p) }; ut.pleierOppe.skudd = skudd(); ut.pleierOppe.zapp = await til(() => p.zapT !== undefined, 1.5); ut.pleierOppe.skli = await til(() => p.slip > 0, 1.5);
           Blod.treff = bt; if (pud) pud.elec = 0; G.zones.splice(G.zones.indexOf(trad), 1); killEntity(p, {});
           // Journalen låner ikke rull, storm eller dypdykk: alle sjefene i puljen er møtt, pluss en prøvesjef med et eget trekk som Krakens dypdykk
           const BM = BOSS_MOVES, orig = {}, valgt = {}, tell = k => () => { valgt[k] = (valgt[k] || 0) + 1; };
@@ -2063,8 +2067,8 @@ async def main():
         sjekk('Nøkken under vannet kaster ingen lykteskygge, er ikke nærmeste fiende (heller ikke med filter), og nærkampslaget går gjennom ham', gr['nede'] and not u['skygge'] and not u['naermest'] and not u['medFilter'] and not u['slag']['rammet'] and not u['slag']['skade'], [gr['nede'], u])
         sjekk('oppe av vannet kaster han skygge, er nærmest og blir truffet (kontroll)', gr['oppe'] and o['skygge'] and o['naermest'] and o['slag']['rammet'] and o['slag']['skade'], o)
         pu, po = gr['pleierUnder'], gr['pleierOppe']
-        sjekk('en hvilken som helst fiende under vann tar ingen skade, gir ingen treffkjede eller blod, siktes ikke på, og verken strøm i pytten eller snubletråd biter', pu['skade'] == 0 and pu['hp'] and pu['kjede'] and not pu['blod'] and not pu['naermest'] and pu['pytt'] and not pu['rort'] and pu['hp2'], pu)
-        sjekk('oppe av vannet gir slaget skade, treffkjede og blod, og strømmen og snubletråden biter (kontroll)', po['skade'] and po['kjede'] and po['blod'] and po['zapp'] and po['skli'], po)
+        sjekk('en hvilken som helst fiende under vann tar ingen skade, gir ingen treffkjede eller blod, siktes ikke på, verken strøm i pytten eller snubletråd biter, og skudd og kast går over ham', pu['skade'] == 0 and pu['hp'] and pu['kjede'] and not pu['blod'] and not pu['naermest'] and pu['pytt'] and not pu['rort'] and pu['hp2'] and not any(pu['skudd'].values()), pu)
+        sjekk('oppe av vannet gir slaget skade, treffkjede og blod, strømmen og snubletråden biter, og skudd og kast treffer (kontroll)', po['skade'] and po['kjede'] and po['blod'] and po['zapp'] and po['skli'] and all(po['skudd'].values()), po)
         sjekk('en sjef under vann tar ingen skade, kaster ingen skygge og siktes ikke på, men oppe gjør han det', gr['sjef']['skade'] == 0 and gr['sjef']['hp'] and not gr['sjef']['skygge'] and not gr['sjef']['naermest'] and gr['sjefOppe']['skygge'] and gr['sjefOppe']['naermest'], [gr['sjef'], gr['sjefOppe']])
         v = gr['laan']['valgt']
         sjekk('Journalen låner aldri rull, storm eller dypdykk på 200 forsøk, men de andre trekkene til de samme sjefene', not any(k in v for k in ['rull', 'storm', 'dypdykk']) and all(v.get(k, 0) > 0 for k in ['favn', 'gevir', 'klem']) and sum(v.values()) == 200 and gr['laan']['liste'], gr['laan'])

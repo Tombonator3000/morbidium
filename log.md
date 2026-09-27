@@ -943,3 +943,8 @@ Alle tidspunkt er UTC.
 - Ny hjelper `statusOrd(e, ord, cd)` for GREPET, SNØRT, SPENT FAST, HEKTET, DØPT og de andre: samme ord over samme figur høyst én gang per cd sekunder, og et nytt ord mens et annet står, løftes over det. Tekstene fra A2 kan slå dem sammen senere.
 - Testdel 58 (Grunnarbeid for nye fiender) sjekker alt dette i 2D og lykteskyggen i 3D, og feiler på bygget fra før. Del 4, 21, 27, 30 og 58 er grønne, bortsett fra takstøvet i del 30, som feiler like ofte på bygget fra før: støvet lever rundt 3 sekunder, mens testen venter 2,6 sekunder spilltid.
 - Bilder til Tom: r5_bilder/58_nokken_under_vann_for.png, _etter.png og _utsnitt.png, 58_figurer_for.png og _etter.png (figurene ser like ut), og 58_statusord_etter.png.
+
+## 2026-09-27 02:04 Spor C, punkt C3: skeptikeren
+- Skudd og kast stoppet fortsatt der en fiende lå under vann: kula forsvant i tomt vann over Nøkken (og ville gjort det over hver rist med en Avløpsarm). `Items.updateShots` (25_items.js) og `updateProjectiles` (05_world.js) hopper nå over `e.dukket`, som nærkampslaget. To små hunker utenfor spor C sine filer, på linjer ingen andre spor eier.
+- Testdel 58 sjekker at både et skudd og et kast går over en fiende under vann, og treffer når han er oppe.
+- Resten holdt: Journalen låner ikke rull eller storm (tåkekopien og de andre hjortetrekkene virker hos henne), strekbåndene sender bare det tegnede, og statusordene løftes over hverandre.
