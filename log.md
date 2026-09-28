@@ -1392,3 +1392,7 @@ Alle tidspunkt er UTC.
 - Vinkelen settes når spillet lastes (tegningene måles etter den), så KAMERA_VALG leser innstillingen rett fra lagringen. Velges en annen vinkel enn den som brukes, kommer en rad med «Last på nytt». Et løp som er i gang, fortsetter fra starten av etasjen. Adressen går foran innstillingen, og ?kamera=standard er lagt til.
 - Testdel 64 har tre nye sjekker (innstillingen brukes ved lasting, raden kommer og panelet får plass, adressen går foran). Kjørt sammen med del 11 (innstillingene får plass) og del 48: 29 av 29 OK.
 - Utvalgte deler etter kameraprøven (16, 28, 36, 39, 40, 48, 51, 55, 57 og 64) er kjørt: alt grønt bortsett fra én sjekk i del 48 (900 partikler lever ut, 3 igjen), som var grønn ved neste kjøring. Den avhenger av tid i programvaregrafikken. Hele test_ekstra er ikke kjørt, fordi den går flere timer i denne skyen.
+
+## 2026-09-28 17:30 Levert som filer til opplasting på GitHub
+- Verken denne økta eller Claude Code fikk skrive til repoet, så Tom fikk endringene som nedlastbare filer: en zip med de 28 endrede og nye filene i samme mapper som i repoet (til «Add file», «Upload files» på GitHub), og patchen med alle commitene til git am.
+- Filene i zipen er hentet fra commiten, ikke fra arbeidsmappa, så de er like det som er testet.
