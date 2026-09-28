@@ -226,6 +226,9 @@ const Input = {
    Lagene kan også ha: rv (hvor mye som sendes til kirkeklangen), vib ([fart, cent]), dist (forvrengning),
    lp ([fra, til] lavpass som sveiper), atk (anslag i sekunder). Lange støylag går i sløyfe.
    En mild kompressor på hovedutgangen tar toppene når mange lyder slår inn samtidig (39_kombo.js). */
+/* lyden og musikken trekker tall fra nettleseren og ikke fra spillets tallrekke: hvor mye de trekker, følger lydklokka og hvor mange
+   lyder som er pakket ut (vanlig tid), og det skal ikke flytte på det som skjer i spillet (testklokka, tools/fiende_fasit.py) */
+const lydRandom = () => globalThis.Math.random();
 const Sound = {
   ctx: null, master: null, sfx: null, amb: null, noiseBuf: null, ready: false, volume: 0.8, ambNodes: [],
   lib: {
@@ -287,13 +290,13 @@ const Sound = {
       this.amb = this.ctx.createGain(); this.amb.gain.value = .35; this.amb.connect(this.master);
       this.mus = this.ctx.createGain(); this.mus.gain.value = .8; this.mus.connect(this.master); if (this.mix) this.setMix(...this.mix);
       const len = this.ctx.sampleRate; this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
-      const d = this.noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const d = this.noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = lydRandom() * 2 - 1;
       // brun stoy (tilfeldig gange), som i The Deep Ones sin Soundscape
       this.brownBuf = this.ctx.createBuffer(1, len * 4, this.ctx.sampleRate); const b = this.brownBuf.getChannelData(0); let v = 0;
-      for (let i = 0; i < b.length; i++) { v = (v + Math.random() * .035 - .0175) * .98; b[i] = v * 3; }
+      for (let i = 0; i < b.length; i++) { v = (v + lydRandom() * .035 - .0175) * .98; b[i] = v * 3; }
       // kirkeklang: en impulsrespons av støy som dør ut over tre sekunder, litt ulik i hvert øre
       const ir = this.ctx.createBuffer(2, Math.floor(len * 3), this.ctx.sampleRate);
-      for (let ch = 0; ch < 2; ch++) { const c = ir.getChannelData(ch); for (let i = 0; i < c.length; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / c.length, 3.2) * (i < 90 ? i / 90 : 1); }
+      for (let ch = 0; ch < 2; ch++) { const c = ir.getChannelData(ch); for (let i = 0; i < c.length; i++) c[i] = (lydRandom() * 2 - 1) * Math.pow(1 - i / c.length, 3.2) * (i < 90 ? i / 90 : 1); }
       this.hall = this.ctx.createGain(); this.hall.gain.value = .5; const kl = this.ctx.createConvolver(); kl.buffer = ir; this.hall.connect(kl); kl.connect(this.sfx);
       this.ready = true;
     } catch (e) { this.ready = false; }
@@ -313,7 +316,7 @@ const Sound = {
   },
   _synth(s, vol, pitch, now) {
     const c = this.ctx, o = c.createOscillator(), g = c.createGain();
-    o.type = s.w; const f = s.f * pitch * (0.97 + Math.random() * 0.06);
+    o.type = s.w; const f = s.f * pitch * (0.97 + lydRandom() * 0.06);
     o.frequency.setValueAtTime(f, now);
     if (s.pd) o.frequency.exponentialRampToValueAtTime(Math.max(20, f * (1 - s.pd)), now + s.d);
     if (s.vib) { const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = s.vib[0]; lg.gain.value = s.vib[1]; l.connect(lg); lg.connect(o.detune); l.start(now); l.stop(now + s.d + .02); }
@@ -336,7 +339,7 @@ const Sound = {
     g.gain.linearRampToValueAtTime(s.v * vol, now + (s.atk || 0.01)); g.gain.exponentialRampToValueAtTime(0.0001, now + s.d);
     src.connect(f); f.connect(g); this._ut(g, s);
     if (s.d > .45) src.loop = true; // støybufferen er ett sekund; lange drønn og applaus går i sløyfe
-    const off = Math.random() * 0.5; src.start(now, off, s.d + 0.05);
+    const off = lydRandom() * 0.5; src.start(now, off, s.d + 0.05);
   },
   _arp(s, vol, pitch, now) {
     s.arp.forEach((fr, i) => this._synth({ w: s.w, f: fr, d: s.nd || s.nl * 1.8, v: s.v, rv: s.rv, vib: s.vib, atk: s.atk }, vol, pitch, now + i * s.nl));
@@ -344,7 +347,7 @@ const Sound = {
   /* mumlende monolog: tilfeldige lave toner, som en pompos stemme gjennom en vegg */
   mumble(n = 6, base = 150) {
     if (!this.ready) return; const now = this.ctx.currentTime;
-    for (let i = 0; i < n; i++) this._synth({ w: 'sawtooth', f: base * (0.8 + Math.random() * 0.5), d: .12, pd: .1, v: .07 }, 1, 1, now + i * .11);
+    for (let i = 0; i < n; i++) this._synth({ w: 'sawtooth', f: base * (0.8 + lydRandom() * 0.5), d: .12, pd: .1, v: .07 }, 1, 1, now + i * .11);
   },
   /* etasjene i dronen og stemningslydene: seks etasjer, men lyden følger de gamle fire (Parken og Nattskogen er ute) */
   lydDybde(depth) { return { 1: 1, 2: 1, 3: 2, 4: 3, 5: 3, 6: 4 }[depth] || depth; },
@@ -376,10 +379,10 @@ const Sound = {
   evT: 8,
   tick(dt, unsettled, depth0) {
     if (!this.ready || this.volume <= 0) return;
-    this.evT -= dt; if (this.evT > 0) return; this.evT = 10 + Math.random() * 12 - (unsettled ? 4 : 0);
+    this.evT -= dt; if (this.evT > 0) return; this.evT = 10 + lydRandom() * 12 - (unsettled ? 4 : 0);
     const depth = this.lydDybde(depth0), valg = depth0 === 1 ? ['ugle', 'kraake', 'klokke', 'hund', 'kvist'] : depth0 === 5 ? ['ugle', 'ugle', 'kvist', 'skrik', 'klokke'] : { 1: ['klokke', 'knirk', 'knirk', 'skrik'], 2: ['drypp', 'drypp', 'ror', 'knirk'], 3: ['skrivemaskin', 'skrivemaskin', 'knirk', 'rotte'], 4: ['skrik', 'hjerte', 'klokke', 'ror'] }[depth] || ['knirk'];
-    const k = valg[Math.floor(Math.random() * valg.length)], n = k === 'drypp' ? 3 : 1;
-    for (let i = 0; i < n; i++) setTimeout(() => this.play(k, .7, (k === 'klokke' && depth >= 4 ? .5 : .85) + Math.random() * .3), i * (300 + Math.random() * 500));
+    const k = valg[Math.floor(lydRandom() * valg.length)], n = k === 'drypp' ? 3 : 1;
+    for (let i = 0; i < n; i++) setTimeout(() => this.play(k, .7, (k === 'klokke' && depth >= 4 ? .5 : .85) + lydRandom() * .3), i * (300 + lydRandom() * 500));
   },
   /* regn eller vind som en støysløyfe under stemningen (17_romtyper.js, Vaer) */
   vaer(type) {

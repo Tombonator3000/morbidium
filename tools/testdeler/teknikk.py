@@ -265,8 +265,10 @@ async def del_67(b):
         s2 = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await s2.goto(URL); await s2.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=90000)
         await s2.evaluate("() => Klokke.frys({ frø: 4242, stille: true })")
-        await klikk(s2, '#tNew'); await s2.wait_for_timeout(500); await klikk(s2, '[data-awk]')
-        await s2.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=60000)
+        await klikk(s2, '#tNew'); await s2.wait_for_timeout(500)
+        # en innleggelse uten kamp i første rom (bølgene kommer med setTimeout), og oppstartens tidtakere får gå ut først
+        await s2.evaluate("() => { const b = [...document.querySelectorAll('[data-awk]')], rolig = b.find(x => !['soppel', 'operasjon', 'begravelse'].includes(x.dataset.awk)) || b[0]; rolig.click(); }")
+        await s2.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=60000); await s2.wait_for_timeout(2000)
         k = await s2.evaluate(KAMP); feil2 = s2.errs[:6]; await s2.close(); return k, feil2
     (t1, f1), (t2, f2) = await fra_tittelen(), await fra_tittelen()
     sjekk('to sider med samme frø fra tittelen gir nøyaktig samme kamp, også neste tilfeldige tall', t1 == t2 and len(t1['sig']) >= 3, [t1, t2])

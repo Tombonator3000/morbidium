@@ -157,7 +157,7 @@ const Lydbank = {
     if (!this.paa || !Sound.ready || Sound.volume <= 0) return null;
     const L = this.gruppeListe()[gruppe]; if (!L) return null;
     const klare = L.filter(k => this.buf[k]); if (!klare.length) return null;
-    let k = o.navn && this.buf[o.navn] ? o.navn : klare[Math.floor(Math.random() * klare.length)];
+    let k = o.navn && this.buf[o.navn] ? o.navn : klare[Math.floor(lydRandom() * klare.length)];
     if (!o.navn && klare.length > 1 && k === this.sist[gruppe]) k = klare[(klare.indexOf(k) + 1) % klare.length];
     this.sist[gruppe] = k;
     // mange like lyder på en gang (tjue blodsprut i samme bilde) blir bare høyere og grøtete: høyst fem per gruppe på 80 ms
@@ -179,7 +179,7 @@ const Lydbank = {
     const v = o.vol ?? 1, a = o.a || 0;
     if (a > 0) { g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(Math.max(.0001, v), t + a); } else g.gain.setValueAtTime(v, t);
     let fra = fs + (o.fra || 0);
-    if (o.loop && sl) { src.loop = true; src.loopStart = fs + sl[0]; src.loopEnd = fs + sl[1]; if (o.tilfeldig) fra = fs + sl[0] + Math.random() * (sl[1] - sl[0]); } // stemningen starter et tilfeldig sted i sløyfa
+    if (o.loop && sl) { src.loop = true; src.loopStart = fs + sl[0]; src.loopEnd = fs + sl[1]; if (o.tilfeldig) fra = fs + sl[0] + lydRandom() * (sl[1] - sl[0]); } // stemningen starter et tilfeldig sted i sløyfa
     else if (o.loop) src.loop = true;
     src.start(t, Math.min(fra, b.duration - .01));
     if (o.d) { const rel = Math.min(o.rel ?? .15, o.d * .5); g.gain.setValueAtTime(Math.max(.0001, v), t + Math.max(a, o.d - rel)); g.gain.linearRampToValueAtTime(.0001, t + o.d); src.stop(t + o.d + .03); }
@@ -198,7 +198,7 @@ const Lydbank = {
     let t = 0, stem = 1;
     if (K.kvant && typeof Musikk === 'object' && Musikk.slag) { const q = Musikk.slag(K.kvant); if (q) { t = q.t; stem = q.stem || 1; } }
     const jit = K.jit ?? (t ? 0 : .05);
-    for (const [gr, v, p = 1, o] of K.s) this.spill(gr, Object.assign({}, o, { vol: vol * v, pitch: pitch * p * stem * (1 + (Math.random() * 2 - 1) * jit), t }));
+    for (const [gr, v, p = 1, o] of K.s) this.spill(gr, Object.assign({}, o, { vol: vol * v, pitch: pitch * p * stem * (1 + (lydRandom() * 2 - 1) * jit), t }));
   },
   /* ---------- per bilde ---------- */
   tick(dt) {
@@ -216,8 +216,8 @@ const Lydbank = {
     this.fotD += d; if (this.fotD < 1.45) return; this.fotD = 0;
     const pytt = typeof puddleAt === 'function' ? puddleAt(P.x, P.z) : null, gulv = typeof gulvUnder === 'function' ? gulvUnder(P.x, P.z) : null;
     const [gr, v, p, lp] = pytt ? ['fot_vann', .34, pytt.kind === 'blod' ? .85 : 1] : FOTGULV[gulv] || ['fot_stein', .3, 1];
-    this.spill(gr, { vol: v * (.8 + Math.random() * .3), pitch: p * (.92 + Math.random() * .16), lp });
-    if (pytt && Math.random() < .5 && typeof Vaatt === 'object') Vaatt.plask(.25, pytt.kind === 'blod');
+    this.spill(gr, { vol: v * (.8 + lydRandom() * .3), pitch: p * (.92 + lydRandom() * .16), lp });
+    if (pytt && lydRandom() < .5 && typeof Vaatt === 'object') Vaatt.plask(.25, pytt.kind === 'blod');
   },
   stemmeT: 1,
   stemmer(dt) {
@@ -226,12 +226,12 @@ const Lydbank = {
     let best = null, bd = 1e9;
     for (const e of G.enemies) {
       if (!e.alive || e.state === 'spawn' || e.sleep > 0 || !FIENDESTEMME[e.type]) continue;
-      e.stemT = (e.stemT ?? Math.random() * 4) - .45; if (e.stemT > 0) continue;
+      e.stemT = (e.stemT ?? lydRandom() * 4) - .45; if (e.stemT > 0) continue;
       const d = d2(e.x, e.z, P.x, P.z); if (d < bd && d < 110) { bd = d; best = e; }
     }
     if (!best) return;
-    best.stemT = 4 + Math.random() * 6; const [gr, p] = FIENDESTEMME[best.type];
-    this.ved(gr, best.x, best.z, { vol: gr === 'hvisk' ? .55 : .5, pitch: p * (.93 + Math.random() * .14), maks: 11, rv: .2 });
+    best.stemT = 4 + lydRandom() * 6; const [gr, p] = FIENDESTEMME[best.type];
+    this.ved(gr, best.x, best.z, { vol: gr === 'hvisk' ? .55 : .5, pitch: p * (.93 + lydRandom() * .14), maks: 11, rv: .2 });
   }
 };
 

@@ -92,7 +92,7 @@ const Musikk = {
     this.bus.connect(this.dukkG); this.dukkG.connect(this.hp); this.hp.connect(this.filt); this.filt.connect(Sound.mus);
     // klang til musikken: egen impulsrespons på 2,4 sekunder, mer i kapellet og på badet
     this.rv = c.createGain(); this.rv.gain.value = .2; const k = c.createConvolver(), n = Math.floor(c.sampleRate * 2.4), ir = c.createBuffer(2, n, c.sampleRate);
-    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.8) * (i < 60 ? i / 60 : 1); }
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < n; i++) d[i] = (lydRandom() * 2 - 1) * Math.pow(1 - i / n, 2.8) * (i < 60 ? i / 60 : 1); }
     k.buffer = ir; this.bus.connect(this.rv); this.rv.connect(k); k.connect(this.dukkG);
     this.lag = {}; for (const navn of ['grunn', 'mel', 'kamp', 'sjef', 'pynt']) { const g = c.createGain(); g.gain.value = navn === 'kamp' || navn === 'sjef' ? 0 : 1; g.connect(this.bus); this.lag[navn] = g; }
     return true;
@@ -211,8 +211,8 @@ const Musikk = {
   tone(trinn, okt = 0) {
     const sk = SKALA[this.S.skala], n = sk.length, i = ((trinn % n) + n) % n, o = Math.floor(trinn / n);
     let m = this.S.rot + sk[i] + 12 * (o + okt);
-    if (this.morb > .3 && Math.random() < (this.morb - .3) * .35) m += Math.random() < .5 ? 1 : -1; // mørket drar tonen en halvtone skjev
-    return m + (Math.random() - .5) * this.morb * .4;
+    if (this.morb > .3 && lydRandom() < (this.morb - .3) * .35) m += lydRandom() < .5 ? 1 : -1; // mørket drar tonen en halvtone skjev
+    return m + (lydRandom() - .5) * this.morb * .4;
   },
   akkord(takt) { const d = this.S.akk[((takt % this.S.akk.length) + this.S.akk.length) % this.S.akk.length]; return [d, d + 2, d + 4]; },
   takt() { return Math.floor(this.steg / this.per()); },
@@ -265,9 +265,9 @@ const Musikk = {
       this.note(mel, this.tone(trinn), t, lang ? ett * 3 : .9, lang ? .05 : .13, M);
     }
     // pynt og lyder fra rommet, stemt og på slaget
-    if ((S.knitr || B.grammofon) && Math.random() < (S.knitr || .5) * .45) this.ins('knitr', 0, t + Math.random() * ett, .01, .02 + Math.random() * .05, G0);
-    if ((S.drypp || B.drypp) && Math.random() < (B.drypp || .05)) this.drypp(this.tone(A[Math.floor(Math.random() * 3)] + 7), t + (Math.random() < .5 ? 0 : ett / 2), G0);
-    if ((S.maskin || B.maskin) && Math.random() < (B.maskin ? .18 : .12)) this.maskin(t, ett, G0);
+    if ((S.knitr || B.grammofon) && lydRandom() < (S.knitr || .5) * .45) this.ins('knitr', 0, t + lydRandom() * ett, .01, .02 + lydRandom() * .05, G0);
+    if ((S.drypp || B.drypp) && lydRandom() < (B.drypp || .05)) this.drypp(this.tone(A[Math.floor(lydRandom() * 3)] + 7), t + (lydRandom() < .5 ? 0 : ett / 2), G0);
+    if ((S.maskin || B.maskin) && lydRandom() < (B.maskin ? .18 : .12)) this.maskin(t, ett, G0);
     if ((S.maskin || B.maskin) && i === per - 1 && takt % 4 === 3) this.ding(t, G0);
     if (B.borste && slag && i !== 0) this.stoy({ t, d: .14, v: .025, ut: G0, ft: 'bandpass', ff: 3200, q: .6 });
     if (B.pynt && ny && takt % 4 === 0) this.note(B.pynt, this.tone(A[0], B.pynt === 'glock' ? 2 : 0), t, 3, .08, P0);
@@ -275,7 +275,7 @@ const Musikk = {
     if (this.niva >= 1) {
       const fjerde = S.takt === 4;
       if (i === 0 || (fjerde && i === 4)) this.slagverk('kick', t, .5, 1, K);
-      if ((fjerde && (i === 2 || i === 6)) || (!fjerde && (i === 2 || i === 4))) this.slagverk('skarp', t, fjerde ? .22 : .14, .95 + Math.random() * .1, K);
+      if ((fjerde && (i === 2 || i === 6)) || (!fjerde && (i === 2 || i === 4))) this.slagverk('skarp', t, fjerde ? .22 : .14, .95 + lydRandom() * .1, K);
       this.ins('hatt', 0, t, .04, slag ? .05 : .03, K);
       this.ins('sagbass', midiHz(this.tone(i % 4 === 2 ? A[2] : A[0], -2)), t, ett * .9, .1, K);
     }
@@ -299,7 +299,7 @@ const Musikk = {
   },
   maskin(t, ett, ut) {
     const har = typeof Lydbank === 'object' && Lydbank.buf.skrivemaskin;
-    for (let k = 0; k < 3; k++) { if (har) Lydbank.spillFil('skrivemaskin', { vol: .12, pitch: .95 + Math.random() * .1, ut, d: .12 }, t + k * ett / 3); else this.ins('klikk', 0, t + k * ett / 3, .02, .06, ut); }
+    for (let k = 0; k < 3; k++) { if (har) Lydbank.spillFil('skrivemaskin', { vol: .12, pitch: .95 + lydRandom() * .1, ut, d: .12 }, t + k * ett / 3); else this.ins('klikk', 0, t + k * ett / 3, .02, .06, ut); }
   },
   ding(t, ut) { if (typeof Lydbank === 'object' && Lydbank.buf.skrivemaskin_2) Lydbank.spillFil('skrivemaskin_2', { vol: .18, ut, fra: .25 }, t); else this.ins('ding', 2600, t, .7, .05, ut); },
   /* ---------- innslag og plasseringen av lydeffekter ---------- */
@@ -323,7 +323,7 @@ const Musikk = {
   slag(kvant) {
     if (!this.aktiv()) return null;
     const ett = this.ett(), per = this.per(), til = kvant === 2 ? (per - this.steg % per) % per : 0, A = this.akkord(this.takt());
-    const sk = SKALA[this.S.skala], trinn = A[Math.floor(Math.random() * 3)], halv = sk[((trinn % 7) + 7) % 7] - sk[A[0] % 7];
+    const sk = SKALA[this.S.skala], trinn = A[Math.floor(lydRandom() * 3)], halv = sk[((trinn % 7) + 7) % 7] - sk[A[0] % 7];
     return { t: this.nesteT + til * ett, stem: Math.pow(2, (((halv % 12) + 12) % 12 - 5) / 12) };
   },
   /* en tone fra lydeffektene (Hz) flyttes til nærmeste tone i akkorden som spilles */
@@ -353,7 +353,7 @@ const Musikk = {
     const c = Sound.ctx, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
     s.buffer = Sound.noiseBuf; f.type = o.ft; f.frequency.value = o.ff; f.Q.value = o.q || .8;
     g.gain.setValueAtTime(o.v, o.t); g.gain.exponentialRampToValueAtTime(.0001, o.t + o.d);
-    s.connect(f); f.connect(g); g.connect(o.ut); s.start(o.t, Math.random() * .5, o.d + .05);
+    s.connect(f); f.connect(g); g.connect(o.ut); s.start(o.t, lydRandom() * .5, o.d + .05);
   },
   ins(navn, f, t, d, v, ut) {
     const s = (o) => this.stemme(Object.assign({ t, d, v, ut, f }, o)), n = (o) => this.stoy(Object.assign({ t, d, v, ut }, o));
