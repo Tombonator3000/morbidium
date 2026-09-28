@@ -30,11 +30,14 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og He
 
 ## Bygg
 ```
-python3 build.py          # lager dist/morbidium.html
-node tools/test_gen.js    # tester generatoren
+python3 build.py              # lager dist/morbidium.html (alt i én fil) og dist/web (nettutgaven med bildene og lydene som filer)
+node tools/sjekk_kode.js      # sjekker koden: rekkefølgen i bygget, ukjente navn og innpakninger
+node tools/test_gen.js        # tester generatoren
+python3 tools/test_roek.py    # røyktest i nettleseren (--mappe dist/web for nettutgaven)
 python3 tools/test_spill.py   # gjennomspilling i nettleseren (Playwright)
-python3 tools/test_ekstra.py  # enkeltfunksjoner i nettleseren (Playwright)
+python3 tools/test_ekstra.py  # enkeltfunksjoner i nettleseren (--del 59,60, --system fiender, -j 3)
 ```
+Nettutgaven må åpnes over http (GitHub Pages, eller `python3 -m http.server` i `dist/web`). Den selvstendige fila virker rett fra disken.
 
 ## Mapper
 - `src/` kildekode, satt sammen av `build.py`
@@ -42,7 +45,7 @@ python3 tools/test_ekstra.py  # enkeltfunksjoner i nettleseren (Playwright)
 - `assets/` behandlede bilder: `ferdig/` (klare for spillet), `deler/` (byggeklosser til figurer), `manifest.json`, og `lyd/` med lydene (laget av `tools/lag_lyd.py`, kildeliste i `assets/lyd/KILDER.md`)
 - `maler/` maler som lastes opp til ChatGPT
 - `tegnelister/` alt som mangler bilde, samlet i ferdige ark med filnavn, mal, prompt og referansebilde (lages av `tools/lag_tegnelister.py`)
-- `tools/` verktøy for bilder, tester og manifest
+- `tools/` verktøy for bilder, tester og manifest; testdelene til `test_ekstra.py` ligger i `tools/testdeler/`, én fil per system
 - `DESIGN_BRIEF.md` og `ART_BRIEF.md` for bildegenerering, `AGENTS.md` for regler
 
 ## Gjenbruk og takk

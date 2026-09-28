@@ -1,5 +1,14 @@
 # Morbidium: gjøremål
 
+## Toms sju punkter (28.9. kveld)
+Tom ba om slankere dokumenter, lettere repo og tester i CI, bilder og lyd ut av HTML-fila, kroker i stedet for innpakking, testklokke og ryddigere tester, fiender som data og byggeklosser, og moduler. Alt er gjort i første omgang; se log.md 28.9. Det som gjenstår:
+- [ ] Tom: skal de 447 MB med originalbilder skrives ut av git-historikken? Det krever omskriving og force-push av main (alle kloner må hentes på nytt). Originalene tas vare på først (egen gren eller eget repo). Si ja, så gjør Claude det.
+- [ ] Tom: prøv nettutgaven på telefonen. Den laster rundt 4 MB før tittelen i stedet for 12,7 og dekoder bare bildene som brukes. Den selvstendige fila ligger ved siden av som morbidium.html.
+- [ ] Claude, senere: resten av innpakningene over på kroker (87 igjen, `node tools/sjekk_kode.js --liste`), de mest brukte først: hurt (4, rekkefølgen betyr noe, og noen må kunne stoppe skaden), Sound.play (4), hurtPlayer, enemySlip og charPart (3 hver). Senk TAK i sjekk_kode.js.
+- [ ] Claude, med neste fiendebølge: nye fiender med Fiende.ny og byggeklossene, flere klosser (sirkel der målet står, kjegle, storm, tilkalling med tak, preken med avbrudd), og de gamle typene over én fil om gangen med tools/fiende_fasit.py som vakt.
+- [ ] Claude, senere: flere testdeler over på testklokka, og spilltid for setTimeout som påvirker spillet (bølgene i kamprommene, luken etter en sjef, gaven etter instrumentskrinet), så de også kan spoles. Del 33 (musikken) følger lydklokka og kan feile når maskinen er travel.
+- [ ] Claude, når taket er 0: filene som ES-moduler med esbuild eller Vite (se «Kodesjekken» i systemer.md).
+
 ## Kameraprøve og etterbehandling (28.9.)
 Tom ønsket 3D-vegger og gulv mot 2D-figurer, en mer isometrisk vinkel og mer etterbehandling for bedre lys.
 - [ ] Claude, hvis telefonen krasjer igjen: be om «Kopier feilrapport» og et skjermbilde av «Log Messages» i chrome://gpu, last inn løpet her og spill av etasjen. Hvorfor Adreno 750 også krasjet i trygg modus 28.9., er ikke funnet. Chrome sperrer WebGL for siden etter hvert krasj, så hvert forsøk koster Tom en omstart av nettleseren.
@@ -20,8 +29,6 @@ Tom sendte fem skjermbilder og ba om: (1) flottere effekter når fiender angripe
 - [ ] Claude, senere: resten av A7 (halvmåne-shader på huggene, stråler som bånd, fartsstrek på prosjektiler, ANIM-oppføringer så ChatGPT kan levere ark), starBurst som bruker materialet om igjen, og større marger i partikkelarket hvis nabotegningen synes rundt små partikler på telefon.
 - [ ] Claude, senere: eyeliner fra siden stikker foran ansiktet (tegningen har to øyne), og liket av menn i morgenkåpe viser ikke pynten.
 - [ ] Claude, senere: blodet på glasset kan tørke mot brunrødt i den ledige blå kanalen, og snø på hoder og ting, fotspor, knirkende fottrinn og frost på glasset (C9 i planen).
-- [ ] Claude, senere: flere eldre testdeler venter i sanntid (wait_for_timeout før en sjekk på skade eller tid). De bør vente på G.time. Morbidium-sjekken i del 28 er rettet (testpytten får kort liv og testen venter til pytten og gløden er borte).
-- [ ] Claude, senere: del 59 (Lærlingen på etasje 3) og del 60 (kall fra dypet) feilet én gang i samlekjøringen 28.9. og var grønne ved neste kjøring. Begge avhenger av hvor fiendene havner i etasjen. Bør få faste plasser.
 
 ## Venter på Tom
 - [ ] Spille prototypen og si hva som føles feil i utseende og kamp.
@@ -33,7 +40,7 @@ Tom sendte fem skjermbilder og ba om: (1) flottere effekter når fiender angripe
 Lista har nå 19 åpne spørsmål til Tom (lyd, blod, mørke, vanskelighet, historien, sjefene), og ingen av dem kan besvares uten å spille. Flaskehalsen er tilbakemelding fra ekte spilling på ekte maskiner, ikke flere systemer. Neste steg bør gjøre det lett å gi den.
 - [ ] Tom: spille tre eller fire løp på PC og mobil, gjerne med hodetelefoner, og lime inn rapportene. Slik: åpne https://tombonator3000.github.io/morbidium/?testmodus (eller slå på Testmodus under Innstillinger, Spill). Svar på spørsmålene under «Si din mening» i pausen når du har lyst. Når pasienten dør eller blir skrevet ut: trykk «Testrapport», så «Kopier rapporten», og lim den inn i samtalen med Claude. Glemmer du det, ligger de fem siste rapportene under Innstillinger, Data.
 - [ ] Claude: justere ut fra rapportene: lydmiksen, mengden blod på skjermen, vanskelighetskurven gjennom seks etasjer, lengden på et løp og ytelsen på mobil.
-- [ ] Claude, små ting som kan tas når som helst: koble inn de seks lydene som er hentet, men ikke brukt (bokslag når journalen lukkes, dørsmell når rommet låses, gulvknirk, radiosus i radiohendelsen, riving ved overkill, sluk på badet), og en fast testklokke så nettlesertestene ikke avhenger av hvor rask maskinen er.
+- [ ] Claude, små ting som kan tas når som helst: koble inn de seks lydene som er hentet, men ikke brukt (bokslag når journalen lukkes, dørsmell når rommet låses, gulvknirk, radiosus i radiohendelsen, riving ved overkill, sluk på badet), og (gjort 28.9.) en fast testklokke så nettlesertestene ikke avhenger av hvor rask maskinen er.
 - [ ] Senere: kapittel i Pasienthåndboka med journalsidene man har lest, og andre halvdel av UI-settet.
 
 ## Grafikk, kart, skygger og TV, 2026-09-26 kveld

@@ -2,34 +2,6 @@
 
 Alle tidspunkt er UTC.
 
-## 2026-09-28 16:40 Kameraprøve med isometrisk vinkel og ny etterbehandling
-- Tom spurte om vegger og gulv kan være 3D mot 2D-figurer og ting, om vinkelen kan bli mer isometrisk, og om det kan bli mer etterbehandling for bedre lys. Vegger og gulv var allerede 3D. Denne økta er gjort fra Cowork, ikke Claude Code.
-- Kameraet: KAMERA_VALG øverst i 04_render.js leser ?kamera=iso (dreining 45, helning 45), ?kamera=lav (helning 42) og ?helning= og ?dreining=. Uten valg er alt som før. KAM har hjelperne for dreiningen, og alt som vender mot kameraet bruker dem: dukker, ting, animerte ting, lagdukker, Kraken-armene, blekkpartiklene, båndene, kantlyset, prosjektilene og snøboksen. Visningen forfra, bakfra og fra siden regnes mot kameraet. Styringen dreies i Input.actions.
-- Veggene: en vegg er lav når gulvet ligger på sida bort fra kameraet, og med dreid kamera bygges sideflatene mot kameraet, med lister i 3D. Minikartet og N på kartringen dreies med.
-- Etterbehandling i 3D: dis (åttendedels oppløsning, tre runder uskarphet, skjermblanding og lys i mørket nær lyskilder) på høy og middels, omgivelsesskygge fra dybdeteksturen på høy (symmetriske nabopar, så flate gulv ikke mørkner, og store sprang teller ikke), og en mild tonekurve. Første forsøk på disen var for sterkt og vasket ut pasienten i lyktelyset, så terskelen ble hevet og styrken tatt ned. ?lys=gammel slår det nye av, ?lys=ao viser bare omgivelsesskyggen.
-- Nytt verktøy: tools/bilder_kamera.py (samme sted med ulike valg). Ny testdel 64 i test_ekstra.py: 7 av 7 OK. Generatoren og gjennomspillingen er grønne.
-- Bilder til Tom i dokumentasjon/kamera/.
-- Kjente mangler står i memory.md og todo.md (lamper, vinduer, pilastre, blod og sprekken bare på sørvegger, ingen gjennomsiktige vegger ennå, snøens parallakse).
-- Denne økta fikk ikke skrive til GitHub (repoet er ikke koblet til økta), så endringene ble levert som en patch til Tom.
-
-## 2026-09-28 17:45 Kameravinkel som valg i innstillingene
-- Tom ba om isometrisk som valg i innstillingene. Innstillinger, Bilde har nå Kameravinkel (som før, lav, isometrisk), lagret som settings.vinkel.
-- Vinkelen settes når spillet lastes (tegningene måles etter den), så KAMERA_VALG leser innstillingen rett fra lagringen. Velges en annen vinkel enn den som brukes, kommer en rad med «Last på nytt». Et løp som er i gang, fortsetter fra starten av etasjen. Adressen går foran innstillingen, og ?kamera=standard er lagt til.
-- Testdel 64 har tre nye sjekker (innstillingen brukes ved lasting, raden kommer og panelet får plass, adressen går foran). Kjørt sammen med del 11 (innstillingene får plass) og del 48: 29 av 29 OK.
-- Utvalgte deler etter kameraprøven (16, 28, 36, 39, 40, 48, 51, 55, 57 og 64) er kjørt: alt grønt bortsett fra én sjekk i del 48 (900 partikler lever ut, 3 igjen), som var grønn ved neste kjøring. Den avhenger av tid i programvaregrafikken. Hele test_ekstra er ikke kjørt, fordi den går flere timer i denne skyen.
-
-## 2026-09-28 17:30 Levert som filer til opplasting på GitHub
-- Verken denne økta eller Claude Code fikk skrive til repoet, så Tom fikk endringene som nedlastbare filer: en zip med de 28 endrede og nye filene i samme mapper som i repoet (til «Add file», «Upload files» på GitHub), og patchen med alle commitene til git am.
-- Filene i zipen er hentet fra commiten, ikke fra arbeidsmappa, så de er like det som er testet.
-
-## 2026-09-28 17:42 Kameravinkelen fra patchen lagt oppå main
-- Tom sendte zipen og patchen fra Cowork-økta (kameraprøven, ny etterbehandling og Kameravinkel under Innstillinger, Bilde) og ba om at det kommer på main, så Pages publiserer det.
-- Patchen er laget mot 4355d3d, men main har fått veggprøven (9b1e5af) etterpå. Zipen har hele filer fra før veggprøven, så en opplasting av den ville slettet veggprøvelinjene i log.md, memory.md og todo.md. Derfor er patchen brukt: de fire commitene er lagt oppå 9b1e5af med cherry-pick, og konfliktene i log.md og todo.md er løst ved å ta med begge sider (oppføringen fra 13:47 foran veggprøven i loggen).
-- Kontroll: lagt på 4355d3d gir patchen nøyaktig de 28 filene i zipen. Oppå main er 25 av dem like zipen byte for byte, og log.md, memory.md og todo.md skiller seg bare med veggprøvelinjene. Ingen filer fra veggprøven er endret, og alt ligger i src/, tools/ og dokumentasjon/kamera/, ikke øverst i repoet.
-- Bygget med bildeløpet: 611 innebygde bilder, 124 deler og 165 lyder. node --check på skriptet er grønn, og test_gen.js gir 1800 av 1800 gyldige etasjer, deterministisk. Arkene bildeløpet klipte i gpt-grafikk/, er satt tilbake, siden Pages-bygget klipper selv.
-- Testdel 41 (menyene med håndkontroll) feilet: den ventet at spaken etter Kameraavstand i fanen Bilde var Skjermristing, men nå kommer Kameravinkel imellom. Resten av sjekken stemte. Testen venter nå vinkel. Del 11 er grønn, også sjekken av at alle fanene i innstillingene får plass. Del 64 og en ny kjøring av del 41 går.
-- memory.md: råd om å bruke patchen og ikke zipen når en økt uten GitHub-tilgang leverer begge, om å rydde gpt-grafikk/ etter bildeløpet lokalt, og om hvordan enkeltdeler av test_ekstra kan kjøres. todo.md: kameraendringene er krysset av som lagt inn.
-
 ## 2026-09-28 17:48 Testene er grønne, og kameravinkelen er lagt på main
 - Del 64 (kameraprøven, etterbehandlingen og Kameravinkel i innstillingene): 10 av 10 OK. Del 11 (menyene): alle OK. Første kjøring av del 41, 11 og 64 ga 25 OK og 1 feil, og feilen var sjekken i del 41 som ventet Skjermristing.
 - Del 41 med den rettede sjekken: 9 av 9 OK. Gjennomspillingen (test_spill.py) er grønn uten feil: kamp, rydding, tjeneste, sjef, luke, drøm og død.
@@ -101,3 +73,27 @@ Alle tidspunkt er UTC.
 - Dryppet fra taket og øynene i veggene hadde tidtakere som aldri ble nullstilt mellom etasjene. De begynner nå på nytt i hver etasje (Blod.tom). Da gir samme frø og samme spilltid nøyaktig samme kamp to ganger, også i etasje 3 og 6.
 - tools/test_ekstra.py er delt: testdelene ligger i tools/testdeler/ (tolv filer per system, én funksjon per del), og test_ekstra.py er en kjører med --del, --system, -j (flere nettlesere samtidig), --liste, --rot og --frist. En del som krasjer, stopper ikke resten, og sidene den lot stå, lukkes. Delene som delte side (17 og 18, 19 og 20, 21 og 22), har fått hver sin, og telefonsiden som ble stående åpen i del 39, lukkes.
 - Ny testdel 67 for testklokka: 6 av 6 OK. Røyktesten og generatortesten er grønne.
+
+## 2026-09-28 21:45 Punkt 5: del 59 og 60 med faste etasjer, og hele testpakka mot fasiten
+- Del 59 (Skinnlauget) og 60 (havet) bruker testklokka og FAST i tools/testdeler/felles.py: fastEtasje søker opp et løpsfrø der etasjen har et rektangulært kamprom som passer (og der plassene testen bruker, er frie), bygger etasjen med klokka frosset, uten drøm, lik og hendelser, og tar bort teslaspoler, gnistrende lamper og pytter. plass() gir et sted bare når det er fritt og i rommet. 17 av 17 på 80 sekunder og 25 av 25 på 61 sekunder, mot flere minutter før, og de feilet av og til.
+- Hele testpakka på bygget med kroker og testklokka (66 deler, tre nettlesere, en time): 11 sjekker feilet i 7 deler. Fasiten (bygget før punkt 4) hadde feil i del 48 og 62. Del 4, 25, 30 og 62 venter i vanlig tid og feiler når spilltida går saktere enn klokka på en travel maskin. Del 33 (musikken) følger lydklokka og gikk gjennom to av tre ganger alene; den var aldri med i fasiten, fordi fasitkjøringen delte 17 og 18 (som delte side) på to grupper og krasjet. Delene som delte side, har nå hver sin.
+
+## 2026-09-28 22:05 Punkt 7: kodesjekken i stedet for ES-moduler og Vite nå
+- tools/sjekk_kode.js leser koden med acorn (lagt i tools/vendor, så den virker uten nett) og finner det moduler ville passet på: en fil som bruker en const, let eller class fra en senere fil mens den lastes, navn deklarert to ganger, ukjente navn (skrivefeil i kode som sjelden kjøres) og innpakninger, med et tak. Prøvd med feil satt inn med vilje, og den fant alle. Går på to sekunder, og CI kjører den.
+- Moduler nå ville brutt de 92 innpakningene som var igjen (en importert funksjon kan ikke settes på nytt). Veien videre står i systemer.md: når taket er 0, kan filene bli moduler, og esbuild eller Vite kan bygge.
+
+## 2026-09-28 22:40 Punkt 6: fiender som data og byggeklosser, med bevis på lik oppførsel
+- Kartla alle 32 fiendetypene med en egen agent: alle har egen AI, og en type er spredt på rundt 15 tabeller. Regler for når de lages, lå i fem innpakninger rundt spawnEnemy.
+- spawnEnemy har kroker. Grensene (høyst tre armer, én klokker) og oppstarten per type er data på typen (grense, vedStart), flokken og fast i gulvet ligger i spawnEnemyGrunn, og oppskriften er en krok. Fem innpakninger borte, taket er 87.
+- Fiende.ny samler en type på ett sted og fyller de gamle tabellene i samme rekkefølge. Byggeklossene Blokk.bitt (flue, rotte, klumpunge og kålhode, som hadde nesten lik kode) og Blokk.angrep (Lærlingen). Lærlingen og Klokkeren er samlet med Fiende.ny.
+- Beviset: tools/fiende_fasit.py kjører hver type i en egen side med samme frøstart og en fast etasje, og lager et avtrykk av hvert tiende steg og av tabellene. Alle 32 typene og tabellene ga nøyaktig samme avtrykk før og etter.
+- For at avtrykket skulle bli likt fra kjøring til kjøring, måtte tre ting i spillet over på spilltid eller egen tallkilde: kameraristingen brukte performance.now (og kameraet avgjør hvor musa sikter), regnet og snøen også, og lyden og musikken trakk tall fra spillets rekke (hvor mye, fulgte lydklokka og hvor mange lyder som var pakket ut). Lyden trekker nå fra nettleseren (lydRandom). Del 67 er delt: samme side sammenligner kampen, og to nye sider med samme frø fra tittelen må gi helt likt, også neste tilfeldige tall.
+
+## 2026-09-28 23:05 Punkt 3: nettutgaven med bildene og lydene som egne filer
+- build.py lager to utgaver: dist/morbidium.html som før (12,7 MB, alt inne, virker fra disken, testene bruker den) og dist/web (index.html på 1,8 MB, og 611 bilder, 124 deler og 165 lyder som filer, 10 MB i alt). Pages viser nettutgaven og har den selvstendige fila ved siden av som morbidium.html.
+- Nettutgaven henter startsettet (UI, glass, animasjonsark, pasienten, gulv, vegger og bakke) før tittelen, rundt 4 MB med Three.js, mot 12,7 MB. Resten hentes etterpå i bakgrunnen: delene til oppskriftene først, så fiendene etter etasjen de hører hjemme i. Art.hent og Art.klar, Art.part og Oppskrift tåler bilder som kommer senere, og lydene hentes med fetch når de skal pakkes ut. Fra disken gir nettutgaven en melding om å bruke morbidium.html.
+- WebP ble målt og valgt bort: PNG-ene er palettkomprimert, tapsfri WebP ga 11 prosent, og tapsbasert ble større.
+- Testdel 68 for nettutgaven (8 av 8), og røyktesten er grønn på begge utgavene. CI røyktester begge.
+
+## 2026-09-28 23:10 Testene: 18 deler over på testklokka
+- Del 4, 25, 28, 29, 30, 38, 44, 46, 48, 49, 57, 58, 61, 62, 63 og 67 venter nå i spilltid. Del 62 (Oldermannen), som feilet i fasiten, er grønn; den samler varslene i hvert steg klokka tar. Del 31 og 37 venter i vanlig tid som før: gaven etter instrumentskrinet kommer med setTimeout, og skyggene måles i tegnede bilder.
