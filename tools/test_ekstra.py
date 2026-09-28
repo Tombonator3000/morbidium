@@ -2055,6 +2055,7 @@ async def main():
           const vegg = st => { const m = Paint.mesh.vegger.find(v => v.userData.veggStil === st); return m && m.material.map; }, mål = t => t && [t.image.width, t.image.height, t.fraBilde || ''];
           const last = (k, src) => new Promise(r => { SPRITES[k] = src; const im = Art.img[k] = new Image(); im.onload = im.onerror = () => r(im.naturalWidth); im.src = src; });
           delete Art.img.gulv_gress; // Toms gressbilde (levert 27.9.) tas ut, så bakken males av koden
+          delete SPRITES.vegg_panel; delete Art.img.vegg_panel; // og panelveggen fra veggprøven (levert 28.9.), så veggen males av koden
           await bygg(2); ut.malt = mål(vegg('panel')); await bygg(1); ut.maltBakke = mål(Paint.mesh.bakke.material.map); ut.vaer1 = G.F.vaer;
           ut.lastet = [await last('vegg_panel', panel), await last('gulv_gress', bakke)];
           await bygg(2); const t = vegg('panel'); ut.panel = mål(t); ut.rep = t && +t.repeat.x.toFixed(4);

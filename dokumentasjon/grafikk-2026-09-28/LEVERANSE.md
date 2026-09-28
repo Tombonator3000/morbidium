@@ -1,5 +1,7 @@
 # Grafikkleveranse 28. september 2026
 
+> Fra 28.9.2026 er `gpt-grafikk/` en innboks. Originalene fra denne leveransen ligger i git-historikken (commit 578f6f2, se `arkiv/grafikk-originaler.md`), og de behandlede bildene i `assets/ferdig/`.
+
 53 nye manifestbilder er levert som 14 PNG-filer i `gpt-grafikk/`. Status er 611 av 636 bilder.
 
 ## Levert
@@ -18,13 +20,13 @@ Originalene ligger i `gpt-grafikk/` med filnavnene fra bestillingen. Alle er lag
 
 | Panel | Fliser |
 |---|---|
-| ![Panel](../../gpt-grafikk/vegg_panel.png) | ![Fliser](../../gpt-grafikk/vegg_fliser.png) |
+| ![Panel](../../assets/ferdig/vegg_panel.webp) | ![Fliser](../../assets/ferdig/vegg_fliser.webp) |
 
 | Mur | Tapet |
 |---|---|
-| ![Mur](../../gpt-grafikk/vegg_mur.png) | ![Tapet](../../gpt-grafikk/vegg_tapet.png) |
+| ![Mur](../../assets/ferdig/vegg_mur.webp) | ![Tapet](../../assets/ferdig/vegg_tapet.webp) |
 
-![Stein](../../gpt-grafikk/vegg_stein.png)
+![Stein](../../assets/ferdig/vegg_stein.webp)
 
 Prøven er vist til Tom i samtalen. Claude må fortsatt vurdere den i spillet på PC og mobil før de ni øvrige veggene bestilles.
 

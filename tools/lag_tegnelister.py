@@ -11,8 +11,8 @@ som kan limes rett inn:
   tekstur       vegg_/gulv_/bakke_<stil>.png, flater som gjentas (liste 11 og 12). Egen stilblokk per liste (stil),
                 fordi den vanlige ber om gjennomsiktig bakgrunn; stilblokken for teksturer står i DESIGN_BRIEF.md, del D.
 
-Hva som mangler, regnes ut av assets/manifest.json minus det som ligger i gpt-grafikk/ (samme regel
-som i ART_BRIEF.md). Kjør skriptet igjen når bilder er levert, så krymper listene. Et ark der noen
+Hva som mangler, regnes ut av assets/manifest.json minus det som er levert: de behandlede bildene i
+assets/ferdig og det som venter i innboksen gpt-grafikk/ (samme regel som i ART_BRIEF.md). Kjør skriptet igjen når bilder er levert, så krymper listene. Et ark der noen
 av rutene alt er levert, får nytt filnavn med bare det som gjenstår.
 
 Med --bilder lages også referansebilder i tegnelister/referanse/: dagens kodetegninger lagt i

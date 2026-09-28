@@ -38,7 +38,7 @@ python3 tools/test_ekstra.py  # enkeltfunksjoner i nettleseren (Playwright)
 
 ## Mapper
 - `src/` kildekode, satt sammen av `build.py`
-- `gpt-grafikk/` bilder fra ChatGPT legges her (se `gpt-grafikk/LESMEG.md`)
+- `gpt-grafikk/` innboks for bilder fra ChatGPT (se `gpt-grafikk/LESMEG.md`). De behandlede bildene ligger i `assets/ferdig/`
 - `assets/` behandlede bilder: `ferdig/` (klare for spillet), `deler/` (byggeklosser til figurer), `manifest.json`, og `lyd/` med lydene (laget av `tools/lag_lyd.py`, kildeliste i `assets/lyd/KILDER.md`)
 - `maler/` maler som lastes opp til ChatGPT
 - `tegnelister/` alt som mangler bilde, samlet i ferdige ark med filnavn, mal, prompt og referansebilde (lages av `tools/lag_tegnelister.py`)

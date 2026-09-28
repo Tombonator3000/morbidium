@@ -32,8 +32,8 @@
 ## Kunst
 - ChatGPT lager bare bilder, etter `DESIGN_BRIEF.md`. Detaljliste per bildedel: `ART_BRIEF.md` (generert, rediger `tools/lag_brief.py` i stedet).
 - Det som mangler, er samlet i ferdige ark i `tegnelister/` (generert av `tools/lag_tegnelister.py`, med `--bilder` også referansebilder av dagens kodetegninger). Kjør verktøyet på nytt når bilder er levert eller manifestet endres, og ikke rediger listene for hånd.
-- Alt ChatGPT leverer legges i `gpt-grafikk/` (se `gpt-grafikk/LESMEG.md`). Ingenting annet skal ligge der.
-- Flyt: bilder i `gpt-grafikk/` → `python3 tools/skjaer_ark.py` (klipper ark) → `python3 tools/behandle_bilder.py` (renser og plasserer) → `python3 build.py`. GitHub Actions gjør de samme stegene ved push til main.
+- Alt ChatGPT leverer, legges i innboksen `gpt-grafikk/` (se `gpt-grafikk/LESMEG.md`). Ingenting annet skal ligge der.
+- Flyt: GitHub Actions klipper og behandler det som ligger i innboksen ved hver bygging (`skjaer_ark.py` → `behandle_bilder.py` → `build.py`), så nye bilder kommer med med en gang. Ligger det bilder i innboksen når du starter, ta imot leveransen med `python3 tools/ta_imot_grafikk.py`: de behandlede bildene havner i `assets/ferdig/` og delene i `assets/deler/` (begge ligger i repoet), og originalene tas ut av innboksen. De finnes i git-historikken; `arkiv/grafikk-originaler.md` sier hvor, og alt fram til 28.9.2026 ligger i commit 578f6f2. Trengs originalene igjen (for eksempel for å behandle alt på nytt med andre mål), hent dem med `git checkout <commit> -- gpt-grafikk/`.
 - Filnavnet er nøkkelen. Gyldige nøkler står i `assets/manifest.json` (lages med `tools/lag_manifest.py`).
 - Alt som mangler bilde, tegnes av koden. Det skal aldri bli hull i spillet fordi et bilde mangler.
 - Spriteark (`anim_<navn>.png`) og UI-bilder (`ui_<navn>.png`) går gjennom det samme løpet. Spritearkene deles i ruter og skaleres likt, UI-bildene strekkes til riktig størrelse (9-delt). Se del G, H og I i `DESIGN_BRIEF.md`.

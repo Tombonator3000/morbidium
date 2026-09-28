@@ -268,7 +268,7 @@ Animasjonsark for figurer som går, slår og dør. Spillet animerer figurene ved
 
 ## Levering
 
-Last ned som PNG, gi fila nøyaktig filnavnet fra denne briefen, og last den opp til `gpt-grafikk/`. Ved push til main klipper og bygger GitHub Actions bildene inn av seg selv. Lokalt kjører du (eller Claude):
+Last ned som PNG, gi fila nøyaktig filnavnet fra denne briefen, og last den opp til `gpt-grafikk/`. Ved push til main klipper og bygger GitHub Actions bildene inn av seg selv. Claude tar imot leveransen neste gang med `python3 tools/ta_imot_grafikk.py`, som flytter de behandlede bildene til `assets/ferdig/` og tar originalene ut av innboksen. Lokalt kan du også kjøre stegene hver for seg:
 
 ```
 python3 tools/skjaer_ark.py

@@ -1,5 +1,7 @@
 # Utegrafikk, 27. september 2026
 
+> Fra 28.9.2026 er `gpt-grafikk/` en innboks. Originalene fra denne leveransen ligger i git-historikken (commit 578f6f2, se `arkiv/grafikk-originaler.md`), og de behandlede bildene i `assets/ferdig/`.
+
 Tom ba om manglende grafikk, særlig i hagen og på grantrærne, og om push til main.
 
 ## Funn og retting

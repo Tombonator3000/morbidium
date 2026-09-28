@@ -18,7 +18,7 @@ Sanntids action-roguelite i et norsk sanatorium, 24. september 1923. Lovecraft- 
 
 ## Teknikk i korte trekk
 - Kilder i src/, satt sammen av build.py i rekkefølgen i parts. Three.js r128 fra cdnjs. Hva hver fil gjør, står i AGENTS.md; hvordan systemene virker, i dokumentasjon/systemer.md.
-- Bildeløpet: gpt-grafikk/ -> tools/skjaer_ark.py -> tools/behandle_bilder.py -> build.py. GitHub Actions gjør det samme ved push til main.
+- Bildeløpet: gpt-grafikk/ er en innboks. GitHub Actions klipper og behandler det som ligger der ved hver bygging. tools/ta_imot_grafikk.py tar imot en leveranse: behandlede bilder i assets/ferdig/ (ligger i repoet), originalene ut av repoet og inn i historikken (arkiv/grafikk-originaler.md). Alt fram til 28.9. ligger i commit 578f6f2.
 - Tester: node tools/test_gen.js (etasjegeneratoren), python3 tools/test_spill.py (gjennomspilling) og python3 tools/test_ekstra.py (enkeltfunksjoner, tar flere timer i skyen).
 - I Claude Code-skyen når Chromium ikke nettet: hent three.min.js med curl og bruk --three STI. Installer playwright==1.56.0 og pillow med pip.
 - Telefonen tåler lite: alt som lages på skjermkortet per etasje, må frigjøres. Chrome sperrer WebGL for siden etter et krasj til nettleseren startes helt på nytt. «Kopier feilrapport» i feilmeldingen gir et øyeblikksbilde og det lagrede løpet.

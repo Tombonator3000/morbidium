@@ -206,8 +206,9 @@ def beskriv(k):
             typ, v = k[len(pre):].rsplit('_', 1); return f'{hva} of {FIG.get(typ, typ)}. {VIEW.get(v, v)}'
     return k
 
-# det ChatGPT allerede har levert: enkeltbilder, ark med nøkler i navnet og figurark
-LEV = set()
+# det ChatGPT allerede har levert: de behandlede bildene i assets/ferdig (de ligger i repoet), og det som venter i
+# innboksen gpt-grafikk/ (enkeltbilder, ark med nøkler i navnet og figurark). Originalene tas ut av repoet når de er behandlet
+LEV = {f.stem for f in (ROT / 'assets' / 'ferdig').glob('*') if f.suffix in ('.png', '.webp')}
 for mappe in (ROT / 'gpt-grafikk', ROT / 'gpt-grafikk' / 'behandlet'):
     for f in (mappe.glob('*.png') if mappe.exists() else []):
         n = f.stem

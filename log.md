@@ -2,25 +2,6 @@
 
 Alle tidspunkt er UTC.
 
-## 2026-09-28 10:47 Spor C, punkt C8: skeptikeren
-- To favn på rad mens Kraken er rasende (seks og seks armer, den andre kommer før de første har sunket) trengte flere armer enn samlingen hadde (høyst åtte). Da kom to av klemmene uten arm: varselet og treffet var der, men ingen arm. Målt i en egen prøve: 12 kall, 2 uten arm. Taket er nå tolv (rundt 80 kB per arm, kastet ved ny etasje som før), og prøven gir 0 uten arm.
-- Den ytre ringen i malstrømmen treffer ikke når den går ut (det er den indre som biter), så den har fått `stille: true` etter kontrakten. Ellers ville nedslagseffekten fra spor A kommet på sju ruter uten skade når sporene flettes.
-- Testdel 63 sjekker nå også to favn på rad når Kraken er rasende: ingen klemme uten arm. Armer som ville kommet opp i en vegg, hoppes over, så sjekken krever minst seks kall og ingen uten arm. Del 4, 21, 36 og 63 er grønne (61 av 61) på koden fra før rettingen av terskelen (9 kall i det rommet); terskelen er senket fra 9 til 6 etterpå, uten ny kjøring.
-- Resten holdt: dykket (ingen skade, skygge eller sikte under vann), favn, blekk, malstrømmen (også lånt av Journalen), taket på fire armer, døden og ryddingen. Sett på stående og liggende telefon (2D og 3D), med Enkel grafikk og med lav tekstur, uten feil i konsollen. Ingen andre spors filer er rørt.
-- Åpent, ikke C8: på stående telefon ligger navnet og tittelen til sjefen oppå panelet med hjertene (gjelder alle sjefer, 00_head.html, spor D). Sjeflinja på PC ligger over toppen av kappen når pasienten står nær Kraken, men øyet synes.
-
-## 2026-09-28 10:51 Kraken flettet, samlet integrasjonsløp startet, og bilder til Tom
-- B6 (tomrom og ganger) og C8 (Kraken) er ferdige, sjekket og flettet. Del 55, 51 og 38 er grønne etter B6. Kraken ga seks nye bildenøkler (kappe, øye, pupill, nebb, skum og bandasje), som står i ART_BRIEF runde 17 og tegneliste 13.
-- Det samlede integrasjonsløpet går nå på det endelige bygget (8c6c468): generatoren, gjennomspillingen og alle delene i test_ekstra.
-- Før- og etterbilder til Tom ligger i dokumentasjon/runde5/, ett ark per punkt på lista hans: angrepsvarslene og nedslagene, snøen, hårrullene med hjorten, det skjulte rommet og tomrommene, stemplene og blodet, og de nye fiendene.
-
-## 2026-09-28 12:20 Samlet integrasjonsløp: to sjekker tilpasset, og gjennomgang av flettingen
-- Tom ba om å fullføre og flette når Kraken er ferdig. Kraken var allerede flettet inn.
-- Integrasjonsløpet på 8c6c468 så langt: generatoren er grønn (1800 etasjer, deterministisk, skjult rom i alle), gjennomspillingen er grønn uten feil, og test_ekstra har 502 OK og 2 feil. Begge feilene er sjekker som ikke kjente de nye reglene:
-  1. Del 11 ventet nøyaktig 18 sider i håndboka. De nye fiendene gir 19. Alle sidene får plass, og sjekken godtar nå 18 eller flere.
-  2. Del 28 ventet glød fra alle bål, lys og lamper. Stearinlysene i det skjulte rommet (ett per etasje, seks til sammen) gløder først etter innbruddet (B2), og telles ikke før.
-- En gjennomgang av flettingen går samtidig: fire lesere (flettingen med Toms uteflater, fiendene på tvers av sporene, grafikkminne og ytelse, testene) og én skeptiker per funn. Hvert punkt var sjekket i sitt spor; dette ser på sømmene mellom sporene.
-
 ## 2026-09-28 13:37 Resten av integrasjonsløpet, uten flere agenter
 - Tom syntes runden har brukt altfor mye tid og ressurser på testing. Gjennomgangen med flere agenter er stoppet, og resten gjøres for hånd: bare delene som var røde, kjøres på nytt.
 - Samlet løp på 8c6c468: generatoren og gjennomspillingen grønne, test_ekstra 613 OK og 10 feil i del 11, 28, 59, 60 og 62.
@@ -121,3 +102,12 @@ Alle tidspunkt er UTC.
 - todo.md har bare åpne punkter (12 KB, var 31 KB). De 120 ferdige ligger i arkiv/ferdig-2026-09.md under samme overskrifter (alle linjene sjekket).
 - Nytt verktøy: tools/rydd_dokumenter.py flytter eldre logg til logg/ÅÅÅÅ-MM.md når log.md passerer 20 KB, flytter avkryssede punkter fra todo.md til arkiv/ferdig-ÅÅÅÅ-MM.md og sier fra når memory.md passerer 8 KB. --sjekk bare sjekker. AGENTS.md sier at det kjøres før en økt avsluttes.
 - Oppstartslesingen for en agent er nå rundt 4 KB minne, 12 KB gjøremål og slutten av en logg på 19 KB, mot 83 KB, 31 KB og 287 KB før.
+
+## 2026-09-28 20:12 Punkt 2: lettere repo og tester i CI
+- CI: generatortesten (test_gen.js avslutter nå med feilkode ved feil) og en ny røyktest (tools/test_roek.py: PC i 3D og 2D og telefon i 3D, tittel, nytt løp og tre etasjer, ingen konsollfeil, rundt ett minutt) må være grønne før Pages publiserer. Ny arbeidsflyt test.yml kjører det samme på alle andre grener og i pull requests, og varsler hvis dokumentene er for lange. Første kjøring på grenen var grønn. test_spill.py avslutter også med feilkode ved feil.
+- gpt-grafikk/ er nå en innboks. Bygget trenger bare de behandlede bildene, så assets/ferdig/ (611 bilder, 5,2 MB) ligger i repoet, og de 607 originalene (445 MB) er tatt ut av arbeidstreet. De ligger i historikken: alt fram til nå i commit 578f6f2, fil for fil i arkiv/grafikk-originaler.md. Taggen jeg ville sette, fikk ikke pushes herfra.
+- Nytt verktøy tools/ta_imot_grafikk.py tar imot en leveranse: klipper og behandler, sjekker at hvert bilde fikk en fil (stopper uten å slette ellers), tømmer innboksen og fører commitene inn. Flyttingen nå ble gjort med det.
+- lag_brief.py regner «levert» fra assets/ferdig og innboksen i stedet for fra originalene. ART_BRIEF.md og tegnelistene ble helt like, og bygget ble byte for byte likt (bortsett fra byggestempelet). De behandlede bildene er like fra kjøring til kjøring.
+- Dokumentene som beskrev det gamle løpet, er oppdatert (gpt-grafikk/LESMEG.md, AGENTS.md, README.md, memory.md, systemer.md, DESIGN_BRIEF.md, og en merknad i GRAFIKKLEVERANSE.md, UTEGRAFIKK.md og leveransen 28.9., der bildene nå peker på assets/ferdig).
+- Testdel 50 feilet også før dette: den ventet at panelveggen ble malt av koden, men veggprøven leverte et panelbilde 28.9. Testen tar nå ut det bildet selv, som den gjorde med gresset. 16 av 16 OK.
+- Historikken er ikke skrevet om. En full kloning henter fortsatt de 447 MB i historikken; en grunn kloning (CI, dybde 1) blir rundt 30 MB med en gang. Å fjerne dem fra historikken krever omskriving og force-push av main, og det gjøres ikke uten at Tom sier ja.

@@ -1,6 +1,8 @@
 # gpt-grafikk: bilder fra ChatGPT
 
-Alt ChatGPT tegner til Morbidium, legges i denne mappa. Herfra plukker verktøyene bildene opp, klipper dem, renser dem og bygger dem inn i spillet. Ingenting annet skal ligge her.
+Denne mappa er innboksen. Alt ChatGPT tegner til Morbidium, legges her. Herfra plukker verktøyene bildene opp, klipper dem, renser dem og bygger dem inn i spillet. Ingenting annet skal ligge her.
+
+Innboksen er tom med vilje. Når en leveranse er tatt imot, ligger de behandlede bildene i `assets/ferdig/` (og delene til oppskriftssystemet i `assets/deler/`), og originalene er tatt ut av mappa. De finnes i git-historikken: `arkiv/grafikk-originaler.md` sier hvilken commit hver fil ligger i, og alt som var levert fram til 28.9.2026, ligger i commit 578f6f2 (`git checkout 578f6f2 -- gpt-grafikk/` henter alt tilbake).
 
 ## Før du tegner
 - Les `DESIGN_BRIEF.md`. Den har stilblokken som limes inn først i hver ChatGPT-samtale, reglene og arktypene.
@@ -43,7 +45,7 @@ Flater med `tekstur: true` i manifestet er et unntak fra reglene om bakgrunn ned
 - Magenta hjelpelinjer fra malene kan bli stående, de fjernes automatisk.
 
 ## Teksturene: vegger, gulv og bakken ute
-Teksturene er unntaket fra reglene over. De lages i en egen ChatGPT-samtale med stilblokken for teksturer (del D i `DESIGN_BRIEF.md`), og ferdige prompter står i `tegnelister/11_vegger_og_bakken.md` (veggene og bakken ute) og `tegnelister/12_gulv.md` (gulvene).
+Teksturene er unntaket fra reglene over. De lages i en egen ChatGPT-samtale med stilblokken for teksturer (del D i `DESIGN_BRIEF.md`), og ferdige prompter står i `tegnelister/11_vegger.md` (veggene og bakken ute) og `tegnelister/12_gulv.md` (gulvene).
 - Bildet skal dekke hele flata, uten gjennomsiktighet. Bare `vegg_gjerde.png` og `vegg_ruin.png` er gjennomsiktige, mellom stengene og over bruddkanten.
 - Vegger: 1536 x 1024, et utsnitt av veggen rett forfra, 1,5 ganger så bredt som høyt, med gulvet nederst og toppen av veggen øverst. Det skal gå i ett fra venstre mot høyre.
 - Gulv og bakke: 1024 x 1024, rett ovenfra, nøyaktig 4 x 4 ruter på én meter. Det skal gå i ett i begge retninger.
@@ -54,7 +56,8 @@ Teksturene er unntaket fra reglene over. De lages i en egen ChatGPT-samtale med 
 ## Slik kommer bildene inn
 1. Last ned bildet fra ChatGPT og gi det riktig filnavn.
 2. Last det opp hit: på GitHub, åpne mappa `gpt-grafikk`, velg Add file og Upload files, og commit til `main`.
-3. Pushen til `main` starter GitHub Actions, som klipper arkene (`tools/skjaer_ark.py`), behandler bildene (`tools/behandle_bilder.py`), bygger spillet (`build.py`) og publiserer det på GitHub Pages.
+3. Pushen til `main` starter GitHub Actions, som klipper arkene (`tools/skjaer_ark.py`), behandler bildene (`tools/behandle_bilder.py`), bygger spillet (`build.py`), tester det og publiserer det på GitHub Pages. Bildene er med i spillet med en gang.
+4. Neste gang Claude jobber i repoet, tas leveransen imot med `python3 tools/ta_imot_grafikk.py`: bildene behandles inn i `assets/ferdig/`, originalene tas ut av innboksen, og commitene de ligger i, skrives i `arkiv/grafikk-originaler.md`. Da blir repoet lett å klone igjen.
 
 Lokalt gjøres det samme med:
 
@@ -64,4 +67,4 @@ python3 tools/behandle_bilder.py
 python3 build.py
 ```
 
-Når `skjaer_ark.py` kjøres lokalt, flyttes originalarket til `gpt-grafikk/behandlet/`, og de klipte delene havner her som enkeltbilder. Behandlede bilder havner i `assets/ferdig/`, og deler til oppskriftssystemet i `assets/deler/`. Det som mangler bilde, tegnes av koden som før, så spillet får aldri hull.
+Når `skjaer_ark.py` kjøres lokalt, flyttes originalarket til `gpt-grafikk/behandlet/`, og de klipte delene havner her som enkeltbilder. Behandlede bilder havner i `assets/ferdig/`, og deler til oppskriftssystemet i `assets/deler/`. `tools/ta_imot_grafikk.py` gjør alt dette og tømmer innboksen etterpå. Det som mangler bilde, tegnes av koden som før, så spillet får aldri hull.
