@@ -693,7 +693,7 @@ function updateNPCs(dt) {
 let lastT = performance.now(), mapT = 0;
 function loop(now) {
   requestAnimationFrame(loop);
-  let dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
+  const raa = now - lastT; let dt = Math.min(.05, raa / 1000); lastT = now; Krasj.ramme(raa);
   Input.pollGamepad(); const A = Input.actions();
   Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); Effekter.tick(dt); Vaatt.tick(dt); Testmodus.tick();
   if (G.state === 'play') {
@@ -743,8 +743,40 @@ function loop(now) {
   Input.endFrame();
   if (G.okFrames !== null && ++G.okFrames === 90) { if (window.bootStep) bootStep('ok'); const b = $('boot'); if (b) b.remove(); G.okFrames = null; }
 }
+/* feilrapporten: når grafikken blir borte (R.mistet), tas et øyeblikksbilde av hvor i spillet pasienten var, hva som ble tegnet,
+   de siste rammetidene og de siste lydene (lydene sier hva som nettopp skjedde). Knappen «Kopier feilrapport» i feilmeldingen gir det,
+   med innstillingene og det lagrede løpet, så en etasje som velter en telefon kan spilles av igjen og feilsøkes her */
+const Krasj = {
+  lyder: [], rammer: [],
+  lyd(n) { this.lyder.push([+(performance.now() / 1000).toFixed(1), n]); if (this.lyder.length > 14) this.lyder.shift(); },
+  ramme(ms) { this.rammer.push(Math.round(ms)); if (this.rammer.length > 60) this.rammer.shift(); },
+  tilstand() {
+    const P = G.player, F = G.F, ut = { sek: +(performance.now() / 1000).toFixed(1), tilstand: G.state, etasje: G.depth };
+    try { const rid = F && P ? roomAt(P.x, P.z) : -1, r = rid >= 0 ? F.rooms[rid] : null; ut.rom = r ? (r.type || '') + '/' + r.role : 'gang'; ut.vaer = F && F.vaer; ut.kamp = !!G.combat; ut.sjef = G.boss ? G.boss.type : null; } catch (e) { }
+    try { const n = {}; for (const e of G.enemies) if (e.alive) n[e.type] = (n[e.type] || 0) + 1; ut.fiender = n; } catch (e) { }
+    try { const i = R.renderer.info; Object.assign(ut, { kall: i.render.calls, trekanter: i.render.triangles, teksturer: i.memory.textures, geometrier: i.memory.geometries, programmer: (i.programs || []).length }); } catch (e) { }
+    try { ut.deler = Art.cache.size; if (performance.memory) ut.jsMB = Math.round(performance.memory.usedJSHeapSize / 1048576); } catch (e) { }
+    const r = this.rammer; if (r.length) ut.rammeMs = { min: Math.min(...r), snitt: Math.round(r.reduce((a, b) => a + b, 0) / r.length), maks: Math.max(...r), siste: r.slice(-10) };
+    ut.lyder = this.lyder.slice();
+    return ut;
+  },
+  rapport(msg, gl) {
+    const L = ['Morbidium feilrapport ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC', 'Melding: ' + msg];
+    const f = (navn, fn) => { try { L.push(navn + ': ' + fn()); } catch (e) { L.push(navn + ': ukjent'); } };
+    f('Grafikk', () => gl || (window.__glInfo ? __glInfo() : window.__gl || 'ukjent')); // slik den var da feilmeldingen kom (før nedgraderingen)
+    f('Nettleser', () => navigator.userAgent);
+    f('Bygg', () => BYGG.dato + ', ' + BYGG.commit);
+    f('Da grafikken ble borte', () => JSON.stringify(R.tapInfo || Store.get('morbidium_krasj', null)));
+    f('Innstillinger', () => JSON.stringify((Store.get('morbidium_meta_v2', {}) || {}).settings || {}));
+    f('Oppstart', () => localStorage.getItem('morbidium_boot'));
+    f('Lagret løp', () => localStorage.getItem(RUN_KEY) || 'ingen');
+    return L.join('\n');
+  }
+};
 function boot() {
   const step = window.bootStep || (() => { });
+  window.__feilrapport = (msg, gl) => Krasj.rapport(msg, gl);
+  try { const sp = Sound.play; Sound.play = function (n, ...a) { Krasj.lyd(n); return sp.call(this, n, ...a); }; } catch (e) { }
   step('Starter WebGL');
   try { R.init($('game')); } catch (e) {
     // nettleseren gir ikke siden WebGL i det hele tatt (three: «Error creating WebGL context»). Det skjer som regel etter at grafikken har

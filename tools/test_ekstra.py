@@ -4040,6 +4040,7 @@ async def main():
           R.renderer.getContext().getExtension('WEBGL_lose_context').loseContext(); await vent(8800);
           const e = document.getElementById('err'), p = e ? [...e.querySelectorAll('p')].map(x => x.textContent) : [];
           ut.feil = !!e && !e.classList.contains('hidden'); ut.tekst = p[0] || ''; ut.info = p[1] || ''; ut.kvAuto = JSON.parse(localStorage.getItem('morbidium_meta_v2')).settings.kvAuto;
+          document.getElementById('errKopi').click(); await vent(300); ut.rapport = document.getElementById('errTekst').value; ut.lagret = !!localStorage.getItem('morbidium_krasj');
           return ut; }""")
         tf['errs'] = [e for e in pg.errs if 'context_lost' not in e.lower() and 'context lost' not in e.lower()][:6]
         await pg.close()
@@ -4050,6 +4051,9 @@ async def main():
               h['kval'] == 'hoy' and h['ao'] == 0 and h['skygge'] == 1024 and not h['dybde'] and h['uAo'] == 0 and h['dis'] > 0, h)
         sjekk('mistet grafikk som ikke kommer tilbake: feilmeldingen sier at neste start blir lettere og viser telefon, 3D middels og oppløsning, og lav er lagret',
               tf['auto'] == 'middels' and tf['feil'] and 'lav kvalitet' in tf['tekst'] and 'telefon, 3D middels, oppløsning 1.5' in tf['info'] and tf['kvAuto'] == 'lav', tf)
+        rp = tf['rapport']
+        sjekk('feilrapporten har meldingen, grafikken, øyeblikksbildet (etasje, lyder og rammer) og det lagrede løpet, og øyeblikksbildet er lagret',
+              rp.startswith('Morbidium feilrapport') and 'Melding: Grafikken gikk tom' in rp and 'telefon, 3D middels' in rp and '"etasje":' in rp and '"lyder":' in rp and '"rammeMs":' in rp and 'Lagret løp: {' in rp and tf['lagret'], rp[:900])
         sjekk('ingen konsollfeil (telefon med fin peker)', not tf['errs'], tf['errs'])
         pc = await fin_side(viewport={'width': 1280, 'height': 720})
         await pc.goto(URL3D + '?3d'); await pc.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000)

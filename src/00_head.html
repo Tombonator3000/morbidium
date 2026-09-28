@@ -644,9 +644,17 @@ body.tv #title :focus, body.tv #panel :focus, body.tv #journal :focus, body.tv #
     var m = String(msg).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; });
     var gl = window.__gl || ''; try { if (window.__glInfo) gl = __glInfo(); } catch (x) { }
     var info = gl.replace(/[<>]/g, '') + ' | ' + navigator.userAgent.replace(/[<>]/g, '');
-    e.innerHTML = '<div class="list paper" style="width:min(520px,92vw);padding:18px 20px;background:#ecd9a8;border:3px solid #2a1a14;border-radius:6px"><div class="jtitle">Noe gikk galt</div><p style="font-size:16px">' + m + '</p><p style="font-size:12px">' + info + '</p><div class="btnrow"><button class="btn big" id="errSimple">Prøv enkel grafikk</button><button class="btn" id="errReload">Last inn på nytt</button></div></div>';
+    e.innerHTML = '<div class="list paper" style="width:min(520px,92vw);padding:18px 20px;background:#ecd9a8;border:3px solid #2a1a14;border-radius:6px"><div class="jtitle">Noe gikk galt</div><p style="font-size:16px">' + m + '</p><p style="font-size:12px">' + info + '</p><div class="btnrow"><button class="btn big" id="errSimple">Prøv enkel grafikk</button><button class="btn" id="errReload">Last inn på nytt</button><button class="btn" id="errKopi">Kopier feilrapport</button></div><textarea id="errTekst" readonly style="display:none;width:100%;box-sizing:border-box;height:120px;margin-top:10px;font-size:11px;-webkit-user-select:text;user-select:text"></textarea></div>';
     document.getElementById('errSimple').onclick = function () { try { localStorage.setItem('morbidium_simple', '1'); } catch (x) { } location.reload(); };
     document.getElementById('errReload').onclick = function () { location.reload(); };
+    // feilrapporten (Krasj.rapport i 30_game.js) kopieres, og vises også i feltet under, så den kan merkes og kopieres for hånd
+    document.getElementById('errKopi').onclick = function () {
+      var b = this, ta = document.getElementById('errTekst'), t = String(msg) + '\n' + info;
+      try { if (window.__feilrapport) t = __feilrapport(String(msg), gl); } catch (x) { }
+      ta.value = t; ta.style.display = 'block';
+      var merk = function () { try { ta.focus(); ta.select(); } catch (x) { } b.textContent = 'Merk teksten og kopier den'; };
+      try { navigator.clipboard.writeText(t).then(function () { b.textContent = 'Kopiert. Lim den inn til Claude'; }, merk); } catch (x) { merk(); }
+    };
   };
   window.addEventListener('error', function (ev) { if (ev && ev.message) showErr(ev.message + (ev.lineno ? ' (linje ' + ev.lineno + ')' : '')); });
   window.addEventListener('unhandledrejection', function (ev) { showErr('Feil: ' + (ev.reason && ev.reason.message || ev.reason)); });
