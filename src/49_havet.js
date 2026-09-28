@@ -878,8 +878,11 @@ Object.assign(LINES.boss, { kraken: ['Blubb.', 'Mer blekk!', 'Ned. Alt går ned.
 LINES.bossDod.kraken = 'Skriv... pent... med meg...';
 SJEF_EPITAF.kraken = 'Kraken er behandlet. Biskop Pontoppidan kalte den en flytende øy i 1752. Den var bare noe som bor i badevannet til den som sover. Journalen er skrevet med blekket dens, og blekket er fortsatt vått.';
 Object.assign(DEATH_CAUSES, { boss_kraken: ['Tatt av Kraken, nøyaktig som biskopen beskrev.', 'Brukt som blekk.', 'Sugd ned i malstrømmen. Poe skrev om det. Ingen trodde ham heller.'] });
-Object.assign(FIENDE_INFO, { kraken: ['En blekksprut fra havet under huset, beskrevet av biskopen i Bergen i 1752. Lar armene stige opp rundt deg, sprøyter blekk, drar deg inn i en malstrøm og dukker opp under deg.', 'Gå ut mellom armene før de klemmer. Løp utover når vannet går rundt, og når den dukker, se etter boblene der du står.'] });
+Object.assign(FIENDE_INFO, { kraken: ['Blekksprut fra havet under huset, sett av biskopen i Bergen i 1752. Armer rundt deg, blekk, malstrøm og dykk.', 'Gå ut mellom armene og ut av virvelen. Bobler der du står? Flytt deg.'] });
 PA[6].push('Pasienter som ser en øy i badekaret, bes ikke gå i land på den. Biskopen gjorde det i 1752.');
+OYE_SER.kraken = 'Jeg ser hvor Kraken ligger. Den leter etter nesen sin med sju armer. Den åttende ble spist av en hval.';
+MERKNADER.kraken = { navn: 'Blekk på hendene', krav: 'Behandle Kraken.', gir: 'Journalen tørker aldri helt. Nå vet du hvorfor.' };
+{ const _ob = Merknad.onBoss; Merknad.onBoss = function (B) { _ob.call(this, B); if (B && B.type === 'kraken') this.gi('kraken'); }; }
 
 const Kraken = {
   armer: [], MAKS_ARMER: 4, SYNK: .55, JAKT: .6, RING: 1.0, STIG: .4,
@@ -984,12 +987,13 @@ const Kraken = {
     B.t = B.atkDur = 2.5; B.aapen = 1; FX.bubble(B, pick(['Kom i favnen min.', 'Åtte armer, og alle vil holde deg.', 'Hold stille. Det er bare en klem.']), 1.4, 'boss'); Sound.play('sluk', .9, .6);
     let i = 0;
     for (let k = 0; k < n; k++) {
-      const a = a0 + k / n * TAU, x = cx + Math.sin(a) * R0, z = cz + Math.cos(a) * R0; if (solid(Math.floor(x), Math.floor(z))) continue;
-      const opp = .75 + i++ * .09, mot = Math.atan2(cx - x, cz - z), o = { x, z, r: .8, color: 0x2a6a7a, type: 'vann' };
+      // står pasienten inntil en vegg, kommer armen opp litt nærmere i stedet for inni muren
+      const a = a0 + k / n * TAU, rr = [R0, R0 * .78].find(q => !solid(Math.floor(cx + Math.sin(a) * q), Math.floor(cz + Math.cos(a) * q))); if (!rr) continue;
+      const x = cx + Math.sin(a) * rr, z = cz + Math.cos(a) * rr, opp = .75 + i++ * .09, mot = Math.atan2(cx - x, cz - z), o = { x, z, r: .8, color: 0x2a6a7a, type: 'vann' };
       this.arm(x, z, { opp, slag: opp + .75, ned: opp + 1.3, mot });
       addTele('circle', o, opp, () => { hitShape('circle', o, dmg * .4, { type: 'boss', x: o.x, z: o.z, kb: 5 }, 'enemy'); Sound.play('splash', .7, .9); R.ripple(o.x, o.z); Particles.spawn(o.x, .3, o.z, 8, 0x9ad0e0, { speed: 3, up: 5, life: .5 }); }, B);
       bossLater(B, opp + .05, () => {
-        const r = { x, z, a: mot, w: 1.25, len: R0 + 1.2, color: KR.blekk, type: 'vann' };
+        const r = { x, z, a: mot, w: 1.25, len: rr + 1.2, color: KR.blekk, type: 'vann' };
         addTele('rect', r, .7, () => { hitShape('rect', r, dmg * .8, { type: 'boss', x, z, kb: 9 }, 'enemy'); beam(r.x, r.z, r.x + Math.sin(r.a) * r.len, r.z + Math.cos(r.a) * r.len, 0x5a2a3a, .45, .3, .6); Sound.play('slam', .7, 1.1); R.shake(.16); }, B);
       });
     }
@@ -1104,4 +1108,4 @@ Object.assign(BOSS_MOVES, {
 { const _uz = updateZones; updateZones = function (dt) { _uz(dt); Kraken.soner(dt); Kraken.armTick(dt); }; }
 { const _cf = clearFloor; clearFloor = function () { Kraken.rydd(); _cf(); }; }
 
-Object.assign(window, { nearestEnemy, statusOrd, puddleAt, moveEnt, BOSS_MOVES, laanbareTrekk, addProj, updateProjectiles, Havet, tentakel, tentakelLinje, Kraken, KRAKEN_DELER, updateZones, bossDie }); // til testene
+Object.assign(window, { nearestEnemy, statusOrd, puddleAt, moveEnt, BOSS_MOVES, laanbareTrekk, addProj, updateProjectiles, Havet, tentakel, tentakelLinje, Kraken, KRAKEN_DELER, roomAt, cancelTeles }); // til testene

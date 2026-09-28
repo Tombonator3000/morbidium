@@ -2655,6 +2655,168 @@ async def main():
         sjekk('ingen konsollfeil (Oldermann i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 63) Kraken: sjefen i puljen sitter i hullet sitt og flytter seg ikke, armene stiger opp rundt pasienten og klemmer (den som går ut
+        #     mellom dem, slipper), blekket gir skyer, malstrømmen drar inn og biter i midten (også når Journalen låner den), dykket kan ikke
+        #     treffes og kommer opp der pasienten sto, Journalen låner aldri dykket, høyst fire armer, og armene er ute av minnet etter etasjen
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        kr = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
+            til = async (f, t = 4, maks = 120000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(40); return !!f(); },
+            spill = async (t, maks = 90000, hver) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) { await vent(40); if (hver) hver(); } };
+          if (typeof Kraken !== 'object' || !SJEF_DATA.kraken) return { mangler: true };
+          ut.data = { pulje: SJEF_PULJE.includes('kraken'), rekke: SJEF_REKKE.includes('kraken'), info: !!(FIENDE_INFO.kraken && FIENDE_INFO.kraken[0] && FIENDE_INFO.kraken[1]),
+            replikker: ['bossIntro', 'monolog', 'monolog2', 'boss'].every(k => (LINES[k].kraken || []).length >= 3) && !!LINES.bossDod.kraken, epitaf: !!SJEF_EPITAF.kraken, dod: (DEATH_CAUSES.boss_kraken || []).length >= 3,
+            egne: SJEF_DATA.kraken.egne, fart: SJEF_DATA.kraken.fart, oye: !!OYE_SER.kraken, merknad: !!MERKNADER.kraken };
+          { let n = 0; for (let s = 1; s < 200; s++) if (Object.values(trekkSjefer(s)).includes('kraken')) n++; ut.data.trukket = n; }
+          // Journalen låner aldri dykket (bare Krakens egen tick flytter den), men gjerne de andre
+          G.run.sjefer = { 1: 'krok', 2: 'kraken', 3: 'hjort', 4: 'klumpen', 5: 'rust', 6: 'journalen' };
+          ut.laan = [...new Set(laanbareTrekk())].sort();
+          G.run.sjefer[3] = 'kraken'; startFloor(3, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
+          P.hp = P.maxHp = 1e6; { const r = G.F.rooms[G.F.bossId]; P.x = r.x + r.w / 2; P.z = r.z + r.h - 2; }
+          await til(() => G.boss && G.boss.alive, 30); const B = G.boss; if (!B || B.type !== 'kraken') return Object.assign(ut, { ingenSjef: B && B.type });
+          await til(() => B.state !== 'intro', 6); B.B0.attacks = ['ingen']; B.cd = 1e9; // ingen egne angrep under testen: de settes i gang ett og ett
+          // treffene på pasienten telles der helsa settes tilbake: hurt kan ikke pakkes inn utenfra (spillet ligger i en funksjon), men P.lastCause sier hvem
+          const treff = [], tell = () => { if (P.hp < 1e6 - .01) treff.push({ t: G.time, type: P.lastCause }); P.hp = 1e6; P.iframe = 0; P.invuln = 0; };
+          const rom = G.F.bossId, fri = (x, z) => roomAt(x, z) === rom && [[0, 0], [.4, 0], [-.4, 0], [0, .4], [0, -.4]].every(([a, c]) => !solid(Math.floor(x + a), Math.floor(z + c)));
+          const ved = (d, a0 = 0) => { for (let i = 0; i < 24; i++) { const v = a0 + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * .26, x = B.x + Math.sin(v) * d, z = B.z + Math.cos(v) * d; if (fri(x, z) && los(B.x, B.z, x, z)) return { x, z }; } return { x: B.x, z: B.z + d }; };
+          const hold = p => () => { tell(); P.x = p.x; P.z = p.z; P.kvx = P.kvz = 0; P.stunT = 0; };
+          const mot = () => [Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)];
+          const angrip = k => { const [d, a] = mot(); bossAttackTest(B, k); };
+          try {
+            // i hullet: et tjern som varer, stor nok til kroppen, og Kraken står stille når pasienten er fem ruter unna
+            const x0 = B.x, z0 = B.z, p0 = ved(5); await spill(2, 60000, hold(p0));
+            ut.start = { hull: !!B.hull && G.puddles.includes(B.hull) && B.hull.kind === 'tjern' && B.hull.r >= 2.3 && B.hull.life > 1e6, r: B.r, flytt: Math.hypot(B.x - x0, B.z - z0),
+              baand: [B.doll.back.n, B.doll.back.cap, B.doll.front.n, B.doll.front.cap], boble: B.bubbleH };
+            // hullet graves på nytt når taket på 46 pytter har skjøvet det ut
+            { const rr = G.F.rooms[rom]; let n = 0; for (let z = rr.z + .5; z < rr.z + rr.h && n < 50; z += .7) for (let x = rr.x + .5; x < rr.x + rr.w && n < 50; x += .7) if (!solid(Math.floor(x), Math.floor(z)) && Math.hypot(x - B.x, z - B.z) > 3) { addPuddle(x, z, 'wet', .3, 60); n++; } }
+            { const h0 = B.hull; await spill(.3, 30000, hold(p0)); ut.start.gravd = !G.puddles.includes(h0) && !!B.hull && G.puddles.includes(B.hull) && B.hull.r >= 2.3; }
+            // favn: armene stiger opp i en ring rundt pasienten, og klemmene går inn mot der hen står
+            treff.length = 0; angrip('favn'); let armer = 0, retning = [];
+            await spill(4.2, 120000, () => { hold(p0)(); armer = Math.max(armer, Kraken.armer.filter(a => a.aktiv).length);
+              for (const t of G.tele) if (t.owner === B && t.shape === 'rect' && !retning.includes(t)) retning.push(t); });
+            const avvik = retning.map(t => { const o = t.o, dx = p0.x - o.x, dz = p0.z - o.z; return Math.abs(dx * Math.cos(o.a) - dz * Math.sin(o.a)); });
+            ut.favn = { armer, klemmer: retning.length, avvik: Math.max(0, ...avvik), treff: treff.filter(t => t.type === 'boss').length, igjen: Kraken.armer.filter(a => a.aktiv).length, lagd: Kraken.armer.length };
+            // den som går ut mellom armene med en gang de er oppe, slipper klemmen
+            treff.length = 0; angrip('favn'); await spill(.95, 60000, hold(p0));
+            const ringen = Kraken.armer.filter(a => a.aktiv).map(a => Math.atan2(a.x - p0.x, a.z - p0.z)).sort((a, b) => a - b); let ut2 = null;
+            if (ringen.length >= 3) { const gap = ringen.map((a, i) => { const nx = i + 1 < ringen.length ? ringen[i + 1] : ringen[0] + Math.PI * 2; return [nx - a, a + (nx - a) / 2]; }).sort((a, b) => b[0] - a[0]);
+              ut: for (const [, mid] of gap) for (const rr of [5.2, 4.8, 5.8, 4.4]) { const x = p0.x + Math.sin(mid) * rr, z = p0.z + Math.cos(mid) * rr; if (fri(x, z)) { ut2 = { x, z }; break ut; } } }
+            if (ut2) { const t1 = G.time; await spill(2.6, 90000, hold(ut2)); ut.unna = { flyttet: true, treff: treff.filter(t => t.t >= t1 && t.type === 'boss').length }; } else ut.unna = { flyttet: false, ringen: ringen.length };
+            await spill(1.5, 30000, hold(p0));
+            // blekk: kjeglen treffer, og det blir skyer der blekket landet
+            const royk0 = G.zones.filter(z => z.kind === 'royk').length, p1 = ved(3.5); treff.length = 0; hold(p1)(); angrip('blekk'); await spill(1.4, 60000, hold(p1));
+            ut.blekk = { skyer: G.zones.filter(z => z.kind === 'royk').length - royk0, treff: treff.filter(t => t.type === 'boss').length };
+            await spill(1, 30000, hold(p0));
+            // malstrømmen drar pasienten inn (omtrent tre ruter i sekundet) og biter i midten
+            const p2 = ved(5.2); hold(p2)(); treff.length = 0; angrip('malstrom'); const zn = G.zones.find(z => z.kind === 'malstrom');
+            const dm = () => zn ? Math.hypot(P.x - zn.x, P.z - zn.z) : 0, d0 = dm(), g0 = G.time; let indre = false;
+            await spill(1.0, 60000, tell);
+            const d1 = dm(), dt1 = G.time - g0;
+            await spill(1.9, 60000, () => { tell(); indre = indre || G.tele.some(t => t.owner === zn && t.o.r > 2 && t.o.r < 2.5); });
+            await spill(.5, 30000, tell);
+            ut.malstrom = { sone: !!zn, d0, d1, fart: (d0 - d1) / dt1, indre, bitt: treff.filter(t => t.type === 'boss').length, borte: !G.zones.includes(zn), mesh: !!zn && !zn.mesh.parent };
+            // Journalen låner malstrømmen: sonen trenger ikke eieren, den drar og biter uten at eieren gjør noe, og stilner når eieren er borte
+            const J = { alive: true, x: B.x, z: B.z, type: 'journalen', q: [], teles: [], bubbleH: 4 }; hold(p2)(); treff.length = 0; BOSS_MOVES.malstrom(J, 5, 0, 20); const zj = G.zones.find(z => z.kind === 'malstrom' && z.B === J);
+            await spill(1.2, 60000, tell); const dj = zj ? Math.hypot(P.x - zj.x, P.z - zj.z) : 99;
+            await spill(1.8, 60000, tell);
+            ut.laant = { sone: !!zj, dratt: dj < 5.2 - 1, bitt: treff.filter(t => t.type === 'boss').length };
+            const zj2 = Kraken.virvel(B.x, B.z, J, 20); await spill(.3, 30000); J.alive = false; await spill(.3, 30000); ut.laant.stilner = !G.zones.includes(zj2) && !zj2.mesh.parent;
+            // grepet til armene står over mens malstrømmen går (to drag samtidig kan ikke løpes fra)
+            { const _gr = Havet.grip; let grep = 0; Havet.grip = function () { grep++; }; const a0 = spawnEnemy('avlopsarm', B.x + 3, B.z, false, 3);
+              try { let pa = null; for (let i = 0; i < 48 && !pa; i++) { const v = i / 48 * Math.PI * 2, x = a0.x + Math.sin(v) * 4.5, z = a0.z + Math.cos(v) * 4.5; if (fri(x, z) && los(a0.x, a0.z, x, z)) pa = { x, z }; }
+                const prov = n => { for (let i = 0; i < n; i++) { hold(pa)(); a0.fase = 'opp'; a0.faseT = 1; a0.dukket = false; a0.state = 'chase'; Grotesk.ai.avlopsarm(a0, P, Math.hypot(P.x - a0.x, P.z - a0.z), Math.atan2(P.x - a0.x, P.z - a0.z)); cancelTeles(a0); } };
+                if (pa) { const zv = Kraken.virvel(B.x, B.z, B, 1); prov(40); const under = grep; zv.t = 0; await spill(.2, 20000); grep = 0; prov(40); ut.grep = { underVirvel: under, uten: grep }; } else ut.grep = { ingenPlass: true }; }
+              finally { Havet.grip = _gr; killEntity(a0, {}); } }
+            await spill(.8, 30000, hold(p0));
+            // dykket: under vann tar den ingen skade, har ingen skygge og siktes ikke på; den kommer opp der pasienten sto, treffer og graver nytt hull
+            const p3 = ved(5); hold(p3)(); treff.length = 0; const hull0 = B.hull, hp0 = B.hp; angrip('dypdykk');
+            ut.dykk = { under: await til(() => B.dukket && !B.doll.root.visible, 3) };
+            Object.assign(ut.dykk, { skade: hurt(B, 50, { from: 'player' }), hp: B.hp === hp0, skygge: Dybde.kastere().some(k => k.k === B), naermest: nearestEnemy(B.x, B.z, 99) === B, gammelt: !G.puddles.includes(hull0) || hull0.life < 10 });
+            const tU = G.time; await til(() => { hold(p3)(); return !B.dukket; }, 4); ut.dykk.tidUnder = G.time - tU;
+            await spill(.6, 30000, hold(p3));
+            Object.assign(ut.dykk, { oppe: !B.dukket && B.doll.root.visible, avstand: Math.hypot(B.x - p3.x, B.z - p3.z), treff: treff.filter(t => t.type === 'boss').length, hop: B.hop || 0, r: B.r,
+              hull: !!B.hull && G.puddles.includes(B.hull) && Math.hypot(B.hull.x - B.x, B.hull.z - B.z) < .1 && B.hull.life > 1e6, armer: Havet.armer() });
+            // høyst fire armer, uansett hvor mange som kalles
+            Kraken.kallArmer(B, 6); Kraken.kallArmer(B, 6); await spill(2.2, 60000, hold(p0)); ut.dykk.maks = Havet.armer();
+            // Enkel grafikk: favn og malstrøm uten feil
+            R.safe = true; try { angrip('favn'); await spill(1.5, 60000, hold(p0)); angrip('malstrom'); await spill(3, 60000, tell); } finally { R.safe = false; }
+            // talen ved to tredjedeler helse, og døden: hullet renner ut, armene dør og luken åpner seg
+            await til(() => B.state !== 'act', 4); B.state = 'chase'; for (let i = 0; i < 40 && B.phase !== 'monolog' && B.hp > B.max * .34; i++) hurt(B, B.max * .04, { from: 'player' }); ut.tale = { fase: B.phase, tale: B.mono === LINES.monolog.kraken };
+            const hull1 = B.hull; hurt(B, 1e9, { from: 'player' }); await spill(3, 60000, hold(p0));
+            ut.dod = { hull: !hull1 || !G.puddles.includes(hull1) || hull1.life < 5, armer: Havet.armer(), luke: !!G.trapdoor };
+          } finally { R.safe = false; }
+          // ny etasje: armene er kastet ut av grafikkminnet, og ingen virvel henger igjen
+          const lagd = Kraken.armer.length; startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
+          ut.rydd = { lagd, igjen: Kraken.armer.length, soner: G.zones.filter(z => z.kind === 'malstrom').length };
+          ut.bilde = (() => { const c = fiendeBilde('kraken', 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); })();
+          return ut; }""")
+        sjekk('Kraken finnes (Kraken i 49_havet.js)', not kr.get('mangler') and not kr.get('ingenSjef'), {k: kr.get(k) for k in ['mangler', 'ingenSjef']})
+        if not kr.get('mangler') and not kr.get('ingenSjef'):
+            d = kr['data']
+            sjekk('Kraken står i sjefpuljen og fiendeindeksen, med replikker, tale, siste ord, epitaf, dødsårsaker, øyet i sprekken og en merknad, og trekkes i en del løp', d['pulje'] and d['rekke'] and d['info'] and d['replikker'] and d['epitaf'] and d['dod'] and d['oye'] and d['merknad'] and 40 < d['trukket'] < 199, d)
+            sjekk('Journalen låner favn, blekk, malstrøm og dypkall, men aldri dykket', 'dypdykk' not in kr['laan'] and all(k in kr['laan'] for k in ['favn', 'blekk', 'malstrom', 'dypkall']) and d['egne'] == ['dypdykk'], kr['laan'])
+            s = kr['start']
+            sjekk('Kraken sitter i et tjern som varer, flytter seg ikke, og hullet graves på nytt når pyttetaket skyver det ut', s['hull'] and s['flytt'] < .05 and s['r'] >= 1.5 and s['gravd'], s)
+            sjekk('de seks armene får plass i strekbåndene (ingenting kuttes)', 2000 < s['baand'][0] < s['baand'][1] and 2000 < s['baand'][2] < s['baand'][3], s['baand'])
+            f = kr['favn']
+            sjekk('favn: armene stiger opp rundt pasienten, klemmer inn mot der hen står, treffer den som blir stående, og synker igjen', f['armer'] >= 3 and f['klemmer'] >= 3 and f['avvik'] < .3 and f['treff'] >= 1 and f['igjen'] == 0, f)
+            sjekk('favn: den som går ut mellom armene med en gang de er oppe, slipper klemmen', kr['unna']['flyttet'] and kr['unna']['treff'] == 0, kr['unna'])
+            sjekk('blekk: kjeglen treffer, og blekket blir til skyer', kr['blekk']['skyer'] >= 2 and kr['blekk']['treff'] >= 1, kr['blekk'])
+            m = kr['malstrom']
+            sjekk('malstrømmen drar pasienten inn med omtrent tre ruter i sekundet, nebbet biter i midten, og virvelen er borte etterpå', m['sone'] and 1.5 < m['fart'] < 5.5 and m['indre'] and m['bitt'] >= 1 and m['borte'] and m['mesh'], m)
+            sjekk('malstrømmen virker også når Journalen låner den, og stilner når eieren er borte', kr['laant']['sone'] and kr['laant']['dratt'] and kr['laant']['bitt'] >= 1 and kr['laant']['stilner'], kr['laant'])
+            sjekk('armene griper ikke mens malstrømmen går (men gjør det ellers)', kr['grep']['underVirvel'] == 0 and kr['grep']['uten'] >= 5, kr['grep'])
+            dk = kr['dykk']
+            sjekk('under vann tar Kraken ingen skade, kaster ingen skygge og siktes ikke på, og det gamle hullet renner ut', dk['under'] and dk['skade'] == 0 and dk['hp'] and not dk['skygge'] and not dk['naermest'] and dk['gammelt'], dk)
+            sjekk('dykket: opp igjen innen 2,6 sekunder der pasienten sto, treffer, står i et nytt hull og har kroppen sin igjen', dk['oppe'] and dk['tidUnder'] <= 2.6 and dk['avstand'] < 1.8 and dk['treff'] >= 1 and dk['hull'] and abs(dk['hop']) < .01 and dk['r'] >= 1.5, dk)
+            sjekk('armer stiger opp mens Kraken er under, og det blir aldri mer enn fire', 1 <= dk['armer'] <= 4 and dk['maks'] <= 4, dk)
+            sjekk('talen ved to tredjedeler helse er Krakens egen', kr['tale']['fase'] == 'monolog' and kr['tale']['tale'], kr['tale'])
+            sjekk('når Kraken dør, renner hullet ut, armene dør og luken åpner seg', kr['dod']['hull'] and kr['dod']['armer'] == 0 and kr['dod']['luke'], kr['dod'])
+            sjekk('armene i favn er kastet ut av grafikkminnet etter etasjen, og ingen virvel henger igjen', kr['rydd']['lagd'] >= 3 and kr['rydd']['igjen'] == 0 and kr['rydd']['soner'] == 0, kr['rydd'])
+            sjekk('fiendeBilde tegner Kraken', kr['bilde'] > .06, kr['bilde'])
+        await pg.screenshot(path='/tmp/e_63_kraken.png')
+        sjekk('ingen konsollfeil (Kraken)', not pg.errs, pg.errs[:6])
+        # håndbokssiden med Kraken får plass, og kortet har bilde
+        await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+        hb = await pg.evaluate("""() => { if (!SJEF_REKKE.includes('kraken')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'sjefer'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(SJEF_REKKE.indexOf('kraken') / per));
+          return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
+        await pg.wait_for_timeout(300)
+        hb['plass'] = await pg.evaluate(HB_PLASS) if not hb.get('mangler') else False
+        sjekk('håndboka har en side med Kraken, og den får plass', 'Kraken' in hb.get('navn', []) and hb['plass'], hb)
+        await pg.screenshot(path='/tmp/e_63_handbok.png')
+        sjekk('ingen konsollfeil (Kraken i håndboka)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # og på stående og liggende telefon, der det er to kort på hver side
+        for vw, vh in [(390, 844), (844, 390)]:
+            pg = await ny_side(b, viewport={'width': vw, 'height': vh}, is_mobile=True, has_touch=True, device_scale_factor=2)
+            await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+            hb = await pg.evaluate("""() => { if (!SJEF_REKKE.includes('kraken')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'sjefer'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(SJEF_REKKE.indexOf('kraken') / per));
+              return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
+            await pg.wait_for_timeout(400)
+            # liggende telefon: håndboka rekker under skjermkanten på alle sider også før Kraken (panelet ruller), så der sjekkes bare kortene
+            hb['plass'] = (await pg.evaluate(HB_PLASS) if vw < vh else await pg.evaluate("() => [...document.querySelectorAll('.fkort')].every(k => k.scrollHeight <= k.clientHeight + 2 && !!k.querySelector('canvas'))")) if not hb.get('mangler') else False
+            sjekk(f'håndbokssiden med Kraken får plass på telefon ({vw}x{vh})', 'Kraken' in hb.get('navn', []) and hb['plass'], hb)
+            await pg.screenshot(path=f'/tmp/e_63_handbok_{vw}.png')
+            await pg.close()
+        # 3D: Kraken med favn, malstrøm og dykk (én runde, 3D er tungt i programvaregrafikk)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
+            til = async (f, t = 4, maks = 150000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(60); return !!f(); };
+          if (typeof Kraken !== 'object') return { mangler: true };
+          G.run.sjefer[3] = 'kraken'; startFloor(3, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } ut.d3 = D3.on;
+          P.hp = P.maxHp = 1e6; { const r = G.F.rooms[G.F.bossId]; P.x = r.x + r.w / 2; P.z = r.z + r.h - 2; }
+          await til(() => G.boss && G.boss.alive, 40); const B = G.boss; if (!B || B.type !== 'kraken') return Object.assign(ut, { ingenSjef: true });
+          await til(() => B.state !== 'intro', 8); B.B0.attacks = ['ingen']; P.x = B.x + 1; P.z = B.z + 4.5;
+          const S = {}; let armer = 0, baand = 0;
+          for (const k of ['favn', 'malstrom', 'dypdykk']) { bossAttackTest(B, k); await til(() => { P.hp = 1e6; armer = Math.max(armer, Kraken.armer.filter(a => a.aktiv).length); baand = Math.max(baand, B.doll.front.n); if (B.dukket) S.dukket = 1; if (G.zones.some(z => z.kind === 'malstrom')) S.virvel = 1; return false; }, 3.5); }
+          await til(() => !B.dukket, 4); ut.S = S; ut.armer = armer; ut.baand = baand; ut.oppe = !B.dukket && B.doll.root.visible; ut.ekstra = (G.ekstraDukker || []).filter(d => d.type === 'krakenarm').length;
+          bossAttackTest(B, 'favn'); await til(() => false, 1.7); G.hitstop = 30; return ut; }""")
+        sjekk('i 3D stiger armene opp, malstrømmen går rundt og Kraken dykker og kommer opp igjen', not d3.get('mangler') and not d3.get('ingenSjef') and d3.get('d3') and d3['S'].get('dukket') and d3['S'].get('virvel') and d3['armer'] >= 3 and d3['oppe'] and 0 < d3['baand'] < 6000 and d3['ekstra'] >= 3, d3)
+        await pg.screenshot(path='/tmp/e_63_kraken_3d.png')
+        sjekk('ingen konsollfeil (Kraken i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
