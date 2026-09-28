@@ -1302,3 +1302,10 @@ Alle tidspunkt er UTC.
 ## 2026-09-28 09:38 Del 50 følger flettingen med Toms uteflater
 - Del 50 brukte manifestnøkkelen bakke_park, som er tatt bort fordi bakken ute nå bruker Toms gress- og mosebilder. Bildeløpet prøves med gulv_planker, lista heter 11_vegger.md og har 30 flater (ikke 44, fordi Tom har levert uteflatene), og bakken prøves med gulv_gress: Toms gressbilde tas ut mens den malte bakken prøves, og prøvebildet legges inn under samme nøkkel.
 - Del 24 og 36 er grønne på den flettede grenen (23 OK). Del 50 til 53 kjøres nå.
+
+## 2026-09-28 09:51 Del 50 til 53 på den flettede grenen, og tre sjekker tilpasset
+- Del 50 til 53: 61 OK og 4 feil, alle fra flettingen med Toms uteflater eller fra ventetid i faktisk tid, ikke fra spillet:
+  1. Bakken ute gjentas nå hver fjerde rute (Toms gress-, mose- og snøbilder), ikke hver femte eller tiende som den malte bakken. Sjekkene i del 52 godtar begge.
+  2. Del 50 forventet malt bakke på 256 punkter i etasje 1, men etasjen kan snø, og da males snøbakken i 512. Sjekken ser nå på været.
+  3. Del 53 leste bare teksten i tipslappen til slutt. Tipsene vises etter en ventetid i faktisk tid, så karttipset fra starten av løpet kom etter sprekktipset og skrev over det. Sjekken noterer nå alle tips som vises mens den venter.
+- Del 51 er grønn. Del 50, 52 og 53 kjøres på nytt.
