@@ -1,11 +1,12 @@
 # AGENTS.md: regler for alle som jobber i dette repoet (Claude, ChatGPT, Codex og andre)
 
 ## Før du starter
-- Les `memory.md` (hva prosjektet er og viktige beslutninger), `todo.md` og de siste oppføringene i `log.md`.
+- Les `memory.md` (kort: gjeldende tilstand og beslutninger), `todo.md` (bare åpne oppgaver) og de siste oppføringene i `log.md`. Jobber du med et bestemt system, les avsnittet om det i `dokumentasjon/systemer.md`. Eldre logg står i `logg/`, ferdige oppgaver i `arkiv/`.
 
 ## Mens og etter du jobber
 - Logg alt du gjør i `log.md` med tidsstempel (`## YYYY-MM-DD HH:MM Kort tittel`), så historikken kan følges.
-- Oppdater `memory.md` når noe varig endres, og `todo.md` når oppgaver kommer til eller blir ferdige.
+- Oppdater `todo.md` når oppgaver kommer til eller blir ferdige, `memory.md` når en beslutning eller tilstanden endres, og `dokumentasjon/systemer.md` når et system endres. Detaljer om systemene hører hjemme i systemer.md, ikke i memory.md.
+- Før du avslutter: kjør `python3 tools/rydd_dokumenter.py`. Den flytter eldre logg til `logg/ÅÅÅÅ-MM.md` (log.md holdes under 20 KB) og ferdige oppgaver til `arkiv/ferdig-ÅÅÅÅ-MM.md`, og sier fra når memory.md har passert 8 KB.
 - Dokumentasjon skrives på norsk, uten emoji og uten tankestreker, og i et naturlig, menneskelig språk.
 
 ## Bygg og test
