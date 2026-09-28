@@ -697,17 +697,64 @@ function updateNPCs(dt) {
   for (const n of G.npcs) { if (!n.doll) continue; n.doll.update(dt, {}); n.talkT -= dt; if (P && n.talkT <= 0 && Math.hypot(n.x - P.x, n.z - P.z) < 6) { n.talkT = rnd(9, 15); FX.bubble(n, pick(NPC_LINES[n.service] || ['...']), 2.6); } }
 }
 let lastT = performance.now(), mapT = 0;
+/* testklokka: Klokke.frys() stopper spillet i den vanlige løkka (bildet tegnes fortsatt, men ingenting flytter seg og ingen tilfeldige
+   tall trekkes), og Klokke.spol(sek) kjører oppdateringen i faste steg på 1/60 sekund uten å vente på skjermen. Da blir en test like rask
+   og lik på en treg og en rask maskin. frys({ frø }) gir spillets Math.random (01_core.js) en fast tallrekke, frys({ stille: true })
+   demper lyden, og slipp() gir alt tilbake. setTimeout og performance.now går fortsatt i vanlig tid (se dokumentasjon/systemer.md,
+   Testklokka). */
+const Klokke = {
+  fast: false, ekteRandom: null, volum: null,
+  frys(o = {}) {
+    this.fast = true;
+    if (o.frø != null) { if (!this.ekteRandom) this.ekteRandom = Math.random; Math.random = mulberry32(o.frø); }
+    if (o.stille && this.volum === null) { this.volum = Sound.volume; Sound.volume = 0; }
+    if (G.okFrames !== null) ferdigStart(); // oppstartsmerket settes med en gang, ellers står #boot og neste lasting starter i gjenopprettingsmodus
+    return this;
+  },
+  slipp() {
+    this.fast = false;
+    if (this.ekteRandom) { Math.random = this.ekteRandom; this.ekteRandom = null; }
+    if (this.volum !== null) { Sound.volume = this.volum; this.volum = null; }
+    return this;
+  },
+  // spoler sek sekunder spilltid fram. Stopper når spillet går ut av 'play' (død, meny, dialog) eller når til() blir sann,
+  // og gir hvor langt det kom. Hitstop går på 6 prosent fart, så taket på antall steg er romslig.
+  spol(sek, o = {}) {
+    const dt = o.dt || 1 / 60, t0 = G.time, maks = Math.ceil(sek / dt / .06) + 60; let n = 0, stoppet = false;
+    while (G.time - t0 < sek - 1e-9 && G.state === 'play' && n < maks) {
+      n++; steg(dt, { spolt: true });
+      if (o.til && o.til()) { stoppet = true; break; }
+    }
+    if (G.state === 'play') { hudUpdate(); drawMap(); }
+    return { tid: G.time - t0, steg: n, tilstand: G.state, stoppet };
+  },
+  // spoler til f() blir sann, høyst sek sekunder spilltid
+  til(f, sek = 10, o = {}) { return this.spol(sek, Object.assign({}, o, { til: f })); },
+  // neste tall fra spillets tallrekke (testene ser ikke spillets Math)
+  trekk() { return Math.random(); }
+};
+function ferdigStart() { if (window.bootStep) bootStep('ok'); const b = $('boot'); if (b) b.remove(); G.okFrames = null; }
 function loop(now) {
   requestAnimationFrame(loop);
-  const raa = now - lastT; let dt = Math.min(.05, raa / 1000); lastT = now; Krasj.ramme(raa);
+  const raa = now - lastT; lastT = now;
+  if (Klokke.fast) { Input.endFrame(); R.render(0); } // testklokka står: bare tegn det som er
+  else { Krasj.ramme(raa); steg(Math.min(.05, raa / 1000)); }
+  if (G.okFrames !== null && ++G.okFrames === 90) ferdigStart();
+}
+/* ett steg i spillet: input, oppdatering og ett bilde. Den vanlige løkka tar ett steg per skjermbilde. Testklokka tar mange steg på rad
+   med spolt: da hoppes lyden, musikken, testmodusen og den automatiske kvaliteten over (de følger vanlig tid eller lydklokka), og HUD,
+   kart og bilde tegnes ikke. Det som ellers klinger av når bildet tegnes (sjokkbølger, blink, blod på skjermen), går i R.fxTick. */
+function steg(dt, o = {}) {
+  const ekte = !o.spolt;
   Input.pollGamepad(); const A = Input.actions();
-  Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); Effekter.tick(dt); Vaatt.tick(dt); Testmodus.tick();
+  if (ekte) { Musikk.tick(); Lydbank.tick(dt); Musikk.dempet(G.state === 'panel' || G.state === 'journal'); }
+  Effekter.tick(dt); Vaatt.tick(dt); if (ekte) Testmodus.tick();
   if (G.state === 'play') {
     const P = G.player;
     if (A.pauseP) openPause(); else if (A.journalP) openJournal(); else if (A.kartP) Kart.apne();
     let ts = 1; if (G.hitstop > 0) { G.hitstop -= dt; ts = .06; }
     if (G.slow.t > 0) { G.slow.t -= dt; ts = Math.min(ts, G.slow.s); } else G.slow.s = 1;
-    const sdt = dt * ts; G.time += sdt; if (R.water) R.water.u.uTime.value += sdt; D3.maal(dt);
+    const sdt = dt * ts; G.time += sdt; if (R.water) R.water.u.uTime.value += sdt; if (ekte) D3.maal(dt);
     updatePlayer(sdt, A);
     const edt = G.slowEnemies > 0 ? sdt * .3 : sdt;
     for (const e of G.enemies) updateEnemy(e, edt); G.enemies = G.enemies.filter(e => !e.gone);
@@ -717,7 +764,7 @@ function loop(now) {
     G.flowT = (G.flowT || 0) - sdt; if (G.flowT <= 0 && P.alive) { G.flowT = .25; buildFlow(Math.floor(P.x), Math.floor(P.z)); }
     roomLogic(sdt); interactLogic(A);
     G.paT -= dt; if (G.paT <= 0) { G.paT = rnd(45, 75); paLine(pick(PA[G.depth] || PA[1])); }
-    Sound.tick(dt, G.depth >= 3 || P.morb >= 50 || !!(G.boss && G.boss.alive), G.depth);
+    if (ekte) Sound.tick(dt, G.depth >= 3 || P.morb >= 50 || !!(G.boss && G.boss.alive), G.depth);
     // musikken følger situasjonen (06_musikk.js): stykket for etasjen, drømmen eller grammofonen i tjenesterommene,
     // besetningen etter rommet, kamplaget og sjefslaget (også i blodrus), og roen når ingenting skjer
     Musikk.morb = P.morb / 100; if (P.alive) Musikk.velg(dt);
@@ -730,7 +777,7 @@ function loop(now) {
     if (innerHeight > innerWidth * 1.2) cz += 2.4; // stående mobil: pasienten over knappene
     R.updateCamera(cx, cz, dt);
     Particles.update(sdt); FX.update(dt);
-    hudUpdate(); mapT -= dt; if (mapT <= 0) { mapT = .12; drawMap(); }
+    mapT -= dt; if (ekte) { hudUpdate(); if (mapT <= 0) { mapT = .12; drawMap(); } }
   } else if (G.state === 'title') {
     G.titleT += dt; if (R.water) R.water.u.uTime.value += dt;
     const r = G.F.rooms[G.F.startId]; R.updateCamera(r.x + r.w / 2 + Math.sin(G.titleT * .15) * 3, r.z + r.h / 2 + Math.cos(G.titleT * .11) * 1.5, dt);
@@ -745,9 +792,8 @@ function loop(now) {
   } else MenyNav.tick(dt, A); // døden og utskrivningen
   // lysene, månen, lykteskyggene og gloriene etter at alt har flyttet seg, så de følger figurene og lykta i samme bilde og ikke ett bilde etter
   D3.tick(dt); Dybde.tick(dt); Glorie.tick(dt);
-  R.render(dt);
+  if (ekte) R.render(dt); else R.fxTick(dt);
   Input.endFrame();
-  if (G.okFrames !== null && ++G.okFrames === 90) { if (window.bootStep) bootStep('ok'); const b = $('boot'); if (b) b.remove(); G.okFrames = null; }
 }
 /* feilrapporten: når grafikken blir borte (R.mistet), tas et øyeblikksbilde av hvor i spillet pasienten var, hva som ble tegnet,
    de siste rammetidene og de siste lydene (lydene sier hva som nettopp skjedde). Knappen «Kopier feilrapport» i feilmeldingen gir det,
@@ -815,6 +861,7 @@ function boot() {
   Object.assign(window, { ROM_ART, UTE_FLATER }); // manifest og grafikkontroll tar også med landskapet
   Object.assign(window, { KAM, KAMERA_VALG, LYS_NY }); // kameraprøven og den nye etterbehandlingen (testdel 64)
   Object.assign(window, { Kroker, VAAPEN_TEGNING, drawWeapon }); // krokene og våpentegningene (testdel 66)
+  Object.assign(window, { Klokke, steg, SpillMath: Math }); // testklokka og spillets egen Math (testdel 67)
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };

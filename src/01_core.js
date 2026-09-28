@@ -2,6 +2,11 @@
 /* ============================================================
    MORBIDIUM  -  kjerne: matte, RNG, lagring, input, lyd
    ============================================================ */
+/* spillets egen Math: hele spillet trekker tilfeldige tall gjennom denne, mens Three.js bruker nettleserens. Testklokka (30_game.js)
+   kan da gi spillet en fast tallrekke uten at id-ene Three.js trekker når den lager objekter (og som bare trekkes første gang noe
+   lages), forskyver rekka. Ellers er alt som før: random spør nettleserens Math.random hver gang, og resten er de vanlige funksjonene. */
+const Math = Object.getOwnPropertyNames(globalThis.Math).reduce((m, k) => (m[k] = globalThis.Math[k], m), {});
+Math.random = () => globalThis.Math.random();
 const TAU = Math.PI * 2;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;

@@ -2,19 +2,6 @@
 
 Alle tidspunkt er UTC.
 
-## 2026-09-28 13:47 Flettet til main (PR #12) og publisert
-- PR #12 (runde 5) er flettet til main som «Flett PR #12: Runde 5, angrepsvarsler, snø, hårruller, skjulte rom, vegger og gulv, og nye fiender» (4355d3d).
-- Pages-byggingen gikk, og den publiserte siden har den nye versjonen. Kort sjekk av siden på PC (1280 x 720) og stående telefon (390 x 844): et løp starter i 3D, blekkvarslene, snøfallet, det skjulte rommet, havet, Skinnlauget, Oldermannen og Kraken er med, og konsollen har ingen feil.
-- Grenen claude/practical-babbage-nc80bu er satt tilbake til main.
-- todo.md: flettingen er krysset av, og del 59 og 60 er notert som tester som bør få faste plasser.
-
-## 2026-09-28 18:20 Veggprøve og Havet under huset og Skinnlauget
-- Tom ba om å fortsette den krasjede grafikkøkta. Dagens main og manifest viste 558 av 636 bilder. Vedlagt kunstbrief var eldre; dagens tegnelister og referansebilder er brukt.
-- Levert fem veggteksturer og ni bestillinger i liste 13: seks figurark, Avløpsarmens tupp, Kraken-delene og fem våpen. 14 PNG-filer gir 53 nye manifestbilder, nå 611 av 636.
-- Fire figurark fikk større marger etter kontroll av klippekantene. Alle 53 klipte kildebilder er gyldige PNG-filer. Bildeløpet og bygget er kjørt i egen kontrollmappe, med 611 innebygde bilder, 124 deler og 165 lyder. En tom mellomfil ble klippet på nytt; fire gjenværende originalark ble hoppet over av bildebehandlingen. Se leveranserapporten for detaljene.
-- ART_BRIEF og tegnelistene er regenerert. Ferdig liste 13 er arkivert i dokumentasjon/grafikk-2026-09-28 sammen med prompter og leveranseoversikt. Spillkode og skript er uendret.
-- De siste 25 bildene følger stoppunktene i bestillingen: ni vegger etter vurdering av prøven på PC og mobil, og 16 gulv etter at egne gulvfliser er på plass.
-
 ## 2026-09-28 16:40 Kameraprøve med isometrisk vinkel og ny etterbehandling
 - Tom spurte om vegger og gulv kan være 3D mot 2D-figurer og ting, om vinkelen kan bli mer isometrisk, og om det kan bli mer etterbehandling for bedre lys. Vegger og gulv var allerede 3D. Denne økta er gjort fra Cowork, ikke Claude Code.
 - Kameraet: KAMERA_VALG øverst i 04_render.js leser ?kamera=iso (dreining 45, helning 45), ?kamera=lav (helning 42) og ?helning= og ?dreining=. Uten valg er alt som før. KAM har hjelperne for dreiningen, og alt som vender mot kameraet bruker dem: dukker, ting, animerte ting, lagdukker, Kraken-armene, blekkpartiklene, båndene, kantlyset, prosjektilene og snøboksen. Visningen forfra, bakfra og fra siden regnes mot kameraet. Styringen dreies i Input.actions.
@@ -107,3 +94,10 @@ Alle tidspunkt er UTC.
 - Gjort om: startFloor, clearFloor og decorateLevel (30_game), spawnBoss, bossDie, enemyDie og playerDie (20_actors), spawnProps, updateTele og updateProjectiles (05_world) og updateZones (26_fiender): 43 innpakninger. De elleve innpakningene av drawWeapon (13 våpen) er et oppslag, VAAPEN_TEGNING, der rekkefølgen ikke betyr noe. Til sammen 54 av 146.
 - Igjen, med rekkefølgen dokumentert i systemer.md under «Kroker»: spawnEnemy, hurt, charPart, enemySlip, hurtPlayer, Sound.play og de med ett eller to lag. AGENTS.md sier at nye systemer bruker kroker eller oppslag.
 - Ny testdel 66: ingen fil setter de omgjorte funksjonene på nytt (sjekket i kildene), krokene står i samme rekkefølge som innpakningene, prio, av og feil i en krok, og alle våpnene tegnes. 5 av 5 OK. En full kjøring av alle testdelene på bygget fra før går i bakgrunnen som fasit.
+
+## 2026-09-28 20:55 Punkt 5: testklokka og test_ekstra.py delt per system
+- Testklokka i 30_game.js: løkka er delt i loop og steg(dt). Klokke.frys() stopper spillet (bildet tegnes fortsatt, ingenting flytter seg), Klokke.spol(sek) kjører oppdateringen i faste steg på 1/60 sekund uten å vente på skjermen, og Klokke.til(f, sek) spoler til f() er sann. I spolte steg hoppes lyden, musikken, testmodusen og den automatiske kvaliteten over, og HUD, kart og bilde tegnes ikke. Det som ellers klinger av når bildet tegnes (blod og rødt på skjermen, sjokkbølger, zoom), går i R.fxTick, så det klinger av i spilltid også der.
+- frys({ frø }) gir en fast tallrekke. For at den skal holde, har spillet fått sin egen Math i 01_core.js: Three.js trekker tall til id-ene når den lager objekter (og bare første gang noe lages), og det forskjøv rekka. Nettleserens Math.random er urørt, og spillets random spør den når testklokka ikke styrer.
+- Dryppet fra taket og øynene i veggene hadde tidtakere som aldri ble nullstilt mellom etasjene. De begynner nå på nytt i hver etasje (Blod.tom). Da gir samme frø og samme spilltid nøyaktig samme kamp to ganger, også i etasje 3 og 6.
+- tools/test_ekstra.py er delt: testdelene ligger i tools/testdeler/ (tolv filer per system, én funksjon per del), og test_ekstra.py er en kjører med --del, --system, -j (flere nettlesere samtidig), --liste, --rot og --frist. En del som krasjer, stopper ikke resten, og sidene den lot stå, lukkes. Delene som delte side (17 og 18, 19 og 20, 21 og 22), har fått hver sin, og telefonsiden som ble stående åpen i del 39, lukkes.
+- Ny testdel 67 for testklokka: 6 av 6 OK. Røyktesten og generatortesten er grønne.

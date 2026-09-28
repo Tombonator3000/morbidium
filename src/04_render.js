@@ -316,7 +316,7 @@ const R = {
   render(dt) {
     // enkel grafikk: hjelpemålene til glød, tilt-shift og lysbufferen trengs ikke og kastes (også når den slås på midt i spillet)
     if (this.safe && (this.bl || this.us || this.lrt)) { this.kastPar('bl'); this.kastPar('us'); this.kastLys(); this.post.uniforms.tBloom.value = this.post.uniforms.tUskarp.value = null; }
-    if (this.safe) { const r = this.renderer; this.fx.hurt = Math.max(0, this.fx.hurt - dt * 2.5); this.fx.flash = Math.max(0, this.fx.flash - dt * 5); r.setRenderTarget(null); r.setClearColor(this.clear || 0x16130c, 1); r.clear(); r.render(this.scene, this.camera); return; }
+    if (this.safe) { const r = this.renderer; this.fxTick(dt); r.setRenderTarget(null); r.setClearColor(this.clear || 0x16130c, 1); r.clear(); r.render(this.scene, this.camera); return; }
     this.renderPost(dt);
     // selvtest: blir bildet helt hvitt eller helt tomt, byttes det til enkel grafikk
     // (ikke mens WebGL er mistet: det er ikke et hvitt eller tomt bilde, og mistet/hentet tar seg av det)
@@ -329,8 +329,9 @@ const R = {
       } catch (e) { }
     }
   },
-  renderPost(dt) {
-    const r = this.renderer, u = this.post.uniforms;
+  // verdiene til etterbehandlingen fra R.fx, og nedtellingen av dem (fra renderPost og fxTick)
+  postFx(dt) {
+    const u = this.post.uniforms;
     u.uTime.value += dt; u.uHurt.value = this.fx.hurt; u.uFlash.value = this.flashOn ? this.fx.flash : 0; u.uMorb.value = this.fx.morb; u.uLow.value = this.fx.low;
     u.uBlod.value = this.fx.blod; u.uBlodFlip.value = this.fx.blodFlip; u.uAarer.value = Math.max(0, this.fx.aarer || 0); u.uPuls.value = this.fx.puls || 3; this.fx.blod = Math.max(0, this.fx.blod - dt * .38);
     const Q = D3.on ? D3.Q() : null; u.uDistort.value = this.distortOn ? 1 : 0; u.uLights.value = this.lightsOn && !D3.on ? 1 : 0; u.uBloom.value = Q && Q.glod ? .7 : 0;
@@ -339,6 +340,16 @@ const R = {
     this.storeFx(dt, u);
     // det skarpe båndet følger pasienten (midt på figuren), og er smalere på stående skjerm, der bildet er høyere
     if (u.uTilt.value > 0) { const P = G.player, y = P && G.state !== 'title' ? this.uvAv(P.x, .9, P.z).y : .54; u.uFokus.value.set(clamp(y, .25, .75), this.rt.width < this.rt.height ? .14 : .2, .42); }
+    return Q;
+  },
+  /* det som klinger av med tida (sjokkbølger, blink, blod på skjermen) og verdiene til etterbehandlingen. render kaller det hver ramme;
+     testklokka kaller det i steg som ikke tegnes, så alt klinger av i spilltid også der */
+  fxTick(dt) {
+    if (this.safe) { this.fx.hurt = Math.max(0, this.fx.hurt - dt * 2.5); this.fx.flash = Math.max(0, this.fx.flash - dt * 5); return null; }
+    return this.postFx(dt);
+  },
+  renderPost(dt) {
+    const r = this.renderer, u = this.post.uniforms, Q = this.postFx(dt);
     if (!D3.on && this.lightsOn) { r.setRenderTarget(this.lysBuf()); r.setClearColor(0x000000, 1); r.clear(); r.render(this.lscene, this.camera); } else if (this.lrt) this.kastLys();
     r.setRenderTarget(this.rt); r.setClearColor(this.clear || 0x16130c, 1); r.clear(); r.render(this.scene, this.camera);
     if (Q && Q.glod) this.renderBloom(); else if (this.bl) { this.kastPar('bl'); u.tBloom.value = null; }

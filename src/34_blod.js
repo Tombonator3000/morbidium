@@ -262,6 +262,7 @@ const Blod = {
     for (const m of this.vegger) this.kast(m); for (const d of this.drypper) this.kast(d.m); for (const f of this.fall) R.remove(f.m);
     for (const o of this.oyne) this.lukk(o, true);
     this.vegger = []; this.drypper = []; this.bitene = []; this.ferske = []; this.oyne = []; this.fall = [];
+    this.takT = 1; this.oyeT = 3; // dryppet og øynene begynner på nytt i hver etasje (da blir etasjen lik med samme frø, testdel 67)
     const P = G.player; if (P) { P.blodSko = 0; P.fsX = undefined; }
   }
 };
