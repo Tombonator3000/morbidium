@@ -853,13 +853,14 @@ const Oldermann = {
   _u.call(this, dt);
   for (const it of this.items) if (it.klem) {
     const el = it.el, fx = el.parentNode, w = el.offsetWidth, h = el.offsetHeight; if (!fx || !w) continue;
-    const x = clamp(parseFloat(el.style.left) || 0, w / 2 + 6, Math.max(w / 2 + 6, fx.clientWidth - w / 2 - 6)); let y = Math.max(parseFloat(el.style.top) || 0, h + 6);
+    // FX plasserer boblene med transform fra it.px/it.py (left og top står på 0), så klemmen regner i samme punkt og skriver transformen selv
+    const x = clamp(it.px + (it.ox || 0), w / 2 + 6, Math.max(w / 2 + 6, fx.clientWidth - w / 2 - 6)); let y = Math.max(it.py + (it.oy || 0), h + 6);
     for (let n = 0; n < 3; n++) {
       let flytt = false;
       for (const id of HINDER) { const b = $(id), r = b && b.getBoundingClientRect(); if (r && r.width && r.height && x - w / 2 < r.right && x + w / 2 > r.left && y - h < r.bottom && y > r.top) { y = r.bottom + h + 4; flytt = true; } }
       if (!flytt) break;
     }
-    el.style.left = x + 'px'; el.style.top = y + 'px';
+    el.style.transform = 'translate3d(' + Math.round(x) + 'px,' + Math.round(y) + 'px,0) translate(-50%,-100%)';
   }
 }; }
 Object.assign(Grotesk.keep, { oldermann: 2.6 });
