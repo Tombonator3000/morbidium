@@ -352,6 +352,12 @@ const Paint = {
     // vegger: høye bak, lave foran. Bare fronten (mot kameraet) og toppen er synlige.
     // hver veggrute får stilen til rommet (eller korridoren) den vender mot: helst sør, så nord, så sidene
     const VG = typeof VEGG === 'object' ? VEGG : { panel: { h: 2.3 } };
+    // en vegg står foran et gulv (mellom gulvet og kameraet) når gulvet ligger på den andre siden sett fra kameraet. Uten dreining er det
+    // raden nord for veggen, som før. Med dreid kamera (?kamera=iso) også sida bort fra kameraet, så gulvet aldri skjules av en høy vegg
+    const BORT = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]].filter(([dx, dz]) => dx * KAM.sy + dz * KAM.cy < -.3);
+    const foran = (f, x, z) => BORT.some(([dx, dz]) => f(x + dx, z + dz));
+    // sidene som vender mot kameraet: fronten (+z) alltid, og øst (+x) eller vest (-x) når kameraet er dreid
+    const SIDE = KAM.sy > .1 ? 1 : KAM.sy < -.1 ? -1 : 0;
     const veggKart = f => {
       const wallH = new Float32Array(W * H), wallS = new Array(W * H);
       const stilFor = (x, z) => { for (const [dx, dz] of [[0, 1], [0, -1], [-1, 0], [1, 0], [-1, 1], [1, 1], [-1, -1], [1, -1]]) { const nx = x + dx, nz = z + dz; if (!f(nx, nz)) continue; const rid = F.roomId ? F.roomId[nz * W + nx] : -1; return rid >= 0 && F.rooms ? (F.rooms[rid].vegg || 'panel') : ((F.korridor && F.korridor.vegg) || 'panel'); } return 'panel'; };
@@ -360,7 +366,7 @@ const Paint = {
         let near = false; for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (f(x + dx, z + dz)) near = true;
         if (!near) continue;
         const st = stilFor(x, z), V = VG[st] || VG.panel; wallS[z * W + x] = VG[st] ? st : 'panel';
-        wallH[z * W + x] = (f(x - 1, z - 1) || f(x, z - 1) || f(x + 1, z - 1)) ? (V.lav || .42) : (V.h || 2.3);
+        wallH[z * W + x] = foran(f, x, z) ? (V.lav || .42) : (V.h || 2.3);
       }
       return { wallH, wallS, f };
     };
@@ -376,6 +382,8 @@ const Paint = {
     // en rute gir en front (quadF, per stil) og en topp med blekkant (quadC). T er toppen ({cp, cc}), grp veggene per stil
     const quadC = (T, a, b, c, d, color) => { for (const v of [a, b, c, a, c, d]) { T.cp.push(v[0], v[1], v[2]); T.cc.push(color.r, color.g, color.b); } };
     const quadF = (grp, st, x0, x1, z0, h, sn) => { const G2 = grp[st + (sn ? '*' : '')] || (grp[st + (sn ? '*' : '')] = { fp: [], fu: [] }), hh = (VG[st] && VG[st].h) || 2.3, vs = [[x0, 0, z0, x0 * .5, 0], [x1, 0, z0, x1 * .5, 0], [x1, h, z0, x1 * .5, h / hh], [x0, 0, z0, x0 * .5, 0], [x1, h, z0, x1 * .5, h / hh], [x0, h, z0, x0 * .5, h / hh]]; for (const v of vs) { G2.fp.push(v[0], v[1], v[2]); G2.fu.push(v[3], v[4]); } };
+    // sideflate: loddrett i planet x = xp, fra z0 til z1, med tekstur langs z
+    const quadS = (grp, st, xp, z0, z1, h, sn) => { const G2 = grp[st + (sn ? '*' : '')] || (grp[st + (sn ? '*' : '')] = { fp: [], fu: [] }), hh = (VG[st] && VG[st].h) || 2.3, vs = [[xp, 0, z1, z1 * .5, 0], [xp, 0, z0, z0 * .5, 0], [xp, h, z0, z0 * .5, h / hh], [xp, 0, z1, z1 * .5, 0], [xp, h, z0, z0 * .5, h / hh], [xp, h, z1, z1 * .5, h / hh]]; for (const v of vs) { G2.fp.push(v[0], v[1], v[2]); G2.fu.push(v[3], v[4]); } };
     const rute = (K, x, z, T, grp) => {
       const h = K.wallH[z * W + x]; if (!h) return;
       const st = K.wallS[z * W + x], V = VG[st] || VG.panel, sn = snoVegg(x, z);
@@ -384,6 +392,11 @@ const Paint = {
       const tom = !F.ute && V.topp === undefined && !sn && nh(x, z + 1) === 0 && !K.f(x, z + 1);
       if (tom) quadC(T, [x, 0, z + 1], [x + 1, 0, z + 1], [x + 1, h, z + 1], [x, h, z + 1], cTomFront);
       else if (nh(x, z + 1) < h) quadF(grp, st, x, x + 1, z + 1, h, sn && !(isF(x, z + 1) && !uteGulv(x, z + 1))); // ikke snøbånd og istapper på en front inn i en paviljong
+      if (SIDE) {
+        const nx = x + SIDE, xp = SIDE > 0 ? x + 1 : x, tomS = !F.ute && V.topp === undefined && !sn && nh(nx, z) === 0 && !K.f(nx, z);
+        if (tomS) { const a = [xp, 0, z], b = [xp, 0, z + 1], c = [xp, h, z + 1], d = [xp, h, z]; quadC(T, a, b, c, d, cTomFront); }
+        else if (nh(nx, z) < h) quadS(grp, st, xp, z, z + 1, h, sn && !(isF(nx, z) && !uteGulv(nx, z)));
+      }
       if (V.topp === null) return; // smijernsgjerdet har ingen topp
       const cTop = sn ? snoTopp(x, z, st) : V.topp ? (toppFarge[st] || (toppFarge[st] = new THREE.Color(V.topp))) : cTopTema;
       quadC(T, [x, h, z], [x, h, z + 1], [x + 1, h, z + 1], [x + 1, h, z], cTop);

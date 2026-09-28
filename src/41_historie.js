@@ -280,7 +280,7 @@ const Kjeder = {
   },
   /* bånd langs kjettingen, lagt på tvers av synslinja, med u langs lengden så leddene gjentas */
   baand(a, b, w, heng) {
-    const n = 10, P = [], inn = new THREE.Vector3(0, -Math.sin(CAM_PITCH), -Math.cos(CAM_PITCH)), s = new THREE.Vector3(), t = new THREE.Vector3(), pos = [], uv = [], idx = [];
+    const n = 10, P = [], inn = new THREE.Vector3(-KAM.sy * Math.cos(CAM_PITCH), -Math.sin(CAM_PITCH), -KAM.cy * Math.cos(CAM_PITCH)), s = new THREE.Vector3(), t = new THREE.Vector3(), pos = [], uv = [], idx = [];
     for (let i = 0; i <= n; i++) { const k = i / n; P.push(new THREE.Vector3(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k - Math.sin(Math.PI * k) * heng, a.z + (b.z - a.z) * k)); }
     let L = 0;
     P.forEach((p, i) => {

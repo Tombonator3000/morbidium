@@ -1376,3 +1376,13 @@ Alle tidspunkt er UTC.
 - Fire figurark fikk større marger etter kontroll av klippekantene. Alle 53 klipte kildebilder er gyldige PNG-filer. Bildeløpet og bygget er kjørt i egen kontrollmappe, med 611 innebygde bilder, 124 deler og 165 lyder. En tom mellomfil ble klippet på nytt; fire gjenværende originalark ble hoppet over av bildebehandlingen. Se leveranserapporten for detaljene.
 - ART_BRIEF og tegnelistene er regenerert. Ferdig liste 13 er arkivert i dokumentasjon/grafikk-2026-09-28 sammen med prompter og leveranseoversikt. Spillkode og skript er uendret.
 - De siste 25 bildene følger stoppunktene i bestillingen: ni vegger etter vurdering av prøven på PC og mobil, og 16 gulv etter at egne gulvfliser er på plass.
+
+## 2026-09-28 16:40 Kameraprøve med isometrisk vinkel og ny etterbehandling
+- Tom spurte om vegger og gulv kan være 3D mot 2D-figurer og ting, om vinkelen kan bli mer isometrisk, og om det kan bli mer etterbehandling for bedre lys. Vegger og gulv var allerede 3D. Denne økta er gjort fra Cowork, ikke Claude Code.
+- Kameraet: KAMERA_VALG øverst i 04_render.js leser ?kamera=iso (dreining 45, helning 45), ?kamera=lav (helning 42) og ?helning= og ?dreining=. Uten valg er alt som før. KAM har hjelperne for dreiningen, og alt som vender mot kameraet bruker dem: dukker, ting, animerte ting, lagdukker, Kraken-armene, blekkpartiklene, båndene, kantlyset, prosjektilene og snøboksen. Visningen forfra, bakfra og fra siden regnes mot kameraet. Styringen dreies i Input.actions.
+- Veggene: en vegg er lav når gulvet ligger på sida bort fra kameraet, og med dreid kamera bygges sideflatene mot kameraet, med lister i 3D. Minikartet og N på kartringen dreies med.
+- Etterbehandling i 3D: dis (åttendedels oppløsning, tre runder uskarphet, skjermblanding og lys i mørket nær lyskilder) på høy og middels, omgivelsesskygge fra dybdeteksturen på høy (symmetriske nabopar, så flate gulv ikke mørkner, og store sprang teller ikke), og en mild tonekurve. Første forsøk på disen var for sterkt og vasket ut pasienten i lyktelyset, så terskelen ble hevet og styrken tatt ned. ?lys=gammel slår det nye av, ?lys=ao viser bare omgivelsesskyggen.
+- Nytt verktøy: tools/bilder_kamera.py (samme sted med ulike valg). Ny testdel 64 i test_ekstra.py: 7 av 7 OK. Generatoren og gjennomspillingen er grønne.
+- Bilder til Tom i dokumentasjon/kamera/.
+- Kjente mangler står i memory.md og todo.md (lamper, vinduer, pilastre, blod og sprekken bare på sørvegger, ingen gjennomsiktige vegger ennå, snøens parallakse).
+- Denne økta fikk ikke skrive til GitHub (repoet er ikke koblet til økta), så endringene ble levert som en patch til Tom.

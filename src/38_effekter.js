@@ -215,7 +215,7 @@ const Lyn = {
   },
   /* bånd langs en sti, like bredt hele veien, lagt på tvers av synslinja */
   baand(P, w) {
-    const inn = new THREE.Vector3(0, -Math.sin(CAM_PITCH), -Math.cos(CAM_PITCH)), s = new THREE.Vector3(), t = new THREE.Vector3(), pos = [], idx = [];
+    const inn = new THREE.Vector3(-KAM.sy * Math.cos(CAM_PITCH), -Math.sin(CAM_PITCH), -KAM.cy * Math.cos(CAM_PITCH)), s = new THREE.Vector3(), t = new THREE.Vector3(), pos = [], idx = [];
     P.forEach((p, i) => {
       t.subVectors(P[Math.min(P.length - 1, i + 1)], P[Math.max(0, i - 1)]).normalize(); s.crossVectors(t, inn).normalize().multiplyScalar(w / 2);
       pos.push(p.x - s.x, p.y - s.y, p.z - s.z, p.x + s.x, p.y + s.y, p.z + s.z);

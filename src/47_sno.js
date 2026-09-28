@@ -130,7 +130,10 @@ const Sno = {
   /* boksen i verden (xz, i forhold til kameramålet) som dekker det som synes fra bakken opp til høyden ytop, med margen m */
   boksFor(ytop, m = 1.5) {
     const c = R.camera, z = c.zoom || 1, hw = (c.right - c.left) / 2 / z, hh = (c.top - c.bottom) / 2 / z;
-    return { x0: -hw - m, z0: -hh / SINP - m, bx: 2 * (hw + m), bz: (2 * hh + ytop * COSP) / SINP + 2 * m, hw, hh };
+    const B = { x0: -hw - m, z0: -hh / SINP - m, bx: 2 * (hw + m), bz: (2 * hh + ytop * COSP) / SINP + 2 * m, hw, hh };
+    // dreid kamera: skjermen dekker en skrå firkant på bakken, så boksen blir et kvadrat rundt den (litt tynnere snø, men ingen hull i hjørnene)
+    if (KAM.dreid) { const r = Math.max(B.bx / 2, -B.z0, B.z0 + B.bz); B.x0 = B.z0 = -r; B.bx = B.bz = 2 * r; }
+    return B;
   },
   /* speilet av boksen slik shaderen bruker den (midtlaget), i verdenskoordinater. Til testene */
   boks() { const L = this.lag.find(L => L.def.navn === 'midt'); if (!L) return null; const u = L.mat.uniforms, c = this.U.uCam.value; return { x0: c.x + u.uBoksMin.value.x, x1: c.x + u.uBoksMin.value.x + u.uBoks.value.x, z0: c.y + u.uBoksMin.value.y, z1: c.y + u.uBoksMin.value.y + u.uBoks.value.y, ytop: u.uYtop.value }; },

@@ -15,9 +15,9 @@ const D3 = {
   on: false, bygd: false, ting: [], byttet: [], egne: [], gjemt: [], pool: [], dukker: new Set(), t: 0,
   BUMP: .7, BUMP_SNO: .45, // snøen: fonnene får relieff uten at klattene blir bobleplast
   NIVA: {
-    hoy: { navn: 'høy', skygge: 2048, lys: 8, glod: true, stov: 192, straaler: true, taake: true, tilt: .7, kant: true, dpr: 2 },
-    middels: { navn: 'middels', skygge: 1024, lys: 6, glod: true, stov: 96, straaler: true, taake: true, tilt: .45, kant: true, dpr: 1.5 },
-    lav: { navn: 'lav', skygge: 512, lys: 4, glod: false, stov: 0, straaler: false, taake: false, tilt: 0, kant: false, dpr: 1 }
+    hoy: { navn: 'høy', skygge: 2048, lys: 8, glod: true, stov: 192, straaler: true, taake: true, tilt: .7, kant: true, dpr: 2, dis: .75, ao: .7 },
+    middels: { navn: 'middels', skygge: 1024, lys: 6, glod: true, stov: 96, straaler: true, taake: true, tilt: .45, kant: true, dpr: 1.5, dis: .6, ao: 0 },
+    lav: { navn: 'lav', skygge: 512, lys: 4, glod: false, stov: 0, straaler: false, taake: false, tilt: 0, kant: false, dpr: 1, dis: 0, ao: 0 }
   }, // tilt: hvor uskarpt det blir over og under pasienten (04_render.js), også på telefon (middels)
   /* valgt nivå: fast i innstillingene (1 lav, 2 middels, 3 høy) eller automatisk (0) */
   kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse || R.tv ? 'middels' : 'hoy'); },
@@ -25,7 +25,7 @@ const D3 = {
      Telefoner og TV får høyst 1024 i skyggekartet, også på høy: 2048 med dybdebuffer tar rundt 24 MB mer grafikkminne, og telefoner har mistet WebGL av mindre */
   Q() { let q = this.NIVA[this.kval()] || this.NIVA.hoy; if ((R.coarse || R.tv) && q.skygge > 1024) q = Object.assign({}, q, { skygge: 1024 }); return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },
   /* oppløsningen følger nivået når 3D er på; uten 3D brukes det skjermen tåler */
-  dpr() { const k = this.on ? Math.min(R.dprMax || 1, this.Q().dpr) : (R.dprMax || 1); if (Math.abs(k - R.dpr) > .01) { R.dpr = k; R.resize(); } },
+  dpr() { const k = this.on ? Math.min(R.dprMax || 1, this.Q().dpr) : (R.dprMax || 1); if (Math.abs(k - R.dpr) > .01) { R.dpr = k; R.resize(); } if (R.settDybde) R.settDybde(this.on && !R.safe && this.Q().ao > 0); },
   /* kalles fra applySettings: nytt nivå bygger 3D-laget på nytt */
   nokkel() { return this.kval() + (R.lightsOn ? '' : '-flat') + (R.coarse || R.tv ? '-mob' : ''); },
   kvalitet() { const k = this.nokkel(); if (k === this.kSist) return; this.kSist = k; if (this.on) { this.dpr(); this.onFloor(); } },
@@ -295,6 +295,20 @@ const D3 = {
       rad(1, .12, .16, tak, liste.map(([x, z]) => [x + .5, 2.2, z]));
     }
     sprekk = false;
+    // dreid kamera (?kamera=iso): sideveggene som vender mot kameraet får fotlist, brystlist og taklist de også
+    const SIDE = KAM.sy > .1 ? 1 : KAM.sy < -.1 ? -1 : 0;
+    if (SIDE) {
+      const side = []; for (let z = 0; z < F.H; z++) for (let x = 0; x < W; x++) if (wh[z * W + x] > 2 && this.listeVegg(z * W + x) && isF(x + SIDE, z) && !(skj && skj[z * W + x])) side.push([SIDE > 0 ? x + 1 : x, z, opp(x + SIDE, z)]);
+      const radS = (w, h, d, mat, pos, k = .02) => {
+        if (!pos.length) return;
+        const lag = (geo, m, dy, dx) => { const im = new THREE.InstancedMesh(geo, m, pos.length); pos.forEach((p, i) => im.setMatrixAt(i, mx.makeTranslation(p[0] + SIDE * (d / 2 + dx), p[1] + dy, p[2]))); im.userData.d3 = true; R.level.add(im); this.ting.push(im); return im; };
+        const im = lag(kasse(d, h, w), mat, 0, 0); im.castShadow = im.receiveShadow = true;
+        lag(kasse(d - .004, h + k - .004, w + 2 * k), this.blekk(), -k / 2 - .002, -.002);
+      };
+      radS(1, .16, .07, fot, side.filter(f => f[2] !== 'dor').map(([x, z]) => [x, .08, z + .5]), .016);
+      radS(1, .08, .09, bryst, side.filter(f => !f[2]).map(([x, z]) => [x, 1.02, z + .5]), .016);
+      radS(1, .12, .16, tak, side.map(([x, z]) => [x, 2.2, z + .5]));
+    }
     rad(.3, 2.1, .13, pil, piler.map(([x, z]) => [x, 1.12, z]));
     rad(.42, .2, .19, fot, piler.map(([x, z]) => [x, .1, z]), .016);
     rad(.44, .12, .21, tak, piler.map(([x, z]) => [x, 2.12, z]));
@@ -401,7 +415,7 @@ const D3 = {
   settKant(U, K, x, y, z, flip) {
     if (!U || !U.uRimCol) return;
     if (!this.q || !this.q.kant || !K.l || K.f < .035) { U.uRimCol.value.setRGB(0, 0, 0); return; }
-    const l = K.l, dx = l.position.x - x, dy = l.position.y - y, dz = l.position.z - z, sx = dx * flip, sy = dy * COSP - dz * SINP, n = Math.hypot(sx, sy) || 1;
+    const l = K.l, dx = l.position.x - x, dy = l.position.y - y, dz = l.position.z - z, sx = KAM.sx(dx, dz) * flip, sy = dy * COSP - KAM.sz(dx, dz) * SINP, n = Math.hypot(sx, sy) || 1;
     U.uRimDir.value.set(sx / n, sy / n); U.uRimCol.value.copy(l.color).multiplyScalar(Math.min(.8, K.f * 1.5));
   },
   tick(dt) {

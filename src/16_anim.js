@@ -121,8 +121,8 @@ const Anim = {
     const R0 = this.rammer(navn); if (!R0) return null;
     const D = ANIM[navn], U = makeU({ tint: o.tint }), i0 = o.start || 0, m = partMesh(R0[i0 % R0.length], U), s = o.s || 1;
     let g;
-    if (o.flat) { m.rotation.x = -Math.PI / 2; m.rotation.z = o.rot || 0; m.position.set(x, o.y ?? .02, z); m.scale.set(s, s / Math.sin(CAM_PITCH), 1); m.material.depthWrite = false; m.renderOrder = o.ro || 2; g = m; }
-    else { g = new THREE.Group(); m.scale.set((o.flip ? -1 : 1) * s, BILL_Y * s, 1); if (o.rot) m.rotation.z = o.rot; g.add(m); g.position.set(x, o.y || 0, z); if (o.depthWrite === false) m.material.depthWrite = false; }
+    if (o.flat) { m.rotation.x = -Math.PI / 2; m.rotation.z = (o.rot || 0) + CAM_YAW; m.position.set(x, o.y ?? .02, z); m.scale.set(s, s / Math.sin(CAM_PITCH), 1); m.material.depthWrite = false; m.renderOrder = o.ro || 2; g = m; }
+    else { g = new THREE.Group(); m.scale.set((o.flip ? -1 : 1) * s, BILL_Y * s, 1); if (o.rot) m.rotation.z = o.rot; g.add(m); g.rotation.y = CAM_YAW; g.position.set(x, o.y || 0, z); if (o.depthWrite === false) m.material.depthWrite = false; }
     (o.parent || R.dyn).add(g);
     const h = { navn, g, m, U, rammer: R0, t: i0 / Math.max(1, o.fps || this.fps(navn)), i: i0, fps: o.fps ?? this.fps(navn), loop: o.loop ?? !!D.loop, hold: !!o.hold, fart: o.fart || 1, done: false, onEnd: o.onEnd };
     // i 3D lyses platen av lampene rundt, som alt annet som er tegnet (lys: false for ting som gløder selv)

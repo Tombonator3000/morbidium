@@ -1,5 +1,14 @@
 # Morbidium: gjøremål
 
+## Kameraprøve og etterbehandling (28.9.)
+Tom ønsket 3D-vegger og gulv mot 2D-figurer, en mer isometrisk vinkel og mer etterbehandling for bedre lys.
+- [x] ?kamera=iso (dreid 45 grader) og ?kamera=lav (helning 42), med styring, dukker, ting, partikler, sidevegger, lave vegger mot kameraet, minikart og N som følger dreiningen.
+- [x] Ny etterbehandling i 3D: dis, omgivelsesskygge (høy) og tonekurve. ?lys=gammel for sammenligning.
+- [x] Testdel 64 og tools/bilder_kamera.py. Bilder i dokumentasjon/kamera/.
+- [ ] Tom: prøv ?kamera=iso og ?kamera=lav på PC og telefon, og si hvilken vinkel som skal bli standard (eller prøv egne tall med &helning=40&dreining=30).
+- [ ] Tom: er disen og omgivelsesskyggen passe, for mye eller for lite? Styrken står i NIVA i 15_rom3d.js (dis, ao).
+- [ ] Claude, når vinkelen er valgt: vegglamper, vinduer, pilastre, blod og sprekken også på sideveggene, gjennomsiktige vegger der en høy vegg dekker pasienten, snøens parallakse etter vinkelen, og eventuelt tegninger av ting sett på skrå.
+
 ## Toms liste, runde 5 (26. og 27.9.)
 Tom sendte fem skjermbilder og ba om: (1) flottere effekter når fiender angriper, (2) snø som ser bedre ut, (3) hårruller som sitter på hodet, (4) skjulte rom som skjules bedre, (5) svar på om ChatGPT skal lage vegger og gulv, (6) flere fiender: Cthulhu og tentakelmonstre, og en Hellraiser-parodi med lærentusiaster. Skjermbildene viste også stempler oppå hverandre («IKKBONKG») og blod på skjermen som rant i rette streker.
 - [x] Angrepsvarslene tegnes i blekk (Blekkvarsel): omrisset tegner seg inn, fyllet feier over, låsen blinker, etterbildet står igjen, store angrep får tegn og sprekker, og fargen følger skadetypen. Varslene følger fienden der treffet gjør det. Lekkasjen i grafikkminnet fra varsler og hugg er tettet.
