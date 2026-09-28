@@ -950,7 +950,7 @@ const Kraken = {
     return d;
   },
   arm(x, z, plan) {
-    let d = this.armer.find(a => !a.aktiv); if (!d) { if (this.armer.length >= 8) return null; d = this.lagArm(); this.armer.push(d); }
+    let d = this.armer.find(a => !a.aktiv); if (!d) { if (this.armer.length >= 12) return null; d = this.lagArm(); this.armer.push(d); } // 12: to favn på rad når den er rasende (6 og 6), før de første har sunket
     const s = Math.sin(plan.mot); d.dir = (s < 0 ? -1 : 1) * Math.max(.45, Math.abs(s));
     Object.assign(d, { aktiv: true, t: 0, plan, x, z, A0: { h: 0, hv: 0, lean: 0, krok: 2.2, L: 2.6, amp: .1, skjelv: 0, fase: Math.random() * 6 } });
     d.root.position.set(x, 0, z); d.root.visible = true; if (!d.root.parent) R.scene.add(d.root);
@@ -1064,7 +1064,7 @@ const Kraken = {
     if (x === undefined) return G.zones.some(zn => zn.kind === 'malstrom' && zn.t > 0);
     const m = new THREE.Mesh(R.plane1(), this.virvelMat()); m.rotation.x = -Math.PI / 2; m.position.set(x, .045, z); m.scale.set(14, 14, 1); m.renderOrder = 2; R.dyn.add(m);
     const zn = { kind: 'malstrom', x, z, r: 7, t: 2.6, max: 2.6, B, dmg, alive: true, teles: [], mesh: m, indre: null, hviskT: 0 };
-    G.zones.push(zn); addTele('circle', { x, z, r: 7, color: 0x2a6a7a, type: 'vann' }, 2.6, () => { }, zn);
+    G.zones.push(zn); addTele('circle', { x, z, r: 7, color: 0x2a6a7a, type: 'vann', stille: true }, 2.6, () => { }, zn); // stille: ringen treffer ikke når den går ut, så ingen nedslag (spor A)
     Sound.play('sluk', 1, .5); Sound.play('hvisk', .7, .6);
     return zn;
   },
