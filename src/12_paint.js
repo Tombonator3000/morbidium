@@ -140,6 +140,14 @@ const Paint = {
      hjulspor midt i grusgangene og stiene, smeltet rundt bål, ovner og kjeler, fonner mot veggene i nord og vest, isen blank med fonner
      i kanten, og glitter. Lette teksturer: én klatt per rute, ingen fonner og ikke glitter. Svarer med dekt(x, z) i ruter */
   snoDekke(g, F, T, UTE, STIL, isF, kant) {
+    // snøbildet fra ChatGPT (gulv_sno, Toms uteflater): legges over hver uterute i verdenskoordinater (4 x 4 ruter per bilde, så det
+    // ikke kuttes langs rutene), med litt av bakken under. Da dekker snøen hele uteområdet
+    if (typeof uteBilde === 'function' && uteBilde('gulv_sno')) {
+      const W = F.W, H = F.H; g.save(); g.globalAlpha = .88;
+      for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) if (isF(x, z) && UTE[z * W + x]) uteBakkeBilde('gulv_sno', g, x * T, z * T, T, { x, z });
+      g.restore();
+      return (x, z) => { const tx = Math.floor(x), tz = Math.floor(z); return tx >= 0 && tz >= 0 && tx < W && tz < H && isF(tx, tz) && !!UTE[tz * W + tx]; };
+    }
     const W = F.W, H = F.H, lett = R.lowTex, sk = ((F.seed || 1) * 131 + 17) | 0, rng = mulberry32((F.seed || 1) * 53 + 29);
     const ute = (x, z) => isF(x, z) && !!UTE[z * W + x], is = (x, z) => STIL[z * W + x] === 'is';
     const vn = (x, z) => { const ix = Math.floor(x), iz = Math.floor(z), fx = x - ix, fz = z - iz, u = fx * fx * (3 - 2 * fx), v = fz * fz * (3 - 2 * fz), a = hRute(ix, iz, sk), b = hRute(ix + 1, iz, sk), c = hRute(ix, iz + 1, sk), d = hRute(ix + 1, iz + 1, sk); return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v; };
@@ -267,13 +275,16 @@ const Paint = {
     // 2 enheter bred og like høy som veggen (128 px per enhet). v = høyde / veggens høyde
     const V = typeof VEGG === 'object' && VEGG[stil], hh = (V && V.h) || 2.3;
     // bilde fra ChatGPT (vegg_<stil>): 1,5 ganger så bredt som høyt, så flekkene gjentas hver 1,5h rute og ikke annenhver.
-    // Blekkstreken oppe og nede legges på her som på de malte veggene, men ikke på gjerdet og ruinen, som er utklipp
-    const im = !R.lowTex && stil !== 'glass' ? this.bilde('vegg_' + stil, F) : null; let kastet = false;
+    // Blekkstreken oppe og nede legges på her som på de malte veggene, men ikke på gjerdet og ruinen, som er utklipp.
+    // Uteflatene Tom har levert (UTE_FLATER i 17_romtyper.js: hekk, steinmur, skog og ruin) er laget 2 enheter brede og uten blekkstreker,
+    // så de beholder sine egne mål, og de er ikke større enn den malte veggen, så de brukes også med lette teksturer
+    const key = 'vegg_' + stil, ute = typeof UTE_FLATER === 'object' && UTE_FLATER[key], bu = ute ? ute[0] : 1.5 * hh;
+    const im = (!R.lowTex || ute) && stil !== 'glass' ? this.bilde(key, F) : null; let kastet = false;
     const legg = tex => {
       if (kastet || !im.naturalWidth) return tex;
-      const c = tex.image, w = c.width = Math.round(192 * hh), hp = c.height = Math.round(128 * hh), g = c.getContext('2d');
-      g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, w, hp); if (!(V && V.alfa)) { g.fillStyle = INK; g.fillRect(0, 0, w, 9); g.fillRect(0, hp - 7, w, 7); } if (sno) this.snoKant(g, w, hp, stil);
-      tex.repeat.x = 2 / (1.5 * hh); tex.fraBilde = 'vegg_' + stil; tex.needsUpdate = true; return tex;
+      const c = tex.image, w = c.width = Math.round(128 * bu), hp = c.height = Math.round(128 * hh), g = c.getContext('2d');
+      g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, w, hp); if (!ute && !(V && V.alfa)) { g.fillStyle = INK; g.fillRect(0, 0, w, 9); g.fillRect(0, hp - 7, w, 7); } if (sno) this.snoKant(g, w, hp, stil);
+      tex.repeat.x = 2 / bu; tex.fraBilde = key; tex.needsUpdate = true; return tex;
     };
     if (im && im.complete) return legg(R.canvasTex(1, 1, () => { }, true));
     const tex = V && V.tegn ? R.canvasTex(256, Math.round(hh * 128), (g, w, h) => { V.tegn(g, w, h, th, mulberry32(stil.length * 97 + 5)); if (sno) this.snoKant(g, w, h, stil); }, true) : R.canvasTex(256, 296, (g, w, h) => { this.malPanel(g, w, h, th); if (sno) this.snoKant(g, w, h, stil); }, true);

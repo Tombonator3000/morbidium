@@ -178,6 +178,11 @@ def behandle_tekstur(sti, m):
     return im
 
 def behandle(sti, m):
+    if m.get('tekstur'):
+        # Flater må beholde kantene og alfaen. Beskjæring og bakgrunnsfjerning
+        # ødelegger sømløs gjentakelse og hullene i ruinveggen.
+        im = Image.open(sti).convert('RGBA')
+        return im.resize(tuple(m['px']), Image.LANCZOS)
     if m.get('flis'):
         return behandle_tekstur(sti, m)
     if 'ruter' in m and sti.stem.lower().startswith('anim_'):

@@ -1,0 +1,77 @@
+{
+  "dato": "2026-09-27",
+  "generator": "Innebygd ChatGPT-bildegenerering (image_gen). Verktøyet oppgir ikke et bekreftet modellnavn.",
+  "bilder": [
+    {
+      "fil": "gpt-grafikk/prop_gran.png",
+      "generert_fil": "exec-f2937fc0-8234-4b14-9745-3089ffe88e80.png",
+      "prompt": "Create one production-ready game sprite: a tall slightly crooked Norwegian spruce tree (gran) for Morbidium, a darkly comic 1920s sanatorium garden. Hand-drawn cartoon game art, thick wobbly dark-brown ink contours #2a1a14, muted forest green needles, chunky asymmetrical drooping branch tiers with individually readable needle tufts, short rough warm-brown trunk and modest exposed roots. Flat colours, just one darker cel shadow on lower right and pale olive highlight upper left. Full tree from tip to root fully visible, straight upright, narrow silhouette width:height approximately 1:2.2; view slightly down from a 50-degree game camera, suitable as a billboard sprite. 1024x1536 portrait canvas, centered with at least 6% transparent margin on every side. Genuine transparent PNG background, including gaps between branches. No scene, ground, cast shadow, glow, checkerboard pattern, text, border, snow, decorations or other objects. A game sprite, not concept art."
+    },
+    {
+      "fil": "gpt-grafikk/gulv_gress.png",
+      "generert_fil": "exec-3dc1c2f3-158a-424e-94cc-39ad2177ff62.png",
+      "prompt": "Production game texture for Morbidium: seamless repeating short grass covering a neglected 1920s Norwegian sanatorium garden. A square 1024x1024 flat albedo texture seen perfectly from directly overhead, orthographic with no perspective. Muted olive/moss greens, restrained value contrast, irregular broad areas of flat green with scattered small hand-inked grass tufts and very few tiny clover leaves. Hand-drawn cartoon videogame ink-and-cel style, slightly wobbly dark-brown outlines, flat colours with just one subtle darker shade, not realistic or painterly. Large calm readable shapes suitable beneath small characters; avoid noisy blades everywhere. Texture fills every pixel and tiles seamlessly on all four edges. Even lighting, no cast shadows, no gradients, no vignetting. Fully opaque PNG. No objects, flowers, paths, borders, lettering, grid lines or checkerboard."
+    },
+    {
+      "fil": "gpt-grafikk/gulv_grus.png",
+      "generert_fil": "exec-7a6a3d12-0c6b-407b-9ba7-6caf3a80396e.png",
+      "prompt": "Create a production seamless game texture, square 1024x1024, full bleed and fully opaque: warm weathered gravel surfacing on the paths of a 1920s Norwegian sanatorium garden. Directly overhead flat orthographic albedo, zero perspective. Muted tan, ochre grey and dusty warm beige with sparse irregular flat small angular stones, tiny dark brown ink edges and calm packed earth between them. Hand-inked cartoon videogame style, flat fills, one quiet cel shade per stone, low contrast so characters stand out. Evenly distributed varied stone sizes, no large focal object. Seamless all four edges. Absolutely no vignette, gradient, directional light, cast shadows, scene, borders, labels, greenery, paths drawn inside the texture, text or grid. This entire image is the gravel material itself."
+    },
+    {
+      "fil": "gpt-grafikk/gulv_jord.png",
+      "generert_fil": "exec-fa1c9c2e-5f4c-46c2-942b-544681d87bad.png",
+      "prompt": "Create one seamless opaque 1024x1024 game material texture: dark loose garden soil in an old Norwegian sanatorium greenhouse. Direct overhead flat orthographic albedo view, no perspective. Chunky hand-drawn cartoon ink-and-cel aesthetic with dark brown outlines and one restrained cel shade. Warm deep umber soil, muted chestnut flat patches, a few small ochre stones and fine crooked exposed roots, broad quiet negative spaces, low contrast for easy reading beneath game characters. Even lighting across the full surface, no vignette, gradient, focal objects, plants, horizon, border, text, grid or cast shadows. This is the soil surface itself and fills every pixel. All four edges repeat seamlessly. Do not depict a rectangular garden bed or an island of soil."
+    },
+    {
+      "fil": "gpt-grafikk/gulv_mose.png",
+      "generert_fil": "exec-f99fc33f-d786-4fe7-956b-37bfa0443db4.png",
+      "prompt": "Production seamless square 1024x1024 flat ground texture for a hand-drawn cartoon game set in an eerie Norwegian forest. Direct overhead orthographic albedo, no perspective. Soft thick moss carpet in dark muted olive and pine green, large interlocking cushion shapes, sparse fine brown spruce needles, a few small flat lichen details. Wobbly dark-brown ink edges with chunky flat-colour areas and one darker cel shade, not photorealistic, not high-contrast. Calm enough for game characters to stand out. Full bleed opaque PNG, tiles perfectly on all four sides, uniform overall colour and even lighting across edges. No mushrooms, trees, rocks, creatures, text, frames, grid, cast shadows, horizon or vignette. It is a material texture, not a scene."
+    },
+    {
+      "fil": "gpt-grafikk/gulv_myr.png",
+      "generert_fil": "exec-b3461687-1732-4d92-b0ba-0b497338ad57.png",
+      "prompt": "Production game texture: a seamless opaque square 1024x1024 overhead swamp floor in a Norwegian night forest. Flat directly overhead orthographic material, no perspective, no horizon. Dark muted olive peat and soggy moss, a few shallow near-black olive water patches with minimal pale grey-green rim marks, sparse short straw-coloured marsh grass flattened in the mud. Bold hand-inked cartoon game aesthetic, wobbly dark-brown ink lines, broad flat colour areas and just one subtle cel shade, restrained value contrast. Pools irregular and connected, not circular polka dots. Repeat perfectly on every edge, full bleed with consistent lighting. No large plants, reeds sticking upwards, trees, creatures, sky reflections, highlights that resemble lights, shadows, vignette, text, border or grid."
+    },
+    {
+      "fil": "gpt-grafikk/gulv_is.png",
+      "generert_fil": "exec-e77581fb-0158-40ce-adb5-ca01df0fa906.png",
+      "prompt": "One seamless square 1024x1024 flat game material for the frozen pond of a 1920s Norwegian sanatorium garden. Direct overhead orthographic albedo, no perspective. Pale desaturated blue-grey thick ice with a few thin branching angular white cracks, soft broad milky frost inclusions and subtle darker blue-grey clear ice patches. Readable quiet hand-drawn cartoon ink-and-cel style, flat colours and sparse restrained ink marks, not photorealistic. Low contrast so small characters remain clear. The ice fills every pixel and repeats seamlessly on every edge, no waterline or shoreline. Fully opaque PNG. Even lighting, no directional shine, vignette, horizon, scenery, snowflakes, bubbles, circular patches, reflections of objects, cast shadows, text, grid or borders."
+    },
+    {
+      "fil": "gpt-grafikk/gulv_sti.png",
+      "generert_fil": "exec-6485d234-7c05-46fa-9053-3220a6cd3d5f.png",
+      "prompt": "Create a square 1024x1024 seamless flat albedo texture of trampled forest trail earth with spruce needles, for a hand-drawn cartoon Norwegian sanatorium game. Direct overhead orthographic, no perspective. Deep muted warm brown compacted soil with broad quiet flat areas, scattered short tan pine needles in varied directions, tiny twig fragments and small desaturated olive moss wisps. Wobbly dark-brown ink details, flat colours with a single subtle cel shade, low contrast and no realistic noise. Entire image is the trail material; do not draw a winding path, sides or borders. Opaque full bleed PNG, all four edges tile seamlessly. Even lighting, no glow, vignette, gradients, cast shadows, trees, footprints, large stones, text, grid or scene."
+    },
+    {
+      "fil": "gpt-grafikk/gulv_brostein.png",
+      "generert_fil": "exec-88e73f87-44d9-4a1e-9c64-194eace9fce8.png",
+      "prompt": "Production game material texture, square 1024x1024: old slightly irregular cobblestone paving for a 1920s Norwegian sanatorium courtyard. Perfectly overhead orthographic flat albedo, no perspective. Warm grey and beige squat chunky cobbles laid in loose offset rows with narrow dark-brown joints and very sparse muted olive moss. Hand-drawn cartoon thick wobbly ink contours, flat colour fills, a single darker cel shade lower right and a small subtle pale upper-left rim. Approximately 9 to 12 cobbles across the canvas, roughly consistent sizes with slight irregularity. Full bleed opaque image that tiles seamlessly on all four edges, even lighting. No curb, ground border, scene, plants, debris, focal object, text, grid, vignette, cast shadows or photorealistic texture."
+    },
+    {
+      "fil": "gpt-grafikk/gulv_sno.png",
+      "generert_fil": "exec-cbc04c6f-da65-4dd8-b822-c108c03d1252.png",
+      "prompt": "Production seamless square 1024x1024 game ground texture: snow lying on a Norwegian garden in winter. Directly overhead orthographic flat albedo. Hand-drawn cartoon ink-and-cel art, broad connected cream-white and very pale cool grey powder-snow shapes with a few subtle grey-blue shallow wind-swept creases and tiny irregular frost grains. Restrained shadows, low contrast, calm large areas. Snow covers the whole canvas, no background showing. NOT separate oval patches, NOT polka dots, NOT bubbles, NOT rounded stepping stones, NOT snowflakes. Full bleed and seamless on every edge. Fully opaque PNG. Even lighting with no gradient, vignette or glow. No trees, footprints, paths, rocks, text, borders, grid, horizon, scene or cast shadows. This is a flat repeatable material, not a landscape picture."
+    },
+    {
+      "fil": "gpt-grafikk/vegg_hekk.png",
+      "generert_fil": "exec-17600dfd-57cf-4ace-ada8-7921f96364ef.png",
+      "prompt": "One production game wall texture for a dense clipped garden hedge at a 1920s Norwegian sanatorium. Landscape 1024x896, entire canvas completely filled with foliage, no isolated bush silhouette. Flat front-on orthographic view of the vertical hedge face, no visible top or side planes and no perspective. Bold hand-drawn cartoon game art: slightly wobbly dark-brown ink contours, layered chunky pointed leaves in muted moss/olive green, some thin interwoven warm-brown twigs, single darker green cel shade lower right, restrained olive highlights upper left. Big readable foliage masses, dense dark recesses between leaves, no flowers. Seamless repetition left-to-right, matching density and colour along the side edges. No border, text, cast shadow, vignette, glow, soil, sky, scenery, labels or transparent gaps. Fully opaque texture, every pixel is hedge."
+    },
+    {
+      "fil": "gpt-grafikk/vegg_steinmur.png",
+      "generert_fil": "exec-bfb71a9d-2670-4e78-9656-81ea47368e6a.png",
+      "prompt": "Create one horizontally seamless game wall texture, landscape 1536x896: a low old Norwegian dry-stone garden wall, straight front-on orthographic face, zero perspective, no side walls or visible top plane. Entire canvas filled: big irregular warm grey stones fitted in 4 to 5 rough offset courses, dark-brown hand-inked joints, a narrow uneven layer of muted olive moss hugging the very top edge and a little creeping into cracks. Bottom reaches canvas edge. Hand-drawn cartoon videogame ink-and-cel style, thick slightly wobbly outlines, flat colours with one restrained darker lower-right cel shade and modest upper-left highlights, chunky readable shapes. Fully opaque PNG, left and right edges tile seamlessly. No sky, earth, plants sticking up, ground shadow, vignette, scene, labels, text, borders or frame.",
+      "retting": "Edit only the very top edge of this game stone-wall texture. Eliminate every white/empty patch along the top border by extending the existing dark olive moss upward all the way to the canvas edge. The final texture must be fully opaque with continuous moss or stone at every edge pixel, absolutely no white background. Keep the stone shapes, ink lines, colours, lighting, layout, resolution, side-to-side repeat and all other pixels below the uppermost moss strip unchanged. Do not add margins or a frame."
+    },
+    {
+      "fil": "gpt-grafikk/vegg_skog.png",
+      "generert_fil": "exec-ed322d24-5646-4b50-8323-0d96fd2d52d3.png",
+      "prompt": "Production wall material texture for the impassable edge of a dark Norwegian forest in a hand-drawn cartoon game. Portrait canvas 1024x1408, flat front-on orthographic view, no perspective and no horizon. A dense close screen of irregular pale birch trunks with rough black bark markings, darker brown spruce trunks and chunky dark green drooping spruce foliage between them. Trunks continue beyond top and bottom edges; foliage fills all gaps with deep forest green, no visible sky or distant scenery. Wobbly dark-brown ink outlines, flat muted colours with one darker cel shade, subdued highlights, readable at small game scale. Make it tile seamlessly left to right. Fully opaque, all canvas pixels filled, no vignette, glow, path, ground plane, characters, text, border or frame. This is a repeated vertical forest boundary texture, not a landscape illustration."
+    },
+    {
+      "fil": "gpt-grafikk/vegg_ruin.png",
+      "generert_fil": "exec-28be68a0-c725-49ec-b499-ac5ac16b1442.png",
+      "prompt": "Create one horizontally repeating wall-face game texture, landscape 1536x832: a low crumbling grey stone ruin in a Norwegian forest. Flat straight front orthographic view, no perspective, no side or top planes. The stone wall fills the full width to both side edges and reaches exactly the bottom edge. An irregular broken upper silhouette varies between 10% and 40% down from the top; the left and right edge heights match at 18% down so copies join. Above the broken top is GENUINELY TRANSPARENT alpha, not white or black. Large rough warm grey stones in 3 or 4 courses, chipped edges, thick wobbly dark-brown ink joints, small muted olive moss patches in cracks. Hand-drawn chunky cartoon game style, flat colour and one lower-right cel shade, modest upper-left highlights. No ground, cast shadow, sky, glow, margin on sides or bottom, border, text or checkerboard. PNG with real transparent empty space only above the ruin. Keep all stonework opaque."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Morbidium: minne
 
-Sist oppdatert 2026-09-26.
+Sist oppdatert 2026-09-27.
 
 ## Hva prosjektet er
 Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og Hellraiser-mareritt med mørk humor som gjør narr av edgelords. Tilfeldig genererte etasjer satt sammen av rom. Designdokument: Morbidium-Design-v0_2.md.
@@ -45,6 +45,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Testing i Claude Code-skyen: Chromium når ikke nettet via proxyen. Hent three.min.js med curl og kjør testene med --three STI eller MORBIDIUM_THREE=STI. Python-pakkene playwright (1.56.0 passer med den ferdiginstallerte Chromium) og pillow må installeres.
 
 ## Arbeidsdeling med ChatGPT
+- 2026-09-27: Tom ba Codex lage manglende utegrafikk og pushe. 14 nye bilder til gran, bakke, snø, hekk, skogkant og mur gir 558 av 558 manifestbilder. `UTE_FLATER` registrerer teksturene, og manifestverktøyet tar også med landskapsdekor fra `ROM_ART`. `tekstur: true` beholder hele bildeflaten og alfa ved behandling. Graner skal ikke sorteres bort når antall bakgrunnstrær begrenses. Se UTEGRAFIKK.md og utegrafikk-prompter.json før nye bestillinger. Dette er en levering på main; øvrig Claude-arbeid på den separate grenen er ikke flettet inn.
 - 2026-09-26: alle 74 bestillinger i Claude-artifacten «Tegnelister» er dekket med 268 nye PNG-kilder: 257 manifestbilder og 11 delark med 97 synlige deler. Hele manifestet har nå 544 av 544 bilder. Lokal behandling: 544 bilder, 0 feil; bygg: 544 bilder, 124 deler, 165 lyder. Kasterens åtte bilder er gjenbrukt fra prøven. Se GRAFIKKLEVERANSE.md og grafikkleveranse.csv før noen nye bilder bestilles. Den hvite hjortens kropp og bein trenger fortsatt visuell kontroll i spillet.
 - Claude koder, lager lyd og musikk og setter sammen bildene. ChatGPT lager bare bilder etter DESIGN_BRIEF.md. Tom laster opp til gpt-grafikk/ (erstattet assets/innboks/ 2026-09-24). Pages-bygget klipper og behandler bildene selv.
 - Figurer bygges som oppskrifter av deler (hode, hatt/hår, tilbehør, kropp, farging). Armer og bein tegnes alltid av koden.
@@ -134,6 +135,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 
 ## Spesialrom (13_rom.js, Spesial)
 - Hemmelig rom i hver etasje bak sprukken vegg (F.crack er rutene; tre poeng: vanlig slag 1, tungt 3, eksplosjon 3). Forbannet rom i blindvei (torner tar et hjerte per inngang, glasset utløser bakhold). Blodofferrom med alter som tilbyr tre handler.
+- Fra runde 5 finnes det hemmelige området ikke før veggen er slått inn, og sprekken er en flekk i pussen i stedet for en murkasse. Se «Det skjulte rommet» under.
 
 ## Animasjon (16_anim.js)
 - ANIM: kasteklump, kastesprut, blodsprut, oye, kjottbiter, hver med n ruter, fps og en tegnefunksjon som reserve. Spriteark fra ChatGPT (anim_<navn>.png) brukes når de finnes; build.py legger rutenettet inn som ANIM_ARK.
@@ -311,7 +313,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Trykk eller klikk på ringen med minikartet, M, eller pil høyre på håndkontrollen åpner hele etasjen som plantegning på papir. Pausemenyen har også «Kartet». Spillet står stille mens kartet er oppe (et vanlig panel). Lukkes med M, Esc, P, B, Start eller Lukk.
 - Tegnes én gang når det åpnes: det malte gulvet skalert ned, bare der pasienten har vært (G.seen), rollefarger, blekkstrek, ikoner og en pil for pasienten. Lerretene frigjøres når kartet lukkes (closePanel har fått o.onClose). Ingen WebGL, så det virker likt i 2D, 3D og med Enkel grafikk.
 - På PC er et klikk på ringen i kamp et slag, ikke kartet, og musa sendes videre til spillet. Ringen har ikke data-kart (journalen bytter ut alt med data-kart).
-- Hemmelige rom vises som før på kartene. Om de skal skjules til de er funnet, er Toms valg.
+- Hemmelige rom synes ikke på kartene før veggen er slått inn (runde 5). Kartpillen, plantegningen og meiselen (visHeleKartet) gir bare en stiplet anelse (G.kartAnelse, «Noe er visket ut her»), og monokkelen tegner sprekken i rødt (G.sprekkKjent).
 
 ## Kontroller i menyene (MenyNav i 32_meny.js, 26.9. kveld, spor B)
 - Hele spillet kan styres med bare en håndkontroll: pil eller venstre spak flytter mellom knappene (nærmeste i retningen), A trykker, B går tilbake, LB og RB blar i faner og sider, høyre spak ruller. Piltastene gjør det samme med tastatur og fjernkontroll. MenyNav.tick kalles fra løkka i alle tilstander unntatt play, også på døds- og utskrivningsskjermen.
@@ -344,6 +346,31 @@ Toms liste med fem skjermbilder (angrepsvarsler, snø, hårruller, skjulte rom, 
 - Flytende tekster (FX i 04_render.js) legges ut hvert bilde fra mål tatt én gang og flyttes med transform. Ingen skal sette left eller top på .dmg eller .bubble. Viktigst først (krit og stempel, skade på pasienten, tall, info), eldre før nyere, og en tekst som ville dekke en annen, flyttes kortest mulig (helst opp). Samme ord på samme sted innen 0,4 s blir «ORD ×n», høyst tre krit- og stempelord lever samtidig, og perfekt unnvikelse fjerner «bom» fra samme unnvikelse.
 - Store stempler går gjennom Stempel i 39_kombo.js (stampBig kaller Stempel.stor): hvert står minst 0,7 s, køen har høyst tre, like stempler hoppes over, det store legger seg under kombostempelet, og lappen (#toast) får .lav så lenge et stempel står, uten å legge seg over evnekortene. Liggende telefon har mindre stempler.
 - Tester: del 18 bruker siden fra del 17, så de må kjøres sammen.
+
+## Det skjulte rommet (48_skjult.js, runde 5, B2 og B4)
+- Tom syntes det var for lett å se hvor det hemmelige rommet var (gangen bak sprekken var tegnet, opplyst og vist på kartet). Nå er det ikke der før man bryter seg inn.
+- Generatoren merker gangen, sprekken og rommet i F.skjult (uten trekk fra rng, så etasjene er de samme). Paint.level bygger etasjen lukket: sprekken er vanlig vegg i foreldrerommets stil, og det skjulte gulvet ligger i Paint.mesh.gulvSkjult (skjult). Veggene som er ulike i lukket og åpen tilstand, ligger i egne deler (userData.del 'lukket', 'sprekk' og 'aapen', toppene i Paint.mesh.toppEkstra) innenfor en sone på to ruter. Paint.wallH og wallS er de lukkede kartene til innbruddet, Paint.aapen de åpne. Går delingen galt, bygges etasjen som før (try/catch).
+- G.skjult er masken så lenge veggen står (null etterpå), og gulvSynlig(i) i 12_paint.js sier om gulvet synes. Alt som legger noe på gulvet eller veggen (hendelser, lyn, regnringer, dekaler, pytter, lik, takstøv), bruker den. Innholdet er gjemt (o.skjult, lys på 0, ingen glød), og tennene og pillen kommer ved innbruddet.
+- Hintene ligger i lag: en flekk nyere puss med én hårstrek og litt pusstøv på gulvet (visne blader i hekken, kvist i krattet), trekk bak veggen innen fem ruter (egne sløyfer trekk_vind og trekk_tikk, stille i kamp), kalde drag (gløden trekk), et dumpt slag mot vanlige vegger (veggbank, høyst hvert 0,4 s, Spesial.bank i 13_rom.js), én boble per etasje og tipset sprekk første gang. Monokkelen gir en tydeligere flekk med lys og drag fra åtte ruter. Flekken er med vilje svak; styrken står i Skjult.flekk.
+- Innbruddet (Skjult.aapne) går i spilltid på 1,3 s: brist (sprekkvegg.png, bare inne), veggen synker under biter, byttet til det åpne, lysene og møblene kommer, rusk på terskelen og «Visste jeg det.». Ute blåser det blader i stedet for biter.
+
+## Vinter i teksturene (runde 5, B3, og snøbildet fra Tom)
+- Snøen på gulvet males i Paint.snoDekke som ett lag over uterutene. Finnes snøbildet fra ChatGPT (gulv_sno), legges det over hver uterute i verdenskoordinater med litt av bakken under, slik Tom laget det 27.9. Mangler det, maler koden snøen (Art.cel med blågrå skygge, sørpe i gangene, smeltet rundt bål, fonner mot veggene, glitter).
+- Vegger mot snødekt ute får hvit topp (#dfe6ef) og sin egen tekstur (nøkkelen stil + '*') med et klumpete snøbånd, klumper på hekkene og istapper under paviljongen, tømmeret og glasset (Paint.snoKant). Bakken ute får snøbildet over gresset eller mosen. Paint.tema gir kaldere fargetone, og D3 har BUMP_SNO .45, hemi #4a5470 og litt mørkere gulv på snøetasjer, så lykta ikke brenner snøen hvit.
+
+## Teksturer fra ChatGPT (runde 5, B1, og uteflatene fra Tom 27.9.)
+- To slags flater i manifestet. Uteflatene Tom leverte 27.9. (UTE_FLATER i 17_romtyper.js: gulvene gress, grus, jord, mose, myr, is, sti, brostein og snø, veggene hekk, steinmur, skog og ruin) har tekstur: true, skaleres bare (ingen beskjæring eller bakgrunnsfjerning) og lagres som PNG. Gulvene tegnes rute for rute inn i det bakte gulvet i verdenskoordinater (uteBakkeBilde, 4 x 4 ruter per bilde), veggene er 2 enheter brede uten blekkstreker, og bakken ute bruker gress- eller mosebildet med snøen oppå. De bevares og bestilles ikke på nytt (UTEGRAFIKK.md).
+- De andre flatene (B1) har flis i manifestet ('begge' for gulv, 'vannrett' for vegger, alfa for gjerdet), går gjennom behandle_tekstur (sømretting, advarsel om magenta og vignett) og lagres som WebP. Paint.bilde(key, F) gir bildet eller null (drømmene bare sikksakkgulvet og forhengene; panelveggen, sjakk- og plankegulvet har egne bilder for etasje 3, 4 og 6), og et bilde som ikke er pakket ut, byttes inn når det kommer. Veggene er 1,5 vegghøyde brede med blekkstreken oppe og nede. wallTex bruker Toms mål for hans flater.
+- Gulvene inne (liste 12) bestilles først når gulvet tegnes med egne fliser (B5 i planen); i dag ville et gulvbilde blitt presset ned til 24 til 32 punkter per rute. Drømmegulvet har 24 punkter per rute på telefon og TV.
+- Tegnelistene: 11 veggene (prøven er panel, fliser, mur, tapet og stein), 12 gulvene inne og 13 de nye fiendene. ART_BRIEF har runde 15 (uteflatene, levert), 16 (vegger og gulv inne) og 17 (havet under huset og Skinnlauget).
+
+## Nye fiender (runde 5, spor C)
+- Grunnarbeid: e.dukket gjelder alle fiender og sjefer (49_havet.js pakker inn hurt, nearestEnemy, groundEffects og enemySlip; meleeHit, skudd og Dybde.kastere hopper over dem). SJEF_DATA[t].egne lister trekk Journalen ikke låner (laanbareTrekk i 31_sjefpulje.js). Statusord (GREPET, SNØRT, SPENT FAST, HEKTET, DØPT) går gjennom statusOrd(e, ord, cd). Ribbon.end sender bare n*3 av tabellen til skjermkortet.
+- Skinnlauget av 1887 (50_skinnlauget.js) er Avdeling Nulls høflige lærlaug: Lærlingen (bukker, reimslag, spenne), Klokkeren (bjella og kjettinger der pasienten står), Holdningssøsteren (snører pasienten treg med lærreimer som en rulle løser, tommestokk) og minisjefen Oldermann Nålepute (nålepute på issen, leser dagsorden i boblen og følger den med klubbeslag, årsmøte ved halv helse). Alle stans fra lauget deler én nedkjøling på to sekunder (G.laugStunT), og høyst ti kjettinger lever. Tonen: høflige lærentusiaster som elsker reimer, spenner og nagler og gjerne forteller om det, aldri noe seksuelt og ingenting fra filmene. Lauget skal ikke i ROLLER.
+- Havet under huset (49_havet.js): Avløpsarmen (en tentakkel fra sluket med ett gult øye, dukker og kommer opp, feier, slår og griper, høyst tre levende), Kapellanen (knehøy kapellan med blekksprutkuppel og tentakkelskjegg over prestekragen, preker for kultistene, døper med sjøvann og kaller armer fra sluket) og Draugpleieren (druknet pleier fra 1887, froskehopp, bekken, leges i vann). tentakelLinje og tentakel er den delte tentakkelen.
+- Rombias i 03_generator.js: Avløpsarmen i kjelleren, Kapellanen i likkapellet og Draugpleieren i tjernet (35 prosent, samme trekk fra rng som før).
+- Oldermann Nålepute bruker ENEMIES[t].fraDybde, så Mini.onFloor ikke setter ham i Parken. Boblen med dagsorden er varselet hans, holdes inne på skjermen under HUD-en og synes også når snakkeboblene er av (en innpakning av FX.update i 50_skinnlauget.js).
+- Figurene er tegnet i kode til nå. Bildene fra ChatGPT står i tegneliste 13.
 
 ## Snøfallet (47_sno.js, runde 5, C2)
 - Tre Points-lag på skjermkortet med én shader: fjernt (0 til 2,5 høyt), midt (0 til 6, dette er Vaer.obj, så test 37 holder) og nært (på skjermen, 1,4 ganger parallakse, blekner rundt pasienten og i paviljonger). All bevegelse regnes i vertex-shaderen fra uTid, som følger spilltiden, så pause og frys stopper snøen.

@@ -1277,3 +1277,24 @@ Alle tidspunkt er UTC.
 - Funnet, ikke rettet her: alle partikler fra Particles blir svarte (instanceColor lages med count 0 i Particles.init, three r128), inne og ute, 2D og 3D. Spor A har skrevet Particles om med en egen instanceColor, så det forsvinner ved flettingen. Da kan bitene ute ved innbruddet vurderes igjen.
 - I TV-modus (1920 x 1080 i testnettleseren) tar innbruddet 84 sekunder sanntid for 2 sekunder spilltid, men blir ferdig.
 - Del 53, 51, 6, 32 og 36 er grønne (66 sjekker). Bygget har 544 innebygde bilder.
+
+## 2026-09-27 16:22 Manglende utegrafikk, graner og teksturer
+- Tom ba Codex kontrollere manglende grafikk i hagen og på grantrær, lage bildene og pushe. Arbeidet er gjort fra gjeldende main 799f983 i egen arbeidskopi. Claudes separate gren og utilgjengelige B/C-arbeidskopier er ikke innlemmet.
+- Fant at prop_gran manglet bilde og ikke var registrert. Den gamle manifestkontrollen overså dekor utenfor rommene. Lagde 14 bilder med den innebygde ChatGPT-bildegeneratoren: gran, ni bakkeflater og fire veggflater. Originaler i gpt-grafikk, prompter i utegrafikk-prompter.json og leveransebeskrivelse i UTEGRAFIKK.md.
+- Teksturene bygges inn gjennom eksisterende bildeflyt uten beskjæring eller bakgrunnsfjerning. De brukes i gulv, vegger, snø og bakgrunnen utenfor rommene. Reservetegninger og eksisterende ressursfrigjøring beholdes. Manifest, kunstbrief og tegnelister er oppdatert til 558 av 558 bilder.
+- Fant og rettet at dekorgrensen sorterte på verdien som valgte treslag, slik at granene i parken ble valgt bort først. Kontrollhagen med løpsfrø 3 hadde ingen graner. Utvalget er nå uavhengig av treslag, med samme grense på 90 objekter i parken og 140 i Nattskogen.
+- Bildebehandling 558 bilder og 0 feil, bygg med 558 bilder, 124 deler og 165 lyder, JavaScript-syntaks og bildestørrelser/alfa kontrollert. test_utegrafikk bestod med 14 innlastede bilder, fungerende reserver og 12 scener i 3D/enkel grafikk, også etter rettingen av treutvalget. Ekte spillbilder er inspisert og fire lagret i dokumentasjon/utegrafikk sammen med rapport og logger.
+- test_spill ble kjørt etter bildeintegrasjonen og fullførte kamp, tjeneste, sjef, drøm, etasjebytte og død uten nettleserfeil. Generatoren er uendret. Ingen ny ytelsesmåling på fysisk telefon/TV eller full omkjøring av test_ekstra.
+
+## 2026-09-28 09:29 Spor B og C flettet, og Toms utegrafikk fra main tatt inn
+- Spor B (B1 til B4) og spor C (C3 til C7) er flettet inn i grenen. B6 (tomrom og ganger) og C8 (Kraken) går fortsatt i hver sin arbeidskopi og flettes når de er ferdige. Ukegrensen stoppet dem i går kveld, og nå får agentene kjøre igjen.
+- Main hadde fått Toms commit 72ce47e (utegrafikk: 14 bilder fra ChatGPT til gress, grus, jord, mose, myr, is, sti, brostein, snø, hekk, steinmur, skogkant, ruin og gran, med teksturstøtte i 12_paint.js og 17_romtyper.js og rettingen av granutvalget). Den overlappet med B1 (teksturløpet) og B3 (snøen). UTEGRAFIKK.md sier at bildene og teksturstøtten skal bevares, og slik er det flettet:
+  1. Toms uteflater (UTE_FLATER, tekstur: true) beholder sine mål og sin behandling. wallTex fra B1 bruker Toms bredde (2 enheter, uten blekkstreker) for hans vegger, og teksturløpet fra B1 (flis, sømretting, WebP) gjelder bare flatene som ikke er levert.
+  2. Snøen på gulvet: finnes Toms snøbilde, legges det over uterutene i Paint.snoDekke som Tom gjorde. B3s malte snø er reserven når bildet mangler. Snøbåndene og istappene på veggene, de hvite toppene og det kalde lyset fra B3 er beholdt.
+  3. Bakken ute bruker Toms gress, mose og snø, med 256 punkter på telefon og TV. B1s egne bakkenøkler (bakke_park og bakke_skog) bestilte det samme og er tatt bort.
+  4. Trærne: Toms retting av granutvalget og trærne ved det skjulte rommet fra B2 virker sammen.
+  5. Manifestet er laget på nytt: 630 nøkler, alle de 558 fra main uendret, pluss 30 flater som ikke er levert og 42 tegninger av de nye fiendene. 558 bilder er behandlet og bygget inn.
+  6. ART_BRIEF.md: runde 15 er Toms uteflater (levert), runde 16 veggene og gulvene inne, runde 17 havet under huset og Skinnlauget. Tegnelistene: 11 veggene (prøven er panel, fliser, mur, tapet og stein), 12 gulvene inne og 13 de nye fiendene.
+- Rombias for de nye fiendene: Avløpsarmen i kjelleren, Kapellanen i likkapellet og Draugpleieren i tjernet. Samme trekk fra rng som før, og generatoren er deterministisk (node tools/test_gen.js).
+- Toms test tools/test_utegrafikk.py fjernet bildet fra Art.img for å tegne reserven. Paint.bilde lager bildet på nytt fra SPRITES, så testen trodde veggbildene ikke ble brukt. Testen tar nå også bildet ut av SPRITES mens reserven tegnes.
+- memory.md har fått «Det skjulte rommet», «Vinter i teksturene», «Teksturer fra ChatGPT» og «Nye fiender», og todo.md det som er gjort og spørsmålene til Tom for spor B og C.

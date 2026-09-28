@@ -60,11 +60,11 @@ NAVN = {'kasteren': 'Kasteren', 'trille': 'Trillepasienten', 'speil': 'Speilpasi
         'hatter_kultister': 'Kultisthatter', 'tilbehor_ansikt': 'Ansiktstilbehør', 'har_personale': 'Frisyrer til personalet', 'kropper_personale': 'Klær til byråkrater og leger',
         'hatter_pasienter': 'Pasienthatter', 'har_pasienter': 'Pasientfrisyrer', 'har_kultister': 'Kultistfrisyrer',
         # teksturene (liste 11 og 12)
-        'vegg_panel': 'Panelveggen', 'vegg_fliser': 'Flisveggen', 'vegg_mur': 'Murveggen', 'vegg_hekk': 'Hekken', 'bakke_park': 'Bakken i Parken',
+        'vegg_panel': 'Panelveggen', 'vegg_fliser': 'Flisveggen', 'vegg_mur': 'Murveggen', 'vegg_hekk': 'Hekken',
         'vegg_panel_3': 'Panelveggen i Underetasjen', 'vegg_panel_4': 'Panelveggen i Kjelleren', 'vegg_panel_6': 'Panelveggen i Dypet',
         'vegg_tapet': 'Tapetveggen', 'vegg_stein': 'Steinveggen', 'vegg_polstret': 'Den polstrede veggen', 'vegg_tre': 'Treveggen',
         'vegg_paviljong': 'Paviljongveggen', 'vegg_tommer': 'Tømmerveggen', 'vegg_skog': 'Skogkanten', 'vegg_steinmur': 'Steinmuren',
-        'vegg_gjerde': 'Smijernsgjerdet', 'vegg_ruin': 'Ruinmuren', 'vegg_forheng': 'De røde forhengene', 'bakke_skog': 'Bakken i Nattskogen',
+        'vegg_gjerde': 'Smijernsgjerdet', 'vegg_ruin': 'Ruinmuren', 'vegg_forheng': 'De røde forhengene',
         'gulv_planker': 'Plankegulvet', 'gulv_sjakk': 'Sjakkgulvet', 'gulv_sjakk_3': 'Sjakkgulvet i Underetasjen', 'gulv_sjakk_4': 'Sjakkgulvet i Kjelleren',
         'gulv_sjakk_6': 'Sjakkgulvet i Dypet', 'gulv_planker_3': 'Plankegulvet i Underetasjen', 'gulv_planker_4': 'Plankegulvet i Kjelleren',
         'gulv_planker_6': 'Plankegulvet i Dypet', 'gulv_tre': 'Tregulvet', 'gulv_parkett': 'Parketten', 'gulv_linoleum': 'Linoleumen',
@@ -79,7 +79,7 @@ BRUK = {'vegg_panel': 'korridorene, venterom, arkiv, kartotek, journalrom, spise
         'vegg_tapet': 'sovesal, dagligstue, direktørens kontor, bibliotek, eget rom og skattkammeret', 'vegg_stein': 'kapell, likkapell, begravelse, det forbannede rommet og blodofferet',
         'vegg_polstret': 'isolatet', 'vegg_tre': 'vaktmesteren og vaktboden', 'vegg_paviljong': 'paviljongene i Parken', 'vegg_tommer': 'koiene i Nattskogen',
         'vegg_skog': 'gangene og rommene i Nattskogen', 'vegg_steinmur': 'kirkegården og gårdsplassen', 'vegg_gjerde': 'liggehallen', 'vegg_ruin': 'ruinen i Nattskogen',
-        'vegg_forheng': 'drømmen i kapittel 5', 'bakke_park': 'bakken utenfor rommene i Parken', 'bakke_skog': 'bakken utenfor rommene i Nattskogen',
+        'vegg_forheng': 'drømmen i kapittel 5',
         'gulv_planker': 'korridorene i Mottaket', 'gulv_planker_3': 'korridorene i Underetasjen', 'gulv_planker_4': 'korridorene i Kjelleren', 'gulv_planker_6': 'korridorene i Dypet',
         'gulv_sjakk': 'venterom, tannlege, frisør, kafeteria og sjefsrommene i Mottaket, og paviljongene i Parken',
         'gulv_sjakk_3': 'de samme rommene i Underetasjen', 'gulv_sjakk_4': 'de samme rommene i Kjelleren', 'gulv_sjakk_6': 'de samme rommene i Dypet',
@@ -178,25 +178,33 @@ LISTER = [
            enkelt('prop_skrin', ekstra='A beautiful and slightly wrong object, like a jewel box made by a surgeon.')]},
   # teksturene (DESIGN_BRIEF.md del D): egen samtale og egen stilblokk. Prøven på fem bilder først; gulvene først når
   # gulvet tegnes med egne fliser (til da presses et gulvbilde ned til 24 til 32 punkter per rute i floorCanvas)
-  {'nr': 11, 'fil': '11_vegger_og_bakken.md', 'tittel': 'Veggene og bakken ute', 'stil': 'tekstur',
-   'prove': ['vegg_panel', 'vegg_fliser', 'vegg_mur', 'vegg_hekk', 'bakke_park'],
-   'merk': 'Skal ChatGPT tegne vegger og gulv, så det ser bedre ut? Ja for veggene og bakken ute, og det kan begynne nå. Veggene tegnes i omtrent den '
+  {'nr': 11, 'fil': '11_vegger.md', 'tittel': 'Veggene', 'stil': 'tekstur',
+   'prove': ['vegg_panel', 'vegg_fliser', 'vegg_mur', 'vegg_tapet', 'vegg_stein'],
+   'merk': 'Skal ChatGPT tegne vegger og gulv, så det ser bedre ut? Ja for veggene, og det kan begynne nå. Uteflatene (gulvene ute, snøen, hekken, steinmuren, skogkanten og ruinen) ble levert 27.9. og er i spillet, så de står ikke her. Veggene tegnes i omtrent den '
            'oppløsningen skjermen viser dem i, så detaljene fra ChatGPT kommer med, og i dag gjentar hver vegg de samme flekkene annenhver rute (se veggen '
            'i kafeteriaen). Gulvene i liste 12 må vente til gulvet tegnes med egne fliser i spillet. I dag males hele gulvet inn i ett stort bilde med 24 til '
            '32 punkter per rute, så et gulv fra ChatGPT ville blitt presset ned til noe uskarpt. Teppet og drivhusglasset tegnes fortsatt av koden. Den mørke '
            'gangen på skjermbilde 9 kommer av lyset og ikke av teksturene, så den blir ikke lysere av nye bilder; det er en egen oppgave. '
            'Bruk en egen ChatGPT-samtale med stilblokken for teksturer under, ikke den vanlige. {prove}Referansebildet viser dagens tegning i samme målestokk, '
            'og bildeløpet retter kanter som ikke går helt i ett.',
-   'ark': [tekstur(k) for k in ['vegg_panel', 'vegg_fliser', 'vegg_mur', 'vegg_hekk', 'bakke_park', 'vegg_panel_3', 'vegg_panel_4', 'vegg_panel_6', 'vegg_tapet',
-                                'vegg_stein', 'vegg_polstret', 'vegg_tre', 'vegg_paviljong', 'vegg_tommer', 'vegg_skog', 'vegg_steinmur', 'vegg_gjerde', 'vegg_ruin',
-                                'vegg_forheng', 'bakke_skog']]},
-  {'nr': 12, 'fil': '12_gulv.md', 'tittel': 'Gulvene', 'stil': 'tekstur',
+   'ark': [tekstur(k) for k in ['vegg_panel', 'vegg_fliser', 'vegg_mur', 'vegg_tapet', 'vegg_stein', 'vegg_panel_3', 'vegg_panel_4', 'vegg_panel_6',
+                                'vegg_polstret', 'vegg_tre', 'vegg_paviljong', 'vegg_tommer', 'vegg_gjerde', 'vegg_forheng']]},
+  {'nr': 12, 'fil': '12_gulv.md', 'tittel': 'Gulvene inne', 'stil': 'tekstur',
    'merk': 'Gulvene. Bestill dem først når Claude sier at gulvet tegnes med egne fliser i spillet, ellers presses bildene ned til 24 til 32 punkter per rute. '
            'Start samtalen med stilblokken for teksturer under, og last opp to godkjente vegger fra liste 11 som stilreferanse. Plankegulvet og sjakkgulvet først; '
            'de dekker mest.',
    'ark': [tekstur(k) for k in ['gulv_planker', 'gulv_sjakk', 'gulv_sjakk_3', 'gulv_sjakk_4', 'gulv_sjakk_6', 'gulv_planker_3', 'gulv_planker_4', 'gulv_planker_6',
-                                'gulv_tre', 'gulv_parkett', 'gulv_linoleum', 'gulv_fliser', 'gulv_sekskant', 'gulv_stein', 'gulv_betong', 'gulv_brostein', 'gulv_gress',
-                                'gulv_grus', 'gulv_jord', 'gulv_mose', 'gulv_sti', 'gulv_myr', 'gulv_is', 'gulv_sikksakk']]},
+                                'gulv_tre', 'gulv_parkett', 'gulv_linoleum', 'gulv_fliser', 'gulv_sekskant', 'gulv_stein', 'gulv_betong', 'gulv_sikksakk']]},
+  # runde 5: de nye fiendene, tegnet i kode til nå (ART_BRIEF.md runde 17)
+  {'nr': 13, 'fil': '13_havet_og_skinnlauget.md', 'tittel': 'Havet under huset og Skinnlauget',
+   'merk': 'De nye fiendene fra runde 5. De er tegnet av koden nå og kan spilles uten bildene, så lista kan tas når det passer. Havet under huset '
+           '(Avløpsarmen, Kapellanen og Draugpleieren) er Lovecraft i 1923: tentakler, blekk og sjøvann. Skinnlauget av 1887 (Lærlingen, Klokkeren, '
+           'Holdningssøsteren og Oldermann Nålepute) er et høflig lærlaug av håndverkere med reimer, spenner og dagsorden. Parodien ligger i tonen: '
+           'ikke noe seksuelt, ikke fetisjutstyr og ingenting hentet fra filmene. Referansebildet viser dagens tegning.',
+   'ark': [figur('laerling'), figur('klokker'), figur('holdning'), figur('oldermann'), figur('kapellan'), figur('draug'),
+           enkelt('avlopsarm_tupp', ekstra='It rises straight up out of a round drain in the floor; draw only the upper part of the tentacle with the eye.'),
+           ark('vaapen_nye', 'Våpnene til Skinnlauget og Kapellanen', ['vaapen_reim', 'vaapen_bjelle', 'vaapen_tommestokk', 'vaapen_klubbe', 'vaapen_avgud'],
+               ekstra='Each weapon alone in its cell, held by nobody, handle down.')]},
 ]
 
 # ---------- hva som mangler ----------
@@ -228,7 +236,8 @@ def ovrige(dekket):
     for k in [k for k in igjen if k.startswith('anim_')]: ut.append(anim(k))
     for k in [k for k in igjen if k.startswith('ui_')]: ut.append(ui(k))
     for k in [k for k in igjen if man[k].get('flis')]: ut.append(tekstur(k))
-    igjen = [k for k in igjen if not k.startswith(('anim_', 'ui_')) and not man[k].get('flis')]
+    for k in [k for k in igjen if man[k].get('tekstur')]: ut.append(enkelt(k))
+    igjen = [k for k in igjen if not k.startswith(('anim_', 'ui_')) and not man[k].get('flis') and not man[k].get('tekstur')]
     for k in [k for k in igjen if stor(k)]: ut.append(enkelt(k))
     små = [k for k in igjen if not stor(k)]
     for i in range(0, len(små), 9): ut.append(ark(f'ovrige_{i // 9 + 1}', f'Øvrige {i // 9 + 1}', små[i:i + 9]))
@@ -304,7 +313,10 @@ def prompt(a, ref):
         L.append(f'Draw ONE image, {fmt}: {setning(B.beskriv(k))}')
         if k.startswith(('prop_', 'drom_')) and not flat(k): L.append('Seen from the front and slightly above, so it shows its front and a little of its top.')
         if a.get('ekstra'): L.append(a['ekstra'])
-        L.append('Exactly one object, centered and fully visible, not cropped. Transparent background, no ground shadow, no text, no frame.')
+        if man[k].get('tekstur'):
+            L.append('Flat full-bleed material texture with even lighting, no perspective, margin, frame, text or cast shadow. Match opposite edges for seamless repetition. Keep the surface opaque except for explicitly requested holes in a broken wall.')
+        else:
+            L.append('Exactly one object, centered and fully visible, not cropped. Transparent background, no ground shadow, no text, no frame.')
         if ref: L.append('The attached image shows the placeholder the game uses today. Use it only to see what it is; redraw it properly in our style.')
     elif t == 'anim':
         k = a['rest'][0]; m = man[k]; d = B.beskriv(k)
