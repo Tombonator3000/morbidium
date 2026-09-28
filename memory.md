@@ -1,6 +1,6 @@
 # Morbidium: minne
 
-Sist oppdatert 2026-09-27.
+Sist oppdatert 2026-09-28.
 
 ## Hva prosjektet er
 Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og Hellraiser-mareritt med mørk humor som gjør narr av edgelords. Tilfeldig genererte etasjer satt sammen av rom. Designdokument: Morbidium-Design-v0_2.md.
@@ -45,6 +45,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Testing i Claude Code-skyen: Chromium når ikke nettet via proxyen. Hent three.min.js med curl og kjør testene med --three STI eller MORBIDIUM_THREE=STI. Python-pakkene playwright (1.56.0 passer med den ferdiginstallerte Chromium) og pillow må installeres.
 
 ## Arbeidsdeling med ChatGPT
+- 2026-09-28: veggprøven med fem teksturer og hele tegneliste 13 er levert som 14 PNG-filer, 53 manifestbilder. Status er 611 av 636. Ni vegger venter på Claudes vurdering av prøven på PC og mobil; 16 gulv venter på egne gulvfliser i koden. Se dokumentasjon/grafikk-2026-09-28/LEVERANSE.md og prompter.json. Ingen spillkode er endret.
 - 2026-09-27: Tom ba Codex lage manglende utegrafikk og pushe. 14 nye bilder til gran, bakke, snø, hekk, skogkant og mur gir 558 av 558 manifestbilder. `UTE_FLATER` registrerer teksturene, og manifestverktøyet tar også med landskapsdekor fra `ROM_ART`. `tekstur: true` beholder hele bildeflaten og alfa ved behandling. Graner skal ikke sorteres bort når antall bakgrunnstrær begrenses. Se UTEGRAFIKK.md og utegrafikk-prompter.json før nye bestillinger. Dette er en levering på main; øvrig Claude-arbeid på den separate grenen er ikke flettet inn.
 - 2026-09-26: alle 74 bestillinger i Claude-artifacten «Tegnelister» er dekket med 268 nye PNG-kilder: 257 manifestbilder og 11 delark med 97 synlige deler. Hele manifestet har nå 544 av 544 bilder. Lokal behandling: 544 bilder, 0 feil; bygg: 544 bilder, 124 deler, 165 lyder. Kasterens åtte bilder er gjenbrukt fra prøven. Se GRAFIKKLEVERANSE.md og grafikkleveranse.csv før noen nye bilder bestilles. Den hvite hjortens kropp og bein trenger fortsatt visuell kontroll i spillet.
 - Claude koder, lager lyd og musikk og setter sammen bildene. ChatGPT lager bare bilder etter DESIGN_BRIEF.md. Tom laster opp til gpt-grafikk/ (erstattet assets/innboks/ 2026-09-24). Pages-bygget klipper og behandler bildene selv.

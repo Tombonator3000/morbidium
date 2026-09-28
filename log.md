@@ -1363,3 +1363,10 @@ Alle tidspunkt er UTC.
 - Del 59 (Lærlingen på etasje 3) og del 60 (kall fra dypet) var grønne ved ny kjøring uten endring. Begge avhenger av hvor fiendene står i en tilfeldig etasje. Ikke rettet, men notert her.
 - Ny kjøring: del 11 grønn, del 28, 59 og 60 grønne (52 sjekker), del 62 grønn bortsett fra knappenålene før hjerterettingen.
 - Del 62 etter hjerterettingen: 26 av 26 OK. Alle delene som var røde i samlekjøringen, er nå grønne.
+
+## 2026-09-28 18:20 Veggprøve og Havet under huset og Skinnlauget
+- Tom ba om å fortsette den krasjede grafikkøkta. Dagens main og manifest viste 558 av 636 bilder. Vedlagt kunstbrief var eldre; dagens tegnelister og referansebilder er brukt.
+- Levert fem veggteksturer og ni bestillinger i liste 13: seks figurark, Avløpsarmens tupp, Kraken-delene og fem våpen. 14 PNG-filer gir 53 nye manifestbilder, nå 611 av 636.
+- Fire figurark fikk større marger etter kontroll av klippekantene. Alle 53 klipte kildebilder er gyldige PNG-filer. Bildeløpet og bygget er kjørt i egen kontrollmappe, med 611 innebygde bilder, 124 deler og 165 lyder. En tom mellomfil ble klippet på nytt; fire gjenværende originalark ble hoppet over av bildebehandlingen. Se leveranserapporten for detaljene.
+- ART_BRIEF og tegnelistene er regenerert. Ferdig liste 13 er arkivert i dokumentasjon/grafikk-2026-09-28 sammen med prompter og leveranseoversikt. Spillkode og skript er uendret.
+- De siste 25 bildene følger stoppunktene i bestillingen: ni vegger etter vurdering av prøven på PC og mobil, og 16 gulv etter at egne gulvfliser er på plass.
