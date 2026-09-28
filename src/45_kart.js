@@ -54,8 +54,9 @@ const Kart = {
   frigi() { document.querySelectorAll('#kartark canvas').forEach(c => { c.width = c.height = 0; }); },
   gulvBilde() { try { const t = Paint.mesh.gulv.material.map, b = t && t.image; return b && b.width && b.width % G.F.W === 0 ? b : null; } catch (e) { return null; } },
   tall() {
-    const F = G.F, hemm = F.rooms.find(r => r.role === 'secret'), krakk = new Set(F.crack || []); let n = 0, s = 0;
-    for (let i = 0; i < F.W * F.H; i++) { if (!F.tiles[i] || krakk.has(i) || (hemm && F.roomId[i] === hemm.id)) continue; n++; if (G.seen[i]) s++; }
+    // det skjulte (gangen, sprekken og rommet) teller ikke, så hele etasjen kan bli utforsket uten å finne det
+    const F = G.F, hemm = F.rooms.find(r => r.role === 'secret'), krakk = new Set(F.crack || []), S = F.skjult; let n = 0, s = 0;
+    for (let i = 0; i < F.W * F.H; i++) { if (!F.tiles[i] || krakk.has(i) || (hemm && F.roomId[i] === hemm.id) || (S && S[i])) continue; n++; if (G.seen[i]) s++; }
     const ut = [['', Math.round(s / Math.max(1, n) * 100) + ' %', 'utforsket']];
     if (!G.drom) { const k = F.rooms.filter(r => r.role === 'boss' || (r.role !== 'cursed' && r.waves && r.waves.length)); ut.push(['', k.filter(r => G.rooms[r.id] && G.rooms[r.id].cleared).length + ' av ' + k.length, 'rom ryddet']); }
     if (F.vaer && KART_VAER[F.vaer]) ut.push([F.ute || G.drom ? 'Vær: ' : 'Gårdsrommene: ', KART_VAER[F.vaer], '']);
@@ -83,6 +84,11 @@ const Kart = {
       if (Mini.rom && Mini.rom[r.id] && !st.cleared) { M.push({ ik: 'mini', x: cx, z: cz }); en1('mini', { ik: 'mini', navn: 'Minisjef', liten: r.role === 'risk' ? 'Frivillig risiko' : 'Noe stort venter' }); }
     }
     if (td && sett(td.x, td.z)) { const U = UTGANGER[G.depth] || UTGANGER[MAX_DEPTH]; M.push({ ik: 'utgang', x: td.x, z: td.z }); L.push({ ik: 'utgang', navn: KART_UT[U.k] || 'Utgangen', liten: G.depth >= MAX_DEPTH ? 'Veien ut' : 'Veien videre' }); }
+    // det skjulte rommet før det er åpnet: bare en anelse (kartpillen, plantegningen) og den sprukne veggen (monokkelen)
+    const hemm = G.skjult && F.rooms.find(r => r.role === 'secret');
+    if (hemm && G.kartAnelse) { M.push({ ik: 'anelse', x: hemm.x + hemm.w / 2, z: hemm.z + hemm.h / 2 }); L.push({ ik: 'anelse', navn: 'Noe er visket ut her' }); }
+    const kr = (Spesial.cracks || []).filter(c => !c.broken);
+    if (G.sprekkKjent && kr.length) { M.push({ ik: 'sprekk', x: kr.reduce((a, c) => a + c.x, 0) / kr.length, z: kr.reduce((a, c) => a + c.z, 0) / kr.length }); L.push({ ik: 'sprekk', navn: 'Sprukken vegg' }); }
     const dp = G.drom && F.dromPlass && F.dromPlass.dor, aapen = !!(typeof Drom === 'object' && Drom.dor && Drom.dor.aapen);
     if (dp && sett(dp.x, dp.z + 1)) { M.push({ ik: 'dor', t: aapen ? '1' : '', x: dp.x, z: dp.z + .6 }); L.push({ ik: 'dor', t: aapen ? '1' : '', navn: 'Døra', liten: aapen ? 'Står på gløtt' : 'Lukket, ennå' }); }
     const rare = (typeof Hendelse === 'object' ? Hendelse.aktive : []).filter(h => !h.brukt && !h.ferdig && sett(h.x, h.z));
@@ -167,6 +173,13 @@ const Kart = {
       for (let t = 0; t <= 4; t++) { const u = .1 + t * .2, w = t % 2 ? .22 : -.22, px = loddrett ? x + .5 + w : x + u, pz = loddrett ? z + u : z + .5 + w; t ? g.lineTo(px, pz) : g.moveTo(px, pz); }
     }
     g.lineWidth = 2.2 / s; g.strokeStyle = '#6a0a0a'; g.stroke();
+    // anelsen om det skjulte rommet: en stiplet blyantstrek rundt der det er, med en visket flekk over, som noe noen har prøvd å gni ut
+    const hemm = G.skjult && G.kartAnelse && F.rooms.find(r => r.role === 'secret');
+    if (hemm) {
+      g.save(); const gr = g.createRadialGradient(hemm.x + hemm.w / 2, hemm.z + hemm.h / 2, 0, hemm.x + hemm.w / 2, hemm.z + hemm.h / 2, Math.max(hemm.w, hemm.h) * .7);
+      gr.addColorStop(0, 'rgba(120,110,100,.22)'); gr.addColorStop(1, 'rgba(120,110,100,0)'); g.fillStyle = gr; g.fillRect(hemm.x - 2, hemm.z - 2, hemm.w + 4, hemm.h + 4);
+      g.setLineDash([.55, .4]); g.lineWidth = 1.6 / s; g.strokeStyle = 'rgba(70,64,60,.7)'; g.beginPath(); g.rect(hemm.x + .1, hemm.z + .1, hemm.w - .2, hemm.h - .2); g.stroke(); g.restore();
+    }
     // 5) ikonene og navnene, i CSS-piksler
     g.setTransform(k, 0, 0, k, 0, 0); const R = clamp(s * 1.05, 10, 15), { M } = this.merker();
     for (const mk of M) {
@@ -233,6 +246,12 @@ const Kart = {
       g.beginPath(); g.ellipse(x, y + R * .62, R * .72, R * .26, 0, 0, TAU); g.fillStyle = '#8a6a4a'; g.fill(); blekk(lw * .7);
       g.beginPath(); g.moveTo(x, y - R * .85); g.lineTo(x, y + R * .55); g.moveTo(x - R * .42, y - R * .38); g.lineTo(x + R * .42, y - R * .38);
       g.lineWidth = lw * 3; g.strokeStyle = 'rgba(246,234,208,.9)'; g.stroke(); blekk(lw * 1.3);
+    } else if (ik === 'anelse') {
+      g.save(); g.setLineDash([R * .32, R * .24]); g.beginPath(); g.rect(x - R * .72, y - R * .72, R * 1.44, R * 1.44); g.lineWidth = lw * .8; g.strokeStyle = 'rgba(70,64,60,.8)'; g.stroke(); g.restore();
+      g.fillStyle = 'rgba(120,110,100,.35)'; g.beginPath(); g.ellipse(x, y, R * .5, R * .3, -.4, 0, TAU); g.fill();
+    } else if (ik === 'sprekk') {
+      g.beginPath(); g.moveTo(x - R * .15, y - R); g.lineTo(x + R * .2, y - R * .45); g.lineTo(x - R * .18, y - R * .05); g.lineTo(x + R * .22, y + R * .4); g.lineTo(x - R * .05, y + R); g.moveTo(x + R * .2, y - R * .45); g.lineTo(x + R * .6, y - R * .3); g.moveTo(x - R * .18, y - R * .05); g.lineTo(x - R * .55, y + R * .12);
+      g.lineWidth = lw * 2.4; g.strokeStyle = 'rgba(246,234,208,.9)'; g.stroke(); g.lineWidth = lw * 1.1; g.strokeStyle = '#b3261e'; g.stroke();
     } else if (ik === 'fiende') {
       g.beginPath(); g.arc(x, y, R * .5, 0, TAU); g.fillStyle = '#b3261e'; g.fill(); blekk(lw * .7);
     } else if (ik === 'du') {
@@ -244,3 +263,7 @@ const Kart = {
     const c = document.createElement('canvas'); c.width = c.height = 60; const g = c.getContext('2d'); g.scale(2, 2); this.ikon(g, ik, 15, 15, 11, t); c.setAttribute('aria-hidden', 'true'); return c;
   }
 };
+
+/* hele etasjen på kartet (kartpillen, plantegningen i biblioteket og meiselen): alt unntatt det skjulte rommet, som bare anes til veggen er slått inn */
+function visHeleKartet() { if (!G.seen) return; const S = G.skjult; for (let i = 0; i < G.seen.length; i++) if (!(S && S[i])) G.seen[i] = 1; if (S) G.kartAnelse = true; }
+Object.assign(window, { visHeleKartet });

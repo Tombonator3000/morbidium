@@ -11,7 +11,8 @@ ROT = pathlib.Path(__file__).resolve().parent
 S = ROT / 'src'
 parts = ['01_core.js', '02_data.js', '03_generator.js', '04_render.js', '05_world.js', '06_musikk.js', '10_art.js', '11_doll.js', '12_paint.js', '13_rom.js', '14_pasient.js', '15_rom3d.js', '16_anim.js', '17_romtyper.js', '20_actors.js', '22_sjefer.js', '25_items.js', '26_fiender.js', '27_utstyr.js', '28_oppskrift.js', '29_monstre.js', '31_sjefpulje.js', '34_blod.js', '35_hendelser.js', '36_drom.js', '32_meny.js', '33_merknader.js', '37_utefiender.js', '38_effekter.js', '39_kombo.js', '40_dybde.js', '41_historie.js', '42_lyd.js', '43_vaatt.js', '46_blekk.js', '47_sno.js', '48_skjult.js', '49_havet.js', '50_skinnlauget.js', '44_testmodus.js', '45_kart.js', '30_game.js']
 ferdig = ROT / 'assets' / 'ferdig'
-sprites = {p.stem: 'data:image/png;base64,' + base64.b64encode(p.read_bytes()).decode() for p in sorted(ferdig.glob('*.png'))} if ferdig.exists() else {}
+# teksturene (gulv_, vegg_ og bakke_) lagres som WebP av tools/behandle_bilder.py, alt annet som PNG
+sprites = {p.stem: f'data:image/{p.suffix[1:]};base64,' + base64.b64encode(p.read_bytes()).decode() for p in sorted([*ferdig.glob('*.png'), *ferdig.glob('*.webp')])} if ferdig.exists() else {}
 # deler til oppskriftssystemet (assets/deler/, laget av tools/skjaer_ark.py): beskjæres til det som
 # faktisk er tegnet, skaleres ned og får palett. Spillet tilpasser størrelsen selv (28_oppskrift.js),
 # fordi tegningene ikke alltid holder seg til hjelpesirkelen i malen.

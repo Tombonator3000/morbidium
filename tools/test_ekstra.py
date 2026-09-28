@@ -847,7 +847,7 @@ async def main():
           addPuddle(P.x + .8, P.z, 'wet', 1.2, 60); await vent(500); ut.speil = R.water.u.uLysF.value.some(v => v.x + v.y + v.z > 0);
           ut.taake = !D3.on || !D3.q.taake || (!!D3.taakeLys && D3.taakeLys.f.value.some(v => v.x + v.y + v.z > 0));
           // takstøv inne når det smeller, og det lander og blir borte
-          Dybde.stovT = 0; R.shake(.8); ut.stov = Dybde.stov.length > 0; await spill(2.6); ut.stovBorte = Dybde.stov.length === 0;
+          Dybde.stovT = 0; R.shake(.8); ut.stov = Dybde.stov.length > 0; await spill(3.2); ut.stovBorte = Dybde.stov.length === 0;
           // kameradykk når sjefen kommer, og ikke uten skjermristing
           spawnBoss(G.depth, P.x + 3, P.z - 2); await vent(900); ut.dykk = R.camera.zoom > 1.04 && R.kam.holdT > 0;
           if (G.boss) killEntity(G.boss, {}); R.kam.hold = R.kam.kick = R.kam.holdT = 0; await vent(900); R.shakeOn = false; R.kamZoom(.2, 2); await vent(500); ut.dykkAv = Math.abs(R.camera.zoom - 1) < .01; R.shakeOn = true; R.kam.hold = R.kam.holdT = 0;
@@ -2547,6 +2547,386 @@ async def main():
         sjekk('ingen konsollfeil (nedslag i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 50) Teksturer fra ChatGPT
+        #     Bildeløpet for teksturer (ren Python), veggene og bakken ute tar bildet når det finnes og maler ellers som før,
+        #     drømmegulvet er mindre på telefon, og tegneliste 11 og 12 har alle teksturene som mangler
+        import base64, io, json, re, tempfile
+        from urllib.parse import unquote, urlparse
+        from PIL import Image
+        ROT50 = pathlib.Path(unquote(urlparse(URL3D).path)).parent.parent  # roten til bygget som testes
+        sys.path.insert(0, str(ROT50 / 'tools')); import behandle_bilder as BB
+        man = json.loads((ROT50 / 'assets' / 'manifest.json').read_text(encoding='utf-8'))
+        def proveflate(w, h, farger, hard=True):
+            """en syntetisk tekstur: striper i farger, med en hard søm (venstre halvdel mørk, høyre lys) og litt gjennomsiktighet"""
+            im = Image.new('RGBA', (w, h), farger[0] + (255,)); px = im.load()
+            for y in range(h):
+                for x in range(w):
+                    c = farger[(y * len(farger)) // h]; k = (.55 + .45 * x / w) if hard else 1; s = ((x // 24 + y // 24) % 2) * 14
+                    px[x, y] = (min(255, int(c[0] * k) + s), min(255, int(c[1] * k) + s), min(255, int(c[2] * k) + s), 255)
+            for y in range(40, 90):
+                for x in range(40, 90): px[x, y] = (0, 0, 0, 0)
+            return im
+        with tempfile.TemporaryDirectory() as tmp:
+            sti = pathlib.Path(tmp) / 'bakke_park.png'; rå = proveflate(1024, 1024, [(40, 70, 30), (60, 100, 40), (30, 60, 24)]); rå.save(sti)
+            ut = BB.behandle(sti, man['bakke_park']); for_ = BB.saum(rå.convert('RGB').resize((512, 512), Image.LANCZOS), 'x')[0]; etter = BB.saum(ut, 'x')[0]
+            sjekk('bildeløpet: en bakke med hard søm blir 512 x 512 uten gjennomsiktighet, og sømmen minst halvert', ut.size == (512, 512) and ut.mode == 'RGB' and etter <= for_ * .5, (ut.size, ut.mode, round(for_, 1), round(etter, 1)))
+            sti = pathlib.Path(tmp) / 'vegg_panel.png'; proveflate(1536, 1024, [(220, 212, 173)] * 5 + [(111, 138, 85)] * 4 + [(59, 51, 34)], False).save(sti)
+            vut = BB.behandle(sti, man['vegg_panel'])
+            sjekk('bildeløpet: en vegg på 1536 x 1024 til en vegg på 2,3 meter blir 442 x 294', vut.size == (442, 294), vut.size)
+            def data_url(im):
+                b = io.BytesIO(); im.save(b, 'WEBP', quality=85); return 'data:image/webp;base64,' + base64.b64encode(b.getvalue()).decode()
+            panel_url, bakke_url = data_url(vut), data_url(ut)
+        # de genererte listene: alle teksturer som ikke er levert, står i liste 11 og 12, med filnavn, nøkkel, referanse og prompt
+        tl = ROT50 / 'tegnelister'; teks = [k for k, m in man.items() if m.get('flis')]
+        levert = {p.stem for p in (ROT50 / 'assets' / 'ferdig').glob('*.*')} if (ROT50 / 'assets' / 'ferdig').exists() else set()
+        tekst = ''.join((tl / f).read_text(encoding='utf-8') for f in ('11_vegger_og_bakken.md', '12_gulv.md') if (tl / f).exists())
+        poster = re.findall(r'(?m)^## (1[12][a-z])\. .*\n\nFilnavn: `([a-z0-9_]+)\.png`\n\nGir: `([a-z0-9_]+)`\n\nBrukes i: .*\n\nReferanse \(last opp sammen med prompten\): `tegnelister/referanse/ref_\2\.png`\n\n!\[[^\]]*\]\(referanse/ref_\2\.png\)\n\n```text\n(?:FLOOR|WALL|GROUND) texture \2: ', tekst)
+        mangler = sorted(set(teks) - levert)
+        sjekk('tegneliste 11 og 12 har hver tekstur som mangler, med filnavn, nøkkel, referansebilde og prompt', len(teks) == 44 and sorted(p[1] for p in poster) == mangler and all(p[1] == p[2] and (tl / 'referanse' / f'ref_{p[1]}.png').exists() for p in poster), (len(teks), len(poster), len(mangler)))
+        stil = re.search(r'## Stilblokk for teksturer.*?```text\n(.*?)\n```', tekst, re.S)
+        sjekk('stilblokken for teksturer ber om et helt dekket bilde, ikke gjennomsiktig bakgrunn', bool(stil) and 'OPAQUE' in stil.group(1) and 'TRANSPARENT background' not in stil.group(1))
+        les = (tl / 'LESMEG.md').read_text(encoding='utf-8'); csvn = [r for r in (tl / 'tegneliste.csv').read_text(encoding='utf-8').splitlines()[1:] if r.split(';')[2:3] == ['tekstur']]
+        sjekk('LESMEG og regnearket har liste 11 og 12', '11_vegger_og_bakken.md' in les and '12_gulv.md' in les and len(csvn) == len(mangler), len(csvn))
+
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg)
+        tk = await pg.evaluate("""async ([panel, bakke]) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const bygg = async d => { G.run.dromVent = 0; startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(150); };
+          const vegg = st => { const m = Paint.mesh.vegger.find(v => v.userData.veggStil === st); return m && m.material.map; }, mål = t => t && [t.image.width, t.image.height, t.fraBilde || ''];
+          const last = (k, src) => new Promise(r => { SPRITES[k] = src; const im = Art.img[k] = new Image(); im.onload = im.onerror = () => r(im.naturalWidth); im.src = src; });
+          await bygg(2); ut.malt = mål(vegg('panel')); await bygg(1); ut.maltBakke = mål(Paint.mesh.bakke.material.map);
+          ut.lastet = [await last('vegg_panel', panel), await last('bakke_park', bakke)];
+          await bygg(2); const t = vegg('panel'); ut.panel = mål(t); ut.rep = t && +t.repeat.x.toFixed(4);
+          await bygg(3); ut.panel3 = mål(vegg('panel')); // Underetasjen har egne farger (vegg_panel_3), og uten det bildet maler koden
+          await bygg(1); const bk = Paint.mesh.bakke.material.map; ut.bakke = mål(bk); ut.bakkeRep = +(bk.repeat.x * 4 - G.F.W).toFixed(2);
+          const c0 = R.coarse; R.coarse = true; await bygg(1); ut.bakkeTlf = mål(Paint.mesh.bakke.material.map);
+          // en drøm på telefon: gulvet er høyst 1200 punkter bredt, kartet får det fortsatt, og veggene beholder drømmens farger
+          G.run.dromVent = 2; startFloor(2, false); await vent(200); ut.drom = !!G.drom; const gm = Paint.mesh.gulv.material.map.image; ut.dromGulv = gm.width; ut.dromKart = Kart.gulvBilde() === gm;
+          ut.dromVegger = Paint.mesh.vegger.filter(v => v.material.map.fraBilde).length; R.coarse = c0; Drom.hopp(); await vent(200);
+          // et bilde som ikke er pakket ut ennå, males først og byttes når det kommer; et ødelagt bilde males av koden
+          const ny = document.createElement('canvas'); ny.width = 300; ny.height = 200; const ng = ny.getContext('2d'); ng.fillStyle = '#' + (Math.random() * 0xffffff | 0).toString(16).padStart(6, '0'); ng.fillRect(0, 0, 300, 200);
+          SPRITES.vegg_mur = ny.toDataURL(); delete Art.img.vegg_mur; const tm = Paint.wallTex(G.th, 'mur', G.F); ut.sakte = [tm.image.width]; // en ny adresse, så nettleseren ikke har bildet ferdig fra før
+          for (let i = 0; i < 100 && !tm.fraBilde; i++) await vent(50); ut.sakte.push(tm.image.width, tm.fraBilde || ''); tm.dispose();
+          SPRITES.vegg_tre = 'data:image/webp;base64,AAAA'; delete Art.img.vegg_tre; const tf = Paint.wallTex(G.th, 'tre', G.F); await vent(300); const tf2 = Paint.wallTex(G.th, 'tre', G.F);
+          ut.odelagt = [tf.image.width, !!tf.fraBilde, tf2.image.width, !!tf2.fraBilde]; tf.dispose(); tf2.dispose(); delete SPRITES.vegg_mur; delete SPRITES.vegg_tre;
+          // lette teksturer maler som før; Enkel grafikk tar bildet og bygger uten feil
+          R.lowTex = true; await bygg(2); ut.lowTex = mål(vegg('panel')); R.lowTex = false;
+          const s = G.meta.settings; s.simple = true; applySettings(); await bygg(2); ut.enkel = mål(vegg('panel')); s.simple = false; applySettings(); await bygg(2);
+          return ut; }""", [panel_url, bakke_url])
+        sjekk('uten bilder er veggen og bakken malt som før (256 punkter bred)', tk['malt'][:2] == [256, 296] and tk['malt'][2] == '' and tk['maltBakke'] == [256, 256, ''], [tk['malt'], tk['maltBakke']])
+        sjekk('panelveggen fra bildet er 442 x 294 og gjentas hver 3,45 rute (repeat .5797)', tk['lastet'][0] == 442 and tk['panel'] == [442, 294, 'vegg_panel'] and abs(tk['rep'] - .5797) < .001, [tk['panel'], tk['rep']])
+        sjekk('i Underetasjen maler koden panelveggen når vegg_panel_3 mangler', tk['panel3'][0] == 256 and tk['panel3'][2] == '', tk['panel3'])
+        sjekk('bakken i Parken fra bildet er 512 punkter over 4 x 4 ruter, 256 på telefon', tk['bakke'] == [512, 512, 'bakke_park'] and tk['bakkeRep'] == 48 and tk['bakkeTlf'] == [256, 256, 'bakke_park'], [tk['bakke'], tk['bakkeRep'], tk['bakkeTlf']])
+        sjekk('en drøm på telefon har et gulv på høyst 1200 punkter, kartet får det, og veggene tar ikke bildene', tk['drom'] and 0 < tk['dromGulv'] <= 1200 and tk['dromKart'] and tk['dromVegger'] == 0, [tk['dromGulv'], tk['dromKart'], tk['dromVegger']])
+        sjekk('et bilde som pakkes ut, males først og byttes når det kommer; et ødelagt bilde males av koden', tk['sakte'] == [256, 442, 'vegg_mur'] and tk['odelagt'] == [256, False, 256, False], [tk['sakte'], tk['odelagt']])
+        sjekk('lette teksturer maler veggen, og Enkel grafikk tar bildet', tk['lowTex'][0] == 256 and tk['lowTex'][2] == '' and tk['enkel'] == [442, 294, 'vegg_panel'], [tk['lowTex'], tk['enkel']])
+        await pg.screenshot(path='/tmp/e_50_2d.png')
+        sjekk('ingen konsollfeil (teksturer i 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: rommene får samme tekstur i sine egne materialer, og en etasje med bilder bygget på nytt holder grafikkminnet i ro
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL3D); await pg.wait_for_timeout(2500); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg, url=URL3D)
+        t3 = await pg.evaluate("""async ([panel, bakke]) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const bygg = async d => { G.run.dromVent = 0; startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(300); };
+          const last = (k, src) => new Promise(r => { SPRITES[k] = src; const im = Art.img[k] = new Image(); im.onload = im.onerror = () => r(im.naturalWidth); im.src = src; });
+          await last('vegg_panel', panel); await last('bakke_park', bakke); await bygg(2); await bygg(1);
+          const mem = () => R.renderer.info.memory; await bygg(2); const m0 = [mem().textures, mem().geometries];
+          const v = Paint.mesh.vegger.find(v => v.userData.veggStil === 'panel'); ut.d3 = D3.on; ut.map = v && v.material.map && v.material.map.fraBilde; ut.type = v && v.material.type;
+          for (const d of [1, 2, 1, 2]) await bygg(d); const m1 = [mem().textures, mem().geometries]; ut.minne = [m1[0] - m0[0], m1[1] - m0[1]]; return ut; }""", [panel_url, bakke_url])
+        sjekk('3D: panelveggen bruker bildet i rommets eget materiale', t3['d3'] and t3['map'] == 'vegg_panel' and t3['type'] != 'MeshBasicMaterial', t3)
+        sjekk('3D: etasjer med bilder bygget på nytt holder grafikkminnet i ro', t3['minne'][0] <= 6 and t3['minne'][1] <= 12, t3['minne'])
+        await pg.screenshot(path='/tmp/e_50_3d.png')
+        sjekk('ingen konsollfeil (teksturer i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 51) Det skjulte rommet
+        #     Gangen og rommet bak den sprukne veggen er ikke der før veggen er slått inn: sprekken er vanlig vegg, gulvet, lysene og tingene
+        #     bak står skjult, kartet viser det ikke gjennom veggen, og hendelser, dekaler og lyn havner ikke der. Et tungt slag åpner det
+        SKJ51 = """() => { const G = MORBIDIUM; let s0 = null;
+          for (let s = 1; s < 400; s++) { const F = generateFloor(s * 7919, 2, {}); if (F.rooms.some(r => r.role === 'cursed') && F.rooms.some(r => r.role === 'offer')) { s0 = s; G.run.seed = s * 7919 - 2 * 7919; startFloor(2, false); break; } }
+          const F = G.F, P = G.player; for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; G.rooms.forEach(s => s.cleared = true); Bygg.alt();
+          const c = Spesial.cracks[Math.floor(Spesial.cracks.length / 2)], hemm = F.rooms.find(r => r.role === 'secret'), par = F.rooms[hemm.parent];
+          const tx = Math.floor(c.x), tz = Math.floor(c.z); let ix = tx, iz = tz; if (tz === par.z - 1) iz = tz + 1; else if (tz === par.z + par.h) iz = tz - 1; else if (tx === par.x - 1) ix = tx + 1; else ix = tx - 1;
+          P.x = ix + .5; P.z = iz + .5; P.face = Math.atan2(c.x - P.x, c.z - P.z); P.hp = P.maxHp; R.snapCamera(P.x, P.z); G.seen.fill(0); return s0; }"""
+        # tilstanden: hva som synes, lysene i rommet, tellingen av firkanter per del og kartet
+        TILST51 = """() => { const G = MORBIDIUM, F = G.F, PM = Paint.mesh, hemm = F.rooms.find(r => r.role === 'secret'), S = F.skjult;
+          const del = d => [...(PM.vegger || []), ...(PM.toppEkstra || [])].filter(m => m.userData.del === d);
+          const lysSum = L => { const c = L.material.color; return c.r + c.g + c.b; };
+          const ting = G.props.filter(o => o.room === hemm.id), pd = Items.pedestals.filter(p => Math.floor(p.x) >= hemm.x && Math.floor(p.x) < hemm.x + hemm.w && Math.floor(p.z) >= hemm.z && Math.floor(p.z) < hemm.z + hemm.h);
+          const fyll = R.levelL.children.filter(L => L.userData.fyll && Math.floor(L.position.x) >= hemm.x && Math.floor(L.position.x) < hemm.x + hemm.w && Math.floor(L.position.z - .3) >= hemm.z && Math.floor(L.position.z - .3) < hemm.z + hemm.h);
+          const lys = [...ting.filter(o => o.light).map(o => o.light), ...pd.filter(p => p.light).map(p => p.light), ...fyll];
+          let synlige = 0, skjulte = 0; for (let i = 0; i < F.tiles.length; i++) if (F.tiles[i]) { if (S && S[i]) skjulte++; else synlige++; }
+          let iSett = 0; if (S) for (let i = 0; i < S.length; i++) if (S[i] && G.seen[i]) iSett++;
+          return { harSkjult: !!S, gSkjult: !!G.skjult, gulvSkjult: PM.gulvSkjult ? PM.gulvSkjult.visible : null, gulvFirk: PM.gulv.geometry.attributes.position.count / 6, synlige, skjulte,
+            aapen: del('aapen').map(m => m.visible), lukket: del('lukket').concat(del('sprekk')).map(m => m.visible), nSprekk: del('sprekk').length,
+            veggPaaSprekk: F.crack.every(i => Paint.wallH[i] > 0), ting: ting.length, tingSynlig: ting.filter(o => o.g.visible).length, pd: pd.length, pdSynlig: pd.filter(p => p.g.visible).length,
+            lys: lys.length, lysSum: +lys.reduce((a, L) => a + lysSum(L), 0).toFixed(3), lysMin: lys.length ? +Math.min(...lys.map(lysSum)).toFixed(3) : 0, iSett, secrets: G.run.secrets || 0,
+            block: F.crack.map(i => F.block[i]), brutt: Spesial.cracks.every(c => c.broken), gTid: +G.time.toFixed(2) }; }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        s51 = await pg.evaluate(SKJ51)
+        await pg.wait_for_timeout(600)
+        t0 = await pg.evaluate(TILST51)
+        sjekk('det skjulte: generatoren merker gangen og rommet, og etasjen bygges lukket (skjult gulv, åpne deler skjult, sprekken er vegg)', s51 is not None and t0['harSkjult'] and t0['gSkjult'] and t0['gulvSkjult'] is False and t0['aapen'] and not any(t0['aapen']) and t0['lukket'] and all(t0['lukket']) and t0['nSprekk'] >= 1 and t0['veggPaaSprekk'], t0)
+        sjekk('det skjulte: hovedgulvet har bare de synlige rutene', t0['gulvFirk'] == t0['synlige'] and t0['skjulte'] > 20, (t0['gulvFirk'], t0['synlige'], t0['skjulte']))
+        sjekk('det skjulte: tingene og glasset i rommet synes ikke, og lysene der er slukket', t0['ting'] > 0 and t0['tingSynlig'] == 0 and t0['pdSynlig'] == 0 and t0['lys'] >= 2 and t0['lysSum'] == 0, t0)
+        # to sekunder spilltid ved sprekken: ingen skjult rute kommer på kartet
+        sett = await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 2 && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 50));
+          let n = 0; for (let i = 0; i < G.skjult.length; i++) if (G.skjult[i] && G.seen[i]) n++; let naer = 0; for (let i = 0; i < G.seen.length; i++) if (G.seen[i]) naer++; return { n, naer, tid: +(G.time - g0).toFixed(2) }; }""")
+        sjekk('det skjulte: står du ved sprekken i to sekunder, kommer ingenting bak veggen på kartet', sett['n'] == 0 and sett['naer'] > 40 and sett['tid'] >= 2, sett)
+        steder = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, S = G.skjult, ut = { gang: 0, vegg: 0, iSkjult: 0 }; const akt = Hendelse.aktive; Hendelse.aktive = [];
+          for (const pl of ['gang', 'vegg']) for (let k = 0; k < 50; k++) { const st = Hendelse.finnSted(pl, () => (k + .5) / 50); if (!st) continue; ut[pl]++; const tz = Math.floor(pl === 'vegg' ? st.vz : st.z), i = tz * F.W + Math.floor(st.x); if (S[i] || (pl === 'vegg' && S[i - F.W])) ut.iSkjult++; }
+          Hendelse.aktive = akt; let lyn = 0; for (let k = 0; k < 400; k++) { const i = Math.floor(Math.random() * F.tiles.length); if (S[i] && gulvSynlig(i)) lyn++; }
+          const st0 = Dybde.stov.length; Dybde.takstov(F.crack[0] % F.W + .5, (F.crack[0] / F.W | 0) + .5, 40, 4); const stov = Dybde.stov.slice(st0), stovSkjult = stov.filter(k => S[Math.floor(k.z) * F.W + Math.floor(k.x)]).length;
+          return Object.assign(ut, { lyn, stov: stov.length, stovSkjult, pytt: !!addPuddle(F.crack[0] % F.W + .5, (F.crack[0] / F.W | 0) + .5, 'wet', 1, 5) }); }""")
+        sjekk('det skjulte: hendelser (også ikke på sprekken), lyn, takstøv og pytter havner ikke bak veggen', steder['gang'] + steder['vegg'] > 0 and steder['iSkjult'] == 0 and steder['lyn'] == 0 and steder['stov'] > 0 and steder['stovSkjult'] == 0 and not steder['pytt'], steder)
+        kart = await pg.evaluate("""() => { const G = MORBIDIUM; visHeleKartet(); const t = Kart.tall()[0][1]; let n = 0; for (let i = 0; i < G.skjult.length; i++) if (G.skjult[i] && G.seen[i]) n++; const a = G.kartAnelse; Kart.apne(); const leg = [...document.querySelectorAll('#kartark .kleg li')].map(l => l.textContent); closePanel(); G.seen.fill(0); return { t, n, a, leg }; }""")
+        sjekk('det skjulte: hele kartet (kartpillen, plantegningen) gir 100 % uten rommet bak veggen, bare en anelse', kart['t'] == '100 %' and kart['n'] == 0 and kart['a'] and any('visket ut' in l for l in kart['leg']), kart)
+        await pg.evaluate("() => { const G = MORBIDIUM; G.kartAnelse = false; R.snapCamera(G.player.x, G.player.z); }")
+        await pg.wait_for_timeout(500); await pg.screenshot(path='/tmp/e_51_skjult_for.png')
+        # et tungt slag som i del 6: veggen faller, og innen halvannet sekund spilltid er rommet der, med lys
+        await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time; startSwing(true, 1); for (let i = 0; i < 400 && !Spesial.cracks.every(c => c.broken) && G.time - g0 < 5; i++) await new Promise(r => setTimeout(r, 50)); }""")
+        t1 = await pg.evaluate(TILST51)
+        await pg.evaluate("async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.5 && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 50)); }")
+        t2 = await pg.evaluate(TILST51)
+        sjekk('det skjulte: et tungt slag knuser veggen med en gang (c.broken, F.block, G.run.secrets)', t1['brutt'] and t1['secrets'] == 1 and not any(t1['block']) and not t1['gSkjult'], t1)
+        sjekk('det skjulte: etter innbruddet er gulvet, de åpne delene, tingene og glasset der, og lysene tent', t2['gulvSkjult'] is True and all(t2['aapen']) and not any(t2['lukket']) and t2['tingSynlig'] == t2['ting'] and t2['pdSynlig'] == t2['pd'] and t2['lysMin'] > 0, t2)
+        tenner = await pg.evaluate("() => MORBIDIUM.pickups.filter(k => k.kind === 'tooth' || k.kind === 'cons').length")
+        sjekk('det skjulte: tennene og pillen ligger der inne etter innbruddet', tenner >= 4, tenner)
+        await pg.wait_for_timeout(500); await pg.screenshot(path='/tmp/e_51_skjult_etter.png')
+        # firkantene: felles pluss lukket er det samme som et vanlig bygg der det skjulte er tomrom, og felles pluss åpen det samme som et bygg uten skjul
+        firk = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, PM = () => Paint.mesh, n = m => m.geometry.attributes.position.count / 6;
+          const tell = () => { const d = {}; for (const m of [PM().topp, ...(PM().toppEkstra || []), ...PM().vegger]) { const k = m.userData.del || ''; d[k] = (d[k] || 0) + n(m); } return d; };
+          const delt = tell(); const S = F.skjult;
+          const Fl = Object.assign({}, F, { tiles: F.tiles.map((t, i) => S[i] ? 0 : t), skjult: null }); Paint.level(Fl, G.th); const lukket = tell()[''];
+          const Fa = Object.assign({}, F, { skjult: null }); Paint.level(Fa, G.th); const aapen = tell()[''];
+          Paint.level(F, G.th); return { delt, lukket, aapen }; }""")
+        d = firk['delt']
+        sjekk('det skjulte: felles pluss lukket og felles pluss åpen gir like mange vegg- og toppfirkanter som vanlige bygg av hver', d.get('', 0) + d.get('lukket', 0) + d.get('sprekk', 0) == firk['lukket'] and d.get('', 0) + d.get('aapen', 0) == firk['aapen'] and d.get('aapen', 0) > 0, firk)
+        sjekk('ingen konsollfeil (det skjulte, 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: listene på sprekken er egne og forsvinner, tåka ligger ikke over det skjulte, og gulvet der blir toon som resten
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        await pg.evaluate(SKJ51)
+        await pg.wait_for_timeout(1500)
+        d3a = await pg.evaluate("""() => { const G = MORBIDIUM, S = G.skjult, PM = Paint.mesh, tm = D3.taakeMask; let taake = 0; if (tm) for (let i = 0; i < S.length; i++) if (S[i] && tm.image.data[i]) taake++;
+          return { on: D3.on, gulv: PM.gulvSkjult.material.type, synlig: PM.gulvSkjult.visible, taake, harTaake: !!tm, lister: (D3.sprekkDeler || []).length, listerSynlig: (D3.sprekkDeler || []).filter(m => m.visible).length }; }""")
+        await pg.screenshot(path='/tmp/e_51_skjult_for3d.png')
+        await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time; startSwing(true, 1); for (let i = 0; i < 600 && !Spesial.cracks.every(c => c.broken) && G.time - g0 < 5; i++) await new Promise(r => setTimeout(r, 50));
+          const g1 = G.time, t0 = performance.now(); while (G.time - g1 < 1.5 && performance.now() - t0 < 40000) await new Promise(r => setTimeout(r, 50)); }""")
+        d3b = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, PM = Paint.mesh, tm = D3.taakeMask; let taake = 0; if (tm) for (let i = 0; i < F.tiles.length; i++) if (F.skjult[i] && tm.image.data[i]) taake++;
+          return { skjult: !!G.skjult, synlig: PM.gulvSkjult.visible, taake, listerSynlig: (D3.sprekkDeler || []).filter(m => m.visible).length, secrets: G.run.secrets || 0 }; }""")
+        await pg.screenshot(path='/tmp/e_51_skjult_etter3d.png')
+        sjekk('det skjulte i 3D: gulvet bak er toon og skjult, tåka ligger ikke der, og listene på sprekken er egne', d3a['on'] and d3a['gulv'] == 'MeshToonMaterial' and d3a['synlig'] is False and d3a['taake'] == 0 and d3a['lister'] == d3a['listerSynlig'], d3a)
+        sjekk('det skjulte i 3D: etter innbruddet er gulvet der, tåka dekker det, og listene på sprekken er borte', not d3b['skjult'] and d3b['synlig'] and d3b['listerSynlig'] == 0 and d3b['secrets'] == 1 and (not d3a['harTaake'] or d3b['taake'] > 0), d3b)
+        # en sprekk i en nordvegg: listene langs veggen fortsetter over sprekken i egne InstancedMesh, og de er borte når veggen faller
+        nord = await pg.evaluate("""async () => { const G = MORBIDIUM; let s0 = null;
+          for (let s = 1; s < 300 && s0 === null; s++) { const F = generateFloor(s * 7919 + 2 * 7919, 2, {}), h = F.rooms.find(r => r.role === 'secret'), p = F.rooms[h.parent]; if (F.crack.every(i => ((i / F.W) | 0) === p.z - 1) && ['panel', 'tapet', 'paviljong'].includes(p.vegg)) s0 = s; }
+          if (s0 === null) return null; G.run.seed = s0 * 7919; startFloor(2, false); await new Promise(r => setTimeout(r, 300));
+          const F = G.F, c = Spesial.cracks[1], lister = (D3.sprekkDeler || []).length, synlig = (D3.sprekkDeler || []).filter(m => m.visible).length, pos = new THREE.Vector3(), mx = new THREE.Matrix4();
+          const paaSprekk = (D3.sprekkDeler || []).every(im => { for (let k = 0; k < im.count; k++) { im.getMatrixAt(k, mx); pos.setFromMatrixPosition(mx); if (!F.crack.includes(Math.floor(pos.z - 1) * F.W + Math.floor(pos.x))) return false; } return true; });
+          Spesial.damage(c, 9); const skjult = !!G.skjult, g0 = G.time, t0 = performance.now(); while (Skjult.vis && G.time - g0 < 2 && performance.now() - t0 < 40000) await new Promise(r => setTimeout(r, 50)); // innbruddet senker listene med veggen (B4)
+          return { s0, lister, synlig, paaSprekk, etter: (D3.sprekkDeler || []).filter(m => m.visible).length, skjult }; }""")
+        sjekk('det skjulte i 3D: listene på en sprukken nordvegg er egne, ligger bare på sprekken og forsvinner ved innbruddet', nord is not None and nord['lister'] > 0 and nord['synlig'] == nord['lister'] and nord['paaSprekk'] and nord['etter'] == 0 and not nord['skjult'], nord)
+        sjekk('ingen konsollfeil (det skjulte, 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 52) Vinter
+        #     Snøen på gulvet er ett lag over hele uteområdet (ingen kutt langs rutene), dekker 75 til 85 % og er aldri helt hvit,
+        #     veggene mot snøen får hvit topp og et snøbånd, bakken ute er snø, lyset er kaldere, og etasjer uten snø har ingen snø
+        V52 = """() => { const G = MORBIDIUM, finn = v => { for (let s = 1; s < 900; s++) if (v(generateFloor(s + 7919, 1, {}))) return s; return null; };
+          window._v52 = { sno: finn(F => F.vaer === 'sno' && F.rooms.some(r => r.template === 'liggehall')), regn: finn(F => F.vaer === 'regn') }; return window._v52; }"""
+        # dekket, kuttene langs rutene, veggene, toppene og bakken i etasjen som står
+        MAAL52 = """() => { const G = MORBIDIUM, F = G.F, c = Paint.mesh.gulv.material.map.image, T = c.width / F.W, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, cw = c.width;
+          const lum = k => (.2126 * d[k] + .7152 * d[k + 1] + .0722 * d[k + 2]) / 255, ute = i => { if (!F.tiles[i]) return false; const rid = F.roomId[i]; return rid >= 0 ? !!F.rooms[rid].ute : !!F.ute; };
+          const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+          const snoFarge = k => Math.abs(d[k] - 228) + Math.abs(d[k + 1] - 235) + Math.abs(d[k + 2] - 243) < 12 || Math.abs(d[k] - 179) + Math.abs(d[k + 1] - 191) + Math.abs(d[k + 2] - 210) < 8;
+          const r1 = mulberry32(5); let n = 0, lys = 0, maks = 0, sf = 0;
+          for (let t = 0; t < 100000 && n < 400; t++) { const x = r1() * F.W, z = r1() * F.H; if (!ute(Math.floor(z) * F.W + Math.floor(x))) continue; const k = (Math.floor(z * T) * cw + Math.floor(x * T)) * 4; n++; if (lum(k) > .72) lys++; if (snoFarge(k)) sf++; maks = Math.max(maks, d[k], d[k + 1], d[k + 2]); }
+          // 200 rutegrenser mellom to uteruter: forskjellen over grensen mot forskjellen mellom to kolonner midt i ruta. Bare par der minst
+          // ett punkt er snø (lysstyrke over .72) telles: bar bakke har sine egne fuger langs rutene, og det er ikke snøen som er kuttet
+          const r2 = mulberry32(9), d2 = (a, b) => { const x = lum(a), y = lum(b); return Math.max(x, y) > .72 ? Math.abs(x - y) : 0; }; let over = 0, inne = 0, nb = 0;
+          for (let t = 0; t < 50000 && nb < 200; t++) { const x = 1 + Math.floor(r2() * (F.W - 1)), z = 1 + Math.floor(r2() * (F.H - 1)), i = z * F.W + x, loddrett = nb % 2 === 0, j = loddrett ? i - 1 : i - F.W; if (!ute(i) || !ute(j)) continue;
+            for (let k = 2; k < T - 2; k++) { if (loddrett) { const y = z * T + k, p = (y * cw + x * T - 1) * 4, q = (y * cw + x * T + T / 2 - 1) * 4; over += d2(p, p + 4); inne += d2(q, q + 4); }
+              else { const xx = x * T + k, p = ((z * T - 1) * cw + xx) * 4, q = ((z * T + T / 2 - 1) * cw + xx) * 4; over += d2(p, p + cw * 4); inne += d2(q, q + cw * 4); } }
+            nb++; }
+          const sv = Paint.mesh.vegger.filter(m => m.userData.sno), hk = sv.find(m => m.userData.veggStil === 'hekk') || sv.find(m => !(VEGG[m.userData.veggStil] || {}).alfa);
+          let topp12 = 0; if (hk) { const im = hk.material.map.image, dd = im.getContext('2d').getImageData(0, 0, im.width, 12).data; for (let k = 0; k < dd.length; k += 4) topp12 += (.2126 * dd[k] + .7152 * dd[k + 1] + .0722 * dd[k + 2]) / 255; topp12 /= dd.length / 4; }
+          const ca = Paint.mesh.topp.geometry.attributes.color.array; let snoTopp = 0; for (let k = 0; k < ca.length; k += 3) if (Math.abs(ca[k] - .875) < .05 && Math.abs(ca[k + 1] - .902) < .05 && Math.abs(ca[k + 2] - .937) < .05) snoTopp++;
+          const bk = Paint.mesh.bakke.material.map, bi = bk.image, bd = bi.getContext ? bi.getContext('2d').getImageData(0, 0, bi.width, bi.height).data : null; let bl = 0; if (bd) { for (let k = 0; k < bd.length; k += 16) bl += (.2126 * bd[k] + .7152 * bd[k + 1] + .0722 * bd[k + 2]) / 255; bl /= bd.length / 16; }
+          const amb = R.post.uniforms.uAmbient.value;
+          // fronter som vender inn i en paviljong (et innerom sør for veggen): ingen av dem har snøbånd og istapper
+          const inn = ms => ms.reduce((n, m) => { const p = m.geometry.attributes.position.array; for (let k = 0; k < p.length; k += 18) { const x = Math.floor(p[k] + 1e-4), z = Math.round(p[k + 2]), i = z * F.W + x; if (z < F.H && F.tiles[i] && !ute(i)) n++; } return n; }, 0);
+          return { vaer: F.vaer, T, n, innSno: inn(sv), innAlle: inn(Paint.mesh.vegger), dekke: +(lys / Math.max(1, n)).toFixed(3), maks, snoFarge: sf, over: +(over / Math.max(1, nb)).toFixed(3), inne: +(inne / Math.max(1, nb)).toFixed(3), nb,
+            snoVegger: sv.length, stil: hk && hk.userData.veggStil, topp12: +topp12.toFixed(3), snoTopp, bakke: +bl.toFixed(3), bakkeRute: +((F.W + 48) / bk.repeat.x).toFixed(2), amb: '#' + amb.getHexString() }; }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        fro = await pg.evaluate(V52)
+        m52 = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), S = window._v52, ut = {};
+          const bygg = async s => { G.run.seed = s; G.run.dromVent = 0; startFloor(1, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(150); };
+          await bygg(S.sno); ut.sno = (""" + MAAL52 + """)(); await bygg(S.regn); ut.regn = (""" + MAAL52 + """)();
+          R.lowTex = true; await bygg(S.sno); ut.lett = (""" + MAAL52 + """)(); R.lowTex = false;
+          const st = G.meta.settings; st.simple = true; applySettings(); await bygg(S.sno); ut.enkel = (""" + MAAL52 + """)(); st.simple = false; applySettings();
+          // byggetiden: hele startFloor med snø, og Paint.level (gulvet, veggene og bakken, der snøen males) med og uten snø på samme etasje.
+          // Uten snø er startFloor minus forskjellen; beste av fem (maskinen er delt, så ett av tre kunne bli forstyrret)
+          const ts = [], ls = [], lr = [], ferdig = () => Paint.mesh.gulv.material.map.image.getContext('2d').getImageData(0, 0, 1, 1); // lerretet tegnes først når det leses
+          for (let k = 0; k < 5; k++) { G.run.seed = S.sno; G.run.dromVent = 0; let t0 = performance.now(); startFloor(1, false); ferdig(); ts.push(performance.now() - t0); await vent(100);
+            const Fr = Object.assign({}, G.F, { vaer: 'regn' }); t0 = performance.now(); Paint.level(Fr, G.th); ferdig(); lr.push(performance.now() - t0); await vent(50);
+            t0 = performance.now(); Paint.level(G.F, G.th); ferdig(); ls.push(performance.now() - t0); await vent(100); }
+          const a = Math.min(...ts), b = Math.min(...ls), c = Math.min(...lr); ut.tid = [Math.round(a), Math.round(a - (b - c)), Math.round(b), Math.round(c)];
+          await bygg(S.sno); const P = G.player, r = G.F.rooms.find(r => r.template === 'liggehall'); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null;
+          P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.invuln = 999; R.snapCamera(P.x, P.z); return ut; }""")
+        s5, r5, l5, e5 = m52['sno'], m52['regn'], m52['lett'], m52['enkel']
+        sjekk('vinter: frøene finnes (Parken med snø og liggehall, og Parken i regn)', fro['sno'] is not None and fro['regn'] is not None and s5['vaer'] == 'sno' and r5['vaer'] == 'regn', fro)
+        sjekk('vinter: snøen dekker minst 70 % av uterutene (lysstyrke over .72), og ingen punkter er helt hvite', s5['n'] == 400 and s5['dekke'] >= .7 and s5['maks'] < 250, s5)
+        sjekk('vinter: ingen kutt langs rutene (forskjellen over 200 rutegrenser er høyst 1,5 ganger den midt i rutene)', s5['nb'] == 200 and s5['over'] <= 1.5 * s5['inne'], (s5['over'], s5['inne'], s5['nb']))
+        sjekk('vinter: veggene mot snøen har snøbånd (øverste 12 punkter lyse) og hvit topp', s5['snoVegger'] > 0 and s5['topp12'] > .8 and s5['snoTopp'] > 0, (s5['snoVegger'], s5['stil'], s5['topp12'], s5['snoTopp']))
+        sjekk('vinter: fronter som vender inn i en paviljong har ikke snøbånd eller istapper', s5['innAlle'] > 0 and s5['innSno'] == 0, (s5['innAlle'], s5['innSno']))
+        sjekk('vinter: bakken ute er snø, gjentatt hver tiende rute, og lyset er kaldere', s5['bakke'] > .7 and abs(s5['bakkeRute'] - 10) < .01 and s5['amb'] != r5['amb'], (s5['bakke'], s5['bakkeRute'], s5['amb'], r5['amb']))
+        sjekk('vinter: en Parken uten snø har ingen snøfarger, snøvegger, snøtopper eller snøbakke', r5['snoFarge'] <= 2 and r5['snoVegger'] == 0 and r5['snoTopp'] == 0 and r5['bakke'] < .5 and abs(r5['bakkeRute'] - 5) < .01, r5)
+        sjekk('vinter: lette teksturer og Enkel grafikk har også snøen', l5['T'] == 16 and l5['dekke'] >= .6 and l5['maks'] < 250 and e5['dekke'] >= .7 and e5['snoVegger'] > 0, (l5['T'], l5['dekke'], e5['dekke'], e5['snoVegger']))
+        sjekk('vinter: etasjen med snø bygges på høyst 1,3 ganger tiden uten (samme frø, beste av fem: startFloor, uten snø, Paint.level med og uten)', m52['tid'][0] <= 1.3 * m52['tid'][1], m52['tid'])
+        await pg.wait_for_timeout(800); await pg.screenshot(path='/tmp/e_52_vinter_2d.png')
+        sjekk('ingen konsollfeil (vinter, 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: kaldt lys fra snøen, lavere relieff, lys tåke, og snøetasjer bygget på nytt holder grafikkminnet i ro
+        for vp, navn in (({'width': 1280, 'height': 720}, '1280'), ({'width': 390, 'height': 844}, '390x844')):
+            pg = await ny_side(b, viewport=vp, **({'is_mobile': True, 'has_touch': True} if vp['width'] < 600 else {}))
+            await start_lop(pg, url=URL3D)
+            await pg.evaluate(V52)
+            d3 = await pg.evaluate("""async (mobil) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), S = window._v52, ut = {};
+              const bygg = async s => { G.run.seed = s; G.run.dromVent = 0; startFloor(1, false); await vent(300); };
+              const lys = () => { const h = D3.ting.find(o => o.isHemisphereLight), g = Paint.mesh.gulv.material; return { hemi: h && '#' + h.groundColor.getHexString(), mane: D3.mane && +D3.mane.intensity.toFixed(2), bump: g.bumpScale, farge: g.color && '#' + g.color.getHexString(), type: g.type }; };
+              await bygg(S.regn); ut.regn = lys(); await bygg(S.sno); ut.sno = lys();
+              if (!mobil) { const mem = () => R.renderer.info.memory, m0 = [mem().textures, mem().geometries]; for (const s of [S.regn, S.sno, S.regn, S.sno]) await bygg(s); ut.minne = [mem().textures - m0[0], mem().geometries - m0[1]]; }
+              const P = G.player, r = G.F.rooms.find(r => r.template === 'liggehall'); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null;
+              P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.invuln = 999; R.snapCamera(P.x, P.z); ut.d3 = D3.on; return ut; }""", vp['width'] < 600)
+            if vp['width'] > 600:
+                sjekk('vinter i 3D: blått lys fra snøen, sterkere måne, lavere relieff og dempet gulv, og regnværet er som før', d3['d3'] and d3['sno']['hemi'] == '#4a5470' and d3['sno']['mane'] > d3['regn']['mane'] and abs(d3['sno']['bump'] - .45) < .01 and d3['sno']['farge'] != '#ffffff' and d3['regn']['hemi'] == '#2a1a14' and abs(d3['regn']['bump'] - .7) < .01 and d3['regn']['farge'] == '#ffffff', d3)
+                sjekk('vinter i 3D: snøetasjer bygget på nytt holder grafikkminnet i ro', d3['minne'][0] <= 6 and d3['minne'][1] <= 12, d3['minne'])
+            await pg.evaluate("async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1 && performance.now() - t0 < 20000) await new Promise(r => setTimeout(r, 50)); }")
+            await pg.screenshot(path=f'/tmp/e_52_vinter_{navn}.png')
+            sjekk(f'ingen konsollfeil (vinter, 3D {navn})', not pg.errs, pg.errs[:6])
+            await pg.close()
+        # 53) Hint og innbrudd
+        #     Sprekken er en flekk nyere puss (ingen murkasse), trekken høres dempet bak veggen innen fem ruter og dragene blåser ut av den,
+        #     et slag mot en vanlig vegg gir et dumpt slag (høyst hvert 0,4 sekund, ikke når en fiende treffes), én boble per etasje og ett tips,
+        #     og innbruddet går gjennom bristen, synkingen, byttet og lysene på under halvannet sekund spilltid, også med enkel grafikk
+        # OPP53: en etasje med en sprekk etter ønske (nord: nordveggen i et innerom, hekk: sørveggen i en hekk ute som i 10.png), med pasienten foran
+        OPP53 = """async (o) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)); let s0 = null;
+          const passer = F => { const h = F.rooms.find(r => r.role === 'secret'); if (!h || !F.crack || !F.crack.length) return false; const p = F.rooms[h.parent], rad = i => (i / F.W) | 0;
+            return o.hvor === 'nord' ? !p.ute && F.crack.every(i => rad(i) === p.z - 1) && ['panel', 'tapet', 'paviljong'].includes(p.vegg) : !!p.ute && F.crack.every(i => rad(i) === p.z + p.h); };
+          for (let s = 1; s < 900; s++) { if (!passer(generateFloor(s + o.d * 7919, o.d, {}))) continue; G.run.seed = s; G.run.dromVent = 0; startFloor(o.d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
+            if (o.hvor !== 'hekk' || (Skjult.info && Skjult.info.st === 'hekk')) { s0 = s; break; } }
+          if (s0 === null) return null;
+          const P = G.player, I = Skjult.info; for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; G.rooms.forEach(s => s.cleared = true); Bygg.alt();
+          P.x = I.cx; P.z = I.ez + I.uz * (o.avst || 1.2); P.face = Math.atan2(0, -I.uz); P.hp = P.maxHp; P.invuln = 999; R.snapCamera(P.x, P.z); await vent(300);
+          return { s0, side: I.side, st: I.st, ute: I.ute, meshes: I.meshes.map(m => m.userData.dekal), sprite: Spesial.cracks.some(c => c.g), eid: Paint.owned.includes(I.tex) && Paint.owned.includes(I.mat) }; }"""
+        # pasienten et gitt antall ruter rett ut fra midten av sprekken (fra midten av sprekkruta)
+        STILL53 = "(d) => { const G = MORBIDIUM, P = G.player, I = Skjult.info; P.x = I.cx; P.z = I.ez - I.uz * .5 + I.uz * d; R.snapCamera(P.x, P.z); }"
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        n53 = await pg.evaluate(OPP53, {'d': 2, 'hvor': 'nord'})
+        sjekk('hint: en sprekk i en nordvegg har flekken (flate og støv, i Paint.owned) og ingen murkasse', n53 is not None and n53['side'] == 'n' and 'flate' in n53['meshes'] and 'stov' in n53['meshes'] and not n53['sprite'] and n53['eid'], n53)
+        # trekken: dempet vind innen fem ruter (lavpass under 900 på tre ruter), ingenting på ni ruter eller i kamp, og dragene langs gulvet
+        tr = await pg.evaluate("""(still) => { const G = MORBIDIUM, ut = {}, still_ = eval(still), maal = () => { const M = Stemning.maal(); return M.trekk_vind ? M.trekk_vind.map(v => +v.toFixed(3)) : null; };
+          const glod = () => { Skjult.trekk(); const E = Skjult.trekkE; return E && Glod.liste.includes(E) ? +E.mat.uniforms.uStyrke.value.toFixed(2) : null; };
+          still_(3); ut.tre = maal(); ut.gl3 = glod(); ut.gruppe = !!(Lydbank.gruppeListe().trekk_vind || []).length; ut.rot = Skjult.trekkE ? +Skjult.trekkE.pts.rotation.y.toFixed(2) : null;
+          G.combat = {}; ut.kamp = maal(); G.combat = null;
+          still_(2); ut.gl2 = glod(); still_(7); ut.gl7 = glod(); G.sprekkKjent = true; ut.gl7m = glod(); G.sprekkKjent = false; still_(9); ut.ni = maal(); ut.gl9 = glod(); return ut; }""", STILL53)
+        sjekk('hint: trekken bak veggen høres dempet på tre ruter (lavpass høyst 900) og ikke på ni ruter eller i kamp', tr['tre'] is not None and tr['tre'][0] > 0 and tr['tre'][1] <= 900 and tr['ni'] is None and tr['kamp'] is None and tr['gruppe'], tr)
+        sjekk('hint: kalde drag langs gulvet nær sprekken (fullt på to ruter, ingen på ni), og monokkelen viser dem fra åtte ruter', tr['gl3'] is not None and 0 < tr['gl3'] < 1 and tr['gl2'] == 1 and tr['gl7'] is None and tr['gl7m'] is not None and tr['gl9'] is None and tr['rot'] is not None, tr)
+        # banking: slag mot en vanlig vegg i foreldrerommet (nordveggen, et stykke fra sprekken)
+        bk = await pg.evaluate("""async () => { const G = MORBIDIUM, F = G.F, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), h = F.rooms.find(r => r.role === 'secret'), p = F.rooms[h.parent];
+          // en rute i foreldrerommet inntil en vanlig vegg, langt fra sprekken og uten ting i nærheten
+          let st = null; for (let z = p.z; z < p.z + p.h && !st; z++) for (let x = p.x; x < p.x + p.w && !st; x++) { if (solid(x, z) || F.crack.some(c => Math.hypot(c % F.W - x, ((c / F.W) | 0) - z) < 4) || G.props.some(o => o.alive !== false && Math.hypot(o.x - x - .5, o.z - z - .5) < 2)) continue;
+            for (const [dx, dz] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) { const i = (z + dz) * F.W + x + dx; if (Paint.wallH[i] > 0 && !F.crack.includes(i)) { st = { x, z, dx, dz }; break; } } }
+          if (!st) return null;
+          const lyder = [], _p = Sound.play; Sound.play = function (n, ...a) { lyder.push([n, +G.time.toFixed(3)]); return _p.call(this, n, ...a); };
+          P.x = st.x + .5 + st.dx * .05; P.z = st.z + .5 + st.dz * .05; P.face = Math.atan2(st.dx, st.dz); R.snapCamera(P.x, P.z); Spesial.bankT = -9;
+          startSwing(false); const g0 = G.time, t0 = performance.now(); while (P.atk && G.time - g0 < 3 && performance.now() - t0 < 20000) await vent(30);
+          const ekte = lyder.filter(l => l[0] === 'veggbank').length; lyder.length = 0;
+          const t00 = G.time; for (let k = 0; k < 24; k++) { G.time += .1; meleeHit({ heavy: false, combo: 0, charge: 0 }); } const tider = lyder.filter(l => l[0] === 'veggbank').map(l => l[1]); G.time = t00 + 2.4; lyder.length = 0;
+          const e = spawnEnemy('pleier', P.x + st.dx * .2, P.z + st.dz * .2, false, 2); e.state = 'chase'; e.cd = 99; e.hp = 1e6; e.maxHp = 1e6; G.time += 1; meleeHit({ heavy: false, combo: 0, charge: 0 }); const medFiende = lyder.filter(l => l[0] === 'veggbank').length; killEntity(e, {}); G.combat = null; G.lock = null;
+          lyder.length = 0; P.face += Math.PI; G.time += 1; meleeHit({ heavy: false, combo: 0, charge: 0 }); const luft = lyder.filter(l => l[0] === 'veggbank').length;
+          Sound.play = _p; let min = 9; for (let k = 1; k < tider.length; k++) min = Math.min(min, tider[k] - tider[k - 1]); return { ekte, n: tider.length, min: +min.toFixed(2), medFiende, luft }; }""")
+        sjekk('hint: et slag mot en vanlig vegg gir et dumpt slag, høyst ett per 0,4 sekund spilltid', bk is not None and bk['ekte'] == 1 and 4 <= bk['n'] <= 7 and bk['min'] >= .4 - 1e-6, bk)
+        sjekk('hint: ingen banking når slaget treffer en fiende eller bare luft', bk is not None and bk['medFiende'] == 0 and bk['luft'] == 0, bk)
+        # ordene: høyst én boble på tjue sekunder spilltid ved sprekken, og tipset første gang (også ved et nytt løp er det vist)
+        ord_ = await pg.evaluate("""async (still) => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)); eval(still)(1.6); for (const e of G.enemies) if (e.alive) killEntity(e, {});
+          const alle = new Set([...Skjult.ord(), 'Det trekker herfra.', 'Den veggen ser tynn ut.', 'Er det noen der inne?']), bobler = [], _b = FX.bubble; FX.bubble = function (hvem, s, ...a) { if (hvem === P) bobler.push(s); return _b.call(this, hvem, s, ...a); };
+          if (G.meta.tips) delete G.meta.tips.sprekk; G.meta.settings.tips = true; Spesial.sagt = false; Spesial.naerT = 0;
+          // tre sekunder i spillets egen løkke, og resten av de tjue sekundene med Spesial.update i steg på en tidel (maskinen er for treg til tjue sekunder spilltid)
+          const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 3 && performance.now() - t0 < 60000) { P.hp = P.maxHp; await vent(100); } let tid = G.time - g0; const n3 = bobler.filter(s => alle.has(s)).length;
+          while (tid < 20) { Spesial.update(.1); tid += .1; }
+          FX.bubble = _b; const el = document.getElementById('tips'); return { tid: +tid.toFixed(1), ekte: +(G.time - g0).toFixed(1), n3, n: bobler.filter(s => alle.has(s)).length, bobler: bobler.slice(0, 6), tips: !!(G.meta.tips && G.meta.tips.sprekk), tekst: el ? el.textContent : '' }; }""", STILL53)
+        sjekk('hint: nøyaktig én boble på tjue sekunder spilltid ved sprekken (den første etter to sekunder), og tipset om murte vegger', ord_['tid'] >= 20 and ord_['ekte'] >= 2.5 and ord_['n3'] == 1 and ord_['n'] == 1 and ord_['tips'] and 'murt igjen' in ord_['tekst'], ord_)
+        await pg.evaluate(STILL53, 1.8); await pg.wait_for_timeout(700); await pg.screenshot(path='/tmp/e_53_hint_2d.png')
+        # et vanlig slag på sprekken: hult, «Det knaker», og hårstreken vokser et steg
+        sl = await pg.evaluate("""async (still) => { const G = MORBIDIUM, P = G.player, I = Skjult.info; eval(still)(1.1); P.face = Math.atan2(0, -I.uz); const lyder = [], _p = Sound.play; Sound.play = function (n, ...a) { lyder.push(n); return _p.call(this, n, ...a); };
+          Spesial.bankT = -9; Spesial.bank(P.x, P.z, P.face, 1.2, 1.4); const direkte = lyder.includes('veggbank'); lyder.length = 0; // sprekken svarer aldri massivt, heller ikke når slaget bommet på den
+          G.time += 1; meleeHit({ heavy: false, combo: 0, charge: 0 }); Sound.play = _p; return { steg: I.steg, lyder, hp: Spesial.cracks.map(c => c.hp), direkte }; }""", STILL53)
+        sjekk('hint: et vanlig slag på sprekken svarer hult (ingen banking) og hårstreken vokser', sl['steg'] == 1 and 'bonk' in sl['lyder'] and 'veggbank' not in sl['lyder'] and not sl['direkte'] and min(sl['hp']) == 2, sl)
+        # innbruddet: et tungt slag, og stegene i forløpet i spilltid etter bristen
+        FORLOP53 = """async (skudd) => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), tider = {}, ut = { lyder: [], bobler: [] };
+          const _p = Sound.play; Sound.play = function (n, ...a) { ut.lyder.push(n); return _p.call(this, n, ...a); }; const _b = FX.bubble; FX.bubble = function (hvem, s, ...a) { if (hvem === P) ut.bobler.push(s); return _b.call(this, hvem, s, ...a); };
+          const orig = {}; for (const k of ['brist', 'synk0', 'bytt', 'vekk', 'slutt']) { orig[k] = Skjult[k]; Skjult[k] = function (...a) { tider[k] = G.time; const r = orig[k].apply(this, a); if (k === 'brist') ut.brist = (Skjult.vis.brist || []).length; return r; }; }
+          const _f = Skjult.forlop; Skjult.forlop = function (dt) { const r = _f.call(this, dt); if (ut.stopp === undefined) ut.stopp = +G.hitstop.toFixed(3); return r; };
+          const rydd = () => { for (const k in orig) Skjult[k] = orig[k]; Skjult.forlop = _f; Sound.play = _p; FX.bubble = _b; };
+          P.face = Math.atan2(0, -Skjult.info.uz); startSwing(true, 1); const g0 = G.time, t0 = performance.now();
+          while (!tider.brist && G.time - g0 < 5 && performance.now() - t0 < 30000) await vent(20);
+          if (skudd && tider.brist) { while (!(Skjult.vis && Skjult.vis.t > .04) && performance.now() - t0 < 30000) await vent(10); slowMo(60, .0005); ut.skudd = true; rydd(); return ut; }
+          const g1 = G.time, t1 = performance.now(); while ((Skjult.vis || !tider.slutt) && G.time - g1 < 3 && performance.now() - t1 < 40000) await vent(30);
+          rydd();
+          const t = k => tider[k] !== undefined ? +(tider[k] - tider.brist).toFixed(2) : null, PM = Paint.mesh, I = Skjult.info;
+          return Object.assign(ut, { synk0: t('synk0'), bytt: t('bytt'), vekk: t('vekk'), slutt: t('slutt'), ferdig: !Skjult.vis, gulv: PM.gulvSkjult && PM.gulvSkjult.visible,
+            sprekkSynlig: [...PM.vegger, ...(PM.toppEkstra || [])].filter(m => m.userData.del === 'sprekk' && m.visible).length, dekalSynlig: I ? I.meshes.filter(m => m.visible && m.userData.dekal !== 'stov' && m.userData.dekal !== 'rusk').length : -1,
+            rusk: I ? I.meshes.some(m => m.userData.dekal === 'rusk') : false, secrets: G.run.secrets || 0, lys: Skjult.lys.length, tent: Skjult.lys.filter(L => L.material.color.r + L.material.color.g + L.material.color.b > 0).length,
+            trekk: Glod.liste.filter(E => E.type === 'trekk').length }); }"""
+        ib = await pg.evaluate(FORLOP53, False)
+        rekke = [ib.get(k) for k in ('synk0', 'bytt', 'vekk', 'slutt')]
+        sjekk('innbrudd: bristen med stopp i slaget, sprekkveggen som bristbilde og bruddlyden', ib.get('brist', 0) >= 2 and ib['stopp'] > 0 and 'murbrudd' in ib['lyder'], ib)
+        sjekk('innbrudd: veggen synker, byttet, rommet våkner og ruskene ligger der, i rekkefølge og innen halvannet sekund spilltid', None not in rekke and rekke == sorted(rekke) and .15 <= rekke[0] <= .3 and rekke[3] <= 1.5 and ib['ferdig'] and ib['rusk'], rekke)
+        sjekk('innbrudd: etterpå er gulvet der, sprekkveggen og flekken borte, lysene tent og «Visste jeg det.» sagt', ib['gulv'] and ib['sprekkSynlig'] == 0 and ib['dekalSynlig'] == 0 and ib['secrets'] == 1 and ib['lys'] >= 2 and ib['tent'] == ib['lys'] and 'Visste jeg det.' in ib['bobler'], ib)
+        await pg.wait_for_timeout(600); await pg.screenshot(path='/tmp/e_53_brudd_2d.png')
+        # enkel grafikk: flekken og innbruddet virker, men uten drag og partikler
+        sf = await pg.evaluate("""async (still) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), s = G.meta.settings, frø = G.run.seed; s.simple = true; applySettings();
+          G.run.seed = frø; G.run.dromVent = 0; startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null;
+          const P = G.player; P.invuln = 999; eval(still)(2); Skjult.trekk(); await vent(300); const ut = { safe: R.safe, dekal: !!(Skjult.info && Skjult.info.meshes.length), trekkE: !!Skjult.trekkE, glod: Glod.liste.length };
+          let tS = null; const _s = Skjult.slutt; Skjult.slutt = function () { tS = G.time; return _s.call(this); };
+          const g0 = G.time; Spesial.damage(Spesial.cracks[0], 9); const t0 = performance.now(); while (Skjult.vis && G.time - g0 < 3 && performance.now() - t0 < 30000) await vent(30); Skjult.slutt = _s;
+          Object.assign(ut, { tid: tS === null ? null : +(tS - g0).toFixed(2), ferdig: !Skjult.vis, gulv: Paint.mesh.gulvSkjult.visible, trekk: Glod.liste.filter(E => E.type === 'trekk').length });
+          s.simple = false; applySettings(); return ut; }""", STILL53)
+        sjekk('innbrudd med enkel grafikk: flekken er der, ingen drag, og innbruddet blir ferdig innen halvannet sekund uten feil', sf['safe'] and sf['dekal'] and not sf['trekkE'] and sf['trekk'] == 0 and sf['ferdig'] and sf['tid'] is not None and sf['tid'] <= 1.5 and sf['gulv'], sf)
+        # hekken ute (10.png): visnet flekk, klokka som tikker inne i hekken i stedet for vinden, og innbruddet med blader
+        hk = await pg.evaluate(OPP53, {'d': 1, 'hvor': 'hekk', 'avst': 1.8})
+        hkl = await pg.evaluate("""(still) => { eval(still)(3); const M = Stemning.maal(); return { tikk: M.trekk_tikk ? M.trekk_tikk.map(v => +v.toFixed(2)) : null, vind: !!M.trekk_vind, ord: Skjult.ord()[0] }; }""", STILL53)
+        sjekk('hint ute: sprekken i en hekk er en visnet flekk, og klokka tikker inne i hekken i stedet for vinden', hk is not None and hk['st'] == 'hekk' and hk['side'] == 's' and not hk['sprite'] and 'topp' in hk['meshes'] and hkl['tikk'] is not None and not hkl['vind'], (hk, hkl))
+        await pg.evaluate(STILL53, 1.8); await pg.wait_for_timeout(700); await pg.screenshot(path='/tmp/e_53_hint_park_2d.png')
+        ihk = await pg.evaluate(FORLOP53, False)
+        sjekk('innbrudd ute: bladene og kvisten (lovbrudd) uten murstein i bristen, og rommet er åpent innen halvannet sekund', 'lovbrudd' in ihk['lyder'] and ihk.get('brist') == 0 and ihk['ferdig'] and ihk['gulv'] and ihk['slutt'] is not None and ihk['slutt'] <= 1.5, ihk)
+        await pg.wait_for_timeout(600); await pg.screenshot(path='/tmp/e_53_brudd_park_2d.png')
+        sjekk('ingen konsollfeil (hint og innbrudd, 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: flekken, dragene og bristbildet, i et innerom og i hekken
+        for hvor, d, avst in (('nord', 2, 1.8), ('hekk', 1, 1.8)):
+            pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+            await start_lop(pg, url=URL3D)
+            o3 = await pg.evaluate(OPP53, {'d': d, 'hvor': hvor, 'avst': avst})
+            g3 = await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.5 && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 50));
+              const I = Skjult.info; return { on: D3.on, trekk: !!Skjult.trekkE, mat: I && I.mat.type, dekal: I ? I.meshes.length : 0 }; }""")
+            await pg.screenshot(path=f'/tmp/e_53_hint_{hvor}_3d.png')
+            sjekk(f'hint i 3D ({hvor}): flekken står på veggen og dragene blåser ut av den', o3 is not None and g3['on'] and g3['dekal'] >= 2 and g3['trekk'] and not o3['sprite'], (o3, g3))
+            b3 = await pg.evaluate(FORLOP53, True)
+            await pg.wait_for_timeout(300); await pg.screenshot(path=f'/tmp/e_53_brist_{hvor}_3d.png')
+            await pg.evaluate("async () => { const G = MORBIDIUM; G.slow.t = 0; G.slow.s = 1; const g0 = G.time, t0 = performance.now(); while ((Skjult.vis || G.time - g0 < 1.6) && performance.now() - t0 < 40000) await new Promise(r => setTimeout(r, 50)); }")
+            f3 = await pg.evaluate("() => ({ ferdig: !Skjult.vis, gulv: Paint.mesh.gulvSkjult.visible, skjult: !!MORBIDIUM.skjult })")
+            await pg.screenshot(path=f'/tmp/e_53_brudd_{hvor}_3d.png')
+            sjekk(f'innbrudd i 3D ({hvor}): bristbildet vises inne (ute bare blader), og rommet er åpent etterpå', b3.get('skudd') and (b3.get('brist', 0) >= 2 if hvor == 'nord' else b3.get('brist') == 0) and f3['ferdig'] and f3['gulv'] and not f3['skjult'], (b3.get('brist'), f3))
+            sjekk(f'ingen konsollfeil (hint og innbrudd, 3D {hvor})', not pg.errs, pg.errs[:6])
+            await pg.close()
         # 56) Hår og pynt på hodet
         #     Papiljottene og den andre pynten sitter på hodet og svever ikke over det (8.png): minst 15 prosent av pynten ligger over hodet
         #     for begge kjønn i alle tre retninger, hornene og svulsten minst 10 prosent. Issen måles på hodebildet (hodeTopp), pynten dreies

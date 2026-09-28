@@ -361,7 +361,7 @@ const Items = {
   onFloor() {
     for (const pd of this.pedestals) { R.remove(pd.g); } this.pedestals = []; this.clearSplats();
     G.run.buffs = {}; const P = G.player; if (P && P.doll && P.doll.sc0) { P.doll.sc = P.doll.sc0; P.r = .36; }
-    for (const r of G.F.rooms) if (r.role === 'treasure' || r.role === 'secret') { if (Math.random() < (r.role === 'secret' ? .5 : .25)) Aktiv.spawnJar(r.x + r.w / 2, r.z + r.h / 2, Aktiv.pick()); else this.spawnPedestal(r.x + r.w / 2, r.z + r.h / 2, this.pickFrom('kabinett')); }
+    for (const r of G.F.rooms) if (r.role === 'treasure' || r.role === 'secret') { const pd = Math.random() < (r.role === 'secret' ? .5 : .25) ? Aktiv.spawnJar(r.x + r.w / 2, r.z + r.h / 2, Aktiv.pick()) : this.spawnPedestal(r.x + r.w / 2, r.z + r.h / 2, this.pickFrom('kabinett')); if (r.role === 'secret' && G.skjult) Skjult.gjem(pd); } // står skjult til veggen er slått inn
     for (const r of G.F.rooms) if (r.role === 'cursed') { const pd = this.spawnPedestal(r.cx + .5, r.cz - .5, this.pickFrom('blod')); pd.cursed = true; pd.room = r.id; }
   },
   onRoomClear(r) {
@@ -385,7 +385,7 @@ const Items = {
     else if (eff === 'oppkast') { for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; addPuddle(P.x + Math.sin(a) * 1.6, P.z + Math.cos(a) * 1.6, 'vomit', .7, 16); } Sound.play('vomit'); for (const e of G.enemies) if (e.alive && d2(e.x, e.z, P.x, P.z) < 9) enemySlip(e); }
     else if (eff === 'morb') addMorb(30); else if (eff === 'rens') P.morb = Math.max(0, P.morb - 40);
     else if (eff === 'kjempe' || eff === 'krymp') { if (!P.doll.sc0) P.doll.sc0 = P.doll.sc; const k = eff === 'kjempe' ? 1.35 : .7; P.doll.sc = P.doll.sc0 * k; P.r = .36 * k; b.speed = (b.speed || 1) * (eff === 'kjempe' ? .9 : 1.15); if (eff === 'kjempe') b.dmg = (b.dmg || 1) * 1.25; }
-    else if (eff === 'kart') { if (G.seen) G.seen.fill(1); } else if (eff === 'glemsel') { if (G.seen) G.seen.fill(0); }
+    else if (eff === 'kart') visHeleKartet(); else if (eff === 'glemsel') { if (G.seen) G.seen.fill(0); }
     else if (eff === 'tenner') dropTeeth(P.x, P.z, 12);
     else FX.bubble(P, 'Jeg føler meg mye bedre.', 1.6);
   },

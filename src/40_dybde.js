@@ -87,7 +87,7 @@ const Dybde = {
     if (R.safe || !F || !R.level || !Paint.wallH) return;
     const W = F.W, H = F.H, PX = 8, c = document.createElement('canvas'); c.width = W * PX; c.height = H * PX;
     const g = c.getContext('2d'), wh = Paint.wallH, VG = typeof VEGG === 'object' ? VEGG : {};
-    const gulv = (x, z) => x >= 0 && z >= 0 && x < W && z < H && F.tiles[z * W + x] > 0;
+    const gulv = (x, z) => x >= 0 && z >= 0 && x < W && z < H && gulvSynlig(z * W + x); // ikke det skjulte rommet før veggen er slått inn
     const vegg = (x, z) => { if (x < 0 || z < 0 || x >= W || z >= H) return 0; const h = wh[z * W + x]; if (!h) return 0; const st = Paint.wallS && Paint.wallS[z * W + x], V = VG[st] || {}; return V.alfa ? .35 : 1; };
     const strek = (x0, y0, x1, y1, a) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; };
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
@@ -120,7 +120,7 @@ const Dybde = {
     this.stovInit(); if (!this.stovMesh) return;
     for (let i = 0; i < n && this.stov.length < this.MAKS; i++) {
       const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * r, px = x + Math.sin(a) * d, pz = z + Math.cos(a) * d;
-      if (tIdx(px, pz) < 0 || !G.F.tiles[tIdx(px, pz)]) continue;
+      if (!gulvSynlig(tIdx(px, pz))) continue; // ikke ned i det skjulte rommet bak veggen
       this.stov.push({ x: px, z: pz, y: rnd(4.5, 7.5), vy: -rnd(0, 2), s: rnd(.6, 1.5), spin: rnd(-8, 8), a: Math.random() * TAU, landet: 0 });
     }
     Sound.play('knirk', .5, rnd(.7, .9));
