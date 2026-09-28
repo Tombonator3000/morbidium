@@ -362,13 +362,13 @@ const Paint = {
         const st = stilFor(x, z), V = VG[st] || VG.panel; wallS[z * W + x] = VG[st] ? st : 'panel';
         wallH[z * W + x] = (f(x - 1, z - 1) || f(x, z - 1) || f(x + 1, z - 1)) ? (V.lav || .42) : (V.h || 2.3);
       }
-      return { wallH, wallS };
+      return { wallH, wallS, f };
     };
     const aapen = veggKart(isF), lukket = skj ? veggKart(isFL) : aapen;
     // sonen rundt det skjulte (to ruter): bare der kan de to byggene bli ulike, for en vegg avhenger bare av 5 x 5 ruter rundt seg
     let sone = null;
     if (skj) { sone = new Uint8Array(W * H); for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) if (skj[z * W + x]) for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) { const nx = x + dx, nz = z + dz; if (nx >= 0 && nz >= 0 && nx < W && nz < H) sone[nz * W + nx] = 1; } }
-    const cTopTema = new THREE.Color(th.cap || Col.dark(th.wall, .5)), cInk = new THREE.Color(INK), toppFarge = {};
+    const cTopTema = new THREE.Color(th.cap || Col.dark(th.wall, .5)), cInk = new THREE.Color(INK), toppFarge = {}, cTomFront = cTopTema.clone().multiplyScalar(.8);
     // snø: en vegg med snødekt ute rundt seg får hvit topp (#dfe6ef, litt ulik fra rute til rute) og sin egen snøtekstur (stil + '*')
     const SNO = F.vaer === 'sno', uteGulv = (x, z) => { if (!isF(x, z)) return false; const rid = F.roomId ? F.roomId[z * W + x] : -1; return rid >= 0 && F.rooms ? !!F.rooms[rid].ute : !!F.ute; };
     const snoVegg = (x, z) => { if (!SNO) return false; for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (uteGulv(x + dx, z + dz)) return true; return false; };
@@ -380,7 +380,10 @@ const Paint = {
       const h = K.wallH[z * W + x]; if (!h) return;
       const st = K.wallS[z * W + x], V = VG[st] || VG.panel, sn = snoVegg(x, z);
       const nh = (nx, nz) => (nx < 0 || nz < 0 || nx >= W || nz >= H) ? 0 : K.wallH[nz * W + nx];
-      if (nh(x, z + 1) < h) quadF(grp, st, x, x + 1, z + 1, h, sn && !(isF(x, z + 1) && !uteGulv(x, z + 1))); // ikke snøbånd og istapper på en front inn i en paviljong
+      // inne er en front mot tomrom (ikke gulv og ingen vegg) mur i toppfargen, ikke puss og brystpanel, så tomrommet ikke ser ut som et mørkt rom
+      const tom = !F.ute && V.topp === undefined && !sn && nh(x, z + 1) === 0 && !K.f(x, z + 1);
+      if (tom) quadC(T, [x, 0, z + 1], [x + 1, 0, z + 1], [x + 1, h, z + 1], [x, h, z + 1], cTomFront);
+      else if (nh(x, z + 1) < h) quadF(grp, st, x, x + 1, z + 1, h, sn && !(isF(x, z + 1) && !uteGulv(x, z + 1))); // ikke snøbånd og istapper på en front inn i en paviljong
       if (V.topp === null) return; // smijernsgjerdet har ingen topp
       const cTop = sn ? snoTopp(x, z, st) : V.topp ? (toppFarge[st] || (toppFarge[st] = new THREE.Color(V.topp))) : cTopTema;
       quadC(T, [x, h, z], [x, h, z + 1], [x + 1, h, z + 1], [x + 1, h, z], cTop);
