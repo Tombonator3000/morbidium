@@ -7,6 +7,8 @@ Tom ønsket 3D-vegger og gulv mot 2D-figurer, en mer isometrisk vinkel og mer et
 - [x] Testdel 64 og tools/bilder_kamera.py. Bilder i dokumentasjon/kamera/.
 - [x] Kameravinkel som valg under Innstillinger, Bilde (som før, lav, isometrisk), med «Last på nytt» når en annen vinkel er valgt. Adressen går foran.
 - [x] Lagt inn på main 28.9. kveld fra patchen, oppå veggprøven, og testdel 41 rettet for den nye spaken.
+- [x] Toms telefon (Adreno 750) mistet WebGL og ga hvitt bilde: telefoner kjennes nå igjen også når Chrome melder fin peker (Samsung med S Pen), telefoner får ikke omgivelsesskyggen, og mistet grafikk som ikke kommer tilbake gir en lettere start neste gang. Testdel 65.
+- [ ] Tom: prøv spillet på telefonen igjen og spill noen etasjer. Kommer feilen tilbake, send et skjermbilde av feilmeldingen. Den viser nå om spillet trodde det var telefon eller PC, kvaliteten og oppløsningen.
 - [ ] Tom: prøv isometrisk og lav (Innstillinger, Bilde, Kameravinkel) på PC og telefon, og si hvilken vinkel som skal bli standard (eller prøv egne tall i adressen med ?helning=40&dreining=30).
 - [ ] Tom: er disen og omgivelsesskyggen passe, for mye eller for lite? Styrken står i NIVA i 15_rom3d.js (dis, ao).
 - [ ] Claude, når vinkelen er valgt: vegglamper, vinduer, pilastre, blod og sprekken også på sideveggene, gjennomsiktige vegger der en høy vegg dekker pasienten, snøens parallakse etter vinkelen, og eventuelt tegninger av ting sett på skrå.

@@ -22,8 +22,10 @@ const D3 = {
   /* valgt nivå: fast i innstillingene (1 lav, 2 middels, 3 høy) eller automatisk (0) */
   kval() { const s = (G.meta && G.meta.settings) || {}, fast = ['', 'lav', 'middels', 'hoy'][s.kvalitet | 0]; return fast || (this.NIVA[s.kvAuto] ? s.kvAuto : R.coarse || R.tv ? 'middels' : 'hoy'); },
   /* «Lys og skygge» av (R.lightsOn) gir et jevnt opplyst rom: ingen punktlys, skygger, lysstråler eller kantlys.
-     Telefoner og TV får høyst 1024 i skyggekartet, også på høy: 2048 med dybdebuffer tar rundt 24 MB mer grafikkminne, og telefoner har mistet WebGL av mindre */
-  Q() { let q = this.NIVA[this.kval()] || this.NIVA.hoy; if ((R.coarse || R.tv) && q.skygge > 1024) q = Object.assign({}, q, { skygge: 1024 }); return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },
+     Telefoner og TV får høyst 1024 i skyggekartet, også på høy: 2048 med dybdebuffer tar rundt 24 MB mer grafikkminne, og telefoner har mistet WebGL av mindre.
+     De får heller ikke omgivelsesskyggen, som leser en dybdetekstur i etterbehandlingen: den er ikke prøvd på telefon, og en telefon med Adreno 750
+     som kjørte høy med den, mistet WebGL (28.9.) */
+  Q() { let q = this.NIVA[this.kval()] || this.NIVA.hoy; if ((R.coarse || R.tv) && (q.skygge > 1024 || q.ao)) q = Object.assign({}, q, { skygge: Math.min(q.skygge, 1024), ao: 0 }); return R.lightsOn ? q : Object.assign({}, q, { lys: 0, skygge: 0, straaler: false, kant: false, flat: true }); },
   /* oppløsningen følger nivået når 3D er på; uten 3D brukes det skjermen tåler */
   dpr() { const k = this.on ? Math.min(R.dprMax || 1, this.Q().dpr) : (R.dprMax || 1); if (Math.abs(k - R.dpr) > .01) { R.dpr = k; R.resize(); } if (R.settDybde) R.settDybde(this.on && !R.safe && this.Q().ao > 0); },
   /* kalles fra applySettings: nytt nivå bygger 3D-laget på nytt */

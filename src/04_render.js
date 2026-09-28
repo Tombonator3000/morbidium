@@ -50,7 +50,10 @@ const R = {
   sjokkL: [], zoomP: { x: 0, y: 1, z: 0 },
   init(canvas) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-    this.coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches); this.dpr = this.dprMax = Math.min(devicePixelRatio || 1, this.coarse ? 1.5 : 2); this.renderer.setPixelRatio(1);
+    // telefon eller nettbrett: grov peker, eller berøringsskjerm i en mobil nettleser. Chrome på Samsung-telefoner med S Pen melder fin peker
+    // (pennen teller først), og da fikk telefonen hele PC-oppsettet: full oppløsning, høy kvalitet og store teksturer (Adreno 750 mistet WebGL 28.9.)
+    const ua = navigator.userAgent || '', mobil = !!(navigator.userAgentData && navigator.userAgentData.mobile) || /Android|iPhone|iPad|iPod/i.test(ua);
+    this.coarse = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches) || ((navigator.maxTouchPoints || 0) > 0 && mobil); this.dpr = this.dprMax = Math.min(devicePixelRatio || 1, this.coarse ? 1.5 : 2); this.renderer.setPixelRatio(1);
     canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); this.mistet(); });
     canvas.addEventListener('webglcontextrestored', () => this.hentet());
     document.addEventListener('visibilitychange', () => { if (this.tapt) this.tapKlokke(); });
@@ -63,8 +66,9 @@ const R = {
   /* WebGL kan mistes på mobil: for lite minne, eller når nettleseren legges i bakgrunnen. Three.js bygger opp igjen
      det den eier når konteksten kommer tilbake. Spillet pauser, venter, går ned til lettere grafikk (lavere oppløsning
      og et trinn ned i 3D) og fortsetter. Kommer grafikken ikke tilbake på åtte sekunder, vises feilmeldingen med
-     «Prøv enkel grafikk» som før. Mistes den mens spillet ligger i bakgrunnen (bytte av app), telles de åtte sekundene
-     først når siden synes igjen, og grafikken settes ikke ned når den kommer tilbake: da var det ikke minnet. */
+     «Prøv enkel grafikk» som før, og neste lasting starter et trinn lettere (tapKlokke). Mistes den mens spillet ligger
+     i bakgrunnen (bytte av app), telles de åtte sekundene først når siden synes igjen, og grafikken settes ikke ned når
+     den kommer tilbake: da var det ikke minnet. */
   mistet() {
     this.tapt = true; this.tapN = (this.tapN || 0) + 1;
     if (typeof Testmodus === 'object') Testmodus.feil.push({ t: performance.now(), m: 'WebGL mistet (' + this.tapN + '. gang)' });
@@ -74,7 +78,16 @@ const R = {
   },
   tapKlokke() {
     clearTimeout(this.tapTimer); if (document.hidden) return;
-    this.tapTimer = setTimeout(() => { if (this.tapt && !document.hidden && window.showErr) showErr('Grafikken gikk tom for minne eller krasjet (WebGL-konteksten ble mistet), og kom ikke tilbake.', true); }, 8000);
+    this.tapTimer = setTimeout(() => {
+      if (!this.tapt || document.hidden || !window.showErr) return;
+      // kom den ikke tilbake, har Chrome ofte stengt WebGL for siden til den lastes på nytt. Da starter neste lasting et trinn lettere
+      // (bare med automatisk kvalitet, som nedgrader i 15_rom3d.js), så «Last inn på nytt» ikke krasjer på samme sted
+      // (feilmeldingen vises først, så den forteller hvilken kvalitet spillet hadde da det skjedde)
+      let lettere = '', neste = null, ned = false;
+      try { if (D3.on && !(G.meta.settings.kvalitet | 0)) { ned = true; neste = { hoy: 'middels', middels: 'lav' }[D3.kval()] || null; lettere = ' Neste gang starter spillet ' + (neste ? 'med ' + D3.NIVA[neste].navn + ' kvalitet.' : 'uten 3D.'); } } catch (e) { }
+      showErr('Grafikken gikk tom for minne eller krasjet (WebGL-konteksten ble mistet), og kom ikke tilbake.' + lettere);
+      try { if (ned) { const s = G.meta.settings; if (neste) s.kvAuto = neste; else s.d3 = false; saveMeta(); } } catch (e) { }
+    }, 8000);
   },
   hentet() {
     this.tapt = false; clearTimeout(this.tapTimer); this.checkN = 3;
