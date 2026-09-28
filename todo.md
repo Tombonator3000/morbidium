@@ -13,6 +13,7 @@ Tom sendte fem skjermbilder og ba om: (1) flottere effekter når fiender angripe
 - [x] Svaret på om ChatGPT skal lage vegger og gulv: ja for veggene nå, gulvene inne først når gulvet tegnes med egne fliser. Uteflatene Tom leverte 27.9. er i spillet. Teksturløpet tar imot resten (tegneliste 11 og 12).
 - [x] Nye fiender: Skinnlauget av 1887 (Lærlingen, Klokkeren, Holdningssøsteren og minisjefen Oldermann Nålepute), havet under huset (Avløpsarmen, Kapellanen og Draugpleieren) og sjefen Kraken. Tegnet i kode, med tegneliste 13 til ChatGPT.
 - [x] Tomrom inne ser ikke lenger ut som mørke rom (murfronter i stedet for panel og puss), og gangene har små taklamper i 3D.
+- [x] Flettet til main i PR #12 den 28.9.
 - [ ] Tom: bestill prøven i tegneliste 11 (panel, fliser, mur, tapet og stein) og vis den til Claude før resten. Liste 12 (gulvene inne) venter på egne gulvfliser. Liste 13 (de nye fiendene) når det passer.
 - [ ] Tom: prøv de nye fiendene. Skinnlauget fra etasje 3 (Oldermannen som minisjef fra etasje 2), havet fra etasje 3. Er bukket og bjella tydelige varsler, kan dagsorden leses i farten på telefon, og er tonen riktig?
 - [ ] Tom: er flekken ved sprekken for svak på telefon? Styrken står i Skjult.flekk i 48_skjult.js.
@@ -25,6 +26,7 @@ Tom sendte fem skjermbilder og ba om: (1) flottere effekter når fiender angripe
 - [ ] Claude, senere: eyeliner fra siden stikker foran ansiktet (tegningen har to øyne), og liket av menn i morgenkåpe viser ikke pynten.
 - [ ] Claude, senere: blodet på glasset kan tørke mot brunrødt i den ledige blå kanalen, og snø på hoder og ting, fotspor, knirkende fottrinn og frost på glasset (C9 i planen).
 - [ ] Claude, senere: flere eldre testdeler venter i sanntid (wait_for_timeout før en sjekk på skade eller tid). De bør vente på G.time. Morbidium-sjekken i del 28 er rettet (testpytten får kort liv og testen venter til pytten og gløden er borte).
+- [ ] Claude, senere: del 59 (Lærlingen på etasje 3) og del 60 (kall fra dypet) feilet én gang i samlekjøringen 28.9. og var grønne ved neste kjøring. Begge avhenger av hvor fiendene havner i etasjen. Bør få faste plasser.
 ## Utegrafikk 2026-09-27
 - [x] Finne grafikk som den gamle manifestkontrollen overså: gran og uteflater.
 - [x] Lage og koble inn 14 nye PNG-er til hage, Nattskogen og snødekke.

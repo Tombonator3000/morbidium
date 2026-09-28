@@ -1363,3 +1363,9 @@ Alle tidspunkt er UTC.
 - Del 59 (Lærlingen på etasje 3) og del 60 (kall fra dypet) var grønne ved ny kjøring uten endring. Begge avhenger av hvor fiendene står i en tilfeldig etasje. Ikke rettet, men notert her.
 - Ny kjøring: del 11 grønn, del 28, 59 og 60 grønne (52 sjekker), del 62 grønn bortsett fra knappenålene før hjerterettingen.
 - Del 62 etter hjerterettingen: 26 av 26 OK. Alle delene som var røde i samlekjøringen, er nå grønne.
+
+## 2026-09-28 13:47 Flettet til main (PR #12) og publisert
+- PR #12 (runde 5) er flettet til main som «Flett PR #12: Runde 5, angrepsvarsler, snø, hårruller, skjulte rom, vegger og gulv, og nye fiender» (4355d3d).
+- Pages-byggingen gikk, og den publiserte siden har den nye versjonen. Kort sjekk av siden på PC (1280 x 720) og stående telefon (390 x 844): et løp starter i 3D, blekkvarslene, snøfallet, det skjulte rommet, havet, Skinnlauget, Oldermannen og Kraken er med, og konsollen har ingen feil.
+- Grenen claude/practical-babbage-nc80bu er satt tilbake til main.
+- todo.md: flettingen er krysset av, og del 59 og 60 er notert som tester som bør få faste plasser.
