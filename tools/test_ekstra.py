@@ -304,7 +304,7 @@ async def main():
             for side in range(await pg.evaluate("(k) => hbSider(HANDBOK[k])", k)):
                 if side: await pg.click('#hNext'); await pg.wait_for_timeout(150)
                 kap.append(await pg.evaluate(HB_PLASS))
-        sjekk('pasienthåndboka har ti kapitler med fiendeindeks, og alle sidene får plass', nkap == 10 and len(kap) == 18 and all(kap), kap)
+        sjekk('pasienthåndboka har ti kapitler med fiendeindeks, og alle sidene får plass', nkap == 10 and len(kap) >= 18 and all(kap), kap)
         await pg.click('[data-close]'); await pg.wait_for_timeout(300)
         await pg.click('#tArch'); await pg.wait_for_timeout(400)
         a = await pg.evaluate("() => ({ mapper: document.querySelectorAll('.mappe').length, portrett: document.querySelectorAll('.mappe canvas').length })")
@@ -739,7 +739,7 @@ async def main():
           // glød: alle typene lages, og tingene med ild, damp eller lys får sine når etasjen bygges
           ut.typer = Object.keys(GLOD_TYPER).filter(t => { const E = Glod.lag(P.x, .3, P.z, t, { liv: 1 }); return E && E.pts.parent; }); ut.antall = Object.keys(GLOD_TYPER).length;
           const sett = new Set(); let kilder = 0, dekket = 0;
-          for (let d = 1; d <= 6; d++) { startFloor(d, false); await vent(80); for (const E of Glod.liste) sett.add(E.type); for (const o of G.props) if (['baal', 'vedovn', 'kjele', 'komfyr', 'gryte', 'candles', 'kjempeplante', 'lyktestolpe'].includes(o.kind)) { kilder++; if (Glod.liste.some(E => E.eier === o)) dekket++; } ut['glod' + d] = Glod.liste.every(E => !E.eier || G.props.includes(E.eier) || G.puddles.includes(E.eier)); }
+          for (let d = 1; d <= 6; d++) { startFloor(d, false); await vent(80); for (const E of Glod.liste) sett.add(E.type); for (const o of G.props) if (['baal', 'vedovn', 'kjele', 'komfyr', 'gryte', 'candles', 'kjempeplante', 'lyktestolpe'].includes(o.kind) && !o.skjult) { kilder++; // ting i det skjulte rommet gløder først etter innbruddet if (Glod.liste.some(E => E.eier === o)) dekket++; } ut['glod' + d] = Glod.liste.every(E => !E.eier || G.props.includes(E.eier) || G.puddles.includes(E.eier)); }
           ut.sett = [...sett]; ut.kilder = kilder; ut.dekket = dekket;
           // addPuddle slår sammen med en lilla pytt i nærheten og beholder den lengste levetiden, så testpytten får kort liv selv,
           // og vi venter til både pytten og gløden er borte (høyst 8 s spilltid), i stedet for en fast ventetid

@@ -1345,3 +1345,10 @@ Alle tidspunkt er UTC.
 - B6 (tomrom og ganger) og C8 (Kraken) er ferdige, sjekket og flettet. Del 55, 51 og 38 er grønne etter B6. Kraken ga seks nye bildenøkler (kappe, øye, pupill, nebb, skum og bandasje), som står i ART_BRIEF runde 17 og tegneliste 13.
 - Det samlede integrasjonsløpet går nå på det endelige bygget (8c6c468): generatoren, gjennomspillingen og alle delene i test_ekstra.
 - Før- og etterbilder til Tom ligger i dokumentasjon/runde5/, ett ark per punkt på lista hans: angrepsvarslene og nedslagene, snøen, hårrullene med hjorten, det skjulte rommet og tomrommene, stemplene og blodet, og de nye fiendene.
+
+## 2026-09-28 12:20 Samlet integrasjonsløp: to sjekker tilpasset, og gjennomgang av flettingen
+- Tom ba om å fullføre og flette når Kraken er ferdig. Kraken var allerede flettet inn.
+- Integrasjonsløpet på 8c6c468 så langt: generatoren er grønn (1800 etasjer, deterministisk, skjult rom i alle), gjennomspillingen er grønn uten feil, og test_ekstra har 502 OK og 2 feil. Begge feilene er sjekker som ikke kjente de nye reglene:
+  1. Del 11 ventet nøyaktig 18 sider i håndboka. De nye fiendene gir 19. Alle sidene får plass, og sjekken godtar nå 18 eller flere.
+  2. Del 28 ventet glød fra alle bål, lys og lamper. Stearinlysene i det skjulte rommet (ett per etasje, seks til sammen) gløder først etter innbruddet (B2), og telles ikke før.
+- En gjennomgang av flettingen går samtidig: fire lesere (flettingen med Toms uteflater, fiendene på tvers av sporene, grafikkminne og ytelse, testene) og én skeptiker per funn. Hvert punkt var sjekket i sitt spor; dette ser på sømmene mellom sporene.
