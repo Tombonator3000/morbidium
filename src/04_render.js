@@ -71,6 +71,8 @@ const R = {
      den kommer tilbake: da var det ikke minnet. */
   mistet() {
     this.tapt = true; this.tapN = (this.tapN || 0) + 1;
+    // øyeblikksbildet til feilrapporten (Krasj i 30_game.js), lagret så det overlever at nettleseren startes på nytt
+    try { if (typeof Krasj === 'object') { this.tapInfo = Krasj.tilstand(); Store.set('morbidium_krasj', Object.assign({ tid: new Date().toISOString() }, this.tapInfo)); } } catch (e) { }
     if (typeof Testmodus === 'object') Testmodus.feil.push({ t: performance.now(), m: 'WebGL mistet (' + this.tapN + '. gang)' });
     this.tapSkjult = document.hidden;
     try { if (G.state === 'play') openPause(); if (!document.hidden) toast('Grafikken ble borte', 'Venter på at den kommer tilbake'); } catch (e) { }
