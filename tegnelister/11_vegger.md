@@ -2,7 +2,7 @@
 
 Laget av `tools/lag_tegnelister.py`. Ikke rediger for hånd; kjør skriptet på nytt når bilder er levert, så forsvinner det som er ferdig.
 
-Skal ChatGPT tegne vegger og gulv, så det ser bedre ut? Ja for veggene, og det kan begynne nå. Uteflatene (gulvene ute, snøen, hekken, steinmuren, skogkanten og ruinen) ble levert 27.9. og er i spillet, så de står ikke her. Veggene tegnes i omtrent den oppløsningen skjermen viser dem i, så detaljene fra ChatGPT kommer med, og i dag gjentar hver vegg de samme flekkene annenhver rute (se veggen i kafeteriaen). Gulvene i liste 12 må vente til gulvet tegnes med egne fliser i spillet. I dag males hele gulvet inn i ett stort bilde med 24 til 32 punkter per rute, så et gulv fra ChatGPT ville blitt presset ned til noe uskarpt. Teppet og drivhusglasset tegnes fortsatt av koden. Den mørke gangen på skjermbilde 9 kommer av lyset og ikke av teksturene, så den blir ikke lysere av nye bilder; det er en egen oppgave. Bruk en egen ChatGPT-samtale med stilblokken for teksturer under, ikke den vanlige. Bestill prøven først (Panelveggen, Flisveggen, Murveggen, Tapetveggen og Steinveggen), og vis bildene til Claude før resten, så de kan sjekkes på mobil og PC. Referansebildet viser dagens tegning i samme målestokk, og bildeløpet retter kanter som ikke går helt i ett.
+Skal ChatGPT tegne vegger og gulv, så det ser bedre ut? Ja for veggene, og det kan begynne nå. Uteflatene (gulvene ute, snøen, hekken, steinmuren, skogkanten og ruinen) ble levert 27.9. og er i spillet, så de står ikke her. Veggene tegnes i omtrent den oppløsningen skjermen viser dem i, så detaljene fra ChatGPT kommer med, og i dag gjentar hver vegg de samme flekkene annenhver rute (se veggen i kafeteriaen). Gulvene i liste 12 må vente til gulvet tegnes med egne fliser i spillet. I dag males hele gulvet inn i ett stort bilde med 24 til 32 punkter per rute, så et gulv fra ChatGPT ville blitt presset ned til noe uskarpt. Teppet og drivhusglasset tegnes fortsatt av koden. Den mørke gangen på skjermbilde 9 kommer av lyset og ikke av teksturene, så den blir ikke lysere av nye bilder; det er en egen oppgave. Bruk en egen ChatGPT-samtale med stilblokken for teksturer under, ikke den vanlige. Referansebildet viser dagens tegning i samme målestokk, og bildeløpet retter kanter som ikke går helt i ett.
 
 ## Slik gjør du det
 
@@ -17,92 +17,7 @@ Skal ChatGPT tegne vegger og gulv, så det ser bedre ut? Ja for veggene, og det 
 Style: hand-painted cartoon game TEXTURES in the style of Conan Chop Chop mixed with Castle Crashers, for a 1923 Norwegian sanatorium (Lovecraftian, a bit gross, darkly funny). Dark brown ink lines (#2a1a14), slightly wobbly and hand-inked but thinner and calmer than on the characters, so figures stay readable on top. Flat muted warm colours with one darker cel-shade tone; every tile, board, brick or stone has a thin light edge on the upper left and a darker edge on the lower right. Mid values only: no large pure-black or pure-white areas. Even, flat lighting over the whole image: no vignette, no light pools, no cast shadows, no perspective, no blur, no photo texture. Fully OPAQUE image (transparency only where the prompt says so). No text, no signature, no frame, no objects lying on the surface. Keep the same style, line weight and scale for every texture in this conversation.
 ```
 
-## 11a. Panelveggen (tekstur)
-
-Filnavn: `vegg_panel.png`
-
-Gir: `vegg_panel`
-
-Brukes i: korridorene, venterom, arkiv, kartotek, journalrom, spisesal, kafeteria og sjefsrommene i Mottaket. Blir 442 x 294 punkter i spillet.
-
-Referanse (last opp sammen med prompten): `tegnelister/referanse/ref_vegg_panel.png`
-
-![Dagens tegning](referanse/ref_vegg_panel.png)
-
-```text
-WALL texture vegg_panel: straight-on front view of a wall section exactly 1.5 times as wide as it is tall. The bottom edge is where the wall meets the floor and the top edge is the top of the wall: no floor, no ceiling, no sky. It must tile seamlessly from left to right only. No doors, windows, lamps, pictures, furniture or signs, and no black band at the top or bottom (the game adds the ink edge). Rails must sit where the game's 3D mouldings are: skirting 0-7 percent, dado rail 43-46 percent, cornice band 94-100 percent. Layout from the bottom: 0-7% dark skirting (#3b3322); 7-43% tongue-and-groove wainscot (#6f8a55), narrow vertical boards, each with a light edge; 43-46% a dado rail with a light top edge; 46-94% pale plaster (#ddd4ad) with faint brown water stains, two hairline cracks and a little flaking paint; 94-100% a slightly darker plaster band. Landscape, 1536 x 1024.
-The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
-```
-
-## 11b. Flisveggen (tekstur)
-
-Filnavn: `vegg_fliser.png`
-
-Gir: `vegg_fliser`
-
-Brukes i: bad, behandling, elektro, tannlege, røntgen, kjøkken, frisør, medisin, vaskeri, likhus, toalett, vaskerom og operasjon. Blir 442 x 294 punkter i spillet.
-
-Referanse (last opp sammen med prompten): `tegnelister/referanse/ref_vegg_fliser.png`
-
-![Dagens tegning](referanse/ref_vegg_fliser.png)
-
-```text
-WALL texture vegg_fliser: straight-on front view of a wall section exactly 1.5 times as wide as it is tall. The bottom edge is where the wall meets the floor and the top edge is the top of the wall: no floor, no ceiling, no sky. It must tile seamlessly from left to right only. No doors, windows, lamps, pictures, furniture or signs, and no black band at the top or bottom (the game adds the ink edge). Layout from the bottom: 0-68% small square glazed tiles, about 6 per metre, off-white (#eeece4), grout #b8bab4, a few pale green (#c8d8d4) and beige (#d4c8a8) tiles, two or three rust drips (#7a461e) from the top row; 68-70% a dark trim; 70-100% plaster (#d8d4c4) with a few stains. Landscape, 1536 x 1024.
-The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
-```
-
-## 11c. Murveggen (tekstur)
-
-Filnavn: `vegg_mur.png`
-
-Gir: `vegg_mur`
-
-Brukes i: kjeller, fyrrom, gårdsrom, lysgård, søppelrom og det hemmelige rommet. Blir 442 x 294 punkter i spillet.
-
-Referanse (last opp sammen med prompten): `tegnelister/referanse/ref_vegg_mur.png`
-
-![Dagens tegning](referanse/ref_vegg_mur.png)
-
-```text
-WALL texture vegg_mur: straight-on front view of a wall section exactly 1.5 times as wide as it is tall. The bottom edge is where the wall meets the floor and the top edge is the top of the wall: no floor, no ceiling, no sky. It must tile seamlessly from left to right only. No doors, windows, lamps, pictures, furniture or signs, and no black band at the top or bottom (the game adds the ink edge). Red brick in running bond, about 8 courses per metre, bricks #8a4a36 to #a45a40 with a few darker (#5a3e30), mortar #4a3024, damp green-black along the bottom 10%, a few iron wall hooks. Landscape, 1536 x 1024.
-The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
-```
-
-## 11d. Tapetveggen (tekstur)
-
-Filnavn: `vegg_tapet.png`
-
-Gir: `vegg_tapet`
-
-Brukes i: sovesal, dagligstue, direktørens kontor, bibliotek, eget rom og skattkammeret. Blir 442 x 294 punkter i spillet.
-
-Referanse (last opp sammen med prompten): `tegnelister/referanse/ref_vegg_tapet.png`
-
-![Dagens tegning](referanse/ref_vegg_tapet.png)
-
-```text
-WALL texture vegg_tapet: straight-on front view of a wall section exactly 1.5 times as wide as it is tall. The bottom edge is where the wall meets the floor and the top edge is the top of the wall: no floor, no ceiling, no sky. It must tile seamlessly from left to right only. No doors, windows, lamps, pictures, furniture or signs, and no black band at the top or bottom (the game adds the ink edge). Rails must sit where the game's 3D mouldings are: skirting 0-7 percent, dado rail 43-46 percent, cornice band 94-100 percent. Layout from the bottom: 0-43% dark wood wainscot (#6a5a40) with framed panels; 43-46% a wooden rail; 46-100% faded damask wallpaper (#bca27c) with a darker pattern (#5a3228) in vertical strips, one peeling seam, one water stain. Landscape, 1536 x 1024.
-The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
-```
-
-## 11e. Steinveggen (tekstur)
-
-Filnavn: `vegg_stein.png`
-
-Gir: `vegg_stein`
-
-Brukes i: kapell, likkapell, begravelse, det forbannede rommet og blodofferet. Blir 442 x 294 punkter i spillet.
-
-Referanse (last opp sammen med prompten): `tegnelister/referanse/ref_vegg_stein.png`
-
-![Dagens tegning](referanse/ref_vegg_stein.png)
-
-```text
-WALL texture vegg_stein: straight-on front view of a wall section exactly 1.5 times as wide as it is tall. The bottom edge is where the wall meets the floor and the top edge is the top of the wall: no floor, no ceiling, no sky. It must tile seamlessly from left to right only. No doors, windows, lamps, pictures, furniture or signs, and no black band at the top or bottom (the game adds the ink edge). Grey dressed stone blocks of uneven length, 3 to 4 courses per metre, #6a6660 to #848078, dark joints #2e2a26, chipped corners, old soot. Landscape, 1536 x 1024.
-The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
-```
-
-## 11f. Panelveggen i Underetasjen (tekstur)
+## 11a. Panelveggen i Underetasjen (tekstur)
 
 Filnavn: `vegg_panel_3.png`
 
@@ -119,7 +34,7 @@ WALL texture vegg_panel_3: straight-on front view of a wall section exactly 1.5 
 The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
 ```
 
-## 11g. Panelveggen i Kjelleren (tekstur)
+## 11b. Panelveggen i Kjelleren (tekstur)
 
 Filnavn: `vegg_panel_4.png`
 
@@ -136,7 +51,7 @@ WALL texture vegg_panel_4: straight-on front view of a wall section exactly 1.5 
 The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
 ```
 
-## 11h. Panelveggen i Dypet (tekstur)
+## 11c. Panelveggen i Dypet (tekstur)
 
 Filnavn: `vegg_panel_6.png`
 
@@ -153,7 +68,7 @@ WALL texture vegg_panel_6: straight-on front view of a wall section exactly 1.5 
 The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
 ```
 
-## 11i. Den polstrede veggen (tekstur)
+## 11d. Den polstrede veggen (tekstur)
 
 Filnavn: `vegg_polstret.png`
 
@@ -170,7 +85,7 @@ WALL texture vegg_polstret: straight-on front view of a wall section exactly 1.5
 The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
 ```
 
-## 11j. Treveggen (tekstur)
+## 11e. Treveggen (tekstur)
 
 Filnavn: `vegg_tre.png`
 
@@ -187,7 +102,7 @@ WALL texture vegg_tre: straight-on front view of a wall section exactly 1.5 time
 The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
 ```
 
-## 11k. Paviljongveggen (tekstur)
+## 11f. Paviljongveggen (tekstur)
 
 Filnavn: `vegg_paviljong.png`
 
@@ -204,7 +119,7 @@ WALL texture vegg_paviljong: straight-on front view of a wall section exactly 1.
 The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
 ```
 
-## 11l. Tømmerveggen (tekstur)
+## 11g. Tømmerveggen (tekstur)
 
 Filnavn: `vegg_tommer.png`
 
@@ -221,7 +136,7 @@ WALL texture vegg_tommer: straight-on front view of a wall section exactly 1.5 t
 The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
 ```
 
-## 11m. Smijernsgjerdet (tekstur)
+## 11h. Smijernsgjerdet (tekstur)
 
 Filnavn: `vegg_gjerde.png`
 
@@ -238,7 +153,7 @@ WALL texture vegg_gjerde: straight-on front view of a wall section exactly 1.5 t
 The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.
 ```
 
-## 11n. De røde forhengene (tekstur)
+## 11i. De røde forhengene (tekstur)
 
 Filnavn: `vegg_forheng.png`
 

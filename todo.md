@@ -13,7 +13,8 @@ Tom sendte fem skjermbilder og ba om: (1) flottere effekter når fiender angripe
 - [x] Svaret på om ChatGPT skal lage vegger og gulv: ja for veggene nå, gulvene inne først når gulvet tegnes med egne fliser. Uteflatene Tom leverte 27.9. er i spillet. Teksturløpet tar imot resten (tegneliste 11 og 12).
 - [x] Nye fiender: Skinnlauget av 1887 (Lærlingen, Klokkeren, Holdningssøsteren og minisjefen Oldermann Nålepute), havet under huset (Avløpsarmen, Kapellanen og Draugpleieren) og sjefen Kraken. Tegnet i kode, med tegneliste 13 til ChatGPT.
 - [x] Tomrom inne ser ikke lenger ut som mørke rom (murfronter i stedet for panel og puss), og gangene har små taklamper i 3D.
-- [ ] Tom: bestill prøven i tegneliste 11 (panel, fliser, mur, tapet og stein) og vis den til Claude før resten. Liste 12 (gulvene inne) venter på egne gulvfliser. Liste 13 (de nye fiendene) når det passer.
+- [x] ChatGPT: veggprøven med panel, fliser, mur, tapet og stein, samt hele liste 13, levert 28.9. 53 nye manifestbilder, 611 av 636 i alt. Se dokumentasjon/grafikk-2026-09-28/LEVERANSE.md.
+- [ ] Claude og Tom: vurder de fem veggprøvene på PC og mobil før de ni øvrige veggene bestilles. Liste 12 med 16 gulv venter fortsatt på egne gulvfliser.
 - [ ] Tom: prøv de nye fiendene. Skinnlauget fra etasje 3 (Oldermannen som minisjef fra etasje 2), havet fra etasje 3. Er bukket og bjella tydelige varsler, kan dagsorden leses i farten på telefon, og er tonen riktig?
 - [ ] Tom: er flekken ved sprekken for svak på telefon? Styrken står i Skjult.flekk i 48_skjult.js.
 - [ ] Claude, senere: håndboka rekker under skjermkanten på liggende telefon (844 x 390) på alle sider (fantes før runde 5).
