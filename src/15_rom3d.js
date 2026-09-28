@@ -88,7 +88,7 @@ const D3 = {
     if (PM.bakke) { bytt(PM.bakke, this.toon({ map: PM.bakke.material.map, color: PM.bakke.material.color })); PM.bakke.receiveShadow = true; }
     this.lysLag();
     this.lamper = []; this.tidU = this.tidU || { value: 0 };
-    this.vegglamper(F, th); this.arkitektur(F, th); if (Q.stov) this.stov(Q.stov); if (Q.taake) this.taake(F, th);
+    this.vegglamper(F, th); this.ganglamper(F, th); this.arkitektur(F, th); if (Q.stov) this.stov(Q.stov); if (Q.taake) this.taake(F, th);
     for (const o of G.props) { o.d3 = true; this.moble(o); }
     R.post.uniforms.uLights.value = 0; R.renderer.shadowMap.needsUpdate = true;
     this.bygd = true; this.t = 0;
@@ -169,6 +169,24 @@ const D3 = {
         n++;
       }
     }
+  },
+  /* små taklamper i gangene inne: et svakt, varmt lys omtrent hver femte rute, ikke i døråpningene (de har sitt eget) og ikke i det skjulte.
+     Gangene var bare opplyst av lykta og ble mørke hull mellom rommene. Ingen tilfeldighet, så de står likt hver gang */
+  ganglamper(F, th) {
+    this.gangLys = 0; if (F.ute || G.drom) return;
+    const W = F.W, H = F.H, rom = i => F.roomId && F.roomId[i] >= 0, gang = i => F.tiles[i] === T_COR && !rom(i) && gulvSynlig(i), kand = [], satt = [];
+    // kandidatene: gangruter uten rom i de åtte naborutene, de åpneste først (midt i en bred gang), så i fast rekkefølge
+    for (let z = 1; z < H - 1; z++) for (let x = 1; x < W - 1; x++) {
+      if (!gang(z * W + x)) continue; let fri = true, n = 0;
+      for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) { const j = (z + dz) * W + x + dx; if (rom(j)) fri = false; else if (gulvSynlig(j)) n++; }
+      if (fri) kand.push([n, x, z]);
+    }
+    kand.sort((a, b) => b[0] - a[0] || a[2] - b[2] || a[1] - b[1]);
+    for (const [, x, z] of kand) {
+      if (satt.some(([sx, sz]) => (sx - x) ** 2 + (sz - z) ** 2 < 25)) continue; satt.push([x, z]);
+      const lp = R.light(x + .5, z + .8, 2.8, th.pool || '#ffd89a', .42, R.levelL); lp.userData.y = 2.1; lp.userData.gang = true; this.ting.push(lp);
+    }
+    this.gangLys = satt.length;
   },
   /* ---------- lys i lufta: stråler fra vinduene og kjegler under lampene ---------- */
   straaleGeo() {

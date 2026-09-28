@@ -2378,6 +2378,60 @@ async def main():
             sjekk(f'innbrudd i 3D ({hvor}): bristbildet vises inne (ute bare blader), og rommet er åpent etterpå', b3.get('skudd') and (b3.get('brist', 0) >= 2 if hvor == 'nord' else b3.get('brist') == 0) and f3['ferdig'] and f3['gulv'] and not f3['skjult'], (b3.get('brist'), f3))
             sjekk(f'ingen konsollfeil (hint og innbrudd, 3D {hvor})', not pg.errs, pg.errs[:6])
             await pg.close()
+        # 55) Tomrom og ganger
+        #     Inne er en veggfront som vender mot tomrom (ikke gulv og ingen vegg), mur i toppfargen og ikke puss med brystpanel, så tomrommet
+        #     ikke ser ut som et mørkt rom (9.webp) og det skjulte ikke skiller seg ut. Ute beholder hekkene frontene sine. I 3D har gangene
+        #     inne små taklamper, faste fra gang til gang, ikke i døråpningene og ikke i det skjulte, og de får punktlys når man står der
+        FRONT55 = """() => { const G = MORBIDIUM, F = G.F, W = F.W, PM = Paint.mesh, tom = (x, z) => { if (x < 0 || z < 0 || x >= W || z >= F.H) return true; const i = z * W + x; return !gulvSynlig(i) && !(Paint.wallH[i] > 0); };
+          let puss = 0, mot = 0, mur = 0, murSkjult = 0, murFeil = 0;
+          for (const m of PM.vegger) { if (!m.visible) continue; const p = m.geometry.attributes.position.array; for (let k = 0; k < p.length; k += 18) { if (tom(Math.floor(Math.min(p[k], p[k + 3]) + .01), Math.round(p[k + 2]))) puss++; else mot++; } }
+          for (const m of [PM.topp, ...(PM.toppEkstra || [])]) { if (!m || !m.visible) continue; const p = m.geometry.attributes.position.array;
+            for (let k = 0; k < p.length; k += 18) if (p[k + 1] === 0 && p[k + 4] === 0 && p[k + 7] > 0 && p[k + 2] === p[k + 8]) { mur++; const x = Math.floor(p[k] + .01), z = Math.round(p[k + 2]); if (!tom(x, z)) murFeil++; if (G.skjult && G.skjult[z * W + x]) murSkjult++; } }
+          return { puss, mot, mur, murSkjult, murFeil, ute: !!F.ute, skjult: !!G.skjult }; }"""
+        ETG55 = """async (o) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)); G.run.seed = o.s; G.run.dromVent = 0; startFloor(o.d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); rolig(); }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        await pg.evaluate(ETG55, {'s': 180 * 7919, 'd': 2})
+        inne = await pg.evaluate(FRONT55)
+        sjekk('tomrom inne: ingen puss eller brystpanel mot tomrom, frontene der er mur i toppmeshen, og frontene mot gulvet har puss', inne['puss'] == 0 and inne['mur'] > 10 and inne['murFeil'] == 0 and inne['mot'] > 40 and not inne['ute'], inne)
+        # det skjulte (lukket) ser ut som annet tomrom: en sprekk i sørveggen har murfront mot gangen bak, som resten av sørveggen, og ingen puss
+        sk = await pg.evaluate("""async (o) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)); for (let s = 1; s < 400; s++) { const F = generateFloor(s * 7919 + 2 * 7919, 2, {}), h = F.rooms.find(r => r.role === 'secret'); if (!F.skjult || !h) continue; const p = F.rooms[h.parent];
+            if (p.ute || !F.crack.every(i => ((i / F.W) | 0) === p.z + p.h)) continue; G.run.seed = s * 7919; G.run.dromVent = 0; startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } return s; } return null; }""")
+        skj = await pg.evaluate(FRONT55)
+        sjekk('tomrom inne: det skjulte bak sprekken har murfronter som annet tomrom, og ingen puss', sk is not None and skj['skjult'] and skj['puss'] == 0 and skj['murSkjult'] > 0 and skj['murFeil'] == 0, (sk, skj))
+        await pg.evaluate(ETG55, {'s': 180 * 7919, 'd': 1})
+        ute = await pg.evaluate(FRONT55)
+        sjekk('tomrom ute: hekkene og trærne beholder frontene sine (landskapet fortsetter), ingen murfronter', ute['ute'] and ute['puss'] > 0 and ute['mur'] == 0, ute)
+        sjekk('ingen konsollfeil (tomrom, 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: taklampene i gangene
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        GANG55 = """() => { const G = MORBIDIUM, F = G.F, W = F.W, L = D3.kilder().filter(m => m.userData.gang), rom = i => F.roomId[i] >= 0;
+          let feil = 0, naerRom = 0, tett = 0; const pos = L.map(m => [Math.floor(m.position.x), Math.floor(m.position.z - .3)]);
+          for (const [x, z] of pos) { const i = z * W + x; if (F.tiles[i] !== 2 || rom(i) || !gulvSynlig(i)) feil++; for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (rom((z + dz) * W + x + dx)) naerRom++; }
+          for (let a = 0; a < pos.length; a++) for (let c = a + 1; c < pos.length; c++) if (Math.hypot(pos[a][0] - pos[c][0], pos[a][1] - pos[c][1]) < 5) tett++;
+          const topp = Paint.mesh.topp, p = topp.geometry.attributes.position.array, n = topp.geometry.attributes.normal ? topp.geometry.attributes.normal.array : null; let murN = 0, murNok = 0;
+          if (n) for (let k = 0; k < p.length; k += 18) if (p[k + 1] === 0 && p[k + 4] === 0 && p[k + 7] > 0) { murN++; if (n[k + 2] > .9) murNok++; }
+          return { on: D3.on && D3.bygd, n: L.length, gangLys: D3.gangLys, feil, naerRom, tett, pos: pos.slice(0, 4), toon: topp.material.type, murN, murNok, kilder: D3.kilder().length }; }"""
+        await pg.evaluate(ETG55, {'s': 180 * 7919, 'd': 2})
+        g1 = await pg.evaluate(GANG55)
+        sjekk('ganger i 3D: taklamper i gangene inne, på gangruter, ikke i døråpningene og minst fem ruter fra hverandre', g1['on'] and g1['n'] >= 3 and g1['n'] == g1['gangLys'] and g1['feil'] == 0 and g1['naerRom'] == 0 and g1['tett'] == 0, g1)
+        sjekk('tomrom i 3D: murfrontene er tegneserielyst som toppene og vender mot kameraet', g1['toon'] == 'MeshToonMaterial' and g1['murN'] > 10 and g1['murNok'] == g1['murN'], g1)
+        # står man under en lampe, får den et punktlys (D3.tick i faste steg, så maskinens fart ikke betyr noe)
+        pl = await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player, m = D3.kilder().find(k => k.userData.gang), x = m.position.x, z = m.position.z;
+          P.x = x; P.z = z - .3; if (P.lantern) { P.lantern.position.x = P.x; P.lantern.position.z = P.z; } R.camT.x = x; R.camT.z = z; for (let k = 0; k < 120; k++) D3.tick(1 / 60);
+          const l = D3.pool.find((l, i) => i > 0 && l.intensity > 0 && Math.abs(l.position.x - x) < 1e-6 && Math.abs(l.position.z - (z - .3)) < 1e-6); return { lys: !!l, styrke: l ? +l.intensity.toFixed(3) : 0, y: l ? l.position.y : 0 }; }""")
+        sjekk('ganger i 3D: under en taklampe får den et punktlys oppe under taket', pl['lys'] and pl['styrke'] > .2 and pl['y'] > 1.8, pl)
+        await pg.wait_for_timeout(400); await pg.screenshot(path='/tmp/e_55_gang_3d.png')
+        # ute har gangene ingen taklamper, og en ny etasje rydder de gamle; tilbake i samme etasje står lampene på de samme stedene
+        await pg.evaluate(ETG55, {'s': 180 * 7919, 'd': 1})
+        g2 = await pg.evaluate(GANG55)
+        await pg.evaluate(ETG55, {'s': 180 * 7919, 'd': 2})
+        g3 = await pg.evaluate(GANG55)
+        sjekk('ganger i 3D: ingen taklamper ute, de gamle ryddes med etasjen, og de står likt neste gang', g2['n'] == 0 and g2['gangLys'] == 0 and g3['n'] == g1['n'] and g3['pos'] == g1['pos'], (g1, g2, g3))
+        sjekk('ingen konsollfeil (tomrom og ganger, 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
