@@ -32,8 +32,8 @@ const Dybde = {
      etter drapet: testdel 30 venter at den er borte etter 0,3 sekunder, og på en treg maskin kan det bildet alene ta så lang tid */
   kastere() {
     const L = [];
-    for (const e of G.enemies || []) if (e.alive && e.doll && e.state !== 'spawn') L.push({ k: e, x: e.x, z: e.z, b: e.r * 2.2, h: 1, U: e.doll.U });
-    if (G.boss && G.boss.alive && G.boss.doll) L.push({ k: G.boss, x: G.boss.x, z: G.boss.z, b: 2, h: 1.4, U: G.boss.doll.U });
+    for (const e of G.enemies || []) if (e.alive && e.doll && e.state !== 'spawn' && !e.dukket && e.doll.root.visible) L.push({ k: e, x: e.x, z: e.z, b: e.r * 2.2, h: 1, U: e.doll.U }); // under vann (e.dukket) og usynlig: ingen skygge
+    if (G.boss && G.boss.alive && G.boss.doll && !G.boss.dukket && G.boss.doll.root.visible) L.push({ k: G.boss, x: G.boss.x, z: G.boss.z, b: 2, h: 1.4, U: G.boss.doll.U });
     for (const n of G.npcs || []) if (n.doll) L.push({ k: n, x: n.x, z: n.z, b: .9, h: 1, U: n.doll.U });
     for (const d of G.ekstraDukker || []) if (d.root && d.root.parent && d.root.visible) L.push({ k: d, x: d.root.position.x, z: d.root.position.z, b: .9, h: 1, U: d.U });
     for (const o of G.props || []) {

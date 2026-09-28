@@ -12,7 +12,7 @@
 const SJEF_HP = { 1: 550, 2: 700, 3: 950, 4: 1150, 5: 1350, 6: 1500 };
 const SJEF_PULJE = ['krok', 'rust', 'arkivar', 'klumpen'];
 const SJEF_DATA = { krok: BOSSES[2], rust: BOSSES[3], arkivar: BOSSES[4], journalen: BOSSES[6] };
-SJEF_DATA.klumpen = { type: 'klumpen', weapon: null, name: 'Den Store Klumpen', title: 'Alle pasientene som ble til én', hp: 1000, minion: 'klumpunge', minions: 3, attacks: ['klem', 'armslag', 'spytt', 'rull', 'armslag', 'klem', 'summon'], puddle: 'blod', r: 1.45, fart: 1.45, skygge: 1.7 };
+SJEF_DATA.klumpen = { type: 'klumpen', weapon: null, name: 'Den Store Klumpen', title: 'Alle pasientene som ble til én', hp: 1000, minion: 'klumpunge', minions: 3, attacks: ['klem', 'armslag', 'spytt', 'rull', 'armslag', 'klem', 'summon'], puddle: 'blod', r: 1.45, fart: 1.45, skygge: 1.7, egne: ['rull'] };
 /* sjefen i en etasje for dette løpet. Eldre lagrede løp uten trekning får de faste sjefene. */
 function sjefFor(depth) {
   const fast = BOSSES[depth] || BOSSES[MAX_DEPTH], type = (G.run && G.run.sjefer && G.run.sjefer[depth]) || fast.type, D = SJEF_DATA[type] || fast;
@@ -143,10 +143,14 @@ SJEF_DATA.klumpen.tick = (B, dt) => {
   if (!R0.traff && P.alive && d2(B.x, B.z, P.x, P.z) < (B.r + P.r + .3) ** 2) { R0.traff = true; hurt(P, bossDmg(B) * 1.1, { type: 'boss', x: B.x, z: B.z, kb: 12 }); }
   if (wall || R0.igjen <= 0) { B.rull = null; if (wall) { B.state = 'stagger'; B.t = 1.6; B.stagger = 1.6; R.shake(.5); Sound.play('bonk', 1, .5); numText(B.x, B.z, 'BONK', 'crit', 4); puff(B.x, B.z, 6, 1.8); } }
 };
-/* Journalen skriver om kapitlene til sjefene du faktisk har møtt i dette løpet */
-BOSS_MOVES.rewrite = function (B, dist, toP, dmg) {
+/* Journalen skriver om kapitlene til sjefene du faktisk har møtt i dette løpet. Trekk som bare virker med sjefens egen tilstand
+   (Klumpens rull og hjortens storm, som bare sjefens egen tick flytter), står i SJEF_DATA[t].egne og lånes ikke: da ble det et varsel og så ingenting */
+function laanbareTrekk() {
   const moter = Object.values((G.run && G.run.sjefer) || { 1: 'krok', 2: 'rust', 3: 'arkivar' }).filter(t => t !== 'journalen');
-  const valg = moter.flatMap(t => ((SJEF_DATA[t] || {}).attacks || []).filter(k => BOSS_MOVES[k] && k !== 'rewrite' && k !== 'rull'));
+  return moter.flatMap(t => { const D = SJEF_DATA[t] || {}, egne = D.egne || []; return (D.attacks || []).filter(k => BOSS_MOVES[k] && k !== 'rewrite' && !egne.includes(k)); });
+}
+BOSS_MOVES.rewrite = function (B, dist, toP, dmg) {
+  const valg = laanbareTrekk();
   const k = pick(valg.length ? valg : ['hookpull', 'flood', 'stamprain']);
   FX.bubble(B, pick(['Jeg blar tilbake.', 'Kjenner du igjen dette kapittelet?', 'Omskrevet.']), 1.4, 'boss');
   BOSS_MOVES[k](B, dist, toP, dmg);
@@ -163,8 +167,10 @@ const Mini = {
   onFloor() {
     const F = G.F; this.rom = {}; if (!F) return;
     const rng = new RNG(((F.seed || 1) >>> 0) * 13 + 71), risk = F.rooms.find(r => r.role === 'risk');
-    if (risk) this.rom[risk.id] = rng.pick(MINISJEFER);
-    if (G.depth >= 2 && rng.chance(.35)) { const k = F.rooms.filter(r => r.role === 'combat' && r.waves && r.waves.length && (!F.dist || F.dist[r.id] >= 2)); if (k.length) this.rom[rng.pick(k).id] = rng.pick(MINISJEFER); }
+    // noen minisjefer hører ikke hjemme i parken (ENEMIES[t].fraDybde), som Oldermann Nålepute
+    const pulje = MINISJEFER.filter(t => !(ENEMIES[t] && ENEMIES[t].fraDybde > G.depth));
+    if (risk) this.rom[risk.id] = rng.pick(pulje);
+    if (G.depth >= 2 && rng.chance(.35)) { const k = F.rooms.filter(r => r.role === 'combat' && r.waves && r.waves.length && (!F.dist || F.dist[r.id] >= 2)); if (k.length) this.rom[rng.pick(k).id] = rng.pick(pulje); }
     this.vis(null);
   },
   kom(C) {
