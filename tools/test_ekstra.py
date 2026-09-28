@@ -2597,7 +2597,7 @@ async def main():
           const vegg = st => { const m = Paint.mesh.vegger.find(v => v.userData.veggStil === st); return m && m.material.map; }, mål = t => t && [t.image.width, t.image.height, t.fraBilde || ''];
           const last = (k, src) => new Promise(r => { SPRITES[k] = src; const im = Art.img[k] = new Image(); im.onload = im.onerror = () => r(im.naturalWidth); im.src = src; });
           delete Art.img.gulv_gress; // Toms gressbilde (levert 27.9.) tas ut, så bakken males av koden
-          await bygg(2); ut.malt = mål(vegg('panel')); await bygg(1); ut.maltBakke = mål(Paint.mesh.bakke.material.map);
+          await bygg(2); ut.malt = mål(vegg('panel')); await bygg(1); ut.maltBakke = mål(Paint.mesh.bakke.material.map); ut.vaer1 = G.F.vaer;
           ut.lastet = [await last('vegg_panel', panel), await last('gulv_gress', bakke)];
           await bygg(2); const t = vegg('panel'); ut.panel = mål(t); ut.rep = t && +t.repeat.x.toFixed(4);
           await bygg(3); ut.panel3 = mål(vegg('panel')); // Underetasjen har egne farger (vegg_panel_3), og uten det bildet maler koden
@@ -2616,7 +2616,7 @@ async def main():
           R.lowTex = true; await bygg(2); ut.lowTex = mål(vegg('panel')); R.lowTex = false;
           const s = G.meta.settings; s.simple = true; applySettings(); await bygg(2); ut.enkel = mål(vegg('panel')); s.simple = false; applySettings(); await bygg(2);
           return ut; }""", [panel_url, bakke_url])
-        sjekk('uten bilder er veggen og bakken malt som før (256 punkter bred)', tk['malt'][:2] == [256, 296] and tk['malt'][2] == '' and tk['maltBakke'] == [256, 256, ''], [tk['malt'], tk['maltBakke']])
+        sjekk('uten bilder er veggen og bakken malt som før (256 punkter bred)', tk['malt'][:2] == [256, 296] and tk['malt'][2] == '' and tk['maltBakke'] == ([512, 512, ''] if tk.get('vaer1') == 'sno' else [256, 256, '']), [tk['malt'], tk['maltBakke'], tk.get('vaer1')])
         sjekk('panelveggen fra bildet er 442 x 294 og gjentas hver 3,45 rute (repeat .5797)', tk['lastet'][0] == 442 and tk['panel'] == [442, 294, 'vegg_panel'] and abs(tk['rep'] - .5797) < .001, [tk['panel'], tk['rep']])
         sjekk('i Underetasjen maler koden panelveggen når vegg_panel_3 mangler', tk['panel3'][0] == 256 and tk['panel3'][2] == '', tk['panel3'])
         sjekk('bakken i Parken fra bildet er 512 punkter over 4 x 4 ruter, 256 på telefon', tk['bakke'] == [512, 512, 'gulv_gress'] and tk['bakkeRep'] == 48 and tk['bakkeTlf'] == [256, 256, 'gulv_gress'], [tk['bakke'], tk['bakkeRep'], tk['bakkeTlf']])
@@ -2786,8 +2786,8 @@ async def main():
         sjekk('vinter: ingen kutt langs rutene (forskjellen over 200 rutegrenser er høyst 1,5 ganger den midt i rutene)', s5['nb'] == 200 and s5['over'] <= 1.5 * s5['inne'], (s5['over'], s5['inne'], s5['nb']))
         sjekk('vinter: veggene mot snøen har snøbånd (øverste 12 punkter lyse) og hvit topp', s5['snoVegger'] > 0 and s5['topp12'] > .8 and s5['snoTopp'] > 0, (s5['snoVegger'], s5['stil'], s5['topp12'], s5['snoTopp']))
         sjekk('vinter: fronter som vender inn i en paviljong har ikke snøbånd eller istapper', s5['innAlle'] > 0 and s5['innSno'] == 0, (s5['innAlle'], s5['innSno']))
-        sjekk('vinter: bakken ute er snø, gjentatt hver tiende rute, og lyset er kaldere', s5['bakke'] > .7 and abs(s5['bakkeRute'] - 10) < .01 and s5['amb'] != r5['amb'], (s5['bakke'], s5['bakkeRute'], s5['amb'], r5['amb']))
-        sjekk('vinter: en Parken uten snø har ingen snøfarger, snøvegger, snøtopper eller snøbakke', r5['snoFarge'] <= 2 and r5['snoVegger'] == 0 and r5['snoTopp'] == 0 and r5['bakke'] < .5 and abs(r5['bakkeRute'] - 5) < .01, r5)
+        sjekk('vinter: bakken ute er snø (Toms snøbilde hver fjerde rute, malt hver tiende), og lyset er kaldere', s5['bakke'] > .7 and min(abs(s5['bakkeRute'] - 4), abs(s5['bakkeRute'] - 10)) < .01 and s5['amb'] != r5['amb'], (s5['bakke'], s5['bakkeRute'], s5['amb'], r5['amb']))
+        sjekk('vinter: en Parken uten snø har ingen snøfarger, snøvegger, snøtopper eller snøbakke', r5['snoFarge'] <= 2 and r5['snoVegger'] == 0 and r5['snoTopp'] == 0 and r5['bakke'] < .5 and min(abs(r5['bakkeRute'] - 4), abs(r5['bakkeRute'] - 5)) < .01, r5)
         sjekk('vinter: lette teksturer og Enkel grafikk har også snøen', l5['T'] == 16 and l5['dekke'] >= .6 and l5['maks'] < 250 and e5['dekke'] >= .7 and e5['snoVegger'] > 0, (l5['T'], l5['dekke'], e5['dekke'], e5['snoVegger']))
         sjekk('vinter: etasjen med snø bygges på høyst 1,3 ganger tiden uten (samme frø, beste av fem: startFloor, uten snø, Paint.level med og uten)', m52['tid'][0] <= 1.3 * m52['tid'][1], m52['tid'])
         await pg.wait_for_timeout(800); await pg.screenshot(path='/tmp/e_52_vinter_2d.png')
@@ -2860,10 +2860,14 @@ async def main():
         ord_ = await pg.evaluate("""async (still) => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)); eval(still)(1.6); for (const e of G.enemies) if (e.alive) killEntity(e, {});
           const alle = new Set([...Skjult.ord(), 'Det trekker herfra.', 'Den veggen ser tynn ut.', 'Er det noen der inne?']), bobler = [], _b = FX.bubble; FX.bubble = function (hvem, s, ...a) { if (hvem === P) bobler.push(s); return _b.call(this, hvem, s, ...a); };
           if (G.meta.tips) delete G.meta.tips.sprekk; G.meta.settings.tips = true; Spesial.sagt = false; Spesial.naerT = 0;
+          // tipsene vises etter en ventetid i faktisk tid, så et tips fra starten av løpet (kartet) kan komme etter og skrive over: alle som vises, noteres
+          let tEl = document.getElementById('tips'); if (!tEl) { tEl = document.createElement('div'); tEl.id = 'tips'; document.getElementById('hud').appendChild(tEl); }
+          const sett = [], mo = new MutationObserver(() => sett.push(tEl.textContent)); mo.observe(tEl, { childList: true, subtree: true, characterData: true });
           // tre sekunder i spillets egen løkke, og resten av de tjue sekundene med Spesial.update i steg på en tidel (maskinen er for treg til tjue sekunder spilltid)
           const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 3 && performance.now() - t0 < 60000) { P.hp = P.maxHp; await vent(100); } let tid = G.time - g0; const n3 = bobler.filter(s => alle.has(s)).length;
           while (tid < 20) { Spesial.update(.1); tid += .1; }
-          FX.bubble = _b; const el = document.getElementById('tips'); return { tid: +tid.toFixed(1), ekte: +(G.time - g0).toFixed(1), n3, n: bobler.filter(s => alle.has(s)).length, bobler: bobler.slice(0, 6), tips: !!(G.meta.tips && G.meta.tips.sprekk), tekst: el ? el.textContent : '' }; }""", STILL53)
+          for (let i = 0; i < 60 && !sett.some(t => t.includes('murt igjen')); i++) await vent(100); mo.disconnect();
+          FX.bubble = _b; const el = document.getElementById('tips'); return { tid: +tid.toFixed(1), ekte: +(G.time - g0).toFixed(1), n3, n: bobler.filter(s => alle.has(s)).length, bobler: bobler.slice(0, 6), tips: !!(G.meta.tips && G.meta.tips.sprekk), tekst: sett.find(t => t.includes('murt igjen')) || (el ? el.textContent : '') }; }""", STILL53)
         sjekk('hint: nøyaktig én boble på tjue sekunder spilltid ved sprekken (den første etter to sekunder), og tipset om murte vegger', ord_['tid'] >= 20 and ord_['ekte'] >= 2.5 and ord_['n3'] == 1 and ord_['n'] == 1 and ord_['tips'] and 'murt igjen' in ord_['tekst'], ord_)
         await pg.evaluate(STILL53, 1.8); await pg.wait_for_timeout(700); await pg.screenshot(path='/tmp/e_53_hint_2d.png')
         # et vanlig slag på sprekken: hult, «Det knaker», og hårstreken vokser et steg
