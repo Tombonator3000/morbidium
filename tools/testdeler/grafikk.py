@@ -63,7 +63,7 @@ async def del_30(b):
     # 30) Dybde: lykteskygger, kontaktskygger, varmeflimmer, speiling i vannet, lysende tåke, takstøv og kameradykk
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg)
-    dy = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, u = R.post.uniforms, ut = {};
+    dy = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async t => { Klokke.spol(t); }, u = R.post.uniforms, ut = {};
           startFloor(2, false); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat' && !r.ute && r.w >= 8) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
           // kontaktskyggene males med etasjen og byttes ut ved neste
           const ao1 = Dybde.ao; ut.ao = !!(ao1 && ao1.m.parent === R.level);
