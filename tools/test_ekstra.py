@@ -2419,7 +2419,7 @@ async def main():
         sjekk('ganger i 3D: taklamper i gangene inne, på gangruter, ikke i døråpningene og minst fem ruter fra hverandre', g1['on'] and g1['n'] >= 3 and g1['n'] == g1['gangLys'] and g1['feil'] == 0 and g1['naerRom'] == 0 and g1['tett'] == 0, g1)
         sjekk('tomrom i 3D: murfrontene er tegneserielyst som toppene og vender mot kameraet', g1['toon'] == 'MeshToonMaterial' and g1['murN'] > 10 and g1['murNok'] == g1['murN'], g1)
         # står man under en lampe, får den et punktlys (D3.tick i faste steg, så maskinens fart ikke betyr noe)
-        pl = await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player, m = D3.kilder().find(k => k.userData.gang), x = m.position.x, z = m.position.z;
+        pl = await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player, m = D3.kilder().find(k => k.userData.gang); if (!m) return { lys: false, styrke: 0, y: 0 }; const x = m.position.x, z = m.position.z;
           P.x = x; P.z = z - .3; if (P.lantern) { P.lantern.position.x = P.x; P.lantern.position.z = P.z; } R.camT.x = x; R.camT.z = z; for (let k = 0; k < 120; k++) D3.tick(1 / 60);
           const l = D3.pool.find((l, i) => i > 0 && l.intensity > 0 && Math.abs(l.position.x - x) < 1e-6 && Math.abs(l.position.z - (z - .3)) < 1e-6); return { lys: !!l, styrke: l ? +l.intensity.toFixed(3) : 0, y: l ? l.position.y : 0 }; }""")
         sjekk('ganger i 3D: under en taklampe får den et punktlys oppe under taket', pl['lys'] and pl['styrke'] > .2 and pl['y'] > 1.8, pl)
