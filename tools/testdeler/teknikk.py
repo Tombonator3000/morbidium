@@ -1,4 +1,4 @@
-"""Teknikken: lyskildene etter flettingen, hint og innbrudd, krokene og testklokka.
+"""Teknikken: lyskildene etter flettingen, hint og innbrudd, krokene, testklokka og nettutgaven.
 
 Testdeler fra test_ekstra.py. Kjøres med python3 tools/test_ekstra.py --system teknikk eller --del N.
 """
@@ -275,4 +275,65 @@ async def del_67(b):
     sjekk('ingen konsollfeil (testklokka fra tittelen)', not f1 and not f2, f1 + f2)
 
 
-DELER = {43: del_43, 53: del_53, 66: del_66, 67: del_67}
+async def del_68(b):
+    # 68) Nettutgaven (dist/web, build.py): bildene, delene og lydene er egne filer. Startsettet (UI-settet, glassene, animasjonsarkene,
+    #     pasienten og flatene) er dekodet før tittelen, resten hentes i bakgrunnen, en fiende utenfor startsettet får bildet sitt i spillet,
+    #     lydene hentes og pakkes ut uten feil, en mester som kommer før delene hans er hentet, tegnes av koden uten feil, og fra disken
+    #     sier siden at nettutgaven må åpnes fra en nettside. Serveres over http som på GitHub Pages.
+    import functools, http.server, threading
+    web = ROT / 'dist' / 'web'
+    if not (web / 'index.html').exists():
+        sjekk('nettutgaven finnes (python3 build.py lager dist/web)', False, str(web)); return
+    h = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(web)); h.log_message = lambda *a: None
+    srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), h); threading.Thread(target=srv.serve_forever, daemon=True).start()
+    url = f'http://127.0.0.1:{srv.server_address[1]}/index.html?2d'
+    try:
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(url); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=90000)
+        ti = await pg.evaluate("""() => { performance.setResourceTimingBufferSize(5000); // bufferen holder 250 oppføringer som standard
+              const k = Object.keys(SPRITES), start = k.filter(x => Art.iStart(x)), rest = k.filter(x => !Art.iStart(x));
+              const lastet = performance.getEntriesByType('resource').concat(performance.getEntriesByType('navigation')).reduce((a, e) => a + (e.transferSize || e.encodedBodySize || 0), 0);
+              return { ute: BYGG.ute, adresser: k.every(x => !SPRITES[x].startsWith('data:')), start: start.length, startKlar: start.filter(x => Art.klar(x)).length,
+                rest: rest.length, restDekodet: rest.filter(x => Art.klar(x)).length, lyd: Object.values(LYDFILER).every(v => typeof v === 'string' && v.startsWith('lyd/')), mb: +(lastet / 1e6).toFixed(2) }; }""")
+        sjekk('nettutgaven: SPRITES og LYDFILER er adresser, og hele startsettet er dekodet før tittelen', ti['ute'] and ti['adresser'] and ti['lyd'] and ti['start'] > 60 and ti['startKlar'] == ti['start'], ti)
+        sjekk('nettutgaven: resten er ikke dekodet ved tittelen, og det som er lastet før tittelen, er under 5 MB (den selvstendige fila er 12,7)', ti['restDekodet'] < ti['rest'] / 2 and 0 < ti['mb'] < 5, ti)
+        await klikk(pg, '#tNew'); await pg.wait_for_timeout(500); await klikk(pg, '[data-awk]')
+        await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=60000)
+        sp = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)); rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999;
+              // en fiende utenfor startsettet: dukken tegnes av koden først, og bildet kommer
+              const k = Object.keys(SPRITES).find(x => /^hode_kapellan/.test(x)) || Object.keys(SPRITES).find(x => /^hode_/.test(x) && !Art.iStart(x));
+              const t = k.split('_')[1], e = spawnEnemy(t, P.x + 2, P.z, false, 2); e.stun = 99;
+              for (let i = 0; i < 100 && !Art.klar(k); i++) await vent(100);
+              const ut = { nokkel: k, klar: Art.klar(k) };
+              // lydene: hentes og pakkes ut når lyden er i gang (første klikk), uten feil
+              for (let i = 0; i < 300 && Lydbank.klar + Lydbank.feil < Lydbank.totalt; i++) await vent(100);
+              ut.lyd = { klar: Lydbank.klar, feil: Lydbank.feil, totalt: Lydbank.totalt };
+              // en fiende som kles med deler før delene er hentet: koden tegner hodet, uten feil, og delene hentes. Bildene kastes fra minnet
+              // først, så de må hentes på nytt (som når en mester kommer tidlig i nettutgaven)
+              const kat = Oppskrift.deler().hode, serie = Object.keys(kat)[0], hode = kat[serie][Object.keys(kat[serie])[0]], nk = Object.values(hode);
+              for (const x of nk) delete Art.img[x];
+              try { const e2 = spawnEnemy('pleier', P.x - 2, P.z, false, 2); e2.stun = 99; e2.doll.setParts(null, null); Oppskrift.kleDeler(e2.doll, hode, null, null, 'har', null); ut.kodeHode = !e2.doll.headOv; } catch (err) { ut.mesterFeil = String(err); }
+              ut.mester = !ut.mesterFeil; for (let i = 0; i < 50 && !nk.every(x => Art.klar(x)); i++) await vent(100); ut.delHentet = nk.every(x => Art.klar(x));
+              // bakgrunnen blir ferdig: alle filene er hentet etter en stund
+              const alle = Object.keys(SPRITES).length; let hentet = 0;
+              const filer = () => new Set(performance.getEntriesByType('resource').map(r => new URL(r.name).pathname).filter(x => x.includes('/bilder/') || x.includes('/deler/'))).size;
+              for (let i = 0; i < 300; i++) { hentet = filer(); if (hentet >= alle) break; await vent(200); }
+              ut.bakgrunn = { hentet, alle };
+              return ut; }""")
+        sjekk('nettutgaven: en fiende utenfor startsettet får bildet sitt i spillet', sp['klar'], sp)
+        sjekk('nettutgaven: lydene hentes som filer og pakkes ut uten feil', sp['lyd']['feil'] == 0 and sp['lyd']['klar'] == sp['lyd']['totalt'] > 100, sp['lyd'])
+        sjekk('nettutgaven: en fiende som kles med deler før de er hentet, tegnes av koden uten feil, og delene hentes', sp['mester'] and sp.get('kodeHode') and sp['delHentet'], sp)
+        sjekk('nettutgaven: bakgrunnen henter alle bildene og delene etter hvert', sp['bakgrunn']['hentet'] >= sp['bakgrunn']['alle'], sp['bakgrunn'])
+        sjekk('ingen konsollfeil (nettutgaven)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # fra disken: en tydelig melding i stedet for et spill uten bilder og lyd
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto((web / 'index.html').as_uri()); await pg.wait_for_timeout(4000)
+        tekst = await pg.evaluate("() => { const e = document.getElementById('err'); return e ? e.textContent : ''; }")
+        sjekk('nettutgaven fra disken sier at den må åpnes fra en nettside, og peker på morbidium.html', 'nettutgaven' in tekst and 'morbidium.html' in tekst, tekst[:160])
+        await pg.close()
+    finally:
+        srv.shutdown()
+
+
+DELER = {43: del_43, 53: del_53, 66: del_66, 67: del_67, 68: del_68}

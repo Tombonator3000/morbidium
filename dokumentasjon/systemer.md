@@ -7,6 +7,7 @@ Oppslagsverk over hvordan spillet er bygd, system for system. Flyttet ordrett fr
 - Testklokka og testdelene (30_game.js, tools/testdeler/, punkt 5, 28.9. kveld)
 - Kodesjekken (tools/sjekk_kode.js, punkt 7, 28.9. kveld)
 - Fiender som data og byggeklosser (02_data.js, 20_actors.js, punkt 6, 28.9. kveld)
+- Nettutgaven: bildene og lydene som egne filer (build.py, 10_art.js, 42_lyd.js, punkt 3, 28.9. kveld)
 - Utseende (besluttet etter Toms referanser)
 - Teknikk
 - Gjenbruk og lisenser
@@ -487,4 +488,12 @@ Toms liste med fem skjermbilder (angrepsvarsler, snø, hårruller, skjulte rom, 
 - Bevis på lik oppførsel: `tools/fiende_fasit.py` kjører hver fiendetype i en fast etasje med testklokka og en fast pasient og lager et fingeravtrykk av hvert tiende steg (plass, tilstand, helse, varsler), pluss tabellene. `--lagre` før en omskriving, `--mot` etter. Omleggingen av spawnEnemy, bittene, Lærlingen og Klokkeren ga nøyaktig samme avtrykk for alle 32 typene og tabellene.
 - Slik lages en ny fiende (neste fiendebølge): én `Fiende.ny` med tallene, tekstene, etasjene, stemmen og indeksen; `ai: Blokk.bitt(...)` eller `ai: Blokk.angrep(...)` når angrepet passer, ellers en egen funksjon som bruker de samme delene (`addTele`, `Laug.treff`, `Havet.treff`, `hitShape`); `grense` og `vedStart` i stedet for å pakke inn spawnEnemy; `LAGDUKKE`, `RIG`, `MONSTER_ART` og `POSER` for tegningen som før. Kjør `node tools/sjekk_kode.js`, en testdel med `FAST` og testklokka for angrepet, og fiende_fasit.py for typene som fantes fra før.
 - Neste skritt når det passer: flere klosser (sirkel der målet står, kjegle foran, rektangel med storm, tilkalling med tak, preken med avbrudd), og de gamle typene over på `Fiende.ny` én fil om gangen, med fiende_fasit.py som vakt.
+
+## Nettutgaven: bildene og lydene som egne filer (build.py, 10_art.js, 42_lyd.js, punkt 3, 28.9. kveld)
+- build.py lager to utgaver fra samme kode. `dist/morbidium.html` er som før: alt i én fil (12,7 MB), bildene dekodes før tittelen, virker fra disken, og testene bruker den. `dist/web/` er det GitHub Pages viser: `index.html` (1,8 MB, bare koden og dataene), `bilder/` (611 filer), `deler/` (124 deler til oppskriftene, som PNG) og `lyd/` (165 MP3), rundt 10 MB i alt. Pages har den selvstendige fila ved siden av som `morbidium.html`.
+- I nettutgaven er `SPRITES` og `LYDFILER` adresser, og `BYGG.ute` er sann. `Art.preload` henter og dekoder startsettet (`Art.iStart`: UI-settet, glassene, animasjonsarkene, pasienten og det pasienten har på seg, og gulv, vegger og bakke, 83 bilder og 1,2 MB) før tittelen. Resten hentes etterpå i bakgrunnen, fire om gangen (`Art.bakgrunn`): delene til oppskriftene først (som bilder, fordi mestrene ser etter dem med en gang), så fiendene etter etasjen de hører hjemme i, så alt annet, som bare legges i nettleserens hurtigbuffer og dekodes når noe tegner det. Før tittelen lastes rundt 3 MB, mot 12,7.
+- `Art.hent(k)` gir et løfte om bildet (null når det ikke finnes eller ikke kan leses), `Art.klar(k)` sier om det er dekodet, og `Art.lastAlt()` henter alt (til tester). `Art.part` bruker hent, så en tegning som lages før bildet er der, tegnes av koden og byttes når bildet kommer. `Oppskrift.delPart` gir null og ber om delen når den ikke er hentet, og `kleDeler` lar da koden tegne hodet eller kroppen (en mester som kommer tidlig, ser ut som en vanlig fiende).
+- Lydene: `Lydbank.bytes(k)` henter fila med fetch i nettutgaven og leser base64 i den selvstendige fila. Utpakkingen er som før (fire om gangen, effektene først, etter første klikk).
+- Fra disken (file://) viser nettutgaven en melding om å åpne den fra en nettside eller bruke morbidium.html: lerretene blir «urene» av bilder fra disken i Chrome, og lydene kan ikke hentes.
+- WebP ble målt og valgt bort: PNG-ene er allerede palettkomprimert, og tapsfri WebP ga bare 11 prosent mindre filer (tapsbasert ble større). Gevinsten ligger i å slippe base64 (en tredel større) og i å bare dekode det som brukes.
 
