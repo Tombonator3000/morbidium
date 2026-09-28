@@ -3994,6 +3994,29 @@ async def main():
               std['valg'] == '' and abs(std['dx']) < .5 and std['mx'] > .99 and abs(std['mz']) < .01 and std['side'] == 0 and abs(std['dukke']) < 1e-6 and std['nord'] == '', std)
         gml = await kamera(URL3D + '?3d&lys=gammel')
         sjekk('lys=gammel slår av dis, omgivelsesskygge og tonekurve', gml['ao'] == 0 and gml['dis'] == 0 and gml['tone'] == 0 and not gml['dybde'], gml)
+        # innstillingen Kameravinkel (Bilde) velger vinkelen når spillet lastes, raden med «Last på nytt» kommer når en annen vinkel er valgt
+        # enn den som brukes, og adressen går foran innstillingen
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2000)
+        await pg.evaluate("() => { localStorage.clear(); MORBIDIUM.meta.settings.vinkel = 2; saveMeta(); }")
+        await pg.goto(URL); await pg.wait_for_timeout(2000)
+        vi = await pg.evaluate("() => ({ navn: KAMERA_VALG.navn, kilde: KAMERA_VALG.kilde, dreid: KAM.dreid, vinkel: MORBIDIUM.meta.settings.vinkel })")
+        await klikk(pg, '#tSet'); await pg.wait_for_timeout(300); await klikk(pg, '[data-tab="bilde"]'); await pg.wait_for_timeout(300)
+        vi['panel'] = await pg.evaluate("""() => { const i = document.querySelector('#settings [data-s="vinkel"]'), rad = () => { const r = document.getElementById('vinkelRad'); return !!r && getComputedStyle(r).display !== 'none'; };
+          const ut = { finnes: !!i, tekst: i ? i.parentNode.querySelector('em').textContent : '', radFor: rad() };
+          i.value = 0; i.dispatchEvent(new Event('input', { bubbles: true })); ut.radEtter = rad(); ut.knapp = !!document.getElementById('bVinkel'); ut.lagret = MORBIDIUM.meta.settings.vinkel;
+          const f = document.querySelector('#panel .fit').getBoundingClientRect(); ut.plass = f.bottom <= innerHeight + 1 && f.top >= -1; return ut; }""")
+        await pg.evaluate("() => { MORBIDIUM.meta.settings.vinkel = 2; saveMeta(); }")
+        await pg.goto(URL + '&kamera=standard'); await pg.wait_for_timeout(2000)
+        vi['adresse'] = await pg.evaluate("() => ({ navn: KAMERA_VALG.navn, kilde: KAMERA_VALG.kilde, dreid: KAM.dreid })")
+        await pg.evaluate("() => { MORBIDIUM.meta.settings.vinkel = 0; saveMeta(); }")
+        vi['errs'] = pg.errs[:6]
+        await pg.close()
+        p = vi['panel']
+        sjekk('Kameravinkel i innstillingene: isometrisk brukes når spillet lastes, raden kommer når en annen vinkel velges, og panelet får plass',
+              vi['navn'] == 'iso' and vi['kilde'] == 'innstilling' and vi['dreid'] and p['finnes'] and 'isometrisk' in p['tekst'] and not p['radFor'] and p['radEtter'] and p['knapp'] and p['lagret'] == 0 and p['plass'], vi)
+        sjekk('adressen (kamera=standard) går foran innstillingen', vi['adresse'] == {'navn': '', 'kilde': 'adresse', 'dreid': False}, vi['adresse'])
+        sjekk('ingen konsollfeil (kameravinkel i innstillingene)', not vi['errs'], vi['errs'])
 
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
