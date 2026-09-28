@@ -462,9 +462,7 @@ const Items = {
 const Grotesk = {
   keep: { flue: .6, svulst: 4.5, lunge: 4.8 },
   ai: {
-    flue(e, T, dist, toT) {
-      if (dist < 1.1) { e.state = 'wind'; e.t = .18; e.face = toT; addTele('circle', { x: e.x + Math.sin(toT) * .5, z: e.z + Math.cos(toT) * .5, r: .5 }, .18, o => { if (inShape({ shape: 'circle', o }, T.x, T.z, T.r)) hurt(T, e.dmg, { type: 'flue', x: e.x, z: e.z, kb: 1 }); }, e); e.cd = rnd(.6, 1.1); }
-    },
+    flue: Blokk.bitt({ rekkevidde: 1.1, tid: .18, foran: .5, r: .5, kb: 1, cd: [.6, 1.1] }),
     svulst(e, T, dist, toT) {
       if (dist < 9 && G.enemies.filter(f => f.alive && f.type === 'flue').length < 10) {
         e.state = 'wind'; e.t = .9; addTele('circle', { x: e.x, z: e.z, r: 1.1, color: 0xe8a0a0 }, .9, () => { for (let i = 0; i < 2; i++) spawnEnemy('flue', e.x + rnd(-.6, .6), e.z + rnd(-.6, .6), false, G.depth); Sound.play('splash', .7, .6); Items.splat(e.x, e.z, '#d8c060', .8); FX.bubble(e, pick(LINES.svulst), 1.6); }, e); e.cd = rnd(4, 6);

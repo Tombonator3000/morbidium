@@ -21,26 +21,41 @@ Object.assign(LYD_KART, {
   smekk: { s: [['hit', .6, 1.4], ['knirk', .3, 1.3]], syn: .35 },
   spenne: { s: [['chain', .5, 1.7]], syn: .3 }
 });
-Object.assign(FIENDESTEMME, { laerling: ['knirk', 1.35], klokker: ['knirk', 1.1] });
-
-Object.assign(ENEMIES, {
-  laerling: { name: 'Lærlingen', hp: 32, speed: 2.6, r: .42, dmg: 10, xp: 11, teeth: [1, 3], bubbleH: 3.2, weapon: 'reim', blood: 0xa01c1c },
-  klokker: { name: 'Klokkeren', hp: 22, speed: 2.1, r: .38, dmg: 10, xp: 14, teeth: [2, 4], bubbleH: 2.6, weapon: 'bjelle', blood: 0x9a1a1a }
-});
-Object.assign(LINES, {
-  laerling: ['Med Deres tillatelse.', 'Unnskyld. Det var meningen.', 'Dette er min første behandling!', 'Kjenn på reima. Oksehud, vegetabilsk garvet. Nei, kjenn!', 'Jeg pusset spennene til i kveld.',
+/* Lærlingen og Klokkeren på ett sted (Fiende.ny i 02_data.js): tallene, replikkene, dødsårsakene, etasjene, stemmen, oppførselen,
+   grensen, oppstarten og teksten i fiendeindeksen. Lærlingens angrep er bygd av Blokk.angrep (20_actors.js); Klokkerens står for
+   seg selv under OPPFØRSEL, fordi han kaller på hjelp, venter og ringer stort hver tredje gang. */
+Fiende.ny('laerling', {
+  name: 'Lærlingen', hp: 32, speed: 2.6, r: .42, dmg: 10, xp: 11, teeth: [1, 3], bubbleH: 3.2, weapon: 'reim', blood: 0xa01c1c,
+  linjer: ['Med Deres tillatelse.', 'Unnskyld. Det var meningen.', 'Dette er min første behandling!', 'Kjenn på reima. Oksehud, vegetabilsk garvet. Nei, kjenn!', 'Jeg pusset spennene til i kveld.',
     'Oldermannen sier jeg har talent.', 'Det knirker. Beklager, det er forkleet.', 'Seksten nagler. Jeg har talt dem to ganger.', 'Har De tenkt på å melde Dem inn? Vi har kaffe.', 'Smerte er et håndverk. Jeg er i lære.', 'Takk for tålmodigheten.'],
-  klokker: ['Besøkstid.', 'Hører De bjella? Den er til Dem.', 'Notert.', 'Vi ringer når det passer. Det passer nå.', 'Avdeling Null takker for tålmodigheten.', 'Krokene er nypusset. Ikke ta på. Jo, ta på.',
-    'Referatet fra sist er godkjent. De skrek i riktig rekkefølge.', 'Kjenner De lukten? Lærfett. Vi smører hver torsdag.', 'Skjema 12-B, smerte, frivillig. Kryss av her.']
+  dod: ['Behandlet av en lærling. Det var hans første. Han ba om unnskyldning.', 'Spent fast, høflig men bestemt.', 'Fikk reim, etter alle kunstens regler.', 'Fikk høre om garving i tre kvarter. Så kom reima.'],
+  dybder: { 3: 1, 4: 2, 6: 2 }, tittel: 'Lærling', stemme: ['knirk', 1.35], keep: 1.4, talk: 1, hold: 1,
+  info: ['Skinnlaugets yngste, i et lærforkle som knirker. Elsker reimer og nagler og vil vise deg alle. Bukker, slår med reima og spenner deg fast.', 'Bukket er varselet. Gå til siden når han bøyer seg, og slå mens han ber om unnskyldning.'],
+  // bukker (varselet), slår med reima, og spenner deg fast av og til
+  ai: Blokk.angrep({
+    rekkevidde: 3, sikt: true, form: 'rect', retning: true, varsel: { w: .9, len: 3.4, color: 0x8a5a2a, type: 'fysisk' }, tid: .55, etter: .4, positur: 'bukk',
+    forbered(e) { Sound.play('bukk', .7, rnd(.9, 1.15)); if (Math.random() < .4) FX.bubble(e, 'Med Deres tillatelse.', 1.1); },
+    treff(e, T, o) {
+      e.positur = { navn: 'reimslag', t: 0, dur: .32 }; Sound.play('smekk', .9); Sound.play('swing', .5, 1.3);
+      const P = G.player, traff = Laug.treff('rect', o, e.dmg, { type: 'laerling', x: e.x, z: e.z, kb: 4 });
+      if (traff && P.alive && Math.hypot(P.x - e.x, P.z - e.z) < 2.2 && Math.random() < .5) { Laug.spenn(e); return; }
+      if (Math.random() < .3) FX.bubble(e, pick(['Unnskyld.', 'Beklager, det var reima.', 'Takk for tålmodigheten.']), 1);
+      e.kvx = -Math.sin(e.face) * 3; e.kvz = -Math.cos(e.face) * 3; // et lite skritt tilbake
+    },
+    cd: [1.8, 2.6]
+  })
 });
-Object.assign(DEATH_CAUSES, {
-  laerling: ['Behandlet av en lærling. Det var hans første. Han ba om unnskyldning.', 'Spent fast, høflig men bestemt.', 'Fikk reim, etter alle kunstens regler.', 'Fikk høre om garving i tre kvarter. Så kom reima.'],
-  klokker: ['Svarte på bjella.', 'Hentet av kroker etter at noen ringte på.', 'Notert, stemplet og hengt opp til tørk.', 'Ført i laugets protokoll under «Frivillige».']
+Fiende.ny('klokker', {
+  name: 'Klokkeren', hp: 22, speed: 2.1, r: .38, dmg: 10, xp: 14, teeth: [2, 4], bubbleH: 2.6, weapon: 'bjelle', blood: 0x9a1a1a,
+  linjer: ['Besøkstid.', 'Hører De bjella? Den er til Dem.', 'Notert.', 'Vi ringer når det passer. Det passer nå.', 'Avdeling Null takker for tålmodigheten.', 'Krokene er nypusset. Ikke ta på. Jo, ta på.',
+    'Referatet fra sist er godkjent. De skrek i riktig rekkefølge.', 'Kjenner De lukten? Lærfett. Vi smører hver torsdag.', 'Skjema 12-B, smerte, frivillig. Kryss av her.'],
+  dod: ['Svarte på bjella.', 'Hentet av kroker etter at noen ringte på.', 'Notert, stemplet og hengt opp til tørk.', 'Ført i laugets protokoll under «Frivillige».'],
+  dybder: { 4: 1, 6: 1 }, tittel: 'Klokker', stemme: ['knirk', 1.1], keep: 6.5, retreat: 1, talk: 1, hold: 1,
+  info: ['Laugets klokker med sølvbjella. Slår aldri selv, men når bjella ringer, kommer krokene ut av mørket der du står.', 'Gå ut av sølvringen når bjella ringer. Ta ham først, ellers roper han på lærlingen.'],
+  // høyst én klokker i rommet: flere blir lærlinger. Klokkeren venter litt før han roper på hjelp første gang
+  grense: { maks: 1, ellers: 'laerling', unntak: () => Laug.flereKlokkere },
+  vedStart(e) { e.kallT = G.time + rnd(4, 7); e.ringT = G.time + rnd(.6, 1.4); }
 });
-DEPTH_ENEMIES[3].push('laerling');
-DEPTH_ENEMIES[4].push('laerling', 'laerling', 'klokker');
-DEPTH_ENEMIES[6].push('laerling', 'laerling', 'klokker');
-Object.assign(MESTER_TITTEL, { laerling: 'Lærling', klokker: 'Klokker' });
 
 /* ---------- positurer: bukket før slaget, reimslaget og bjella ---------- */
 Object.assign(POSER, {
@@ -256,10 +271,6 @@ VAAPEN_TEGNING.bjelle = g => {
 /* ============================================================
    OPPFØRSEL
    ============================================================ */
-Object.assign(Grotesk.keep, { laerling: 1.4, klokker: 6.5 });
-Object.assign(Grotesk.retreat, { klokker: 1 });
-Object.assign(Grotesk.talk, { laerling: 1, klokker: 1 });
-Object.assign(Grotesk.hold, { laerling: 1, klokker: 1 });
 const Laug = {
   STUN_CD: 2, KJEDER_MAKS: 10, flereKlokkere: false,
   /* laugets treff i en form: allierte tar skaden, pasienten også, og stans deles mellom alle i lauget (én per STUN_CD sekunder).
@@ -306,21 +317,6 @@ const Laug = {
   }
 };
 Object.assign(Grotesk.ai, {
-  /* bukker (varselet), slår med reima, og spenner deg fast av og til */
-  laerling(e, T, dist, toT) {
-    if (dist > 3 || !los(e.x, e.z, T.x, T.z)) return;
-    const tid = .55, o = { x: e.x, z: e.z, a: toT, w: .9, len: 3.4, color: 0x8a5a2a, type: 'fysisk' };
-    e.state = 'wind'; e.t = tid + .4; e.face = toT; e.positur = { navn: 'bukk', t: 0, dur: tid };
-    Sound.play('bukk', .7, rnd(.9, 1.15)); if (Math.random() < .4) FX.bubble(e, 'Med Deres tillatelse.', 1.1);
-    addTele('rect', o, tid, () => {
-      e.positur = { navn: 'reimslag', t: 0, dur: .32 }; Sound.play('smekk', .9); Sound.play('swing', .5, 1.3);
-      const P = G.player, traff = Laug.treff('rect', o, e.dmg, { type: 'laerling', x: e.x, z: e.z, kb: 4 });
-      if (traff && P.alive && Math.hypot(P.x - e.x, P.z - e.z) < 2.2 && Math.random() < .5) { Laug.spenn(e); return; }
-      if (Math.random() < .3) FX.bubble(e, pick(['Unnskyld.', 'Beklager, det var reima.', 'Takk for tålmodigheten.']), 1);
-      e.kvx = -Math.sin(e.face) * 3; e.kvz = -Math.cos(e.face) * 3; // et lite skritt tilbake
-    }, e);
-    e.cd = rnd(1.8, 2.6);
-  },
   /* ringer med bjella: sølvringen der pasienten står, krokene fra mørket når ringen går av. Hver tredje er stor */
   klokker(e, T, dist, toT) {
     const lar = G.enemies.filter(f => f.alive && f.type === 'laerling').length;
@@ -335,9 +331,6 @@ Object.assign(Grotesk.ai, {
     e.cd = 1;
   }
 });
-/* høyst én klokker i rommet: flere blir lærlinger. Klokkeren venter litt før han roper på hjelp første gang */
-ENEMIES.klokker.grense = { maks: 1, ellers: 'laerling', unntak: () => Laug.flereKlokkere };
-ENEMIES.klokker.vedStart = e => { e.kallT = G.time + rnd(4, 7); e.ringT = G.time + rnd(.6, 1.4); };
 
 /* ============================================================
    HOLDNINGSSØSTEREN
@@ -884,10 +877,8 @@ Object.assign(Grotesk.tick, {
 });
 
 /* ---------- fiendeindeksen ---------- */
-FIENDE_REKKE.push('laerling', 'klokker', 'holdning');
+FIENDE_REKKE.push('holdning');
 Object.assign(FIENDE_INFO, {
-  laerling: ['Skinnlaugets yngste, i et lærforkle som knirker. Elsker reimer og nagler og vil vise deg alle. Bukker, slår med reima og spenner deg fast.', 'Bukket er varselet. Gå til siden når han bøyer seg, og slå mens han ber om unnskyldning.'],
-  klokker: ['Laugets klokker med sølvbjella. Slår aldri selv, men når bjella ringer, kommer krokene ut av mørket der du står.', 'Gå ut av sølvringen når bjella ringer. Ta ham først, ellers roper han på lærlingen.'],
   holdning: ['Laugets holdningssøster. Snører deg inn med lærreimer så du går sakte og rett, og slår med tommestokken når du kommer nær.', 'Rull deg løs med en gang, snøret ryker når du ruller.'],
   oldermann: ['Oldermannen i Skinnlauget, med nålepute på hodet og klubbe i hånden. Leser opp dagsorden før han slår, og gjør alt i den rekkefølgen han sa.', 'Les dagsorden i boblen. Han følger den alltid, og ved «Votering» kommer lærlingene.']
 });

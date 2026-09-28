@@ -397,6 +397,42 @@ function spawnEnemyGrunn(type, x, z, elite, depth) {
 }
 // oppstarten per type kommer etter oppskriften (prio 1), som da innpakningene i 29, 49 og 50 lå utenpå den i 28
 Kroker.etter('spawnEnemy', e => { const D = e && ENEMIES[e.type]; if (D && D.vedStart) D.vedStart(e); }, 1);
+/* byggeklosser til fiendenes angrep (punkt 6). Et angrep er: vilkår (rekkevidde og sikt), legge an (wind i tid pluss etter sekunder,
+   snu seg mot målet, positur), forberedelse (lyd, replikk), varselet (form og sted), treffet når varselet går av, og nedkjølingen.
+   Blokk.angrep(d) lager en AI-funksjon (e, T, dist, toT) av en slik beskrivelse, og Blokk.bitt(d) er det vanligste angrepet: et lite
+   bitt rett foran. Rekkefølgen er den samme som i fiendene som er skrevet for hånd, så tilfeldige tall trekkes i samme rekkefølge. */
+const Blokk = {
+  steder: {
+    meg: e => ({ x: e.x, z: e.z }),
+    maal: (e, T) => ({ x: T.x, z: T.z })
+  },
+  /* d: rekkevidde, sikt, form ('circle', 'rect', 'cone'), sted ('meg', 'maal' eller en funksjon (e, T, toT)), retning (a = toT i varselet),
+     varsel (resten av varselet: r, w, len, arc, color, type), tid (varselets lengde), etter (ekstra tid i wind), positur,
+     forbered(e, T, toT, o), treff(e, T, o), cd ([fra, til]) og ellers(e, T, dist, toT) når vilkåret ikke holder */
+  angrep(d) {
+    const sted = typeof d.sted === 'function' ? d.sted : Blokk.steder[d.sted || 'meg'];
+    return function (e, T, dist, toT) {
+      if (dist > d.rekkevidde || (d.sikt && !los(e.x, e.z, T.x, T.z))) return d.ellers ? d.ellers(e, T, dist, toT) : undefined;
+      const s = sted(e, T, toT), o = d.retning ? Object.assign({ x: s.x, z: s.z, a: toT }, d.varsel) : Object.assign(s, d.varsel);
+      e.state = 'wind'; e.t = d.tid + (d.etter || 0); e.face = toT;
+      if (d.positur) e.positur = { navn: d.positur, t: 0, dur: d.tid };
+      if (d.forbered) d.forbered(e, T, toT, o);
+      addTele(d.form, o, d.tid, () => d.treff(e, T, o), e);
+      if (d.cd) e.cd = rnd(d.cd[0], d.cd[1]);
+    };
+  },
+  /* bittet: innenfor rekkevidde legger fienden an i tid sekunder og biter i en liten sirkel foran seg (foran ruter fram, radius r).
+     Treffer bare målet. d: rekkevidde, tid, varselTid (standard tid), foran, r, color, kb, lyd ([navn, styrke, tonehøyde] når det biter), cd */
+  bitt(d) {
+    return function (e, T, dist, toT) {
+      if (!(dist < d.rekkevidde)) return;
+      e.state = 'wind'; e.t = d.tid; e.face = toT;
+      const o = { x: e.x + Math.sin(toT) * d.foran, z: e.z + Math.cos(toT) * d.foran, r: d.r }; if (d.color != null) o.color = d.color;
+      addTele('circle', o, d.varselTid ?? d.tid, o => { if (inShape({ shape: 'circle', o }, T.x, T.z, T.r)) hurt(T, e.dmg, { type: e.type, x: e.x, z: e.z, kb: d.kb }); if (d.lyd) Sound.play(...d.lyd); }, e);
+      e.cd = rnd(d.cd[0], d.cd[1]);
+    };
+  }
+};
 function spawnEnemyKjerne(type, x, z, elite, depth) {
   const D = ENEMIES[type], gj = G.run && G.run.gjen, sk = typeof dybdeStyrke === 'function' ? dybdeStyrke(depth) : depth, hpK = (1 + (sk - 1) * .3) * (gj ? 1.3 : 1);
   // lagdelte skapninger (29_monstre.js) har egne deler i stedet for hode og kropp

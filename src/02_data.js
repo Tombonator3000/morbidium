@@ -70,6 +70,27 @@ const ENEMIES = {
    vedStart(e): kjøres når fienden er laget, etter oppskriften (tidtakere, tillegg på dukken, plassen i sluket).
    rooted: står fast og kan ikke slås bakover. pack: så mange til kommer i flokk. */
 const Fiende = {
+  /* én fiendetype på ett sted: tallene (som i ENEMIES, med grense og vedStart), og ved siden av dem
+     linjer (replikker), dod (dødsårsaker), dybder ({ etasje: antall i puljen }), tittel (mestertittel), stemme (FIENDESTEMME),
+     keep (avstanden den holder), retreat, talk, hold og hop (flaggene til oppførselen i Grotesk), ai og tick (Grotesk.ai og .tick)
+     og info (to linjer til fiendeindeksen i håndboka, som også setter typen sist i FIENDE_REKKE).
+     Tabellene fylles i samme rekkefølge som når de fylles hver for seg, så resten av spillet leser dem som før. Brukes fra
+     32_meny.js og utover i bygget (FIENDESTEMME og fiendeindeksen finnes først da); tools/sjekk_kode.js sier fra ellers. */
+  ny(type, d) {
+    const { linjer, dod, dybder, tittel, stemme, keep, retreat, talk, hold, hop, ai, tick, info, ...tall } = d;
+    ENEMIES[type] = tall;
+    if (linjer) LINES[type] = linjer;
+    if (dod) DEATH_CAUSES[type] = dod;
+    if (dybder) for (const [dyp, n] of Object.entries(dybder)) for (let i = 0; i < n; i++) DEPTH_ENEMIES[dyp].push(type);
+    if (tittel) MESTER_TITTEL[type] = tittel;
+    if (stemme) FIENDESTEMME[type] = stemme;
+    if (keep != null) Grotesk.keep[type] = keep;
+    for (const [flagg, v] of [['retreat', retreat], ['talk', talk], ['hold', hold], ['hop', hop]]) if (v) Grotesk[flagg][type] = 1;
+    if (ai) Grotesk.ai[type] = ai;
+    if (tick) (Grotesk.tick || (Grotesk.tick = {}))[type] = tick;
+    if (info) { FIENDE_INFO[type] = info; FIENDE_REKKE.push(type); }
+    return tall;
+  },
   byttType(type) {
     const D = ENEMIES[type], g = D && D.grense; if (!g || (g.unntak && g.unntak())) return type;
     const n = g.tell ? g.tell() : G.enemies.filter(e => e.alive && e.type === type).length, maks = typeof g.maks === 'function' ? g.maks() : g.maks;

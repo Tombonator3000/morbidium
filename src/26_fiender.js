@@ -144,10 +144,10 @@ VAAPEN_TEGNING.gasskolbe = g => {
 
 /* ---------- oppførsel ---------- */
 Object.assign(Grotesk.keep, { tvang: 1.0, byrakrat: 5, narkose: 3.6, rotte: .5, oyeblomst: 0 });
-Grotesk.retreat = { lunge: 1, svulst: 1, byrakrat: 1, narkose: 1 };
-Grotesk.talk = { lunge: 1, svulst: 1, tvang: 1, byrakrat: 1, narkose: 1, rotte: 1, oyeblomst: 1 };
-Grotesk.hold = { byrakrat: 1, narkose: 1 };
-Grotesk.hop = { yngel: 1, tvang: 1, rotte: 1 };
+Grotesk.retreat = Object.assign(Grotesk.retreat || {}, { lunge: 1, svulst: 1, byrakrat: 1, narkose: 1 });
+Grotesk.talk = Object.assign(Grotesk.talk || {}, { lunge: 1, svulst: 1, tvang: 1, byrakrat: 1, narkose: 1, rotte: 1, oyeblomst: 1 });
+Grotesk.hold = Object.assign(Grotesk.hold || {}, { byrakrat: 1, narkose: 1 });
+Grotesk.hop = Object.assign(Grotesk.hop || {}, { yngel: 1, tvang: 1, rotte: 1 });
 Object.assign(Grotesk.ai, {
   /* ruller seg fram som en kjegle, stanger når den er nær */
   tvang(e, T, dist, toT) {
@@ -178,9 +178,7 @@ Object.assign(Grotesk.ai, {
     bossLaterE(e, .3, () => addProj({ type: 'eter', from: 'enemy', x: e.x, z: e.z, tx, tz, arc: true, dur: .5, h: 2, land: p => { addGas(p.tx, p.tz, 1.8, 5); Sound.play('glass', .8, .8); } }));
     e.cd = rnd(3.2, 4.6);
   },
-  rotte(e, T, dist, toT) {
-    if (dist < 1.0) { e.state = 'wind'; e.t = .22; e.face = toT; addTele('circle', { x: e.x + Math.sin(toT) * .45, z: e.z + Math.cos(toT) * .45, r: .45 }, .22, o => { if (inShape({ shape: 'circle', o }, T.x, T.z, T.r)) hurt(T, e.dmg, { type: 'rotte', x: e.x, z: e.z, kb: 1 }); }, e); e.cd = rnd(.7, 1.2); }
-  },
+  rotte: Blokk.bitt({ rekkevidde: 1.0, tid: .22, foran: .45, r: .45, kb: 1, cd: [.7, 1.2] }),
   /* står fast i gulvet og skyter langsomme Morbidium-kuler som følger etter */
   oyeblomst(e, T, dist, toT) {
     if (dist < 1.8) { e.state = 'wind'; e.t = .45; addTele('circle', { x: e.x, z: e.z, r: 1.7, color: 0xb36be0 }, .45, o => hitShape('circle', o, e.dmg, { type: 'oyeblomst', x: e.x, z: e.z, kb: 8 }, 'enemy'), e); e.cd = rnd(1.4, 2); return; }

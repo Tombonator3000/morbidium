@@ -308,9 +308,7 @@ Object.assign(Grotesk.ai, {
       e.cd = rnd(2.4, 3.2);
     }
   },
-  kaalhode(e, T, dist, toT) {
-    if (dist < 1.1) { e.state = 'wind'; e.t = .3; e.face = toT; addTele('circle', { x: e.x + Math.sin(toT) * .5, z: e.z + Math.cos(toT) * .5, r: .55, color: 0x6a9a4a }, .28, o => { if (inShape({ shape: 'circle', o }, T.x, T.z, T.r)) hurt(T, e.dmg, { type: 'kaalhode', x: e.x, z: e.z, kb: 2 }); Sound.play('bitt', .6, 1.1); }, e); e.cd = rnd(.9, 1.4); }
-  }
+  kaalhode: Blokk.bitt({ rekkevidde: 1.1, tid: .3, varselTid: .28, foran: .5, r: .55, color: 0x6a9a4a, kb: 2, lyd: ['bitt', .6, 1.1], cd: [.9, 1.4] }),
 });
 Object.assign(Grotesk.tick, {
   /* Vedkubbemannen går til siden når noe står i veien, til han ser deg og kan kaste */

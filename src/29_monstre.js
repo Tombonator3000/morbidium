@@ -581,9 +581,7 @@ Object.assign(Grotesk.ai, {
       e.cd = rnd(3, 4.5);
     }
   },
-  klumpunge(e, T, dist, toT) {
-    if (dist < 1.1) { e.state = 'wind'; e.t = .25; e.face = toT; addTele('circle', { x: e.x + Math.sin(toT) * .5, z: e.z + Math.cos(toT) * .5, r: .5, color: 0xd49a8a }, .25, o => { if (inShape({ shape: 'circle', o }, T.x, T.z, T.r)) hurt(T, e.dmg, { type: 'klumpunge', x: e.x, z: e.z, kb: 2 }); }, e); e.cd = rnd(.8, 1.3); }
-  },
+  klumpunge: Blokk.bitt({ rekkevidde: 1.1, tid: .25, foran: .5, r: .5, color: 0xd49a8a, kb: 2, cd: [.8, 1.3] }),
   koret(e, T, dist, toT) {
     const r = Math.random(), P = G.player;
     if (dist < 3.2 || r < .16) {
