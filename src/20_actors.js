@@ -30,7 +30,10 @@ function addMorb(v) {
   const P = G.player; if (!P) return;
   P.morb = clamp(P.morb + v * (hasDiag('hovedperson') ? 1.3 : 1) * (1 - (P.stats.fatteevne - 1) * .05) * (v > 0 && Lomme.has('pastill') ? .7 : 1), 0, 100);
 }
-function healPlayer(v, silent, blod) {
+/* healPlayer: kroker (Kroker.etter('healPlayer', ...)) i stedet for innpakning i andre filer. Krokene får pasientens helse fra før
+   som fjerde argument */
+function healPlayer(v, silent, blod) { const P = G.player; return Kroker.kall('healPlayer', healPlayerKjerne, this, [v, silent, blod, P ? P.hp : 0]); }
+function healPlayerKjerne(v, silent, blod) {
   const P = G.player; const h = Math.min(P.maxHp - P.hp, v * (hasDiag('hypokonder') ? 1.4 : 1) * (hasDiag('blodtorst') && !blod ? .75 : 1)); if (h <= 0) return;
   P.hp += h; if (!silent) { numText(P.x, P.z, '+' + Math.round(h), 'info', 2.2); Sound.play('heal'); Particles.spawn(P.x, 1.2, P.z, 8, 0x9cc7a4, { speed: 2, up: 4, g: 2 }); }
 }
@@ -79,7 +82,9 @@ function makePlayer(run) {
 }
 function recalcPlayer() { const P = G.player, old = P.maxHp; P.maxHp = Math.max(10, 30 + P.stats.helse * 10 + Items.hearts() * 10); if (P.maxHp > old) P.hp += P.maxHp - old; P.hp = Math.min(P.hp, P.maxHp); }
 function weaponStats() { return WEAPONS[G.player.weapon] || WEAPONS.stativ; }
-function updatePlayer(dt, A) {
+/* updatePlayer: kroker (Kroker.foer/etter('updatePlayer', ...)) i stedet for innpakning i andre filer */
+function updatePlayer(dt, A) { return Kroker.kall('updatePlayer', updatePlayerKjerne, this, arguments); }
+function updatePlayerKjerne(dt, A) {
   const P = G.player;
   if (!P.alive) { P.doll.update(dt, { down: true }); return; }
   P.iframe -= dt; P.invuln -= dt; P.fastT -= dt; P.kamferT -= dt; P.stunT -= dt; P.mokkT = (P.mokkT || 0) - dt; P.roykT = (P.roykT || 0) - dt; P.dodgeText = false;
@@ -151,7 +156,9 @@ function startSwing(heavy, charge = 0) {
   P.atk = { t: 0, p: 0, dur: (heavy ? W0.time + .14 : P.combo === 2 ? W0.time * 1.25 : W0.time) / Items.stat('rate'), combo: heavy ? 0 : P.combo, heavy, charge, hit: false }; P.chain = 0;
   Sound.play(heavy ? 'swingHeavy' : 'swing', 1, heavy ? .8 : 1 + P.combo * .08);
 }
-function meleeHit(k) {
+/* meleeHit: kroker (Kroker.rundt('meleeHit', ...)) i stedet for innpakning i andre filer */
+function meleeHit(k) { return Kroker.kall('meleeHit', meleeHitKjerne, this, arguments); }
+function meleeHitKjerne(k) {
   const P = G.player, W0 = weaponStats();
   const range = W0.range * (k.heavy ? 1.25 : 1) * Items.stat('range'), arc = k.heavy && Items.tf('kirurg') ? TAU : k.heavy ? Math.min(3.6, W0.arc * 1.35) : k.combo === 2 ? W0.arc * 1.2 : W0.arc;
   let dmg = W0.dmg * (k.heavy ? 1.4 + .8 * k.charge : k.combo === 2 ? 1.5 : 1);
@@ -192,7 +199,9 @@ function playerDieKjerne() {
   P.alive = false; P.hp = 0; Sound.play('die', 1, .7); R.shake(.7); puff(P.x, P.z, 5); slowMo(1.2, .25); Musikk.stopp(.6);
   setTimeout(() => showDeath(), 1600);
 }
-function gainXp(v) {
+/* gainXp: kroker (Kroker.rundt('gainXp', ...)) i stedet for innpakning i andre filer */
+function gainXp(v) { return Kroker.kall('gainXp', gainXpKjerne, this, arguments); }
+function gainXpKjerne(v) {
   const P = G.player; P.xp += v * (1 + (P.stats.fatteevne - 1) * .1);
   const need = () => 40 + (P.level - 1) * 55;
   while (P.xp >= need()) { P.xp -= need(); P.level++; P.points++; Sound.play('level'); toast('Nytt nivå', 'Et poeng å fordele i journalen' + Input.parentes('journal')); Tips.vis('niva', 2500); numText(P.x, P.z, 'NIVÅ ' + P.level, 'crit', 2.8); }
@@ -230,7 +239,9 @@ function hallucinate(dt) {
    EVNER. Fire plasser = fire hjerneområder. Et kort i sitt eget område
    får et ekstra nivå og 20 prosent kortere nedkjøling.
    ============================================================ */
-function useAbility(i) {
+/* useAbility: kroker (Kroker.rundt('useAbility', ...)) i stedet for innpakning i andre filer */
+function useAbility(i) { return Kroker.kall('useAbility', useAbilityKjerne, this, arguments); }
+function useAbilityKjerne(i) {
   const P = G.player, e = slotEff(i);
   if (!e) { Sound.play('deny'); return; }
   if (P.cds[i] > 0) { Sound.play('deny', .5); return; }
@@ -444,7 +455,9 @@ function spawnEnemyKjerne(type, x, z, elite, depth) {
   if (type === 'yngel') Particles.spawn(x, .2, z, 8, 0x6b2d8c, { speed: 2, up: 5 });
   return e;
 }
-function enemySlip(e) { if (e.slip > 0 || e.kind === 'boss') return; e.slip = 1.2; cancelTeles(e); e.state = 'recover'; e.t = 1.2; numText(e.x, e.z, 'SKLI!', 'info', 2.4); Sound.play('bonk', .6, .7); }
+/* enemySlip: kroker (Kroker.vakt('enemySlip', ...)) i stedet for innpakning i andre filer */
+function enemySlip(e) { return Kroker.kall('enemySlip', enemySlipKjerne, this, arguments); }
+function enemySlipKjerne(e) { if (e.slip > 0 || e.kind === 'boss') return; e.slip = 1.2; cancelTeles(e); e.state = 'recover'; e.t = 1.2; numText(e.x, e.z, 'SKLI!', 'info', 2.4); Sound.play('bonk', .6, .7); }
 /* enemyDie: kroker før og etter (Kroker.foer/etter('enemyDie', ...)) i stedet for innpakning i andre filer */
 function enemyDie() { return Kroker.kall('enemyDie', enemyDieKjerne, this, arguments); }
 function enemyDieKjerne(e, src) {
@@ -457,7 +470,9 @@ function enemyDieKjerne(e, src) {
   if (D.morb) { for (let i = 0; i < D.morb; i++) dropPickup(e.x, e.z, 'morb'); addPuddle(e.x, e.z, 'morb', .8, 24); }
   gainXp(D.xp * (e.elite ? 2.5 : 1)); checkDiagnoses(); Items.onKill(e); Oppskrift.onDie(e);
 }
-function updateEnemy(e, dt) {
+/* updateEnemy: kroker (Kroker.foer/etter('updateEnemy', ...)) i stedet for innpakning i andre filer */
+function updateEnemy(e, dt) { return Kroker.kall('updateEnemy', updateEnemyKjerne, this, arguments); }
+function updateEnemyKjerne(e, dt) {
   const P = G.player;
   if (!e.alive) { e.deadT -= dt; e.doll.update(dt, { down: true }); e.doll.dissolve(1 - Math.max(0, e.deadT) / .5); if (e.deadT <= 0 && !e.gone) { e.gone = true; e.doll.dispose(); } return; }
   updateEnemyQueue(e, dt);
@@ -556,7 +571,9 @@ function spawnBossKjerne(depth, x, z) {
   $('bossName').textContent = B0.name; $('bossTitle').textContent = B0.title; $('bossBar').classList.remove('hidden');
   Sound.play('boss'); return B;
 }
-function bossOnHurt(B, d) {
+/* bossOnHurt: kroker (Kroker.foer('bossOnHurt', ...)) i stedet for innpakning i andre filer */
+function bossOnHurt(B, d) { return Kroker.kall('bossOnHurt', bossOnHurtKjerne, this, arguments); }
+function bossOnHurtKjerne(B, d) {
   if (B.phase === 'monolog') { B.monoDmg += d; if (B.monoDmg > B.max * .12) bossInterrupt(B); }
   const th = [.66, .33][B.phasesDone];
   if (th && B.hp / B.max < th && B.phase !== 'monolog') {
@@ -576,7 +593,9 @@ function bossDieKjerne(B) {
   for (const e of G.enemies) if (e.alive) { e.hp = 0; killEntity(e, {}); }
   setTimeout(openTrapdoor, 1400);
 }
-function updateBoss(B, dt) {
+/* updateBoss: kroker (Kroker.etter('updateBoss', ...)) i stedet for innpakning i andre filer */
+function updateBoss(B, dt) { return Kroker.kall('updateBoss', updateBossKjerne, this, arguments); }
+function updateBossKjerne(B, dt) {
   const P = G.player;
   if (!B.alive) { B.deadT -= dt; B.doll.update(dt, { down: B.type !== 'journalen' }); B.doll.dissolve(1 - Math.max(0, B.deadT) / 1.6); if (B.glow) R.setLight(B.glow, B.deadT); if (B.deadT <= 0 && !B.gone) { B.gone = true; B.doll.dispose(); if (B.glow) R.remove(B.glow); } return; }
   const sl = B.slowT > 0 ? .6 : 1; dt *= sl; B.slowT -= dt;

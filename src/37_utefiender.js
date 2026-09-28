@@ -332,8 +332,7 @@ Object.assign(Grotesk.tick, {
     return { x: T.x, z: T.z };
   }
 });
-// Nøkken under vannet kan ikke treffes
-{ const _h = hurt; hurt = function (e, dmg, src) { if (e && e.kind === 'enemy' && e.type === 'nokken' && e.dukket) return 0; return _h(e, dmg, src); }; }
+// Nøkken under vannet (e.dukket) kan ikke treffes: vakta i hurt står i 49_havet.js og gjelder alt som ligger under vann
 
 /* ============================================================
    OVERGARTNER ANSGAR HEKK

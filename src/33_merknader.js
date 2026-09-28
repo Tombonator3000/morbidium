@@ -50,7 +50,9 @@ const Merknad = {
 };
 
 /* ---------- utskrivningsbrevet ---------- */
-function utskrivningsbrev(onDone) {
+/* utskrivningsbrev: kroker (Kroker.rundt('utskrivningsbrev', ...)) i stedet for innpakning i andre filer */
+function utskrivningsbrev(onDone) { return Kroker.kall('utskrivningsbrev', utskrivningsbrevKjerne, this, arguments); }
+function utskrivningsbrevKjerne(onDone) {
   const r = G.run, P = G.player, p = r.patient, min = Math.max(1, Math.round((performance.now() - r.t0) / 60000));
   const diag = (P.diag || []).map(d => DIAGNOSES[d] && DIAGNOSES[d].name).filter(Boolean), kur = (r.items || []).map(i => ITEMS[i] && ITEMS[i].name).filter(Boolean), tf = (r.transforms || []).map(t => TRANSFORMS[t] && TRANSFORMS[t].name).filter(Boolean);
   const liste = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' og ' + a[a.length - 1] : a[0], Bv = Historie.brev();

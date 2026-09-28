@@ -225,54 +225,43 @@ addEventListener('unhandledrejection', e => { Testmodus.feil.push({ t: performan
 /* ---------- koblingene ---------- */
 {
   Kroker.etter('startFloor', () => { try { if (Testmodus.paa()) Testmodus.nyEtasje(G.depth); } catch (e) { console.warn('testmodus', e); } });
-  const _hp = hurtPlayer;
-  hurtPlayer = function (dmg, src) { const P = G.player, h0 = P ? P.hp : 0, r = _hp(dmg, src); if (P && Testmodus.paa() && P.hp < h0) { const d = h0 - Math.max(P.hp, 0); Testmodus.fanget = (Testmodus.fanget || 0) + d; Testmodus.skade(src && src.type, d); } return r; };
-  const _hel = healPlayer;
-  healPlayer = function (...a) { const P = G.player, h0 = P ? P.hp : 0, r = _hel.apply(this, a); if (P && Testmodus.paa() && P.hp > h0) { const E = Testmodus.naa(); if (E) E.hel = Math.round((E.hel + P.hp - h0) * 10) / 10; Testmodus.hp = P.hp; } return r; };
+  Kroker.etter('hurtPlayer', (r, dmg, src, h0) => { const P = G.player; if (P && Testmodus.paa() && P.hp < h0) { const d = h0 - Math.max(P.hp, 0); Testmodus.fanget = (Testmodus.fanget || 0) + d; Testmodus.skade(src && src.type, d); } });
+  Kroker.etter('healPlayer', (r, v, silent, blod, h0) => { const P = G.player; if (P && Testmodus.paa() && P.hp > h0) { const E = Testmodus.naa(); if (E) E.hel = Math.round((E.hel + P.hp - h0) * 10) / 10; Testmodus.hp = P.hp; } });
   Kroker.etter('spawnBoss', B => { try { const E = Testmodus.naa(); if (B && E && Testmodus.paa() && !E.sjef) E.sjef = { navn: B.name, t0: performance.now(), sek: null }; } catch (e) { } });
   Kroker.etter('bossDie', () => { try { const E = Testmodus.naa(); if (E && E.sjef && E.sjef.sek == null) E.sjef.sek = Math.round((performance.now() - E.sjef.t0) / 100) / 10; } catch (e) { } });
   // døden og utskrivningen: rapporten lagres, og det kommer en knapp til den
   const knapp = () => { if (!Testmodus.paa()) return; const rad = document.querySelector('#panel .btnrow'); if (!rad || $('dTest')) return; const b = document.createElement('button'); b.className = 'btn'; b.id = 'dTest'; b.textContent = 'Testrapport'; b.onclick = () => Testmodus.apne('rapport'); rad.appendChild(b); };
-  const _sd = showDeath;
-  showDeath = function (...a) {
-    const P = G.player, alleredeDod = G.state === 'dead', r = _sd.apply(this, a);
+  Kroker.rundt('showDeath', (neste, ...a) => {
+    const P = G.player, alleredeDod = G.state === 'dead', r = neste(...a);
     if (!alleredeDod && Testmodus.paa()) { const rr = roomAt(P.x, P.z), rom = rr >= 0 && G.F ? G.F.rooms[rr] : null, E = Testmodus.naa(); Testmodus.slutt(`døde i etasje ${G.depth} (${depthName(G.depth)})${rom ? ', i rommet ' + (rom.template || rom.role) : ''}, dødsårsak «${(G.meta.lastDeath || {}).cause || '?'}» (${P.lastCause || '?'})${G.boss && G.boss.alive ? ', sjefen levde' : ''}, etter ${Math.round((performance.now() - G.run.t0) / 1000)} s` + (E && E.drom ? ', i en drøm' : '')); knapp(); }
     return r;
-  };
-  const _vu = visUtskrevet;
-  visUtskrevet = function (...a) { const r = _vu.apply(this, a); if (Testmodus.paa()) { Testmodus.slutt(`utskrevet etter ${Math.round((performance.now() - G.run.t0) / 1000)} s, brevet «${Historie.brev().sl}»`); knapp(); } return r; };
+  });
+  Kroker.etter('visUtskrevet', () => { if (Testmodus.paa()) { Testmodus.slutt(`utskrevet etter ${Math.round((performance.now() - G.run.t0) / 1000)} s, brevet «${Historie.brev().sl}»`); knapp(); } });
   // pausemenyen: to knapper til når testmodus er på
-  const _op = openPause;
-  openPause = function (...a) {
-    const r = _op.apply(this, a);
+  Kroker.etter('openPause', () => {
     if (Testmodus.paa()) {
       const q = $('pQ'); if (q) q.insertAdjacentHTML('beforebegin', '<button class="tbtn" id="pMening"><b>Si din mening</b><small>Spørsmål med knapper, til Claude</small></button><button class="tbtn" id="pRapport"><b>Testrapport</b><small>Kopier og lim inn til Claude</small></button>');
       const m = $('pMening'), t = $('pRapport'); if (m) m.onclick = () => Testmodus.apne('lyd'); if (t) t.onclick = () => Testmodus.apne('rapport');
       fitPanel();
     }
-    return r;
-  };
+  });
   // innstillingene: Testmodus under Spill, og de lagrede rapportene under Data
-  const _sbd = settingsBody;
-  settingsBody = function (tab) {
-    let h = _sbd(tab); const s = G.meta.settings;
+  Kroker.rundt('settingsBody', (neste, tab) => {
+    let h = neste(tab); const s = G.meta.settings;
     if (tab === 'spill') h += `<label class="srow cb"><input type="checkbox" data-s="testmodus" ${s.testmodus ? 'checked' : ''}><span>Testmodus<small>Bilder i sekundet og minne i et hjørne, «Si din mening» og «Testrapport» i pausen, og en rapport etter hvert løp som kan kopieres og limes inn til Claude</small></span></label>`;
     if (tab === 'data') { const n = (G.meta.testrapporter || []).length; h = h.replace('<p class="shint">', `<div class="datarad"><div><b>Testrapporter</b><small>${n ? n + ' lagret, den siste fra ' + new Date(G.meta.testrapporter[n - 1].t).toLocaleString('nb-NO') : 'Ingen ennå. Slå på Testmodus under Spill.'}</small></div><button class="btn" id="dTestSist" ${n ? '' : 'disabled'}>Kopier siste</button><button class="btn" id="dTestAlle" ${n > 1 ? '' : 'disabled'}>Kopier alle</button></div><div class="tstatus" id="dTestStatus"></div><p class="shint">`); }
     return h;
-  };
-  const _os = openSettings;
-  openSettings = function (...a) {
-    const r = _os.apply(this, a), L = G.meta.testrapporter || [];
+  });
+  Kroker.etter('openSettings', () => {
+    const L = G.meta.testrapporter || [];
     const b1 = $('dTestSist'), b2 = $('dTestAlle');
     if (b1) b1.onclick = () => Testmodus.kopier(L[L.length - 1].tekst, null, 'dTestStatus');
     if (b2) b2.onclick = () => Testmodus.kopier(L.map(x => x.tekst).join('\n\n'), null, 'dTestStatus');
-    return r;
-  };
-  const _as = applySettings;
-  applySettings = function (...a) {
-    const r = _as.apply(this, a), s = G.meta.settings;
+  });
+  Kroker.etter('applySettings', () => {
+    const s = G.meta.settings;
     // ?testmodus i adressen slår den på én gang per lasting, så den fortsatt kan slås av under Spill
     if (!Testmodus.urlBrukt && /[?&#]testmodus\b/.test(location.search + location.hash)) { Testmodus.urlBrukt = true; if (!s.testmodus) { s.testmodus = true; saveMeta(); } }
-    Testmodus.sett(!!s.testmodus); return r;
-  };
+    Testmodus.sett(!!s.testmodus);
+  });
 }

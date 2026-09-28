@@ -566,7 +566,7 @@ const Nedslag = {
   Kroker.etter('updateTele', (_, dt) => Nedslag.tick(dt));
   Kroker.etter('updateProjectiles', () => Nedslag.skygge());
   Kroker.etter('clearFloor', () => Nedslag.tom());
-  const _hp = hurtPlayer; hurtPlayer = function (dmg, src) { const d = _hp.apply(this, arguments); Nedslag.tungt(d); return d; };
+  Kroker.etter('hurtPlayer', d => Nedslag.tungt(d));
   // lynet i regnværet har sitt eget nedslag (38_effekter.js)
   if (typeof Uvaer === 'object') { const _uv = Uvaer.varsel; Uvaer.varsel = function (x, z) { const n = G.tele.length; _uv.call(this, x, z); if (G.tele.length > n) G.tele[G.tele.length - 1].o.stille = true; }; }
 }

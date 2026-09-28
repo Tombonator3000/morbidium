@@ -66,7 +66,7 @@ const ROM_ART = {
     });
   }
 };
-{ const _pa = propArt; propArt = function (p) { return ROM_ART[p.k] ? ROM_ART[p.k](p) : _pa(p); }; }
+Kroker.rundt('propArt', (neste, p) => ROM_ART[p.k] ? ROM_ART[p.k](p) : neste(p));
 
 /* ============================================================
    SPESIALROM  -  forbannet rom, hemmelig rom bak sprukken vegg, blodofferrom
@@ -180,7 +180,7 @@ const Spesial = {
     const deals = [
       P.maxHp > 20 && { art: ['heart'], name: 'Et hjerte for en kuriositet', desc: 'Mister ett hjerte for godt. Får noe fra blodhylla.', fn: done('Et hjerte', () => { run.heartDebt = (run.heartDebt || 0) + 1; recalcPlayer(); Items.give(Items.pickFrom('blod')); }) },
       P.teeth >= 20 && { art: ['cons', 'kamfer'], name: 'Halve tennene for en kuriositet', desc: 'Gir fra deg ' + Math.floor(P.teeth / 2) + ' gulltenner.', fn: done('Tennene', () => { P.teeth -= Math.floor(P.teeth / 2); Items.give(Items.pickFrom('kabinett')); }) },
-      cards.length > 1 && { art: ['card', 'ukjent'], name: 'Et evnekort for to poeng', desc: 'Alteret spiser et tilfeldig kort. Du får to poeng å fordele i journalen.', fn: done('Et kort', () => { const k = pick(cards); run.slots[k.i] = null; P.points += 2; hudCardsKey = ''; toast(ABILITIES[k.c.id].name + ' er borte', 'To poeng å fordele (Tab)'); }) },
+      cards.length > 1 && { art: ['card', 'ukjent'], name: 'Et evnekort for to poeng', desc: 'Alteret spiser et tilfeldig kort. Du får to poeng å fordele i journalen.', fn: done('Et kort', () => { const k = pick(cards); run.slots[k.i] = null; P.points += 2; hudKortPaaNytt(); toast(ABILITIES[k.c.id].name + ' er borte', 'To poeng å fordele (Tab)'); }) },
       P.hp > 35 && { art: ['heart'], name: '30 helse for 40 gulltenner', desc: 'Alteret drikker. Tennene kommer ut av munnen på det.', fn: done('Blod', () => { P.hp -= 30; dropTeeth(o.x, o.z + 1, 40); }) },
       P.stats.styrke < 5 && { art: ['kur', 'eyeliner'], name: 'Mørke for styrke', desc: '40 Morbidium i blodet. Ett poeng i Styrke.', fn: done('Mørket', () => { addMorb(40); P.stats.styrke++; }) },
       P.weaponLvl > 0 && { art: ['weapon', P.weapon], name: 'Slipingen for et hjerte', desc: 'Våpenet mister all sliping. Du får ett hjerte tilbake.', fn: done('Slipingen', () => { P.weaponLvl = 0; drawWeaponCard(); run.pillHearts = (run.pillHearts || 0) + 1; recalcPlayer(); healPlayer(10, true); }) }

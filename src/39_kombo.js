@@ -263,31 +263,28 @@ const Stempel = {
 };
 
 /* ---------- koblinger ---------- */
-{ const _h = hurt; hurt = function (e, dmg, src = {}) {
-  const levde = !!(e && e.alive), hp0 = levde ? e.hp : 0, d = _h(e, dmg, src);
-  if (!levde || !e || e.kind === 'player' || e.kind === 'ally' || !(d > 0)) return d;
+// d > 0 betyr at den levde da slaget kom (kjernen gir 0 ellers), og hp0 er helsa fra før
+Kroker.etter('hurt', (d, e, dmg, src, hp0) => {
+  if (!e || e.kind === 'player' || e.kind === 'ally' || !(d > 0)) return;
   if (src.from === 'player' && !src.dot) { Kombo.treff(e); if (Kombo.slag) Kombo.slag.treff++; }
   if (!e.alive) Kombo.drept(e, src, d, hp0);
-  return d;
-}; }
-{ const _hp = hurtPlayer; hurtPlayer = function (dmg, src = {}) {
-  const P = G.player, unnvik = !!(P && P.alive && P.roll > 0 && P.iframe > 0 && P.invuln <= 0 && G.state === 'play'), d = _hp(dmg, src);
-  if (d > 0) Kombo.brist(); else if (unnvik) Kombo.perfekt();
-  return d;
-}; }
-{ const _mh = meleeHit; meleeHit = function (k) { Kombo.slag = { treff: 0 }; try { _mh(k); } finally { const S = Kombo.slag; Kombo.slag = null; if (S && S.treff >= 2 && (k.combo === 2 || (k.heavy && k.charge >= .99))) Kombo.finale(k, S.treff); } }; }
-{ const _ua = useAbility; useAbility = function (i) { const P = G.player, n0 = P ? P.counters.ability : 0; _ua(i); if (P && P.counters.ability > n0) Kombo.kort(i); }; }
+});
+// perfekt unnvikelse: slaget bommet mens pasienten rullet med iframes. Kjernen endrer verken roll, iframe eller invuln når
+// den bommer (og setter invuln når den treffer eller benekter), så det kan leses etterpå
+Kroker.etter('hurtPlayer', d => { const P = G.player; if (d > 0) Kombo.brist(); else if (P && P.alive && P.roll > 0 && P.iframe > 0 && P.invuln <= 0 && G.state === 'play') Kombo.perfekt(); });
+Kroker.rundt('meleeHit', (neste, k) => { Kombo.slag = { treff: 0 }; try { neste(k); } finally { const S = Kombo.slag; Kombo.slag = null; if (S && S.treff >= 2 && (k.combo === 2 || (k.heavy && k.charge >= .99))) Kombo.finale(k, S.treff); } });
+Kroker.rundt('useAbility', (neste, i) => { const P = G.player, n0 = P ? P.counters.ability : 0; neste(i); if (P && P.counters.ability > n0) Kombo.kort(i); });
 Kroker.etter('bossDie', (_, B) => Kombo.sjef(B));
-{ const _sb = stampBig; stampBig = function (t, sub) { _sb(t, sub); if (t === 'SYNERGI' || t === 'FORVANDLING') Kombo.fanfare(t === 'SYNERGI' ? 'synergi' : 'forvandling'); }; }
+Kroker.etter('stampBig', (_, t) => { if (t === 'SYNERGI' || t === 'FORVANDLING') Kombo.fanfare(t === 'SYNERGI' ? 'synergi' : 'forvandling'); });
 // lappen får teksten med en gang som før, og legger seg under stemplene hvis et står
-{ const _t = toast; toast = function (t, sub) { _t(t, sub); Stempel.plass(); }; }
+Kroker.etter('toast', () => Stempel.plass());
 Kroker.foer('startFloor', () => Kombo.onFloor());
-{ const _rs = runStats; runStats = function () {
-  let s = _rs(); const r = G.run || {};
+Kroker.rundt('runStats', neste => {
+  let s = neste(); const r = G.run || {};
   if (r.komboMaks >= 5) s += `<dt>Lengste kjede</dt><dd>${r.komboMaks} treff</dd>`;
   if (r.flerdrapMaks >= 2) s += `<dt>Flest på en gang</dt><dd>${r.flerdrapMaks}</dd>`;
   return s;
-}; }
+});
 Object.assign(MERKNADER, {
   blodrus: { navn: 'Blodrus', krav: 'Slå 50 ganger på rad uten å bli truffet.', gir: 'Kunngjøreren kjenner navnet ditt.' },
   massakre: { navn: 'Massakre', krav: 'Slå fem fiender i hjel på et øyeblikk.', gir: 'Applaus fra pasientene, og en side i årsrapporten.' }

@@ -197,12 +197,12 @@ const Mini = {
     G.meta.minisjefer = (G.meta.minisjefer || 0) + 1; saveMeta();
   }
 };
-{ const _ct = combatTick; combatTick = function (dt) {
+Kroker.rundt('combatTick', (neste, dt) => {
   const C = G.combat;
   if (C && !C.boss && !C.mini && Mini.rom[C.r.id] && C.t - dt <= 0) {
     const waves = C.r.waves || [], alive = G.enemies.filter(e => e.alive).length;
     if (C.wave >= waves.length - 1 && alive === 0) { Mini.kom(C); C.t = 1.2; return; }
   }
-  _ct(dt);
-}; }
+  neste(dt);
+});
 Kroker.etter('enemyDie', (_, e) => { if (e.mini) try { Mini.dod(e); } catch (err) { } });

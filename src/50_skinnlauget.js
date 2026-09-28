@@ -544,23 +544,20 @@ Object.assign(Grotesk.ai, {
   }
 });
 /* snøret: pasienten går tregere (P.mokkT, som myr) så lenge P.snortT varer, og en rulle løser det med en gang */
-{ const _up = updatePlayer; updatePlayer = function (dt, A) {
+Kroker.foer('updatePlayer', dt => {
   const P = G.player;
   if (P && P.snortT > 0) { P.snortT -= dt; if (P.snortT > 0 && P.alive) P.mokkT = Math.max(P.mokkT || 0, dt + .02); else { P.snortT = 0; Laug.slippAlle(); } }
-  const r = _up(dt, A);
-  if (P && P.snortT > 0 && P.roll > 0) Laug.los(P);
-  return r;
-}; }
+});
+Kroker.etter('updatePlayer', () => { const P = G.player; if (P && P.snortT > 0 && P.roll > 0) Laug.los(P); });
 /* «Rett ryggen!» går ut: skaden tilbake nøyaktig, eller faktoren tas ut av det som står hvis noe annet har endret den underveis */
-{ const _ue = updateEnemy; updateEnemy = function (e, dt) {
+Kroker.foer('updateEnemy', (e, dt) => {
   if (e.reimK && (!e.alive || e.stun > 0 || e.sleep > 0)) Laug.slipp(e); // slått ut eller død: reimene går slakke og tilbake
   if (e.rettet) {
     e.rettetT -= dt;
     if (e.rettetT <= 0 || !e.alive) { const V = e.rettet; e.dmg = e.dmg === V.satt ? V.dmg : e.dmg / Laug.RETT_K; e.rettet = null; }
     else if (Math.random() < dt * 2) Particles.spawn(e.x + rnd(-.3, .3), 1.5, e.z + rnd(-.3, .3), 1, 0x8a5a2a, { speed: .3, up: 1.2, g: 0, life: .6, size: .7 });
   }
-  return _ue(e, dt);
-}; }
+});
 
 /* ============================================================
    OLDERMANN NÅLEPUTE  -  minisjef, laugets formann

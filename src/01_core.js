@@ -44,10 +44,17 @@ const Store = {
 /* ---------- kroker ----------
    Systemene kobler seg på spillets gang med navngitte kroker i stedet for å pakke inn funksjonene i hverandre.
    Kroker.foer(navn, fn) kjører fn før kjernen, Kroker.etter(navn, fn) etter, med svaret fra kjernen først: fn(svar, ...argumentene).
-   Kjernen kaller dem med Kroker.kall(navn, kjerne, this, arguments). Rekkefølgen er den samme som innpakningene ga: før-krokene
-   kjører sist lagt til først (som det ytterste laget), etter-krokene først lagt til først. Trenger en krok en fast plass uansett
-   rekkefølgen i bygget, gi den prio (lavere kjører først, og prio går foran rekkefølgen). En feil i én krok logges og stopper ikke
-   de andre eller kjernen. Hvilke kroker som finnes, står i dokumentasjon/systemer.md under «Kroker». */
+   Kroker.vakt(navn, fn) kjører før alt annet og kan svare i stedet for kjernen: gir fn noe annet enn undefined, blir det svaret,
+   og verken kjernen eller de andre krokene kjører (fiender under vann tar ikke skade, tabeller som tegner en del før kjernen gjør
+   det). For en funksjon uten svar holder det å gi false.
+   Kroker.rundt(navn, fn) er for det som må se begge sider på én gang (en verdi fra før kjernen, try/finally, endrede argumenter
+   eller et endret svar): fn(neste, ...argumentene), der neste(...argumentene) kjører resten og gir svaret. Bruk foer, etter og
+   vakt når de holder.
+   Kjernen kaller dem med Kroker.kall(navn, kjerne, this, arguments). Rekkefølgen er den samme som innpakningene ga: vaktene først,
+   så rundt-lagene (sist lagt til er ytterst), før-krokene sist lagt til først, kjernen, og etter-krokene først lagt til først.
+   Trenger en krok en fast plass uansett rekkefølgen i bygget, gi den prio (lavere kjører først, og prio går foran rekkefølgen).
+   En feil i en vakt eller en før- eller etter-krok logges og stopper ikke de andre eller kjernen; en feil i et rundt-lag går
+   videre til den som kalte, som fra en innpakning. Hvilke kroker som finnes, står i dokumentasjon/systemer.md under «Kroker». */
 const Kroker = {
   l: {}, n: 0,
   leggTil(navn, fn, prio, foer) {
@@ -56,15 +63,26 @@ const Kroker = {
   },
   foer(navn, fn, prio) { return this.leggTil(navn + ':foer', fn, prio, true); },
   etter(navn, fn, prio) { return this.leggTil(navn + ':etter', fn, prio, false); },
-  av(navn, fn) { for (const k of [navn + ':foer', navn + ':etter']) if (this.l[k]) this.l[k] = this.l[k].filter(x => x.fn !== fn); },
+  vakt(navn, fn, prio) { return this.leggTil(navn + ':vakt', fn, prio, true); },
+  rundt(navn, fn, prio) { return this.leggTil(navn + ':rundt', fn, prio, true); },
+  av(navn, fn) { for (const k of ['vakt', 'rundt', 'foer', 'etter'].map(s => navn + ':' + s)) if (this.l[k]) this.l[k] = this.l[k].filter(x => x.fn !== fn); },
   kall(navn, kjerne, self, args) {
+    const V = this.l[navn + ':vakt'], R = this.l[navn + ':rundt'];
+    if (V) for (const x of V.slice()) { const s = this.prov(navn, x.fn, self, args); if (s !== undefined) return s; }
+    return R ? this.lag(navn, kjerne, self, R.slice(), 0, args) : this.midt(navn, kjerne, self, args);
+  },
+  lag(navn, kjerne, self, R, i, args) {
+    if (i >= R.length) return this.midt(navn, kjerne, self, args);
+    return R[i].fn.call(self, (...a) => this.lag(navn, kjerne, self, R, i + 1, a), ...args);
+  },
+  midt(navn, kjerne, self, args) {
     const F = this.l[navn + ':foer'], E = this.l[navn + ':etter'];
     if (F) for (const x of F.slice()) this.prov(navn, x.fn, self, args);
     const r = kjerne.apply(self, args);
     if (E) { const a = [r, ...args]; for (const x of E.slice()) this.prov(navn, x.fn, self, a); }
     return r;
   },
-  prov(navn, fn, self, a) { try { fn.apply(self, a); } catch (e) { console.error('Kroken ' + navn + ' feilet:', e); } }
+  prov(navn, fn, self, a) { try { return fn.apply(self, a); } catch (e) { console.error('Kroken ' + navn + ' feilet:', e); } }
 };
 
 /* ---------- input ---------- */

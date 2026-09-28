@@ -108,8 +108,8 @@ const BLOBS = {
     if (v !== 'b') { A.dot(g, -.22, -.4, .04); A.dot(g, .22, -.4, .04); A.curve(g, [-.1, -.26], [0, -.2], [.1, -.26], .03); }
   }]
 };
-{ const _cp = charPart; charPart = function (type, piece, v) { if (piece === 'blob' && BLOBS[type]) { const b = BLOBS[type]; return Art.part('blob_' + type + '_' + v, b[0], b[1], b[2], b[3], b[4](v)); } return _cp(type, piece, v); }; }
-{ const _bp = bottlePart; bottlePart = function (id) { return id && id.startsWith('pille_') ? pillPart(id) : _bp(id); }; }
+Kroker.vakt('charPart', (type, piece, v) => { if (piece === 'blob' && BLOBS[type]) { const b = BLOBS[type]; return Art.part('blob_' + type + '_' + v, b[0], b[1], b[2], b[3], b[4](v)); } });
+Kroker.vakt('bottlePart', id => { if (id && id.startsWith('pille_')) return pillPart(id); });
 function pillPart(id) {
   const [, col] = PILL_COL[id] || ['', '#fff'];
   return Art.part('pille_' + id, .5, .4, .25, .08, g => {
@@ -226,7 +226,7 @@ const Items = {
   },
   give(id) {
     const P = G.player, it = ITEMS[id]; if (!it || this.has(id)) return;
-    G.run.items.push(id); hudCardsKey = ''; this.itemsKey = '';
+    G.run.items.push(id); hudKortPaaNytt(); this.itemsKey = '';
     toast(it.name, it.desc); Sound.play('level'); Sound.play('pickup');
     // pasienten løfter kuriositeten over hodet, som Isaac
     this.liftT = 1.1; if (this.liftG) R.remove(this.liftG); this.liftG = sprite(itemIcon(id), P.x, P.z, {}); this.liftG.scale.setScalar(.8);

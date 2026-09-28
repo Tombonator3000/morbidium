@@ -6,15 +6,15 @@
 
 /* ---------- grunnarbeid: under vann (e.dukket) ----------
    En fiende eller sjef med e.dukket ligger under vann og kan verken treffes eller siktes på. Nøkken (37_utefiender.js) var først,
-   og Avløpsarmen og Krakens dykk skal bruke det samme. Fila ligger etter 39_kombo og 34_blod, så slag i vannet teller ikke i treffkjeden
-   og gir ikke blod. Nærkampslaget hopper over dem (20_actors.js), skudd og kast går over dem (Items.updateShots og updateProjectiles),
+   og Avløpsarmen og Krakens dykk skal bruke det samme. Vakta i hurt kjører før alle de andre krokene, så slag i vannet teller ikke i
+   treffkjeden og gir ikke blod. Nærkampslaget hopper over dem (20_actors.js), skudd og kast går over dem (Items.updateShots og updateProjectiles),
    og lykta gir dem ingen skygge (Dybde.kastere, 40_dybde.js). */
-{ const _h = hurt; hurt = function (e, dmg, src) { if (e && e.dukket && e.kind !== 'player') return 0; return _h(e, dmg, src); }; }
+Kroker.vakt('hurt', e => { if (e && e.dukket && e.kind !== 'player') return 0; });
 // siktet på berøring og håndkontroll, evnene, duene og lynet i treffkjeden finner ikke den som ligger under
-{ const _ne = nearestEnemy; nearestEnemy = function (x, z, maxD, filter) { return _ne(x, z, maxD, e => !e.dukket && (!filter || filter(e))); }; }
+Kroker.rundt('nearestEnemy', (neste, x, z, maxD, filter) => neste(x, z, maxD, e => !e.dukket && (!filter || filter(e))));
 // strøm i pytten, skli og snubletråd biter ikke under overflaten. Før røpet ZAPP og SKLI! over tomt vann hvor Nøkken lå
-{ const _ge = groundEffects; groundEffects = function (e, dt, speed) { if (e && e.dukket && e.kind !== 'player') return; return _ge(e, dt, speed); }; }
-{ const _es = enemySlip; enemySlip = function (e) { if (e && e.dukket) return; return _es(e); }; }
+Kroker.vakt('groundEffects', e => { if (e && e.dukket && e.kind !== 'player') return false; });
+Kroker.vakt('enemySlip', e => { if (e && e.dukket) return false; });
 
 /* ---------- trekk Journalen ikke låner (laanbareTrekk i 31_sjefpulje.js) ----------
    Stormen flyttes bare av hjortens egen tick, så hos Journalen ble den et varsel på elleve ruter, et brøl og ingenting mer */
@@ -499,19 +499,19 @@ ENEMIES.avlopsarm.grense = { maks: () => Havet.MAKS_ARMER, tell: () => Havet.arm
 ENEMIES.avlopsarm.vedStart = e => { e.kalt = !!spawnEnemy.kalt; Havet.start(e); };
 ENEMIES.kapellan.vedStart = e => { e.kallT = G.time + rnd(3, 5); e.prekenT = G.time + rnd(1.5, 3); };
 /* velsignelsen går ut (farten tilbake nøyaktig) og gjør nedkjølingen halvannen gang så rask. Armen står fast i risten sin */
-{ const _ue = updateEnemy; updateEnemy = function (e, dt) {
+Kroker.foer('updateEnemy', (e, dt) => {
   if (e.velsignet) {
     e.velsignetT -= dt; if (e.alive) e.cd -= dt * .5;
     // nøyaktig tilbake når ingen andre har rørt farten; ble den treg (eller fri fra treghet) underveis, tas faktoren ut av det som står
     if (e.velsignetT <= 0 || !e.alive) { const V = e.velsignet; e.sp = e.sp === V.satt ? V.sp : e.sp / 1.2; if (e.baseSp) e.baseSp /= 1.2; e.velsignet = null; }
     else if (Math.random() < dt * 2.5) Particles.spawn(e.x + rnd(-.3, .3), 1.4, e.z + rnd(-.3, .3), 1, 0x3a8a7a, { speed: .3, up: 1.5, g: 0, life: .7, size: .7 });
   }
-  const r = _ue(e, dt);
+});
+Kroker.etter('updateEnemy', (r, e) => {
   if (e.type === 'avlopsarm' && e.hjem && e.alive) { e.x = e.hjem.x; e.z = e.hjem.z; e.vx = e.vz = 0; e.doll.root.position.set(e.x, 0, e.z); }
-  return r;
-}; }
+});
 // armen har ingen føtter å skli på, selv i sin egen pytt
-{ const _es = enemySlip; enemySlip = function (e) { if (e && e.type === 'avlopsarm') return; return _es(e); }; }
+Kroker.vakt('enemySlip', e => { if (e && e.type === 'avlopsarm') return false; });
 Kroker.etter('enemyDie', (_, e) => { try { Havet.dod(e); } catch (err) { } });
 
 /* ============================================================
@@ -704,13 +704,12 @@ Object.assign(Grotesk.ai, {
 Object.assign(Grotesk.tick, { draug(e, dt) { Havet.hoppTick(e, dt); Havet.lege(e, dt); return null; } });
 /* VÅT: pasienten går tregere (P.mokkT, som myr) så lenge P.vaatT varer. En egen klokke, fordi pyttene setter P.mokkT rett
    (et tjern gir 0,35 sekunder) og ellers ville kortet ned tregheten fra bekkenet */
-{ const _up = updatePlayer; updatePlayer = function (dt, A) {
+Kroker.foer('updatePlayer', dt => {
   const P = G.player;
   if (P && P.vaatT > 0) { P.vaatT -= dt; if (P.vaatT > 0 && P.alive) P.mokkT = Math.max(P.mokkT || 0, dt + .02); else P.vaatT = 0; }
-  return _up(dt, A);
-}; }
+});
 // draugen sklir ikke i sitt eget element (snubletråden på tørt gulv tar den fortsatt)
-{ const _es = enemySlip; enemySlip = function (e) { if (e && e.type === 'draug' && (e.hopp || Havet.vannUnder(e))) return; return _es(e); }; }
+Kroker.vakt('enemySlip', e => { if (e && e.type === 'draug' && (e.hopp || Havet.vannUnder(e))) return false; });
 
 /* ---------- fiendeindeksen ---------- */
 FIENDE_REKKE.push('avlopsarm', 'kapellan', 'draug');

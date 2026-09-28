@@ -52,9 +52,12 @@ async def del_9(b):
     await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
     posisjoner = []
     for i in range(2):
-        await start_lop(pg)
-        pos = await pg.evaluate("""(i) => { if (MORBIDIUM.depth !== 1) startFloor(1, false); rolig(); const G = MORBIDIUM, P = G.player, r = G.F.rooms.filter(r => r.role === 'combat')[i] || G.F.rooms[1]; const s = freeSpot(r.x + 2.5, r.z + 2.5, 2); P.x = s.x; P.z = s.z; P.invuln = 0; P.iframe = 0; hurt(P, 9999, { type: 'pleier' }); return { x: P.x, z: P.z, d: G.depth }; }""", i)
-        posisjoner.append(pos); await pg.wait_for_timeout(2600)
+        await start_lop(pg); await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=30000)
+        # frosken i lomma (lommerusk fra gulvet eller en hendelse) tar det første dødelige slaget, så den regnes som brukt
+        pos = await pg.evaluate("""(i) => { if (MORBIDIUM.depth !== 1) startFloor(1, false); rolig(); const G = MORBIDIUM, P = G.player, r = G.F.rooms.filter(r => r.role === 'combat')[i] || G.F.rooms[1]; const s = freeSpot(r.x + 2.5, r.z + 2.5, 2); P.x = s.x; P.z = s.z; P.invuln = 0; P.iframe = 0; P.deny = null; G.run.froskBrukt = true; hurt(P, 9999, { type: 'pleier' }); return { x: P.x, z: P.z, d: G.depth, dod: !P.alive }; }""", i)
+        posisjoner.append(pos)
+        # dødsskjermen (og liket i arkivet) kommer 1,6 sekunder etter døden med setTimeout, så det ventes på den i stedet for en fast pause
+        await pg.wait_for_function("() => MORBIDIUM.state === 'dead'", timeout=20000)
     lik = await pg.evaluate("() => MORBIDIUM.meta.lik.map(l => [l.depth, l.x, l.z])")
     sjekk('hvert dødsfall lagres med posisjon', len(lik) == 2 and all(l[1] > 0 for l in lik), lik)
     await pg.click('#dNew'); await pg.wait_for_timeout(500); await pg.click('[data-awk]'); await pg.wait_for_timeout(1400)

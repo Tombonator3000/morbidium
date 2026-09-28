@@ -141,7 +141,10 @@ function hitShape(shape, o, dmg, src, side) {
 
 /* ---------- skade ---------- */
 function numText(x, z, v, cls, y = 1.6) { FX.text(x + rnd(-.3, .3), y, z + rnd(-.2, .2), typeof v === 'number' ? String(Math.max(1, Math.round(v))) : v, cls); }
-function hurt(e, dmg, src = {}) {
+/* hurt: kroker (Kroker.vakt/foer/etter('hurt', ...)) i stedet for innpakning i andre filer. Krokene får helsa fra før slaget
+   som fjerde argument (0 når den som ble truffet, ikke levde), og src er alltid et objekt */
+function hurt(e, dmg, src = {}) { return Kroker.kall('hurt', hurtKjerne, this, [e, dmg, src, e && e.alive ? e.hp : 0]); }
+function hurtKjerne(e, dmg, src = {}) {
   if (!e || !e.alive) return 0;
   const P = G.player;
   if (e.kind === 'player') return hurtPlayer(dmg, src);
@@ -183,7 +186,10 @@ function killEntity(e, src) {
   else if (e.kind === 'boss') bossDie(e);
   else if (e.kind === 'ally') { Particles.spawn(e.x, 1, e.z, 10, 0x8a8f98, { flat: true, speed: 3, g: 4, life: 1.2 }); if (e.doll) e.doll.dispose(); else if (e.g) R.remove(e.g); }
 }
-function hurtPlayer(dmg, src) {
+/* hurtPlayer: kroker (Kroker.etter('hurtPlayer', ...)) i stedet for innpakning i andre filer. Krokene får pasientens helse fra
+   før slaget som tredje argument, og src er alltid et objekt (kjernen leser src.type) */
+function hurtPlayer(dmg, src = {}) { const P = G.player; return Kroker.kall('hurtPlayer', hurtPlayerKjerne, this, [dmg, src, P ? P.hp : 0]); }
+function hurtPlayerKjerne(dmg, src) {
   const P = G.player; if (!P.alive || G.state !== 'play') return 0;
   if (P.iframe > 0 || P.invuln > 0) { if (P.iframe > 0 && !P.dodgeText) { numText(P.x, P.z, 'bom', 'info'); P.dodgeText = true; } return 0; }
   let d = dmg * (1 - Math.min(.3, (P.stats.helse - 1) * .03)) * (G.depth >= 3 ? 1 : .9);
@@ -204,7 +210,9 @@ function hurtPlayer(dmg, src) {
   if (P.hp <= 0 && !Lomme.saveFromDeath()) playerDie();
   return d;
 }
-function nearestEnemy(x, z, maxD = 99, filter) {
+/* nearestEnemy: kroker (Kroker.rundt('nearestEnemy', ...)) i stedet for innpakning i andre filer */
+function nearestEnemy(x, z, maxD = 99, filter) { return Kroker.kall('nearestEnemy', nearestEnemyKjerne, this, arguments); }
+function nearestEnemyKjerne(x, z, maxD = 99, filter) {
   let best = null, bd = maxD * maxD;
   const all = G.boss && G.boss.alive ? G.enemies.concat([G.boss]) : G.enemies;
   for (const e of all) { if (!e.alive || (filter && !filter(e))) continue; const d = d2(x, z, e.x, e.z); if (d < bd) { bd = d; best = e; } }
@@ -217,7 +225,9 @@ function slowMo(t, s) {
 
 /* ---------- pytter og strøm ---------- */
 const CONDUCTIVE = { wet: 1, soup: 1, vomit: 1, blod: 1, mokk: 1, myr: 1, tjern: 1 };
-function addPuddle(x, z, kind, r = 1, life = 16) {
+/* addPuddle: kroker (Kroker.etter('addPuddle', ...)) i stedet for innpakning i andre filer */
+function addPuddle(x, z, kind, r = 1, life = 16) { return Kroker.kall('addPuddle', addPuddleKjerne, this, arguments); }
+function addPuddleKjerne(x, z, kind, r = 1, life = 16) {
   if (!gulvSynlig(tIdx(x, z))) return null;
   for (const p of G.puddles) if (p.kind === kind && d2(p.x, p.z, x, z) < (p.r * .7) * (p.r * .7)) { p.r = Math.min(2.6, Math.max(p.r, r) + .15); p.life = Math.max(p.life, life); p.mesh.scale.set(p.r * 2, p.r * 2, 1); return p; }
   if (G.puddles.length > 46) { const old = G.puddles.shift(); R.remove(old.mesh); }
@@ -249,7 +259,9 @@ function updatePuddles(dt) {
   }
 }
 /* påvirkning fra underlaget for en figur, kalles hvert bilde */
-function groundEffects(e, dt, speed) {
+/* groundEffects: kroker (Kroker.vakt('groundEffects', ...)) i stedet for innpakning i andre filer */
+function groundEffects(e, dt, speed) { return Kroker.kall('groundEffects', groundEffectsKjerne, this, arguments); }
+function groundEffectsKjerne(e, dt, speed) {
   const p = puddleAt(e.x, e.z); if (!p) { e.inPud = null; return; }
   const entered = e.inPud !== p; e.inPud = p;
   if (entered && speed > 1) R.ripple(e.x, e.z);
@@ -324,7 +336,9 @@ function breakProp(o, src) {
   if (Math.random() < .06) dropPickup(o.x, o.z, 'heart');
   if (Math.random() < .015) dropPickup(o.x, o.z, 'trinket', Lomme.pick());
 }
-function hitProps(x, z, face, range, arc, dmg, kb) {
+/* hitProps: kroker (Kroker.etter('hitProps', ...)) i stedet for innpakning i andre filer */
+function hitProps(x, z, face, range, arc, dmg, kb) { return Kroker.kall('hitProps', hitPropsKjerne, this, arguments); }
+function hitPropsKjerne(x, z, face, range, arc, dmg, kb) {
   let n = 0;
   for (const o of G.props) {
     if (!o.alive || o.skjult) continue;

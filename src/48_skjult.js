@@ -268,10 +268,10 @@ Object.assign(Sound.lib, { veggbank: [{ w: 'sine', f: 140, d: .09, pd: .6, v: .3
 { const _m = Stemning.maal; Stemning.maal = function () { const M = _m.call(this); try { if (G.state === 'play' && this.etasje) Skjult.lyd(M); } catch (e) { } return M; }; }
 
 /* ---------- koblinger ---------- */
-// spawnProps er allerede pakket inn av 17_romtyper (lysene) og 38_effekter (gløden), så alt finnes når tingene gjemmes
+// krokene på spawnProps fra 17_romtyper (lysene) og 38_effekter (gløden) kjører før denne, så alt finnes når tingene gjemmes
 Kroker.etter('spawnProps', () => { try { Skjult.gjemTing(); } catch (e) { console.warn('det skjulte rommet ble ikke gjemt', e); } });
 // banking: sprekken spør om slaget traff en ting, og hitProps kalles rett før hitCrack i meleeHit
-{ const _hp = hitProps; hitProps = function (...a) { const n = _hp.apply(this, a); Spesial.sistProps = n; return n; }; }
+Kroker.etter('hitProps', n => { Spesial.sistProps = n; });
 // hvert slag på sprekken: hårstreken vokser. Siste slag knuser veggen (c.broken, F.block og G.run.secrets som før), og så åpnes rommet
 { const _d = Spesial.damage; Spesial.damage = function (c, n) { _d.call(this, c, n); if (!G.skjult) return; if (this.cracks.length && this.cracks.every(k => k.broken)) Skjult.aapne(); else Skjult.oppdaterSteg(); }; }
 { const _u = Spesial.update; Spesial.update = function (dt) { _u.call(this, dt); Skjult.tick(dt); }; }

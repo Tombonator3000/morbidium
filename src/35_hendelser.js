@@ -44,14 +44,14 @@ const Folge = {
   xp(n) { gainXp(n); },
   visRom(r) { const F = G.F, S = G.skjult; for (let z = r.z - 1; z <= r.z + r.h; z++) for (let x = r.x - 1; x <= r.x + r.w; x++) if (x >= 0 && z >= 0 && x < F.W && z < F.H && !(S && S[z * F.W + x])) G.seen[z * F.W + x] = 1; },
   // det skjulte rommet tegnes ikke inn før veggen er slått inn: kartet får bare en anelse om at noe er visket ut der (45_kart.js)
-  kart(hva) { const F = G.F; for (const r of F.rooms) { if (r.role === 'secret' && G.skjult) { if (hva === 'skatt') G.kartAnelse = true; continue; } if (hva === 'alt' ? r.role !== 'secret' : hva === 'sjef' ? r.role === 'boss' : r.role === 'treasure' || r.role === 'secret') this.visRom(r); } mapT = 0; },
+  kart(hva) { const F = G.F; for (const r of F.rooms) { if (r.role === 'secret' && G.skjult) { if (hva === 'skatt') G.kartAnelse = true; continue; } if (hva === 'alt' ? r.role !== 'secret' : hva === 'sjef' ? r.role === 'boss' : r.role === 'treasure' || r.role === 'secret') this.visRom(r); } kartPaaNytt(); },
   kuriositet(pulje = 'kabinett') { const id = Items.pickFrom(pulje); if (id) Items.give(id); },
   lomme() { const l = Lomme.pick(); if (l) Lomme.give(l); },
   flaske(id) { const P = G.player; dropPickup(P.x, P.z, 'cons', id || pick(Object.keys(CONSUMABLES))); },
   fiender(type, n, elite) { const P = G.player; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, s = freeSpot(P.x + Math.sin(a) * 3.2, P.z + Math.cos(a) * 3.2, 2); spawnEnemy(type, s.x, s.z, !!elite, G.depth); } },
   fornavn() { const n = (G.run && G.run.patient && G.run.patient.name) || 'Pasient'; return n.split(' ')[0]; },
   hjerte() { G.run.pillHearts = (G.run.pillHearts || 0) + 1; recalcPlayer(); Sound.play('hjerte'); },
-  naerRom(x, z, r) { for (const rm of G.F.rooms) if (rm.role !== 'secret' && d2(rm.cx, rm.cz, x, z) < r * r) this.visRom(rm); mapT = 0; },
+  naerRom(x, z, r) { for (const rm of G.F.rooms) if (rm.role !== 'secret' && d2(rm.cx, rm.cz, x, z) < r * r) this.visRom(rm); kartPaaNytt(); },
   ganger(id) { return ((G.meta.hendelser || {})[id] || 0); } // teller med denne gangen
 };
 

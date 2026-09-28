@@ -131,7 +131,7 @@ const ENEMY_ART = {
     }
   }
 };
-{ const _cp = charPart; charPart = function (type, piece, v) { const E = ENEMY_ART[type]; if (E && (piece === 'hode' || piece === 'kropp')) { const h = piece === 'hode'; return Art.part(piece + '_' + type + '_f', h ? 1.2 : 1.3, h ? 1.1 : 1.0, h ? .6 : .65, h ? .1 : .08, h ? E.head : E.body); } return _cp(type, piece, v); }; }
+Kroker.vakt('charPart', (type, piece) => { const E = ENEMY_ART[type]; if (E && (piece === 'hode' || piece === 'kropp')) { const h = piece === 'hode'; return Art.part(piece + '_' + type + '_f', h ? 1.2 : 1.3, h ? 1.1 : 1.0, h ? .6 : .65, h ? .1 : .08, h ? E.head : E.body); } });
 Object.assign(WEAPON_ART, { skjemabunke: [.6, .7, .3, .1], gasskolbe: [.5, .9, .25, .1] });
 VAAPEN_TEGNING.skjemabunke = g => {
     for (let i = 0; i < 5; i++) { g.save(); g.translate((i % 2 - .5) * .03, -.08 - i * .07); g.rotate((i % 3 - 1) * .06); A.cel(g, A.rr(-.22, -.06, .44, .08, .01), i === 2 ? '#c8b890' : PAPER, { line: PAPERL, lw: .022, hi: false, soft: false }); g.restore(); }

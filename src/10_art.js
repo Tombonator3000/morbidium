@@ -373,7 +373,9 @@ const WEAPON_ART = { mopp: [.7, 1.65, .35, .12], stativ: [.6, 1.5, .3, .12], sag
 function weaponPart(id) { const d = WEAPON_ART[id]; return Art.part('vaapen_' + id, d[0], d[1], d[2], d[3], drawWeapon(id)); }
 
 /* ---------- delregister ---------- */
-function charPart(type, piece, v) {
+/* charPart: vakter (Kroker.vakt('charPart', ...)) med egne tegninger svarer før kjernen, i stedet for innpakning i andre filer */
+function charPart(type, piece, v) { return Kroker.kall('charPart', charPartKjerne, this, arguments); }
+function charPartKjerne(type, piece, v) {
   const extra = NPC_ART[type] || BOSS_ART[type];
   if (extra && piece !== 'kappe') v = 'f';
   const key = piece + '_' + type + '_' + v;
@@ -595,7 +597,9 @@ function bedArt(style, fw, fd, head) {
     if (style === 'optable') A.flat(g, A.ell(0, top + tf * .5, .12, .08), 'rgba(160,30,30,.5)', 0);
   });
 }
-function propArt(p) {
+/* propArt: kroker (Kroker.rundt('propArt', ...)) i stedet for innpakning i andre filer */
+function propArt(p) { return Kroker.kall('propArt', propArtKjerne, this, arguments); }
+function propArtKjerne(p) {
   const k = p.k, fw = p.fw || 1, fd = p.fd || 1, r = ((p.rot || 0) % TAU + TAU) % TAU;
   const facing = r < .5 || r > TAU - .5 ? 'f' : Math.abs(r - Math.PI) < .5 ? 'b' : 's';
   const head = fd > fw ? (Math.abs(r - Math.PI) < .5 ? 's' : 'n') : (r > 0 && r < Math.PI ? 'w' : 'e');
@@ -679,7 +683,9 @@ function barrierArt() {
 /* plukk og småting */
 function heartPart() { return Art.part('hjerte', .5, .5, .25, .05, g => { A.cel(g, g2 => { g2.beginPath(); g2.moveTo(0, -.04); g2.bezierCurveTo(-.3, -.2, -.22, -.44, 0, -.32); g2.bezierCurveTo(.22, -.44, .3, -.2, 0, -.04); g2.closePath(); }, '#d8322a', { lw: .04 }); }); }
 function morbPart() { return Art.part('morbdrape', .4, .5, .2, .05, g => { A.cel(g, A.blob([[0, -.42], [.13, -.16], [.1, -.04], [-.1, -.04], [-.13, -.16]]), '#8a3ac0', { lw: .035 }); A.dot(g, -.03, -.16, .025, '#e0a8ff'); }); }
-function bottlePart(id) { const col = { levertran: '#c8a040', luktesalt: '#e8e8f0', eter: '#9ad0e0', kamfer: '#d06a3a' }[id] || '#fff'; return Art.part('flaske_' + id, .5, .7, .25, .05, g => { A.cel(g, A.rr(-.13, -.42, .26, .42, .06), col, { lw: .035 }); A.cel(g, A.rr(-.06, -.56, .12, .16, .02), col, { lw: .03, hi: false }); A.flat(g, A.rr(-.07, -.62, .14, .07, .02), '#5a3a22', .025); A.flat(g, A.rr(-.1, -.3, .2, .12, .01), '#efe4c4', .02); }); }
+/* bottlePart: vakter (Kroker.vakt('bottlePart', ...)) svarer før kjernen, i stedet for innpakning i andre filer */
+function bottlePart(id) { return Kroker.kall('bottlePart', bottlePartKjerne, this, arguments); }
+function bottlePartKjerne(id) { const col = { levertran: '#c8a040', luktesalt: '#e8e8f0', eter: '#9ad0e0', kamfer: '#d06a3a' }[id] || '#fff'; return Art.part('flaske_' + id, .5, .7, .25, .05, g => { A.cel(g, A.rr(-.13, -.42, .26, .42, .06), col, { lw: .035 }); A.cel(g, A.rr(-.06, -.56, .12, .16, .02), col, { lw: .03, hi: false }); A.flat(g, A.rr(-.07, -.62, .14, .07, .02), '#5a3a22', .025); A.flat(g, A.rr(-.1, -.3, .2, .12, .01), '#efe4c4', .02); }); }
 function cardPart() { return Art.part('kortplukk', .6, .8, .3, .05, g => { g.rotate(-.12); A.cel(g, A.rr(-.22, -.66, .44, .6, .03), '#f6ead0', { lw: .035, sk: .9 }); A.flat(g, A.rr(-.16, -.6, .32, .08, .01), '#6b2d8c', 0); A.dot(g, 0, -.68, .05, '#e8b93a'); }); }
 function pigeonPart() { return Art.part('due_figur', .8, .7, .4, .05, g => { g.translate(0, -.36); g.scale(1.1, 1.1); CARD_ART.due(g); }); }
 function stampDecal() { return Art.part('stempelmerke', 1.6, 1.0, .8, .5, g => { g.rotate(-.12); g.strokeStyle = 'rgba(179,38,30,.85)'; g.lineWidth = .06; g.strokeRect(-.66, -.26, 1.32, .52); g.fillStyle = 'rgba(179,38,30,.85)'; g.font = 'bold .3px Georgia, serif'; g.textAlign = 'center'; g.fillText('AVSLÅTT', 0, .1); }); }

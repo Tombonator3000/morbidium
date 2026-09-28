@@ -5,15 +5,20 @@
    2. Ingen navn deklareres to ganger på toppnivå (alle filene deler ett skop i bygget).
    3. Ingen ukjente navn: alt som brukes, er deklarert i en fil, i skriptet i 00_head.html, lagt inn av build.py eller kjent fra
       nettleseren (KJENT under). Fanger skrivefeil i kode som bare kjøres av og til. typeof X er alltid lov.
-   4. Innpakningene som er igjen (funksjoner og metoder som settes på nytt etter at de er laget), med et tak som ikke skal øke:
-      nye systemer bruker Kroker eller oppslag (AGENTS.md). Senk TAK når innpakninger gjøres om til kroker.
-   Bruk: node tools/sjekk_kode.js [--liste] [--rot MAPPE]    --liste viser innpakningene, --rot sjekker et annet repo.
+   4. Ingen toppnivåfunksjon settes på nytt (pakkes inn): det er en feil, fordi funksjonene har kroker (Kroker i 01_core.js) og
+      fordi moduler ikke kan sette en annen fils funksjoner. Metoder på objekter som settes på nytt (Sound.play = ...), telles,
+      med et tak som ikke skal øke: nye systemer bruker Kroker eller oppslag (AGENTS.md). Senk TAK når de gjøres om til kroker.
+   5. Ingen fil skriver til en let eller var som er deklarert i en annen fil (en modul kan ikke det heller). Gi fila som eier
+      variabelen, en funksjon som gjør det (som hudKortPaaNytt og kartPaaNytt i 30_game.js).
+   Bruk: node tools/sjekk_kode.js [--liste] [--moduler] [--rot MAPPE]    --liste viser innpakningene, --moduler viser navnene
+   tidligere filer bruker fra senere filer mens spillet går (med moduler blir de til sirkler i importene, se «Kodesjekken» i
+   dokumentasjon/systemer.md), --rot sjekker et annet repo.
    Avslutter med kode 1 ved feil. */
 'use strict';
 const fs = require('fs'), path = require('path');
 const acorn = require('./vendor/acorn.js');
 const ROT = process.argv.includes('--rot') ? path.resolve(process.argv[process.argv.indexOf('--rot') + 1]) : path.resolve(__dirname, '..'), SRC = path.join(ROT, 'src');
-const TAK = 87; // innpakninger som er igjen (28.9.2026)
+const TAK = 45; // innpakninger av metoder som er igjen (28.9.2026); toppnivåfunksjoner: ingen, og det er en feil å legge til en
 
 // nettleseren og språket: navn spillet bruker uten å deklarere dem
 const KJENT = new Set(`window document navigator location history screen console performance localStorage sessionStorage globalThis self
@@ -33,7 +38,7 @@ const KJENT = new Set(`window document navigator location history screen console
 const parts = JSON.parse(fs.readFileSync(path.join(ROT, 'build.py'), 'utf8').match(/^parts = (\[.*\])$/m)[1].replace(/'/g, '"'));
 // konstantene build.py legger inn etter en fil
 const INNLAGT = { '01_core.js': ['BYGG', 'LYDFILER', 'LYD_META'], '10_art.js': ['DELER_META', 'ANIM_ARK'] };
-const feil = [], varsler = [], innpakninger = [];
+const feil = [], varsler = [], innpakninger = [], bakover = new Map(); // bakover: 'fil -> senere fil' => navnene
 
 /* ---------- toppnivået: hvem deklarerer hva, og i hvilken rekkefølge ---------- */
 const topp = new Map(); // navn -> { fil, nr, pos, art, linje }
@@ -113,6 +118,7 @@ function gå(n, K) {
       for (const m of n.body.body) { if (m.computed) gå(m.key, K2); if (m.type === 'MethodDefinition') funksjon(m.value, K2, false); else if (m.type === 'PropertyDefinition') { if (m.static) gå(m.value, K2); else if (m.value) funksjon({ type: 'ArrowFunctionExpression', params: [], body: m.value, expression: true }, K2, false); } else if (m.type === 'StaticBlock') gå(m, K2); } return; }
     case 'ReturnStatement': case 'ThrowStatement': case 'UnaryExpression': case 'UpdateExpression': case 'SpreadElement': case 'AwaitExpression': case 'YieldExpression':
       if (n.type === 'UnaryExpression' && n.operator === 'typeof' && n.argument.type === 'Identifier') return ref(n.argument, Object.assign({}, K, { typeof: true }));
+      if (n.type === 'UpdateExpression' && n.argument.type === 'Identifier') skrivTil(n.argument, K, n.loc.start.line);
       return gå(n.argument, K);
     case 'IfStatement': case 'ConditionalExpression': gå(n.test, K); gå(n.consequent, K); return gå(n.alternate, K);
     case 'ForStatement': { const s = new Set(); if (n.init && n.init.type === 'VariableDeclaration' && n.init.kind !== 'var') n.init.declarations.forEach(v => navnI(v.id).forEach(x => s.add(x))); const K2 = Object.assign({}, K, { skop: K.skop.concat([s]) }); gå(n.init, K2); gå(n.test, K2); gå(n.update, K2); return gå(n.body, K2); }
@@ -168,9 +174,13 @@ function ref(id, K) {
   if (lokal(id.name, K)) return;
   K.refs.push({ navn: id.name, pos: id.start, linje: id.loc ? id.loc.start.line : '?', lastes: K.lastes, typeof: !!K.typeof });
 }
+function skrivTil(id, K, linje) { // en let eller var fra en annen fil
+  if (lokal(id.name, K)) return; const d = topp.get(id.name);
+  if (d && (d.art === 'let' || d.art === 'var') && d.fil !== K.fil) feil.push(`${K.fil}:${linje}: skriver til ${id.name}, som er deklarert i ${d.fil}:${d.linje}; gi ${d.fil} en funksjon som gjør det`);
+}
 function tildeling(n, K) { // innpakninger: en funksjon eller metode som settes på nytt
-  const l = n.left;
-  if (l.type === 'Identifier' && !lokal(l.name, K)) { const d = topp.get(l.name); if (d && d.art === 'function') innpakninger.push(`${K.fil}:${n.loc.start.line}: ${l.name}`); }
+  const l = n.left; if (l.type === 'Identifier') skrivTil(l, K, n.loc.start.line);
+  if (l.type === 'Identifier' && !lokal(l.name, K)) { const d = topp.get(l.name); if (d && d.art === 'function') feil.push(`${K.fil}:${n.loc.start.line}: ${l.name} settes på nytt (${d.fil}:${d.linje}); gi den kroker med Kroker.kall i stedet (se «Kroker» i dokumentasjon/systemer.md)`); }
   else if (l.type === 'MemberExpression' && !l.computed && l.object.type === 'Identifier' && !lokal(l.object.name, K) && metoder.has(l.object.name + '.' + l.property.name)) innpakninger.push(`${K.fil}:${n.loc.start.line}: ${l.object.name}.${l.property.name}`);
 }
 
@@ -197,6 +207,7 @@ for (const F of filer) {
     for (const x of r.refs) if (x.lastes) K.refs.push(Object.assign({}, x, { pos: -1, linje: k.linje, via: k.via }));
     for (const c of r.kall) kø.push({ navn: c.navn, linje: k.linje, via: k.via + ' -> ' + c.navn });
   }
+  for (const r of K.refs) { const d = topp.get(r.navn); if (d && d.nr > F.nr) { const k = F.fil + ' -> ' + d.fil; if (!bakover.has(k)) bakover.set(k, new Set()); bakover.get(k).add(r.navn); } }
   for (const r of K.refs) {
     const d = topp.get(r.navn);
     if (!d) { if (!KJENT.has(r.navn) && !r.typeof) feil.push(`${F.fil}:${r.linje}: ukjent navn ${r.navn}`); continue; }
@@ -206,11 +217,15 @@ for (const F of filer) {
   }
 }
 const unike = a => [...new Set(a)];
-const F2 = unike(feil);
-if (process.argv.includes('--liste')) { console.log(innpakninger.join('\n')); console.log(''); }
-console.log(`${parts.length} filer, ${topp.size} navn på toppnivået, ${innpakninger.length} innpakninger (tak ${TAK}).`);
-if (innpakninger.length > TAK) F2.push(`flere innpakninger enn taket (${innpakninger.length} > ${TAK}): bruk Kroker eller et oppslag (AGENTS.md), eller se --liste`);
-else if (innpakninger.length < TAK) varsler.push(`færre innpakninger enn taket: sett TAK = ${innpakninger.length} i tools/sjekk_kode.js`);
+const F2 = unike(feil), IP = unike(innpakninger); // en funksjon som kalles mens filene lastes, gås gjennom to ganger
+if (process.argv.includes('--liste')) { console.log(IP.join('\n')); console.log(''); }
+if (process.argv.includes('--moduler')) {
+  let n = 0; for (const [k, s] of bakover) { n += s.size; console.log(`${k}: ${[...s].sort().join(' ')}`); }
+  console.log(`\n${n} navn i ${bakover.size} filpar brukes fra en senere fil mens spillet går. Med moduler blir hvert filpar en sirkel i importene.\n`);
+}
+console.log(`${parts.length} filer, ${topp.size} navn på toppnivået, ${IP.length} innpakninger av metoder (tak ${TAK}).`);
+if (IP.length > TAK) F2.push(`flere innpakninger av metoder enn taket (${IP.length} > ${TAK}): bruk Kroker eller et oppslag (AGENTS.md), eller se --liste`);
+else if (IP.length < TAK) varsler.push(`færre innpakninger enn taket: sett TAK = ${IP.length} i tools/sjekk_kode.js`);
 for (const v of varsler) console.log('Merk: ' + v);
 if (F2.length) { console.log('\nFeil:'); for (const f of F2) console.log('  ' + f); process.exitCode = 1; }
 else console.log('Koden er i orden.');

@@ -370,12 +370,12 @@ Kroker.etter('spawnProps', () => { try { Effekter.onFloor(); } catch (e) { conso
 Kroker.foer('clearFloor', () => { Glod.tom(); Lyn.tom(); Glorie.tom(); Regnringer.stopp(); });
 { const _st = Vaer.start, _so = Vaer.stopp; Vaer.start = function (F) { _st.call(this, F); if (this.type === 'regn') try { Regnringer.start(F); } catch (e) { console.warn('regnringer feilet', e); } }; Vaer.stopp = function () { Regnringer.stopp(); _so.call(this); }; }
 // Morbidium stiger fra de lilla pyttene
-{ const _ap = addPuddle; addPuddle = function (x, z, kind, r, life) { const p = _ap(x, z, kind, r, life); if (p && kind === 'morb' && !p.glod) p.glod = Glod.lag(p.x, .08, p.z, 'morb', { eier: p }) || true; return p; }; }
+Kroker.etter('addPuddle', (p, x, z, kind) => { if (p && kind === 'morb' && !p.glod) p.glod = Glod.lag(p.x, .08, p.z, 'morb', { eier: p }) || true; });
 // store øyeblikk får sjokkbølge: eksplosjoner fra kuriositetene og sjefer som dør
 { const _b = Items.boom; Items.boom = function (x, z, dmg) { _b.call(this, x, z, dmg); R.sjokk(x, z, .4, { life: .5 }); }; }
 Kroker.etter('bossDie', (_, B) => { R.sjokk(B.x, B.z, 1.6, { life: 1.1, fart: 1 }); R.zoomStot(B.x, B.z, .9); R.negativ(.12); R.fx.ca = 1.2; });
 // nytt nivå: en myk ring ut fra pasienten
-{ const _gx = gainXp; gainXp = function (v) { const P = G.player, l0 = P ? P.level : 0; _gx(v); if (P && P.level > l0) { R.sjokk(P.x, P.z, .55, { life: .8 }); Glod.lag(P.x, .2, P.z + .1, 'kombo', { liv: 1.6, n: 24, farger: ['#fff8d0', '#ffd24a'] }); } }; }
+Kroker.rundt('gainXp', (neste, v) => { const P = G.player, l0 = P ? P.level : 0; neste(v); if (P && P.level > l0) { R.sjokk(P.x, P.z, .55, { life: .8 }); Glod.lag(P.x, .2, P.z + .1, 'kombo', { liv: 1.6, n: 24, farger: ['#fff8d0', '#ffd24a'] }); } });
 // dødsårsaken når lynet tar deg
 if (typeof DEATH_CAUSES === 'object') DEATH_CAUSES.lyn = ['Truffet av lynet. Det slår visst ned to ganger.', 'Stod ute i tordenvær. Journalen sier «uforsiktig».', 'Lynet fant deg før sykepleieren gjorde det.'];
 Object.assign(window, { Glorie, GLORIE_KILDER }); // til testene

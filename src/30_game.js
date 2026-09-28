@@ -30,8 +30,12 @@ function continueRun() {
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const shuf = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-function toast(t, sub) { const el = $('toast'); el.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : ''); el.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => el.classList.remove('on'), 1900); }
-function stampBig(t, sub) { Stempel.stor(t, sub); } // i kø bak et stempel som står, og under kombostempelet (Stempel i 39_kombo.js)
+/* toast: kroker (Kroker.etter('toast', ...)) i stedet for innpakning i andre filer */
+function toast(t, sub) { return Kroker.kall('toast', toastKjerne, this, arguments); }
+function toastKjerne(t, sub) { const el = $('toast'); el.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : ''); el.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => el.classList.remove('on'), 1900); }
+/* stampBig: kroker (Kroker.etter('stampBig', ...)) i stedet for innpakning i andre filer */
+function stampBig(t, sub) { return Kroker.kall('stampBig', stampBigKjerne, this, arguments); }
+function stampBigKjerne(t, sub) { Stempel.stor(t, sub); } // i kø bak et stempel som står, og under kombostempelet (Stempel i 39_kombo.js)
 function paLine(txt) { const el = $('pa'); el.textContent = 'Høyttaleren: ' + txt; el.classList.add('on'); Sound.play('pa', .7); clearTimeout(paLine.h); paLine.h = setTimeout(() => el.classList.remove('on'), 5200); }
 function show(id, on) { $(id).classList.toggle('hidden', !on); }
 function partCanvas(P, w, h, s = 1) {
@@ -220,7 +224,9 @@ function startFloorKjerne(depth, first) {
   if (first) setTimeout(() => FX.bubble(P, pick(['Hvor er tøflene mine? Å. Der.', 'Dette er ikke rommet mitt.', 'Noen har skrevet navnet mitt feil.']), 2.4), 900);
   $('game').focus(); saveRun(first);
 }
-function descend() {
+/* descend: kroker (Kroker.foer('descend', ...)) i stedet for innpakning i andre filer */
+function descend() { return Kroker.kall('descend', descendKjerne, this, arguments); }
+function descendKjerne() {
   const P = G.player; if (!P.alive) return;
   if (G.depth >= MAX_DEPTH) { showWin(); return; }
   Sound.play('door'); healPlayer(Math.round(P.maxHp * .25), true);
@@ -259,7 +265,9 @@ function lockRoom(r) {
   if (r.role === 'boss') { spawnBoss(G.depth, r.x + r.w / 2, r.z + r.h / 2 - 1); G.combat.t = 99; }
   else toast(r.role === 'risk' ? 'Frivillig risiko' : 'Dørene smeller igjen', r.role === 'risk' ? 'Noen her er større enn de andre' : '');
 }
-function combatTick(dt) {
+/* combatTick: kroker (Kroker.rundt('combatTick', ...)) i stedet for innpakning i andre filer */
+function combatTick(dt) { return Kroker.kall('combatTick', combatTickKjerne, this, arguments); }
+function combatTickKjerne(dt) {
   const C = G.combat, alive = G.enemies.filter(e => e.alive).length;
   if (C.boss) { if (!G.boss || !G.boss.alive) { if (!C.endT) C.endT = 2; C.endT -= dt; if (C.endT <= 0) finishCombat(); } return; }
   C.t -= dt; if (C.t > 0) return;
@@ -599,6 +607,8 @@ function bindCards() {
 /* ---------- HUD ---------- */
 const HEART = f => `<svg viewBox="0 0 24 22"><path d="M12 20.5C5 15 1.5 11.3 1.5 7.1 1.5 4 3.9 1.6 6.9 1.6c2 0 3.8 1 5.1 2.8 1.3-1.8 3.1-2.8 5.1-2.8 3 0 5.4 2.4 5.4 5.5 0 4.2-3.5 7.9-10.5 13.4z" fill="${f}" stroke="#2a1a14" stroke-width="2.4" stroke-linejoin="round"/>${f !== '#4a3a36' ? '<path d="M5 6.5c.4-1.6 1.6-2.4 3-2.4" stroke="#ffd0c8" stroke-width="1.8" fill="none" stroke-linecap="round"/>' : ''}</svg>`;
 let hudKey = '', hudCardsKey = '', hudConsKey = '';
+// for de andre filene: kortene i HUD tegnes på nytt ved neste oppdatering (en fil skriver ikke til en annen fils let)
+function hudKortPaaNytt() { hudCardsKey = ''; }
 function drawWeaponCard() {
   const P = G.player; if (!P) return; const W0 = WEAPONS[P.weapon], wc = $('wpc').getContext('2d'), wp = weaponPart(P.weapon);
   wc.setTransform(1, 0, 0, 1, 0, 0); wc.clearRect(0, 0, 88, 132); wc.translate(40, 126); wc.rotate(.3); const k = Math.min(.55, 120 / wp.canvas.height);
@@ -660,8 +670,12 @@ function drawMap() {
 }
 
 /* ---------- død og utskrivning ---------- */
-function runStats() { const P = G.player, secs = Math.round((performance.now() - G.run.t0) / 1000); return `<div class="alive">Innlagt i ${Math.floor(secs / 60)} min ${secs % 60} s, nådde etasje ${G.depth}</div><dl><dt>Lagt i seng for godt</dt><dd>${G.run.kills}</dd><dt>Rom ryddet</dt><dd>${G.run.rooms}</dd><dt>Gulltenner i lomma</dt><dd>${P.teeth}</dd>`; }
-function showDeath() {
+/* runStats: kroker (Kroker.rundt('runStats', ...)) i stedet for innpakning i andre filer */
+function runStats() { return Kroker.kall('runStats', runStatsKjerne, this, arguments); }
+function runStatsKjerne() { const P = G.player, secs = Math.round((performance.now() - G.run.t0) / 1000); return `<div class="alive">Innlagt i ${Math.floor(secs / 60)} min ${secs % 60} s, nådde etasje ${G.depth}</div><dl><dt>Lagt i seng for godt</dt><dd>${G.run.kills}</dd><dt>Rom ryddet</dt><dd>${G.run.rooms}</dd><dt>Gulltenner i lomma</dt><dd>${P.teeth}</dd>`; }
+/* showDeath: kroker (Kroker.rundt('showDeath', ...)) i stedet for innpakning i andre filer */
+function showDeath() { return Kroker.kall('showDeath', showDeathKjerne, this, arguments); }
+function showDeathKjerne() {
   const P = G.player; if (G.state === 'dead') return;
   const ck = P.lastCause === 'boss' && G.boss && DEATH_CAUSES['boss_' + G.boss.type] ? 'boss_' + G.boss.type : P.lastCause, cause = pick(DEATH_CAUSES[ck] || DEATH_CAUSES.any), m = G.meta;
   m.deaths++; Merknad.onDeath(); m.lastDeath = { depth: G.depth, name: G.run.patient.name, teeth: P.teeth, cause, looted: false };
@@ -683,7 +697,9 @@ function showWin() {
   const P = G.player; if (!P || G.state === 'dead') return; G.state = 'dead'; P.invuln = 99; show('hud', false); Sound.stopAmbience(); Musikk.stopp(.3); Musikk.stikk('seier');
   setTimeout(() => utskrivningsbrev(visUtskrevet), 900);
 }
-function visUtskrevet() {
+/* visUtskrevet: kroker (Kroker.etter('visUtskrevet', ...)) i stedet for innpakning i andre filer */
+function visUtskrevet() { return Kroker.kall('visUtskrevet', visUtskrevetKjerne, this, arguments); }
+function visUtskrevetKjerne() {
   const P = G.player; Merknad.onWin(G.run); G.meta.wins++; G.meta.historie = (G.meta.historie || []).concat([{ name: G.run.patient.name, nr: G.run.patient.nr, age: G.run.patient.age, depth: G.depth, cause: 'Utskrevet. Frisk nok.', kills: G.run.kills, rooms: G.run.rooms, awk: G.run.awk, look: G.run.look || null, utskrevet: true, drom: Drom.mappe(true) }]).slice(-40); saveMeta(); clearRun(); G.state = 'dead'; show('hud', false); Sound.play('level'); Sound.stopAmbience();
   $('panel').innerHTML = `<div class="fit dodskjerm"><div class="hdr">UTSKREVET</div><div class="dcard"><div class="slab" style="background:linear-gradient(#b8c8a8,#8aa07a)"><canvas id="winc" width="300" height="118"></canvas><div class="plate">${esc(G.run.patient.name)}</div></div>${runStats()}<dt>Legens konklusjon</dt><dd class="cause">${esc(Historie.konklusjon())}</dd></dl>${Merknad.kortHtml()}<div class="stamp">${Historie.brev().sl === 'gjentakelse' ? 'INNKALT' : 'FRISK NOK'}</div></div>
     <div class="btnrow"><button class="btn big" id="dNew">Ny pasient</button><button class="btn" id="dTitle">Til tittel</button></div></div>`;
@@ -697,6 +713,8 @@ function updateNPCs(dt) {
   for (const n of G.npcs) { if (!n.doll) continue; n.doll.update(dt, {}); n.talkT -= dt; if (P && n.talkT <= 0 && Math.hypot(n.x - P.x, n.z - P.z) < 6) { n.talkT = rnd(9, 15); FX.bubble(n, pick(NPC_LINES[n.service] || ['...']), 2.6); } }
 }
 let lastT = performance.now(), mapT = 0;
+// for de andre filene: kartet tegnes på nytt ved neste bilde
+function kartPaaNytt() { mapT = 0; }
 /* testklokka: Klokke.frys() stopper spillet i den vanlige løkka (bildet tegnes fortsatt, men ingenting flytter seg og ingen tilfeldige
    tall trekkes), og Klokke.spol(sek) kjører oppdateringen i faste steg på 1/60 sekund uten å vente på skjermen. Da blir en test like rask
    og lik på en treg og en rask maskin. frys({ frø }) gir spillets Math.random (01_core.js) en fast tallrekke, frys({ stille: true })

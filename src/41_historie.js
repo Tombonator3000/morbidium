@@ -524,11 +524,10 @@ Kroker.foer('clearFloor', () => Kjeder.tom());
 }; }
 // sjefene: ny tale ved en tredjedel helse, slengord i kampen, siste ord, og Journalen som svarer seg selv
 // den første talen er over når fasen er tilbake til kamp, så den andre kan byttes inn før bossOnHurt starter den
-{ const _o = bossOnHurt; bossOnHurt = function (B, d) { if (B.phasesDone === 1 && B.phase !== 'monolog' && LINES.monolog2[B.type]) B.mono = LINES.monolog2[B.type]; _o(B, d); }; }
-{ const _u = updateBoss; updateBoss = function (B, dt) {
-  _u(B, dt);
+Kroker.foer('bossOnHurt', B => { if (B.phasesDone === 1 && B.phase !== 'monolog' && LINES.monolog2[B.type]) B.mono = LINES.monolog2[B.type]; });
+Kroker.etter('updateBoss', (_, B, dt) => {
   if (B.alive && B.state === 'chase' && G.state === 'play') { B.slengT = (B.slengT ?? rnd(5, 9)) - dt; if (B.slengT <= 0) { B.slengT = rnd(8, 14); const L = LINES.boss[B.type]; if (L && L.length) FX.bubble(B, pick(L), 1.8, 'boss'); } }
-}; }
+});
 // Journalen: svarer seg selv, er svakere uten pennen og sterkere når ingen leser for den under huset
 Kroker.etter('spawnBoss', B => {
   if (!B) return; const run = G.run || {};

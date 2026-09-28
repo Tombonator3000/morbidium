@@ -75,7 +75,8 @@ async def del_33(b):
           for (let i = 0; i < 60 && Musikk.navn !== stykkeFor(G.depth); i++) await vent(100);
           const n0 = Object.assign({}, Musikk.tall); startFloor(6, false); rolig(); P.hp = P.maxHp = 9999; Musikk.velg(.016);
           const O = Musikk.overgang, per = Musikk.per(); ut.venter = Musikk.navn !== 'e4' && !!O && O.til === 'e4'; ut.paaStrek = !!O && O.b % per === 0;
-          for (let i = 0; i < 100 && Musikk.navn !== 'e4'; i++) await vent(100);
+          // byttet følger lydklokka (vanlig tid), og på en travel maskin med tre nettlesere kan broen og taktstreken ta lenger tid
+          for (let i = 0; i < 250 && Musikk.navn !== 'e4'; i++) await vent(100);
           ut.byttet = Musikk.navn === 'e4' && Musikk.tall.bytter > n0.bytter && Musikk.tall.broer > n0.broer;
           // besetningen følger rommet
           const rom = G.F.rooms.find(r => ROM_BESETNING[r.template] && !['combat', 'risk', 'boss'].includes(r.role)) || G.F.rooms.find(r => ROM_BESETNING[r.template]);

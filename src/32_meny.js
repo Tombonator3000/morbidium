@@ -22,7 +22,9 @@ const tvAuto = () => TV_UA.test(navigator.userAgent || '');
 const tvSkala = () => R.tv ? Math.max(1, 1.4 * Math.min(innerWidth / 1920, innerHeight / 1080)) : 1;
 function settUi(s) { const k = tvSkala(), r = document.documentElement.style; r.setProperty('--ui', R.tv ? Math.min(1.6, s.ui * k) : s.ui); r.setProperty('--tvk', k.toFixed(3)); }
 addEventListener('resize', () => { if (R.tv && G.meta && G.meta.settings) settUi(G.meta.settings); });
-function applySettings() {
+/* applySettings: kroker (Kroker.etter('applySettings', ...)) i stedet for innpakning i andre filer */
+function applySettings() { return Kroker.kall('applySettings', applySettingsKjerne, this, arguments); }
+function applySettingsKjerne() {
   // samme objekt hele tiden: panelet holder på det mens du endrer flere ting etter hverandre
   const n = normSettings(G.meta.settings), s = G.meta.settings = G.meta.settings ? Object.assign(G.meta.settings, n) : n;
   R.safe = !!s.simple; R.tv = s.tv === 1 || (!s.tv && tvAuto()); document.body.classList.toggle('tv', R.tv); Sound.setVolume(s.vol); Sound.setMix(s.sfx, s.amb, s.mus);
@@ -97,7 +99,9 @@ function bindTitleMenu(sv) {
 }
 
 /* ---------- pause ---------- */
-function openPause() {
+/* openPause: kroker (Kroker.etter('openPause', ...)) i stedet for innpakning i andre filer */
+function openPause() { return Kroker.kall('openPause', openPauseKjerne, this, arguments); }
+function openPauseKjerne() {
   const r = G.run, p = r && r.patient;
   openPanel(`<div class="fit clip paper"><div class="clamp"></div><div class="ptitle">Pause</div>
     ${p ? `<div class="pwho"><span id="pPort"></span><div><b>${esc(p.name)}</b><br>Pasient ${p.nr}, ${esc(depthName(G.depth))}<br><span class="svak">${G.player ? G.player.teeth : 0} gulltenner, ${r.kills || 0} fiender slått</span></div></div>` : ''}
@@ -137,7 +141,9 @@ const SET_FMT = {};
 const vinkelVenter = s => VINKLER[s.vinkel] !== KAMERA_VALG.navn;
 function vinkelTekst() { return (KAMERA_VALG.kilde === 'adresse' ? 'Adressen bestemmer vinkelen nå (kamera=' + (KAMERA_VALG.navn || 'standard') + '). Innstillingen brukes når spillet åpnes uten den.' : 'Brukes når spillet lastes på nytt. Et løp som er i gang, fortsetter fra starten av etasjen.') + ' Som før er 52 grader rett nedover gangene, lav er 42 grader, og isometrisk er dreid 45 grader på skrå.'; }
 function vinkelRad(s) { return `<div class="datarad" id="vinkelRad"${vinkelVenter(s) ? '' : ' style="display:none"'}><div><b>Ny kameravinkel</b><small>${esc(vinkelTekst())}</small></div>${KAMERA_VALG.kilde === 'adresse' ? '' : '<button class="btn" id="bVinkel">Last på nytt</button>'}</div>`; }
-function settingsBody(tab) {
+/* settingsBody: kroker (Kroker.rundt('settingsBody', ...)) i stedet for innpakning i andre filer */
+function settingsBody(tab) { return Kroker.kall('settingsBody', settingsBodyKjerne, this, arguments); }
+function settingsBodyKjerne(tab) {
   const s = G.meta.settings, sl = (id, lab, min, max, st, v, fmt) => { SET_FMT[id] = fmt; return `<label class="srow"><span>${lab}</span><input type="range" min="${min}" max="${max}" step="${st}" value="${v}" data-s="${id}"><em>${fmt(v)}</em></label>`; };
   const cb = (id, lab, hint) => `<label class="srow cb"><input type="checkbox" data-s="${id}" ${s[id] ? 'checked' : ''}><span>${lab}${hint ? `<small>${hint}</small>` : ''}</span></label>`;
   const pct = v => Math.round(v * 100) + ' %';
@@ -153,7 +159,9 @@ function settingsBody(tab) {
     <div class="datarad"><div><b>Tipsene</b><small>${Object.keys(G.meta.tips || {}).length} av ${Object.keys(TIPS).length} er vist</small></div><button class="btn" id="dTips">Vis dem på nytt</button></div>
     <p class="shint">Alt lagres bare i denne nettleseren. Innstillingene beholdes når arkivet brennes.</p>`;
 }
-function openSettings(fromTitle, back, tab = 'lyd') {
+/* openSettings: kroker (Kroker.etter('openSettings', ...)) i stedet for innpakning i andre filer */
+function openSettings(fromTitle, back, tab = 'lyd') { return Kroker.kall('openSettings', openSettingsKjerne, this, arguments); }
+function openSettingsKjerne(fromTitle, back, tab = 'lyd') {
   if (fromTitle) show('title', false);
   const onBack = fromTitle ? showTitle : back || null;
   openPanel(`<div class="fit kort paper${narrow() ? ' smal' : ''}" id="settings"><div class="ktabs">${Object.entries(SET_TABS).map(([k, n]) => `<button class="ktab${k === tab ? ' on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>

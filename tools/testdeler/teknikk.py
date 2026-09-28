@@ -181,17 +181,21 @@ async def del_53(b):
 
 async def del_66(b):
     # 66) Kroker i stedet for innpakning (punkt 4): ingen fil setter de omgjorte funksjonene på nytt, krokene kjører i samme rekkefølge
-    #     som innpakningene ga, prio går foran, en feil i én krok stopper ikke de andre, av() tar en krok bort, og våpnene fra andre filer
-    #     slås opp i VAAPEN_TEGNING og tegnes
+    #     som innpakningene ga, prio går foran, en feil i én krok stopper ikke de andre, av() tar en krok bort, vaktene kan svare i stedet
+    #     for kjernen, rundt-lagene ligger utenpå med det siste ytterst, og våpnene fra andre filer slås opp i VAAPEN_TEGNING og tegnes
     import re as _re
     kilde = {f.name: f.read_text(encoding='utf-8') for f in (ROT / 'src').glob('*.js')}
-    KROK = ['startFloor', 'clearFloor', 'spawnBoss', 'bossDie', 'enemyDie', 'drawWeapon', 'spawnProps', 'decorateLevel', 'updateTele', 'updateZones', 'updateProjectiles', 'playerDie', 'spawnEnemy']
+    KROK = ['startFloor', 'clearFloor', 'spawnBoss', 'bossDie', 'enemyDie', 'drawWeapon', 'spawnProps', 'decorateLevel', 'updateTele', 'updateZones', 'updateProjectiles', 'playerDie', 'spawnEnemy',
+            'hurt', 'hurtPlayer', 'healPlayer', 'nearestEnemy', 'groundEffects', 'enemySlip', 'charPart', 'bottlePart', 'updatePlayer', 'updateEnemy', 'meleeHit', 'useAbility',
+            'toast', 'stampBig', 'runStats', 'showDeath', 'visUtskrevet', 'applySettings', 'openPause', 'settingsBody', 'openSettings',
+            'addPuddle', 'hitProps', 'propArt', 'gainXp', 'bossOnHurt', 'updateBoss', 'descend', 'combatTick', 'utskrivningsbrev']
     pakket = [f'{f}: {n}' for f, t in sorted(kilde.items()) for n in KROK if _re.search(r'(?<![\w.])' + n + r'\s*=(?![=>])', t)]
     sjekk('ingen fil pakker inn funksjonene som har fått kroker', not pakket, pakket)
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000)
-    kr = await pg.evaluate("""() => { const K = Kroker, ut = { orden: {} }, ord = /(Kraken|Kjeder|Dybde|Glod|Drom|Hendelse|Vaer|Blekk|Nedslag|Vaatt|Kombo|Historie|Testmodus|Mini|Blod|Havet|speil|morke|sjefSvekk|kamZoom|journalen|bossDod|kraken|sjokk|Effekter|Skjult|LYS|Landskap)/;
-          for (const n of ['clearFloor:foer', 'clearFloor:etter', 'startFloor:foer', 'startFloor:etter', 'spawnBoss:etter', 'bossDie:etter', 'enemyDie:etter', 'spawnProps:etter'])
+    kr = await pg.evaluate("""() => { const K = Kroker, ut = { orden: {} }, ord = /(Kraken|Kjeder|Dybde|Glod|Drom|Hendelse|Vaer|Blekk|Nedslag|Vaatt|Kombo|Historie|Testmodus|Mini|Blod|Havet|speil|morke|sjefSvekk|kamZoom|journalen|bossDod|kraken|sjokk|Effekter|Skjult|LYS|Landskap|dukket|hpFor|MONSTER_ART|ENEMY_ART|BLOBS|avlopsarm|draug|velsignet|vaatT|Laug)/;
+          for (const n of ['clearFloor:foer', 'clearFloor:etter', 'startFloor:foer', 'startFloor:etter', 'spawnBoss:etter', 'bossDie:etter', 'enemyDie:etter', 'spawnProps:etter',
+                           'hurt:vakt', 'hurt:foer', 'hurt:etter', 'hurtPlayer:etter', 'enemySlip:vakt', 'charPart:vakt', 'updateEnemy:foer', 'updateEnemy:etter', 'updatePlayer:foer', 'updatePlayer:etter', 'nearestEnemy:rundt'])
             ut.orden[n] = (K.l[n] || []).map(x => (x.fn.toString().match(ord) || ['?'])[0]).join(' ');
           const spor = [], ce = console.error; console.error = () => spor.push('logget');
           try {
@@ -199,7 +203,17 @@ async def del_66(b):
             K.etter('t66', (r, a) => spor.push('e1:' + r + ':' + a)); K.etter('t66', () => { throw new Error('med vilje'); }); const e3 = K.etter('t66', () => spor.push('e3'));
             ut.svar = K.kall('t66', (a, b) => { spor.push('kjerne'); return a + b; }, null, [2, 3]); ut.spor = spor.join(' ');
             spor.length = 0; K.av('t66', e3); K.kall('t66', () => 0, null, []); ut.av = !spor.includes('e3');
-          } finally { console.error = ce; delete K.l['t66:foer']; delete K.l['t66:etter']; }
+            // vaktene (sist lagt til først) kan svare i stedet for kjernen, også med 0; rundt-lagene ligger utenpå før- og etter-krokene
+            const s2 = [], kj = a => { s2.push('k:' + a); return a; };
+            K.vakt('t66b', a => { s2.push('v1'); if (a === 1) return 'stopp1'; }); K.vakt('t66b', a => { s2.push('v2'); if (a === 2) return 0; });
+            K.rundt('t66b', (neste, a) => { s2.push('r1<'); const s = neste(a * 10); s2.push('>r1'); return s + 1; });
+            K.rundt('t66b', (neste, a) => { s2.push('r2<'); const s = neste(a + 1); s2.push('>r2'); return s * 2; });
+            K.foer('t66b', a => s2.push('f:' + a)); K.etter('t66b', (s, a) => s2.push('e:' + s + ':' + a));
+            ut.vakt = [];
+            for (const a of [1, 2, 3]) { s2.length = 0; ut.vakt.push([K.kall('t66b', kj, null, [a]), s2.join(' ')]); }
+            spor.length = 0; K.vakt('t66c', () => { throw new Error('med vilje'); }); ut.vaktFeil = [K.kall('t66c', () => 'kjerne', null, []), spor.join(' ')];
+            K.rundt('t66d', () => { throw new Error('med vilje'); }); try { K.kall('t66d', () => 1, null, []); ut.rundtFeil = 'stoppet'; } catch (e) { ut.rundtFeil = 'gikk videre'; }
+          } finally { console.error = ce; for (const n of ['t66', 't66b', 't66c', 't66d']) for (const s of ['vakt', 'rundt', 'foer', 'etter']) delete K.l[n + ':' + s]; }
           const tegn = id => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.setTransform(60, 0, 0, 60, 64, 120); drawWeapon(id)(g); const d = g.getImageData(0, 0, 128, 128).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; };
           ut.vaapen = Object.keys(VAAPEN_TEGNING).filter(id => tegn(id) < 40); ut.nVaapen = Object.keys(VAAPEN_TEGNING).length; ut.mopp = tegn('mopp');
           return ut; }""")
@@ -209,9 +223,15 @@ async def del_66(b):
     sjekk('krokene kjører i samme rekkefølge som innpakningene: rydding, etasjestart, sjefene, døden og tingene',
           o == {'clearFloor:foer': 'Kraken Kjeder Dybde Glod Drom Hendelse Vaer', 'clearFloor:etter': 'Blekk Nedslag', 'startFloor:foer': 'Vaatt Kombo',
                 'startFloor:etter': 'Hendelse Drom Historie Testmodus', 'spawnBoss:etter': 'morke sjefSvekk kamZoom journalen kraken Testmodus',
-                'bossDie:etter': 'Blod sjokk Kombo bossDod kraken Testmodus', 'enemyDie:etter': 'speil Mini Blod Havet', 'spawnProps:etter': 'LYS Effekter Skjult'}, o)
+                'bossDie:etter': 'Blod sjokk Kombo bossDod kraken Testmodus', 'enemyDie:etter': 'speil Mini Blod Havet', 'spawnProps:etter': 'LYS Effekter Skjult',
+                'hurt:vakt': 'dukket', 'hurt:foer': 'hpFor', 'hurt:etter': 'Blod Kombo', 'hurtPlayer:etter': 'Kombo Nedslag Testmodus', 'enemySlip:vakt': 'draug avlopsarm dukket',
+                'charPart:vakt': 'MONSTER_ART ENEMY_ART BLOBS', 'updateEnemy:foer': 'Laug velsignet', 'updateEnemy:etter': 'avlopsarm', 'updatePlayer:foer': 'Laug vaatT',
+                'updatePlayer:etter': 'Laug', 'nearestEnemy:rundt': 'dukket'}, o)
     sjekk('Kroker: prio foran, før-krokene sist lagt til først, etter-krokene med svaret først, en feil stopper ikke resten, og av() virker',
           kr['svar'] == 5 and kr['spor'] == 'f0 f2 f1 kjerne e1:5:2 logget e3' and kr['av'], kr)
+    sjekk('Kroker: vaktene svarer i stedet for kjernen (også med 0), rundt-lagene ligger utenpå med det siste ytterst, en feil i en vakt stopper ikke kallet, og en feil i et rundt-lag går videre',
+          kr['vakt'] == [['stopp1', 'v2 v1'], [0, 'v2'], [82, 'v2 v1 r2< r1< f:40 k:40 e:40:40 >r1 >r2']] and kr['vaktFeil'] == ['kjerne', 'logget'] and kr['rundtFeil'] == 'gikk videre',
+          [kr['vakt'], kr['vaktFeil'], kr['rundtFeil']])
     sjekk('alle våpnene i VAAPEN_TEGNING tegnes, og moppen fra kjernen også', kr['nVaapen'] == 13 and not kr['vaapen'] and kr['mopp'] > 40, [kr['nVaapen'], kr['vaapen'], kr['mopp']])
     sjekk('ingen konsollfeil (kroker)', not kr['errs'], kr['errs'])
 

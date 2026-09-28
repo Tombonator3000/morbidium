@@ -520,8 +520,8 @@ const Drom = {
 
 /* ---------- krokene ---------- */
 // utgangen etter sjefen: drømmen venter før neste etasje
-{ const _d = descend; descend = function () { const P = G.player; if (P && P.alive && !G.drom && G.run && G.depth < MAX_DEPTH) G.run.dromVent = G.depth + 1; _d(); }; }
+Kroker.foer('descend', () => { const P = G.player; if (P && P.alive && !G.drom && G.run && G.depth < MAX_DEPTH) G.run.dromVent = G.depth + 1; });
 Kroker.etter('startFloor', () => { if (G.drom) try { Drom.oppsett(); } catch (e) { console.warn('drøm', e); } });
 Kroker.foer('clearFloor', () => Drom.fjern());
 // utskrivningen: slutten på historien før brevet
-{ const _ub = utskrivningsbrev; utskrivningsbrev = function (onDone) { const H = G.run && G.run.historie; if (!H || !H.sett) return _ub(onDone); Drom.epilog(() => _ub(onDone)); }; }
+Kroker.rundt('utskrivningsbrev', (neste, onDone) => { const H = G.run && G.run.historie; if (!H || !H.sett) return neste(onDone); Drom.epilog(() => neste(onDone)); });

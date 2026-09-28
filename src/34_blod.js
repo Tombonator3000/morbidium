@@ -269,13 +269,8 @@ const Blod = {
 /* Items.splat og Items.clearSplats går via Blod, så alle gamle kall får de samlede, våte flekkene */
 Items.splat = (x, z, col, s, alpha) => Blod.flekk(x, z, col, s, alpha);
 Items.clearSplats = () => Blod.tom();
-{ const _h = hurt; hurt = function (e, dmg, src = {}) {
-  const hp0 = e && e.alive ? e.hp : 0;
-  if (e && e.alive) { e.hpFor = hp0; e.raaSkade = dmg; }  // leses av Blod.dod, som kjøres før hurt er ferdig
-  const d = _h(e, dmg, src);
-  if (d > 0 && e && Blod.on && G.F) try { Blod.treff(e, src, d, hp0); } catch (err) { }
-  return d;
-}; }
+Kroker.foer('hurt', (e, dmg, src, hp0) => { if (e && e.alive) { e.hpFor = hp0; e.raaSkade = dmg; } });  // leses av Blod.dod, som kjøres før hurt er ferdig
+Kroker.etter('hurt', (d, e, dmg, src, hp0) => { if (d > 0 && e && Blod.on && G.F) try { Blod.treff(e, src, d, hp0); } catch (err) { } });
 Kroker.etter('enemyDie', (_, e, src) => { if (Blod.on) try { Blod.dod(e, src || {}); } catch (err) { } });
 Kroker.etter('bossDie', (_, B) => { if (Blod.on) try { Blod.sjefDod(B); } catch (err) { } });
 { let P = null, levde = false; Kroker.foer('playerDie', () => { P = G.player; levde = !!(P && P.alive); }); Kroker.etter('playerDie', () => { if (levde && G.F) { Blod.flekk(P.x, P.z, '#7a0a0a', 1.6, .9); if (Blod.on) { Anim.lag('blodsprut', P.x, P.z + .05, { s: 1.2, tint: '#9a1a1a' }); Blod.sprut(P.x, P.z, Math.random() * TAU, '#8a1010', 10, 1.3); } } }); }

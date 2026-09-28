@@ -66,14 +66,13 @@ Object.assign(MESTER_TITTEL, { kasteren: 'Kasteren', trille: 'Pasient', speil: '
    Nøklene blir hode_<type>_<v> og kropp_<type>_<v>, de samme som figurark fra ChatGPT klippes til.
    ============================================================ */
 const MONSTER_ART = {};
-{ const _cp = charPart; charPart = function (type, piece, v) {
+Kroker.vakt('charPart', (type, piece, v) => {
   const M = MONSTER_ART[type];
   if (M && M[piece]) {
     const box = (M.box && M.box[piece]) || (piece === 'hode' ? [1.2, 1.1, .6, .1] : [1.3, 1.0, .65, .08]), k = M.big || 1;
     return Art.part(piece + '_' + type + '_' + v, box[0] * k, box[1] * k, box[2] * k, box[3], M[piece](v));
   }
-  return _cp(type, piece, v);
-}; }
+});
 const kv = (v, f, b, s) => v === 'b' ? b : v === 's' ? s : f;
 
 /* ---------- Kasteren: vill, grå sveis, digre briller, åpen munn med tunga ute, flekkete kåpe ---------- */
