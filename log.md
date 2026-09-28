@@ -1396,3 +1396,11 @@ Alle tidspunkt er UTC.
 ## 2026-09-28 17:30 Levert som filer til opplasting på GitHub
 - Verken denne økta eller Claude Code fikk skrive til repoet, så Tom fikk endringene som nedlastbare filer: en zip med de 28 endrede og nye filene i samme mapper som i repoet (til «Add file», «Upload files» på GitHub), og patchen med alle commitene til git am.
 - Filene i zipen er hentet fra commiten, ikke fra arbeidsmappa, så de er like det som er testet.
+
+## 2026-09-28 17:42 Kameravinkelen fra patchen lagt oppå main
+- Tom sendte zipen og patchen fra Cowork-økta (kameraprøven, ny etterbehandling og Kameravinkel under Innstillinger, Bilde) og ba om at det kommer på main, så Pages publiserer det.
+- Patchen er laget mot 4355d3d, men main har fått veggprøven (9b1e5af) etterpå. Zipen har hele filer fra før veggprøven, så en opplasting av den ville slettet veggprøvelinjene i log.md, memory.md og todo.md. Derfor er patchen brukt: de fire commitene er lagt oppå 9b1e5af med cherry-pick, og konfliktene i log.md og todo.md er løst ved å ta med begge sider (oppføringen fra 13:47 foran veggprøven i loggen).
+- Kontroll: lagt på 4355d3d gir patchen nøyaktig de 28 filene i zipen. Oppå main er 25 av dem like zipen byte for byte, og log.md, memory.md og todo.md skiller seg bare med veggprøvelinjene. Ingen filer fra veggprøven er endret, og alt ligger i src/, tools/ og dokumentasjon/kamera/, ikke øverst i repoet.
+- Bygget med bildeløpet: 611 innebygde bilder, 124 deler og 165 lyder. node --check på skriptet er grønn, og test_gen.js gir 1800 av 1800 gyldige etasjer, deterministisk. Arkene bildeløpet klipte i gpt-grafikk/, er satt tilbake, siden Pages-bygget klipper selv.
+- Testdel 41 (menyene med håndkontroll) feilet: den ventet at spaken etter Kameraavstand i fanen Bilde var Skjermristing, men nå kommer Kameravinkel imellom. Resten av sjekken stemte. Testen venter nå vinkel. Del 11 er grønn, også sjekken av at alle fanene i innstillingene får plass. Del 64 og en ny kjøring av del 41 går.
+- memory.md: råd om å bruke patchen og ikke zipen når en økt uten GitHub-tilgang leverer begge, om å rydde gpt-grafikk/ etter bildeløpet lokalt, og om hvordan enkeltdeler av test_ekstra kan kjøres. todo.md: kameraendringene er krysset av som lagt inn.

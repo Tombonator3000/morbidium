@@ -1746,7 +1746,8 @@ async def main():
         await pg.wait_for_function("() => MORBIDIUM.state === 'play' && MORBIDIUM.time > .3", timeout=30000)
         hud = await pg.evaluate("async () => { rolig(); await __ramme(3); return [...document.querySelectorAll('#cards .acard .k')].map(e => e.textContent).join(' '); }")
         sjekk('A i innleggelsen legger inn pasienten, og evnekortene viser LB RB LT RT', hud == 'LB RB LT RT', hud)
-        # pausen og innstillingene: Start, pil ned til Innstillinger, A, RB bytter fane, pil ned til spaken, pil høyre og venstre endrer den
+        # pausen og innstillingene: Start, pil ned til Innstillinger, A, RB bytter fane, pil ned til spaken, pil høyre og venstre endrer den.
+        # Neste spak etter Kameraavstand er Kameravinkel (28.9.)
         ps = await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; await __trykk(9); await __ramme(2);
           ut.pause = G.state === 'panel' && !!document.querySelector('#panel .clip'); ut.forste = document.activeElement.hasAttribute('data-close');
           await __trykk(13); ut.ned = document.activeElement.id;
@@ -1762,7 +1763,7 @@ async def main():
         ps.update(await pg.evaluate("""async () => { const G = MORBIDIUM, ut = {}; await __trykk(4); await __ramme(2); ut.lb = document.querySelector('.ktab.on').dataset.tab;
           await __trykk(1); await __ramme(2); ut.tilbake = !!document.querySelector('#panel .clip'); await __trykk(1); await __ramme(2); ut.ute = G.state; return ut; }"""))
         sjekk('pausen og innstillingene med håndkontroll: pil ned, A, RB og LB bytter fane, spaken endres med pil høyre og venstre, B går tilbake',
-              ps == {'pause': True, 'forste': True, 'ned': 'pJ', 'inn': True, 'fane': 'bilde', 'fanefokus': True, 'spak': 'kamera', 'opp': .05, 'ned2': 0, 'neste': 'shake', 'oppTilFane': 'bilde', 'lb': 'lyd', 'tilbake': True, 'ute': 'play'}, ps)
+              ps == {'pause': True, 'forste': True, 'ned': 'pJ', 'inn': True, 'fane': 'bilde', 'fanefokus': True, 'spak': 'kamera', 'opp': .05, 'ned2': 0, 'neste': 'vinkel', 'oppTilFane': 'bilde', 'lb': 'lyd', 'tilbake': True, 'ute': 'play'}, ps)
         # journalen: Select åpner, A velger et kort, retningene flytter fokus, A på en tom plass flytter kortet dit og så til lomma, RB og LB bytter fane, B slipper kortet og lukker
         jr = await pg.evaluate("""async () => { const G = MORBIDIUM, run = G.run, ut = {};
           run.slots = [null, null, null, null]; run.reserve = []; giveCard('due', true); const fra = run.slots.findIndex(Boolean), til = run.slots.findIndex(c => !c);
