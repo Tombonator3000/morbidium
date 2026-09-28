@@ -27,7 +27,7 @@ Tom ønsker at ansiktene er grovere, styggere og mer morbide enn de første figu
 
 ## Faste regler for alle bilder
 
-1. Gjennomsiktig bakgrunn. Går ikke det, bruk helt hvit bakgrunn.
+1. Gjennomsiktig bakgrunn. Går ikke det, bruk helt hvit bakgrunn. Teksturene (del D) er unntaket: de dekker hele bildet.
 2. Følg malen nøyaktig: én ting per rute, helt innenfor ruta, ingenting som overlapper naboruta.
 3. Magentafargede hjelpelinjer i malene er bare veiledning. De skal helst ikke tegnes med, men verktøyet fjerner dem hvis de blir stående.
 4. Samme strektykkelse og samme lys (fra øvre venstre) i alle bilder.
@@ -124,13 +124,26 @@ Navn og beskrivelser står i `ART_BRIEF.md`, runde 1 (nøklene `kur_...`). Eksem
 
 `ark__kur_tuberkulose__kur_bronkitt__kur_spyttkjertel__kur_magnet__kur_syl__kur_celledeling__kur_nitro__kur_kvikksolv__kur_frost.png`
 
-### D. Teksturer og plakater (til vegger og gulv)
+### D. Teksturer: veggene, bakken ute og gulvene
 
-```
-A seamless, tileable square texture for a game floor/wall: <beskrivelse>. Seen straight on, flat, even lighting, no perspective, no objects on it, edges must tile perfectly. Same hand-drawn cartoon style with ink lines.
+Teksturer er flater som gjentas bortover veggene og bakken, ikke ting som står i rommet. De lages i en egen ChatGPT-samtale med stilblokken for teksturer under, fordi den vanlige stilblokken ber om gjennomsiktig bakgrunn. Ferdige prompter med filnavn og referansebilde av dagens tegning står i `tegnelister/11_vegger_og_bakken.md` og `tegnelister/12_gulv.md` (verktøyet henter stilblokken herfra).
+
+Stilblokk for teksturer (lim inn først i tekstursamtalen):
+
+```text
+Style: hand-painted cartoon game TEXTURES in the style of Conan Chop Chop mixed with Castle Crashers, for a 1923 Norwegian sanatorium (Lovecraftian, a bit gross, darkly funny). Dark brown ink lines (#2a1a14), slightly wobbly and hand-inked but thinner and calmer than on the characters, so figures stay readable on top. Flat muted warm colours with one darker cel-shade tone; every tile, board, brick or stone has a thin light edge on the upper left and a darker edge on the lower right. Mid values only: no large pure-black or pure-white areas. Even, flat lighting over the whole image: no vignette, no light pools, no cast shadows, no perspective, no blur, no photo texture. Fully OPAQUE image (transparency only where the prompt says so). No text, no signature, no frame, no objects lying on the surface. Keep the same style, line weight and scale for every texture in this conversation.
 ```
 
-Forslag: gulgrønne sjakkfliser, mintgrønne fliser for hydroterapien, lilla stein for kjelleren, falmet tapet, grønt brystpanel, tregulv i korridor. Plakater kan ha kort norsk tekst: «SMIL. DET ER OBLIGATORISK.», «IKKE MAT DUENE.».
+- **Vegger** (`vegg_<stil>.png`): 1536 x 1024, liggende. Bildet er et utsnitt av veggen sett rett forfra, 1,5 ganger så bredt som høyt. Nederst møter veggen gulvet, øverst er toppen av veggen. Det skal gå i ett fra venstre mot høyre, men ikke oppover. Spillet legger på blekkstreken oppe og nede selv. På panelveggen, tapetveggen og paviljongveggen setter 3D-rommene inn lister, så de malte listene må stå på samme høyde: fotlist fra 0 til 7 prosent, brystlist fra 43 til 46 prosent og taklist fra 94 til 100 prosent av høyden.
+- **Gulv** (`gulv_<stil>.png`) og **bakken ute** (`bakke_park.png`, `bakke_skog.png`): 1024 x 1024, kvadrat, sett rett ovenfra. Bildet dekker nøyaktig 4 x 4 meter, altså fire ganger fire ruter i spillet, og fugene i et flisgulv ligger på 0, 25, 50 og 75 prosent. Det skal gå i ett i begge retninger. Plankene går fra venstre mot høyre.
+- Hele bildet skal være dekket, uten gjennomsiktighet, bortsett fra smijernsgjerdet (`vegg_gjerde.png`) og ruinmuren (`vegg_ruin.png`), som er gjennomsiktige mellom stengene og over bruddkanten.
+- Ingen skygge fra vegger, ingen lyskjegler, ingen tepper, blod eller ting på gulvet. Spillet legger på lys, skygger, blod og rusk selv.
+- Bildeløpet (`tools/behandle_bilder.py`) skalerer veggene til 128 punkter per meter (442 x 294 for en vanlig vegg på 2,3 meter) og gulv og bakke til 512 x 512, retter kanter som ikke går helt i ett, og lagrer dem som WebP.
+- Et navn uten tall bak bruker fargene fra Mottaket. Panelveggen, sjakkgulvet og plankegulvet har egne farger i Underetasjen, Kjelleren og Dypet, med `_3`, `_4` og `_6` bak navnet (`vegg_panel_3.png`).
+- Teppet (egen farge per rom og gullkant) og drivhusglasset tegnes fortsatt av koden.
+- Gulvene (liste 12) bestilles først når Claude sier at gulvet tegnes med egne fliser i spillet. Til da males hele gulvet inn i ett stort bilde med 24 til 32 punkter per rute, og et gulv fra ChatGPT ville blitt presset ned til noe uskarpt.
+
+Plakater lager ikke ChatGPT: spillet skriver plakatene selv, med norsk tekst.
 
 ### E. Portretter
 
@@ -241,6 +254,7 @@ Animasjonsark for figurer som går, slår og dør. Spillet animerer figurene ved
 5. UI-settet i runde 9 (se G). Hjertene og ringene gir mest for minst.
 6. Utvidelsen (UTVIDELSE.md), runde 10 til 13 i `ART_BRIEF.md`. Aller først figurarkene til de nye fiendene: `figur_gartner.png`, `figur_huldra.png` (bakfra er hun en råtten stamme, så baksiden på arket er viktig), `figur_vedkubbe.png` og `figur_nokken.png`, og de to sjefene. Deretter figurene uten ansikt i drømmene (`figur_blank_m.png`, `figur_blank_k.png`) og hendelsene i runde 11, som vises stort i samtalepanelet. Møblene i runde 10 kan komme sist; koden tegner dem godt nok til da.
 7. Historien (Hellraiser møter Twin Peaks, med et Lovecraft-hav under huset), runde 14 i `ART_BRIEF.md` og liste 10 i `tegnelister/`: ett «ni ting»-ark med de fem journalsidene og de fire sluttbildene (`historie_1` til `historie_5`, `historie_slutt_*`), `prop_forstander.png` (forstanderen sydd fast til stolen med sølvkroker), `prop_venterom.png` (Venterommet med røde forheng og sikksakkgulv) og `prop_skrin.png` (instrumentskrinet). Fire bestillinger, og bildene vises stort i samtalepanelet.
+8. Teksturene til veggene og bakken ute, tegneliste 11 i `tegnelister/` og runde 15 i `ART_BRIEF.md` (se D). Start med prøven på fem bilder (panelveggen, flisveggen, murveggen, hekken og bakken i Parken) og vis dem til Claude før resten. Gulvene i tegneliste 12 venter til gulvet tegnes med egne fliser i spillet.
 
 ## Første bestilling (stort sett levert, se status i `ART_BRIEF.md`)
 
@@ -250,7 +264,7 @@ Animasjonsark for figurer som går, slår og dør. Spillet animerer figurene ved
 4. `hoder_personale.png`, `hatter_personale.png`, `kropper_uniformer.png` (farges). Det gir de første sammensatte pleierne og oppasserne.
 5. `hoder_kultister.png`, `hatter_kultister.png`, `kropper_kultister.png`.
 6. Sjefene: `figur_krok.png`, `figur_rust.png`.
-7. Teksturer og plakater.
+7. Teksturer: se del D og tegneliste 11 og 12. Plakater lager spillet selv.
 
 ## Levering
 

@@ -42,8 +42,9 @@ const Folge = {
   skade(n, type) { const P = G.player; P.iframe = P.invuln = 0; hurt(P, n, { type: type || 'any' }); },
   morb(n) { const P = G.player; if (n > 0) addMorb(n); else P.morb = Math.max(0, P.morb + n); },
   xp(n) { gainXp(n); },
-  visRom(r) { const F = G.F; for (let z = r.z - 1; z <= r.z + r.h; z++) for (let x = r.x - 1; x <= r.x + r.w; x++) if (x >= 0 && z >= 0 && x < F.W && z < F.H) G.seen[z * F.W + x] = 1; },
-  kart(hva) { const F = G.F; for (const r of F.rooms) if (hva === 'alt' ? r.role !== 'secret' : hva === 'sjef' ? r.role === 'boss' : r.role === 'treasure' || r.role === 'secret') this.visRom(r); mapT = 0; },
+  visRom(r) { const F = G.F, S = G.skjult; for (let z = r.z - 1; z <= r.z + r.h; z++) for (let x = r.x - 1; x <= r.x + r.w; x++) if (x >= 0 && z >= 0 && x < F.W && z < F.H && !(S && S[z * F.W + x])) G.seen[z * F.W + x] = 1; },
+  // det skjulte rommet tegnes ikke inn før veggen er slått inn: kartet får bare en anelse om at noe er visket ut der (45_kart.js)
+  kart(hva) { const F = G.F; for (const r of F.rooms) { if (r.role === 'secret' && G.skjult) { if (hva === 'skatt') G.kartAnelse = true; continue; } if (hva === 'alt' ? r.role !== 'secret' : hva === 'sjef' ? r.role === 'boss' : r.role === 'treasure' || r.role === 'secret') this.visRom(r); } mapT = 0; },
   kuriositet(pulje = 'kabinett') { const id = Items.pickFrom(pulje); if (id) Items.give(id); },
   lomme() { const l = Lomme.pick(); if (l) Lomme.give(l); },
   flaske(id) { const P = G.player; dropPickup(P.x, P.z, 'cons', id || pick(Object.keys(CONSUMABLES))); },
@@ -520,14 +521,14 @@ const Hendelse = {
   },
   /* et ledig sted for hendelsen, minst seks ruter fra de andre */
   finnSted(plass, rng) {
-    const F = G.F, W = F.W, wh = Paint.wallH || [], ledig = (x, z) => x > 0 && z > 0 && x < W - 1 && z < F.H - 1 && F.tiles[z * W + x] && !F.block[z * W + x];
+    const F = G.F, W = F.W, wh = Paint.wallH || [], ledig = (x, z) => x > 0 && z > 0 && x < W - 1 && z < F.H - 1 && gulvSynlig(z * W + x) && !F.block[z * W + x];
     const langtFra = (x, z) => this.aktive.every(h => d2(h.x, h.z, x, z) > 36) && !(G.F.rooms[F.startId] && d2(F.rooms[F.startId].cx, F.rooms[F.startId].cz, x, z) < 16);
     const naerDor = (x, z) => F.rooms.some(r => r.doors.some(d => Math.abs(d % W - x) + Math.abs(((d / W) | 0) - z) <= 2));
     const romOK = rid => rid < 0 || !['start', 'boss', 'service', 'secret', 'treasure', 'offer', 'cursed'].includes(F.rooms[rid].role);
     const kand = [];
     if (plass === 'vegg') {
       for (let z = 1; z < F.H; z++) for (let x = 1; x < W - 1; x++) {
-        if (!ledig(x, z) || !(wh[(z - 1) * W + x] > 2) || !D3.inneVegg((z - 1) * W + x) || (Paint.opptatt && Paint.opptatt.has(x + ',' + z))) continue;
+        if (!ledig(x, z) || !(wh[(z - 1) * W + x] > 2) || (G.skjult && G.skjult[(z - 1) * W + x]) || !D3.inneVegg((z - 1) * W + x) || (Paint.opptatt && Paint.opptatt.has(x + ',' + z))) continue; // ikke på sprekken, den faller
         if (!romOK(F.roomId[z * W + x]) || naerDor(x, z) || !langtFra(x + .5, z + .5)) continue;
         kand.push({ x: x + .5, z: z + .7, vz: z });
       }

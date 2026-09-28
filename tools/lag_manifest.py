@@ -44,6 +44,17 @@ JS = r"""() => {
   // UI-settet (DESIGN_BRIEF.md, del G): paneler og rammer strekkes (9-delt), ringer og ikoner beholder formen
   const UI = { ui_panel: [4, 2.5, 1], ui_knapp: [1.5, 1.2, 1], ui_kort: [1.25, 1.6, 1], ui_skilt: [3, .75, 1], ui_utklipp: [4, 5.5, 1], ui_ring_portrett: [1.5, 1.5, 0], ui_ring_kart: [2, 2, 0], ui_hjerte_full: [.5, .5, 0], ui_hjerte_halv: [.5, .5, 0], ui_hjerte_tom: [.5, .5, 0], ui_ikon_journal: [.5, .5, 0], ui_ikon_pause: [.5, .5, 0], ui_hode: [4.6875, 4.6875, 0] };
   for (const [k, [w, h, strekk]] of Object.entries(UI)) out[k] = Object.assign({ w, h, ax: w / 2, ay: h / 2, px: [Math.round(w * 128), Math.round(h * 128)] }, strekk ? { strekk: true, snitt: (UI_SETT[k] || {}).snitt } : {});
+  // teksturer (DESIGN_BRIEF.md del D, tegneliste 11 og 12): gulv og bakke er 4 x 4 ruter i 512 x 512, vegger 1,5 ganger så brede som høye
+  // i 128 px per enhet. flis sier hvilken vei bildet skal gå i ett med seg selv, alfa at gjennomsiktigheten er med vilje (gjerdet og ruinen).
+  // Teppet (farge per rom og gullkant) og drivhusglasset males av koden. _3, _4 og _6 er fargene i Underetasjen, Kjelleren og Dypet.
+  const flis = () => ({ w: 4, h: 4, ax: 2, ay: 2, px: [512, 512], flis: 'begge' });
+  for (const st of ['sjakk', 'planker', ...Object.keys(GULV).filter(k => k !== 'teppe')]) out['gulv_' + st] = flis();
+  for (const st of ['sjakk', 'planker']) for (const d of [3, 4, 6]) out['gulv_' + st + '_' + d] = flis();
+  for (const k of ['bakke_park', 'bakke_skog']) out[k] = flis();
+  for (const [st, V] of Object.entries(VEGG)) if (st !== 'glass') for (const d of st === 'panel' ? ['', '_3', '_4', '_6'] : ['']) {
+    const h = V.h || 2.3, w = +(1.5 * h).toFixed(3);
+    out['vegg_' + st + d] = Object.assign({ w, h, ax: +(w / 2).toFixed(3), ay: 0, px: [Math.round(192 * h), Math.round(128 * h)], flis: 'vannrett' }, V.alfa ? { alfa: true } : {});
+  }
   window.__kur = Object.assign(Object.fromEntries(Object.entries(ITEMS).map(([k, v]) => [k, { name: v.name, desc: v.desc }])), Object.fromEntries(Object.entries(AKTIVE).map(([k, v]) => ['akt:' + k, { name: v.name, desc: v.desc }])), Object.fromEntries(Object.entries(LOMMERUSK).map(([k, v]) => ['lomme:' + k, { name: v.name, desc: v.desc }])));
   return out;
 }"""

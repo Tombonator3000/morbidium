@@ -199,6 +199,28 @@
   ],
   "w": 3.1499999999999995
  },
+ "bakke_park": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "bakke_skog": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
  "blob_flue_b": {
   "ax": 0.45,
   "ay": 0.1,
@@ -908,6 +930,270 @@
    52
   ],
   "w": 0.4
+ },
+ "gulv_betong": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_brostein": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_fliser": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_gress": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_grus": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_is": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_jord": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_linoleum": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_mose": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_myr": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_parkett": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_planker": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_planker_3": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_planker_4": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_planker_6": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_sekskant": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_sikksakk": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_sjakk": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_sjakk_3": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_sjakk_4": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_sjakk_6": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_stein": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_sti": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
+ },
+ "gulv_tre": {
+  "ax": 2,
+  "ay": 2,
+  "flis": "begge",
+  "h": 4,
+  "px": [
+   512,
+   512
+  ],
+  "w": 4
  },
  "historie_1": {
   "ax": 1.2,
@@ -5461,6 +5747,206 @@
    217
   ],
   "w": 3.06
+ },
+ "vegg_fliser": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_forheng": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_gjerde": {
+  "alfa": true,
+  "ax": 1.2,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 1.6,
+  "px": [
+   307,
+   205
+  ],
+  "w": 2.4
+ },
+ "vegg_hekk": {
+  "ax": 1.275,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 1.7,
+  "px": [
+   326,
+   218
+  ],
+  "w": 2.55
+ },
+ "vegg_mur": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_panel": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_panel_3": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_panel_4": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_panel_6": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_paviljong": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_polstret": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_ruin": {
+  "alfa": true,
+  "ax": 0.825,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 1.1,
+  "px": [
+   211,
+   141
+  ],
+  "w": 1.65
+ },
+ "vegg_skog": {
+  "ax": 2.1,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.8,
+  "px": [
+   538,
+   358
+  ],
+  "w": 4.2
+ },
+ "vegg_stein": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_steinmur": {
+  "ax": 0.9,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 1.2,
+  "px": [
+   230,
+   154
+  ],
+  "w": 1.8
+ },
+ "vegg_tapet": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_tommer": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
+ },
+ "vegg_tre": {
+  "ax": 1.725,
+  "ay": 0,
+  "flis": "vannrett",
+  "h": 2.3,
+  "px": [
+   442,
+   294
+  ],
+  "w": 3.45
  },
  "verktoytavle1": {
   "ax": 0.625,

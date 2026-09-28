@@ -67,7 +67,7 @@ const Lomme = {
   pick() { const c = Object.keys(LOMMERUSK).filter(k => k !== (G.run && G.run.trinket)); return pick(c); },
   onFloor() {
     if (G.run) G.run.froskBrukt = false;
-    if (this.has('monokkel') && G.F) for (const i of G.F.crack || []) { const x = i % G.F.W, z = (i / G.F.W) | 0; for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) { const j = (z + dz) * G.F.W + x + dx; if (j >= 0 && j < G.seen.length) G.seen[j] = 1; } }
+    if (this.has('monokkel') && G.F && (G.F.crack || []).length) G.sprekkKjent = true; // kartet får en sprukken vegg i rødt blekk (45_kart.js), men ikke rommet bak
   },
   onRoomClear() { if (this.has('morfin')) healPlayer(3); },
   /* kalles fra hurtPlayer når slaget ville drept */
@@ -117,8 +117,8 @@ const Aktiv = {
     stoppeklokke(P) { G.slowEnemies = 5; Sound.play('pa', .8, .5); FX.bubble(P, 'Tikk. Takk.', 1.2); },
     duebur(P) { for (let k = 0; k < 4; k++) spawnAlly('due', P.x + rnd(-.8, .8), P.z + rnd(-.8, .8), { hp: 25, dmg: 6 * abilityPower(), life: 14 }); Sound.play('coo'); },
     meisel(P) {
-      G.seen.fill(1); let best = null, bd = 64; for (const c of Spesial.cracks) if (!c.broken && d2(c.x, c.z, P.x, P.z) < bd) { bd = d2(c.x, c.z, P.x, P.z); best = c; }
-      if (best) Spesial.damage(best, 9); toast('Plantegningen', 'Olsen tegnet alt, også det han ikke skulle'); Sound.play('paper');
+      let best = null, bd = 64; for (const c of Spesial.cracks) if (!c.broken && d2(c.x, c.z, P.x, P.z) < bd) { bd = d2(c.x, c.z, P.x, P.z); best = c; }
+      if (best) Spesial.damage(best, 9); visHeleKartet(); toast('Plantegningen', 'Olsen tegnet alt, også det han ikke skulle'); Sound.play('paper'); // kartet etter innbruddet, så et rom som ble åpnet kommer med
     },
     grammofon(P) {
       Sound.mumble(10, 260); FX.bubble(P, pick(['♪ Ro, ro til fiskeskjær ♪', '♪ Byssan lull ♪']), 2.2);
