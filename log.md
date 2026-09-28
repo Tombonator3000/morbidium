@@ -1352,3 +1352,14 @@ Alle tidspunkt er UTC.
   1. Del 11 ventet nøyaktig 18 sider i håndboka. De nye fiendene gir 19. Alle sidene får plass, og sjekken godtar nå 18 eller flere.
   2. Del 28 ventet glød fra alle bål, lys og lamper. Stearinlysene i det skjulte rommet (ett per etasje, seks til sammen) gløder først etter innbruddet (B2), og telles ikke før.
 - En gjennomgang av flettingen går samtidig: fire lesere (flettingen med Toms uteflater, fiendene på tvers av sporene, grafikkminne og ytelse, testene) og én skeptiker per funn. Hvert punkt var sjekket i sitt spor; dette ser på sømmene mellom sporene.
+
+## 2026-09-28 13:37 Resten av integrasjonsløpet, uten flere agenter
+- Tom syntes runden har brukt altfor mye tid og ressurser på testing. Gjennomgangen med flere agenter er stoppet, og resten gjøres for hånd: bare delene som var røde, kjøres på nytt.
+- Samlet løp på 8c6c468: generatoren og gjennomspillingen grønne, test_ekstra 613 OK og 10 feil i del 11, 28, 59, 60 og 62.
+- Rettet:
+  1. Boblen med dagsorden til Oldermannen havnet utenfor skjermen. Klemmen i 50_skinnlauget.js satte left og top, men FX plasserer boblene med transform nå (spor D). Klemmen regner og skriver transformen selv.
+  2. Rettingen i del 28 fra forrige commit hadde en //-kommentar midt i en enlinjes løkke, så resten av linja ble borte. Det er nå en blokkommentar.
+  3. Del 62 (knappenålene): nålen traff, men et hjerte fra en lærling testen hadde drept, ble trukket inn med en gang pasienten mistet helse og ga +7 tilbake. Testen fjerner løse hjerter før hver sak. Ikke en feil i spillet.
+- Del 59 (Lærlingen på etasje 3) og del 60 (kall fra dypet) var grønne ved ny kjøring uten endring. Begge avhenger av hvor fiendene står i en tilfeldig etasje. Ikke rettet, men notert her.
+- Ny kjøring: del 11 grønn, del 28, 59 og 60 grønne (52 sjekker), del 62 grønn bortsett fra knappenålene før hjerterettingen.
+- Del 62 etter hjerterettingen: 26 av 26 OK. Alle delene som var røde i samlekjøringen, er nå grønne.

@@ -739,7 +739,7 @@ async def main():
           // glød: alle typene lages, og tingene med ild, damp eller lys får sine når etasjen bygges
           ut.typer = Object.keys(GLOD_TYPER).filter(t => { const E = Glod.lag(P.x, .3, P.z, t, { liv: 1 }); return E && E.pts.parent; }); ut.antall = Object.keys(GLOD_TYPER).length;
           const sett = new Set(); let kilder = 0, dekket = 0;
-          for (let d = 1; d <= 6; d++) { startFloor(d, false); await vent(80); for (const E of Glod.liste) sett.add(E.type); for (const o of G.props) if (['baal', 'vedovn', 'kjele', 'komfyr', 'gryte', 'candles', 'kjempeplante', 'lyktestolpe'].includes(o.kind) && !o.skjult) { kilder++; // ting i det skjulte rommet gløder først etter innbruddet if (Glod.liste.some(E => E.eier === o)) dekket++; } ut['glod' + d] = Glod.liste.every(E => !E.eier || G.props.includes(E.eier) || G.puddles.includes(E.eier)); }
+          for (let d = 1; d <= 6; d++) { startFloor(d, false); await vent(80); for (const E of Glod.liste) sett.add(E.type); for (const o of G.props) if (['baal', 'vedovn', 'kjele', 'komfyr', 'gryte', 'candles', 'kjempeplante', 'lyktestolpe'].includes(o.kind) && !o.skjult) { kilder++; /* ting i det skjulte rommet gløder først etter innbruddet */ if (Glod.liste.some(E => E.eier === o)) dekket++; } ut['glod' + d] = Glod.liste.every(E => !E.eier || G.props.includes(E.eier) || G.puddles.includes(E.eier)); }
           ut.sett = [...sett]; ut.kilder = kilder; ut.dekket = dekket;
           // addPuddle slår sammen med en lilla pytt i nærheten og beholder den lengste levetiden, så testpytten får kort liv selv,
           // og vi venter til både pytten og gløden er borte (høyst 8 s spilltid), i stedet for en fast ventetid
@@ -3676,6 +3676,8 @@ async def main():
             const plasser = d => { let s = null; for (let i = 0; i < 32 && !s; i++) { const v = i / 32 * Math.PI * 2, x = o2.x + Math.sin(v) * d, z = o2.z + Math.cos(v) * d; if (fri(x, z) && los(o2.x, o2.z, x, z)) s = { x, z }; } s = s || freeSpot(o2.x + d, o2.z, 3); P.x = s.x; P.z = s.z; P.kvx = P.kvz = 0; P.stunT = 0; P.invuln = 0; P.iframe = 0; P.deny = null; G.laugStunT = 0; };
             const sak = async (saker, d, t = 1.8) => {
               await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; o2.stun = 0; plasser(d); teleSett.clear();
+              // hjerter fra fiender testen har drept, trekkes inn når pasienten mister helse og ville skjult skaden
+              for (const k of G.pickups.filter(k => k.kind === 'heart')) { R.remove(k.mesh); G.pickups.splice(G.pickups.indexOf(k), 1); }
               o2.dagsorden = { saker, i: 0, cd: .35, ev: null, vent: null }; (o2.referat || (o2.referat = [])).push({ saker, utfort: [] });
               const hp0 = P.hp, d0 = Math.hypot(P.x - o2.x, P.z - o2.z), n0 = Oldermann.skutt || 0, t0n = tall.length; Oldermann.sak(o2, P, d0, Math.atan2(P.x - o2.x, P.z - o2.z)); o2.cd = 1e9;
               await spill(t); const r = { tele: varsler(), skade: hp0 - P.hp, d0, d1: Math.hypot(P.x - o2.x, P.z - o2.z), proj: (Oldermann.skutt || 0) - n0, ord: tall.slice(t0n, t0n + 8), ev: o2.referat[o2.referat.length - 1].ev };
