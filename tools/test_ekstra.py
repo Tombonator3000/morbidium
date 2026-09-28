@@ -2738,6 +2738,10 @@ async def main():
               hull: !!B.hull && G.puddles.includes(B.hull) && Math.hypot(B.hull.x - B.x, B.hull.z - B.z) < .1 && B.hull.life > 1e6, armer: Havet.armer() });
             // høyst fire armer, uansett hvor mange som kalles
             Kraken.kallArmer(B, 6); Kraken.kallArmer(B, 6); await spill(2.2, 60000, hold(p0)); ut.dykk.maks = Havet.armer();
+            // rasende og to favn på rad (6 og 6 armer, den andre før de første har sunket): alle klemmene har en arm å vise. Armer som ville kommet opp i en vegg, hoppes over, så tallet på kall følger rommet
+            { const _a = Kraken.arm; let kall = 0, uten = 0; Kraken.arm = function (...a) { kall++; const d = _a.apply(this, a); if (!d) uten++; return d; };
+              try { B.enraged = true; angrip('favn'); await spill(3.09, 60000, hold(p0)); angrip('favn'); await spill(3.6, 60000, hold(p0)); } finally { Kraken.arm = _a; B.enraged = false; }
+              ut.rasende = { kall, uten }; }
             // Enkel grafikk: favn og malstrøm uten feil
             R.safe = true; try { angrip('favn'); await spill(1.5, 60000, hold(p0)); angrip('malstrom'); await spill(3, 60000, tell); } finally { R.safe = false; }
             // talen ved to tredjedeler helse, og døden: hullet renner ut, armene dør og luken åpner seg
@@ -2770,6 +2774,7 @@ async def main():
             sjekk('under vann tar Kraken ingen skade, kaster ingen skygge og siktes ikke på, og det gamle hullet renner ut', dk['under'] and dk['skade'] == 0 and dk['hp'] and not dk['skygge'] and not dk['naermest'] and dk['gammelt'], dk)
             sjekk('dykket: opp igjen innen 2,6 sekunder der pasienten sto, treffer, står i et nytt hull og har kroppen sin igjen', dk['oppe'] and dk['tidUnder'] <= 2.6 and dk['avstand'] < 1.8 and dk['treff'] >= 1 and dk['hull'] and abs(dk['hop']) < .01 and dk['r'] >= 1.5, dk)
             sjekk('armer stiger opp mens Kraken er under, og det blir aldri mer enn fire', 1 <= dk['armer'] <= 4 and dk['maks'] <= 4, dk)
+            sjekk('to favn på rad når Kraken er rasende: hver klemme har en arm (ingen treff uten arm)', kr['rasende']['kall'] >= 6 and kr['rasende']['uten'] == 0, kr['rasende'])
             sjekk('talen ved to tredjedeler helse er Krakens egen', kr['tale']['fase'] == 'monolog' and kr['tale']['tale'], kr['tale'])
             sjekk('når Kraken dør, renner hullet ut, armene dør og luken åpner seg', kr['dod']['hull'] and kr['dod']['armer'] == 0 and kr['dod']['luke'], kr['dod'])
             sjekk('armene i favn er kastet ut av grafikkminnet etter etasjen, og ingen virvel henger igjen', kr['rydd']['lagd'] >= 3 and kr['rydd']['igjen'] == 0 and kr['rydd']['soner'] == 0, kr['rydd'])
