@@ -2,7 +2,7 @@
 
 Testdeler fra test_ekstra.py. Kjøres med python3 tools/test_ekstra.py --system teknikk eller --del N.
 """
-from .felles import ROT, sjekk, ny_side, start_lop, URL, URL3D
+from .felles import ROT, sjekk, ny_side, start_lop, klikk, URL, URL3D
 
 
 async def del_43(b):
@@ -255,9 +255,22 @@ async def del_67(b):
     k1 = await pg.evaluate(KAMP)
     k2 = await pg.evaluate(KAMP)
     beveget = any(abs(a[1] - 0) > 0 for a in k1['sig'])
-    sjekk('samme frø gir nøyaktig samme kamp to ganger (stillinger, helse, tilstander og neste tilfeldige tall)', k1 == k2 and len(k1['sig']) >= 3 and beveget, [k1, k2])
+    # i samme side går tidtakerne til tingene pasienten har, videre mellom kampene, så neste tilfeldige tall kan være et annet
+    kamp = lambda k: {x: k[x] for x in k if x != 'rnd'}
+    sjekk('samme frø i samme side gir nøyaktig samme kamp to ganger (stillinger, helse og tilstander)', kamp(k1) == kamp(k2) and len(k1['sig']) >= 3 and beveget, [k1, k2])
     sjekk('ingen konsollfeil (testklokka)', not pg.errs, pg.errs[:6])
     await pg.close()
+    # to nye sider med samme frø fra tittelen (samme pasient og samme vei fram): helt lik kamp, også neste tilfeldige tall
+    async def fra_tittelen():
+        s2 = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await s2.goto(URL); await s2.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=90000)
+        await s2.evaluate("() => Klokke.frys({ frø: 4242, stille: true })")
+        await klikk(s2, '#tNew'); await s2.wait_for_timeout(500); await klikk(s2, '[data-awk]')
+        await s2.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=60000)
+        k = await s2.evaluate(KAMP); feil2 = s2.errs[:6]; await s2.close(); return k, feil2
+    (t1, f1), (t2, f2) = await fra_tittelen(), await fra_tittelen()
+    sjekk('to sider med samme frø fra tittelen gir nøyaktig samme kamp, også neste tilfeldige tall', t1 == t2 and len(t1['sig']) >= 3, [t1, t2])
+    sjekk('ingen konsollfeil (testklokka fra tittelen)', not f1 and not f2, f1 + f2)
 
 
 DELER = {43: del_43, 53: del_53, 66: del_66, 67: del_67}

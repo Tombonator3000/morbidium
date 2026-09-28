@@ -61,7 +61,7 @@ HB_PLASS = """() => { const f = document.querySelector('#panel .fit'), r = f.get
 # fastEtasje(d, krav, min, steder) finner det første løpsfrøet der etasje d har et rektangulært kamprom på minst min[0] x min[1] som krav(r, F)
 # godtar, og der stedene (forskyvninger fra midten av rommet) er frie (det største slike rommet, så laveste id), og bygger etasjen med det: testklokka fryses med frøet som tallrekke og lyden av, spilltida hopper fram til
 # neste hele tusen (alltid framover, og likt fra kjøring til kjøring), uten drøm, lik fra tidligere pasienter eller hendelser, og farene
-# i etasjen tas bort (teslaspoler, gnistrende lamper og pytter, der fiender sklir og får støt). Med godta(rom) prøves neste frø når
+# i etasjen tas bort (teslaspoler, gnistrende lamper og pytter, der fiender sklir og får støt), og pasienten har ikke Morbidium. Med godta(rom) prøves neste frø når
 # etasjen som ble bygget, ikke passer likevel (for det som bare kan sjekkes i spillet). Pasienten står midt i rommet, der
 # kamprommene alltid har fem ganger fem ruter uten møbler. plass(r, x, z) gir stedet bare når det er fritt og i rommet, ellers stopper
 # testen med en tydelig feil i stedet for å flytte fienden et annet sted.
@@ -78,7 +78,7 @@ const fastEtasje = (d, krav = () => true, min = [11, 11], steder = [], godta = n
     Klokke.frys({ frø: s, stille: true }); G.time = (Math.floor(G.time / 1000) + 1) * 1000; startFloor(d, false); rolig(); Hendelse.fjern();
     for (const o of G.props) { if (o.kind === 'spole') o.alive = false; if (o.kind === 'lamp') { o.faulty = false; o.spark = 0; } }
     for (const p of G.puddles) R.remove(p.mesh); G.puddles.length = 0;
-    const P = G.player, rom = G.F.rooms[r.id]; P.x = rom.cx + .5; P.z = rom.cz + .5; P.vx = P.vz = P.kvx = P.kvz = 0; R.snapCamera(P.x, P.z);
+    const P = G.player, rom = G.F.rooms[r.id]; P.x = rom.cx + .5; P.z = rom.cz + .5; P.vx = P.vz = P.kvx = P.kvz = 0; P.morb = 0; R.snapCamera(P.x, P.z);
     if (godta && !godta(rom)) continue;
     return rom;
   }
