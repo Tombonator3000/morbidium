@@ -426,7 +426,7 @@ function addProj(o) {
   if (!p.mesh) {
     const P = p.type === 'syringe' ? weaponPart('sproyte') : p.type === 'hand' ? handPart() : p.type === 'pill' ? Art.part('pille', .3, .3, .15, .15, g => { A.cel(g, A.rr(-.12, -.05, .24, .1, .05), '#f4f0e6', { lw: .025, hi: false }); A.flat(g, A.rr(0, -.05, .12, .1, .05), '#b3261e', .025); }) : p.type === 'keys' ? Art.part('nokler_p', .4, .4, .2, .2, g => { A.flat(g, A.ell(0, 0, .1, .1), null, .04, '#d4b048'); A.line(g, [[.07, .07], [.16, .16]], .04, '#d4b048'); }) : p.type === 'eter' ? bottlePart('eter') : p.type === 'glob' ? Art.part('klyse', .5, .5, .25, .25, g => A.cel(g, A.blob([[-.18, 0], [0, -.16], [.2, -.04], [.12, .14], [-.1, .14]]), '#9fae3a', { lw: .035 })) : p.type === 'page' ? cardPart() : morbPart();
     p.mesh = propSprite(null, p.x, p.z, { P, shadow: false, y: p.y }); R.dyn.add(p.mesh);
-    if (p.type === 'syringe' || p.type === 'hand') { const sx = Math.sin(Math.atan2(p.vx || 0, p.vz || 1)), sy = -Math.cos(Math.atan2(p.vx || 0, p.vz || 1)) * Math.sin(CAM_PITCH); p.mesh.userData.m.rotation.z = Math.atan2(-sx, sy); }
+    if (p.type === 'syringe' || p.type === 'hand') { const pa = Math.atan2(p.vx || 0, p.vz || 1) - CAM_YAW, sx = Math.sin(pa), sy = -Math.cos(pa) * Math.sin(CAM_PITCH); p.mesh.userData.m.rotation.z = Math.atan2(-sx, sy); }
     if (p.glow) p.light = R.light(p.x, p.z, p.glow[1], p.glow[0], .8);
   }
   if (p.arc) { p.sx = p.x; p.sz = p.z; p.t = 0; }

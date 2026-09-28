@@ -3956,6 +3956,45 @@ async def main():
         sjekk('ingen konsollfeil (Kraken i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
+        # 64) Kameraprøven og den nye etterbehandlingen: ?kamera=iso dreier kameraet 45 grader, styringen følger skjermen, dukkene og tingene
+        # vender mot kameraet, sideveggene mot kameraet bygges, kartet og N dreies, og veggene nærmest kameraet er lave. Uten valget er alt
+        # som før. Omgivelsesskyggen har dybdetekstur bare på høy, disen er på i middels og høy, og ?lys=gammel slår det nye av
+        async def kamera(url):
+            pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+            await start_lop(pg, url=url)
+            await pg.evaluate("() => { const s = MORBIDIUM.meta.settings; s.kvalitet = 3; applySettings(); }")
+            await pg.wait_for_timeout(600)
+            await pg.keyboard.down('KeyD'); await pg.wait_for_timeout(120)
+            r = await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player, A = Input.actions(), c = R.camera.position, F = G.F, W = F.W;
+              // sideflater: trekanter der alle tre hjørnene har samme x (planet x = konstant) i veggmeshene
+              let side = 0; for (const m of Paint.mesh.vegger || []) { const p = m.geometry.attributes.position.array; for (let i = 0; i < p.length; i += 9) if (p[i] === p[i + 3] && p[i] === p[i + 6] && (p[i + 2] !== p[i + 5] || p[i + 2] !== p[i + 8])) side++; }
+              // lave vegger: en vegg med gulv rett vest for seg (og ikke nord) er lav når kameraet står i øst
+              let lavVest = 0, hoyVest = 0; for (let z = 1; z < F.H - 1; z++) for (let x = 1; x < W - 1; x++) { const h = Paint.wallH[z * W + x]; if (!h || !F.tiles[z * W + x - 1] || (G.skjult && G.skjult[z * W + x - 1]) || F.tiles[(z - 1) * W + x] || F.tiles[(z - 1) * W + x - 1] || F.tiles[(z - 1) * W + x + 1]) continue; if (h < 1) lavVest++; else hoyVest++; }
+              const n = document.querySelector('#mapring .nord');
+              return { valg: KAMERA_VALG.navn, dx: c.x - R.camT.x, dz: c.z - R.camT.z, mx: A.mx, mz: A.mz, dukke: P.doll.plane.rotation.y, side, lavVest, hoyVest,
+                nord: n ? n.style.left : '', ting: (G.props.find(o => o.g && !o.g.userData.flat && o.g.userData.m) || {}).g?.rotation.y ?? null,
+                dybde: !!R.rt.depthTexture, ao: R.post.uniforms.uAo.value, dis: R.post.uniforms.uDis.value, tone: R.post.uniforms.uTone.value, kval: D3.kval(), d3: D3.on }; }""")
+            await pg.keyboard.up('KeyD')
+            r['middels'] = await pg.evaluate("""async () => { const s = MORBIDIUM.meta.settings; s.kvalitet = 2; applySettings(); await new Promise(f => setTimeout(f, 400)); return { dybde: !!R.rt.depthTexture, ao: R.post.uniforms.uAo.value, dis: R.post.uniforms.uDis.value }; }""")
+            r['errs'] = pg.errs[:6]
+            await pg.screenshot(path='/tmp/e_64_' + ('iso' if 'iso' in url else 'gammel' if 'gammel' in url else 'standard') + '.png')
+            await pg.close()
+            return r
+        iso = await kamera(URL3D + '?3d&kamera=iso')
+        sjekk('kamera=iso: kameraet står skrått (øst og sør for målet), og D går mot høyre på skjermen (sørøst i verden)',
+              iso['valg'] == 'iso' and iso['dx'] > 15 and iso['dz'] > 15 and iso['mx'] > .6 and iso['mz'] < -.6, iso)
+        sjekk('kamera=iso: dukkene og tingene vender mot kameraet, sideveggene finnes, og veggene med gulv i vest er lave',
+              abs(iso['dukke'] - .7854) < .01 and (iso['ting'] is None or abs(iso['ting'] - .7854) < .01) and iso['side'] > 20 and iso['lavVest'] > 0 and iso['hoyVest'] == 0, iso)
+        sjekk('kamera=iso: N på kartringen er flyttet', 'calc' in iso['nord'], iso['nord'])
+        sjekk('ny etterbehandling på høy: dybdetekstur, omgivelsesskygge, dis og tonekurve; på middels dis uten omgivelsesskygge',
+              iso['d3'] and iso['kval'] == 'hoy' and iso['dybde'] and iso['ao'] > 0 and iso['dis'] > 0 and iso['tone'] > 0 and not iso['middels']['dybde'] and iso['middels']['ao'] == 0 and iso['middels']['dis'] > 0, iso)
+        sjekk('ingen konsollfeil (kamera=iso)', not iso['errs'], iso['errs'])
+        std = await kamera(URL3D + '?3d')
+        sjekk('uten valg er kameraet som før: rett nedover gangene, D er rett mot høyre, ingen sidevegger',
+              std['valg'] == '' and abs(std['dx']) < .5 and std['mx'] > .99 and abs(std['mz']) < .01 and std['side'] == 0 and abs(std['dukke']) < 1e-6 and std['nord'] == '', std)
+        gml = await kamera(URL3D + '?3d&lys=gammel')
+        sjekk('lys=gammel slår av dis, omgivelsesskygge og tonekurve', gml['ao'] == 0 and gml['dis'] == 0 and gml['tone'] == 0 and not gml['dybde'], gml)
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

@@ -103,7 +103,7 @@ class Doll {
     this.type = type; this.rig = opt.rig ? Object.assign({}, RIG[type] || RIG.pasient, opt.rig) : RIG[type] || RIG.pasient; this.opt = opt;
     this.root = new THREE.Group(); this.plane = new THREE.Group(); this.root.add(this.plane);
     this.U = makeU({ outline: opt.elite ? 1 : 0, outlineCol: opt.outlineCol, tint: opt.tint });
-    this.sc = (opt.scale || 1) * this.rig.scale; this.plane.scale.set(this.sc, this.sc * BILL_Y, this.sc);
+    this.sc = (opt.scale || 1) * this.rig.scale; this.plane.scale.set(this.sc, this.sc * BILL_Y, this.sc); this.plane.rotation.y = CAM_YAW;
     this.view = 'f'; this.flip = 1; this.phase = 0; this.speed = 0; this.t = 0;
     this.headOff = { x: 0, y: 0, vx: 0, vy: 0 }; this.squash = 0; this.lean = 0; this.spin = 0;
     this.attack = null; this.flashT = 0; this.wpId = opt.weapon || null;
@@ -153,6 +153,7 @@ class Doll {
   hit(dir = 1) { this.squash = 1; this.headOff.vx += dir * 1.2; }
   /* face: vinkel i verden, der (sin a, cos a) er retningen */
   setFacing(a) {
+    a -= CAM_YAW; // visningen (forfra, bakfra, siden) regnes mot kameraet, ikke mot verdens akser
     if (this.opt.fixedView) { this.view = this.opt.fixedView; this.flip = Math.sin(a) < -.3 ? -1 : Math.sin(a) > .3 ? 1 : this.flip; return; }
     const sx = Math.sin(a), cz = Math.cos(a);
     if (Math.abs(sx) > .5) { this.view = 's'; this.flip = sx < 0 ? -1 : 1; }
@@ -268,8 +269,8 @@ function dukkeKast(d) {
 /* rekvisitt som stående illustrasjon, festet i forkant */
 function propSprite(k, x, z, opt = {}) {
   const P = opt.P || propPart(k), U = makeU(opt), m = partMesh(P, U);
-  if (opt.flat) { m.rotation.x = -Math.PI / 2; m.position.set(x, .014, z); m.scale.set(1, 1 / Math.sin(CAM_PITCH), 1); m.material.depthWrite = false; m.renderOrder = 1; m.userData.U = U; return m; }
-  const g = new THREE.Group(); g.add(m); m.scale.set(opt.flip ? -1 : 1, BILL_Y, 1); g.position.set(x, opt.y || 0, z); g.userData.U = U; g.userData.m = m;
+  if (opt.flat) { m.rotation.x = -Math.PI / 2; m.rotation.z = CAM_YAW; m.position.set(x, .014, z); m.scale.set(1, 1 / Math.sin(CAM_PITCH), 1); m.material.depthWrite = false; m.renderOrder = 1; m.userData.U = U; return m; }
+  const g = new THREE.Group(); g.add(m); m.scale.set(opt.flip ? -1 : 1, BILL_Y, 1); g.position.set(x, opt.y || 0, z); g.rotation.y = CAM_YAW; g.userData.U = U; g.userData.m = m;
   if (opt.shadow !== false) {
     if (!propSprite.tex) propSprite.tex = R.canvasTex(64, 64, g2 => { g2.fillStyle = 'rgba(40,24,12,.34)'; g2.beginPath(); g2.moveTo(8, 12); g2.lineTo(40, 6); g2.quadraticCurveTo(62, 30, 56, 58); g2.lineTo(14, 56); g2.quadraticCurveTo(2, 34, 8, 12); g2.fill(); });
     const s = new THREE.Mesh(R.plane1(), new THREE.MeshBasicMaterial({ map: propSprite.tex, transparent: true, depthWrite: false })); g.userData.shadow = s;

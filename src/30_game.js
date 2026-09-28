@@ -638,7 +638,7 @@ function hudUpdate() {
 }
 function drawMap() {
   const c = $('map'), g = c.getContext('2d'), F = G.F, P = G.player, s = 5.2; if (!F || !P) return;
-  g.fillStyle = '#1c1410'; g.fillRect(0, 0, 200, 200); g.save(); g.translate(100 - P.x * s, 100 - P.z * s);
+  g.fillStyle = '#1c1410'; g.fillRect(0, 0, 200, 200); g.save(); g.translate(100, 100); g.rotate(CAM_YAW); g.translate(-P.x * s, -P.z * s); // dreid kamera: kartet dreies likt, så opp er opp på skjermen
   const cols = { service: '#e8c890', boss: '#d88a7a', treasure: '#f0d870', risk: '#c8a0d8', cursed: '#c86a7a', offer: '#e0906a', secret: '#b8c8e8' };
   for (let z = 0; z < F.H; z++) for (let x = 0; x < F.W; x++) { const i = z * F.W + x; if (!F.tiles[i] || !G.seen[i]) continue; const rid = F.roomId[i]; g.fillStyle = F.tiles[i] === T_COR ? '#8a7650' : (rid >= 0 && cols[F.rooms[rid].role]) || '#d8c08a'; g.fillRect(x * s, z * s, s + .6, s + .6); }
   g.font = 'bold 11px Georgia, serif'; g.textAlign = 'center';
@@ -650,7 +650,7 @@ function drawMap() {
   for (const e of G.enemies) if (e.alive) { g.fillStyle = '#b3261e'; g.beginPath(); g.arc(e.x * s, e.z * s, 3, 0, TAU); g.fill(); }
   if (G.trapdoor) { g.fillStyle = '#e8b93a'; g.fillRect(G.trapdoor.x * s - 4, G.trapdoor.z * s - 4, 8, 8); }
   g.restore(); g.fillStyle = '#e8b93a'; g.strokeStyle = '#2a1a14'; g.lineWidth = 2;
-  g.save(); g.translate(100, 100); g.rotate(-P.face + Math.PI); g.beginPath(); g.moveTo(0, -8); g.lineTo(6, 6); g.lineTo(-6, 6); g.closePath(); g.fill(); g.stroke(); g.restore();
+  g.save(); g.translate(100, 100); g.rotate(-P.face + Math.PI + CAM_YAW); g.beginPath(); g.moveTo(0, -8); g.lineTo(6, 6); g.lineTo(-6, 6); g.closePath(); g.fill(); g.stroke(); g.restore();
 }
 
 /* ---------- død og utskrivning ---------- */
@@ -763,8 +763,11 @@ function boot() {
   $('vignette').style.display = 'none';
   addEventListener('pointerdown', () => { Sound.init(); applySettings(); }, { once: true }); addEventListener('keydown', () => { Sound.init(); applySettings(); }, { once: true });
   $('bJournal').onclick = () => openJournal(); $('bPause').onclick = () => openPause(); Kart.init();
+  // dreid kamera: N på kompassringen flyttes dit nord faktisk er på skjermen
+  if (KAM.dreid) { const n = document.querySelector('#mapring .nord'), sx = KAM.sy.toFixed(3), cz = KAM.cy.toFixed(3); if (n) Object.assign(n.style, { left: `calc(50% + (50% + 3px) * ${sx})`, top: `calc(50% - (50% + 3px) * ${cz})`, transform: 'translate(-50%, -50%)' }); }
   window.MORBIDIUM = G; Object.assign(window, { Items, ITEMS, spawnEnemy, itemIcon, jarPart, pillPart, addonPart, shotPart, LOOKS, PILL_COL, BLOBS, R, hurt, descend, finishCombat, openService, killEntity, Art, RIG, PROPS, CARD_ART, WEAPONS, THEMES, charPart, propArt, weaponPart, shoePart, cardArtCanvas, generateFloor, CONSUMABLES, heartPart, morbPart, bottlePart, cardPart, pigeonPart, stampDecal, handPart, toothPart, starPart, puffPart, barrierArt });
   Object.assign(window, { ROM_ART, UTE_FLATER }); // manifest og grafikkontroll tar også med landskapet
+  Object.assign(window, { KAM, KAMERA_VALG, LYS_NY }); // kameraprøven og den nye etterbehandlingen (testdel 64)
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };

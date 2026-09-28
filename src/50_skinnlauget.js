@@ -794,7 +794,7 @@ const Oldermann = {
   naal(e, o, a) {
     this.skutt = (this.skutt || 0) + 1; // telles, til testene
     const x = o.x + Math.sin(a) * .6, z = o.z + Math.cos(a) * .6, m = propSprite(null, x, z, { P: naalPart(), shadow: false, y: 1.2 });
-    const sx = Math.sin(a), sy = -Math.cos(a) * Math.sin(CAM_PITCH); m.userData.m.rotation.z = Math.atan2(-sx, sy); R.dyn.add(m);
+    const sx = Math.sin(a - CAM_YAW), sy = -Math.cos(a - CAM_YAW) * Math.sin(CAM_PITCH); m.userData.m.rotation.z = Math.atan2(-sx, sy); R.dyn.add(m);
     return addProj({ type: 'naal', from: 'enemy', x, z, vx: Math.sin(a) * 14, vz: Math.cos(a) * 14, dmg: e.dmg * .4, life: .56, r: .2, y: 1.2, cause: 'oldermann', mesh: m });
   },
   /* kjettinger: sølvringen der pasienten står, krokene fra mørket, og treffet drar pasienten inn til ham */

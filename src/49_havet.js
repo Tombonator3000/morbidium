@@ -942,7 +942,7 @@ const Kraken = {
      En liten samling tentakler som gjenbrukes, lagd første gang de trengs og kastet (ut av grafikkminnet) når etasjen rives.
      Hver har sitt eget manus: opp, trekk seg tilbake, slå inn mot midten, og ned igjen */
   lagArm() {
-    const U = makeU(), root = new THREE.Group(), plane = new THREE.Group(), sc = 1.1; root.add(plane); plane.scale.set(sc, sc * BILL_Y, sc);
+    const U = makeU(), root = new THREE.Group(), plane = new THREE.Group(), sc = 1.1; root.add(plane); plane.scale.set(sc, sc * BILL_Y, sc); plane.rotation.y = CAM_YAW;
     const rib = new Ribbon(3400, U); plane.add(rib.mesh);
     const d = { type: 'krakenarm', root, plane, U, back: rib, front: null, meshes: [], shadow: Doll.blob(.6), shadowA: 1, flip: 1, aktiv: false, A0: null };
     root.add(d.shadow); d.dispose = () => dukkeKast(d);

@@ -174,6 +174,11 @@ const Input = {
       for (let i = 0; i < 4; i++) if (T.pressed['ab' + i]) a.abP[i] = true;
     }
     const L = Math.hypot(a.mx, a.mz); if (L > 1) { a.mx /= L; a.mz /= L; }
+    // dreid kamera (?kamera=iso): styringen følger skjermen, så opp på tastaturet, spaken og berøringen er opp på skjermen
+    if (typeof KAM === 'object' && KAM.dreid) {
+      const mx = a.mx, mz = a.mz; a.mx = KAM.vx(mx, mz); a.mz = KAM.vz(mx, mz);
+      if (a.aimStickX || a.aimStickZ) { const sx = a.aimStickX, sz = a.aimStickZ; a.aimStickX = KAM.vx(sx, sz); a.aimStickZ = KAM.vz(sx, sz); }
+    }
     return a;
   },
   endFrame() {

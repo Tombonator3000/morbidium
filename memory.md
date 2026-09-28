@@ -7,7 +7,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 
 ## Utseende (besluttet etter Toms referanser)
 - Mål: Conan Chop Chop møter Castle Crashers. Tykk mørk kontur, flate farger med én skyggetone, store hoder, korte bein.
-- Kamera: ortografisk, 52 grader helning, fast.
+- Kamera: ortografisk, 52 grader helning, fast. Fra 28.9. finnes en prøve med mer isometrisk vinkel bak ?kamera=iso (dreid 45 grader, helning 45) og ?kamera=lav (helning 42), se «Kameraprøven» under. Standard er uendret til Tom har valgt.
 - Figurer er 2.5D-papirdukker: illustrert hode og kropp som flate plater, armer og bein som tykke bånd bygget hvert bilde. Visninger forfra, bakfra og fra siden (speilet for venstre).
 - Rekvisitter er tegnet i 3/4-perspektiv og står som plater festet i forkant.
 - Gulv og vegger er ekte geometri med malte teksturer. Rommene er 3D som standard (lys, skygger, tåke, se under); uten 3D er skyggen langs veggene malt inn.
@@ -382,3 +382,14 @@ Toms liste med fem skjermbilder (angrepsvarsler, snø, hårruller, skjulte rom, 
 - Enkel grafikk har bare de gamle prikkene, nå runde og i en boks som følger kameraet. Lette teksturer har ikke snøfall.
 - På snøetasjer har gasslyktene snø i lyset (GLOD_TYPER.lyssno) i stedet for møll, sirissene (amb_natt) tier, og vinden stiger i kastene.
 - GLSL: bruk aldri smoothstep med kantene baklengs, skriv 1.0 - smoothstep(a, b, x).
+
+## Kameraprøven og den nye etterbehandlingen (04_render.js), 2026-09-28
+- Tom ønsket at vegger og gulv skal være 3D mot 2D-figurer og ting (slik det allerede var), en mer isometrisk vinkel og mer etterbehandling for bedre lys. Referansen hans var et høstlig isometrisk spill med og uten etterbehandling.
+- Kameraet velges i adressen og gjelder hele økta: ?kamera=iso (dreining 45, helning 45), ?kamera=lav (dreining 0, helning 42), og ?helning=N og ?dreining=N overstyrer tallene (25 til 80 og -80 til 80). Uten valg er alt som før (52 grader, ingen dreining). KAMERA_VALG, CAM_PITCH, CAM_YAW og BILL_Y ligger øverst i 04_render.js.
+- KAM har hjelperne for dreiningen: sx og sz gir hvor mye en vannrett vektor peker mot høyre på skjermen og mot kameraet, vx og vz går andre veien. Alt som vender mot kameraet bruker dem: dukkene (plane.rotation.y), propSprite og Anim (gruppen dreies, flate ting får rotation.z), Lagdukke og Kraken-armene, blekkpartiklene, båndene i 38_effekter og 41_historie, kantlyset i 15_rom3d, prosjektilene i 05_world og 50_skinnlauget, og snøboksen i 47_sno. Visningen forfra, bakfra og fra siden regnes mot kameraet (setFacing trekker fra CAM_YAW). Styringen (tastatur, spak, berøring) dreies i Input.actions, så opp er opp på skjermen. Musa bruker strålen fra kameraet og trengte ingen endring.
+- Veggene (12_paint.js): en vegg er lav når det er gulv på sida bort fra kameraet (BORT), ikke bare i raden nord for den. Med dreid kamera bygges også sideflaten som vender mot kameraet (quadS), med tomromsfront der det ikke er gulv. 15_rom3d.js gir sideveggene fotlist, brystlist og taklist.
+- Minikartet dreies likt med kameraet, og N på kartringen flyttes dit nord er.
+- Ny etterbehandling (standard i 3D, for alle kameravalg): dis (en bred, myk glød i en åttendedels oppløsning, lagt på som skjermblanding og som lys i mørket nær lyskilder) på høy og middels, omgivelsesskygge fra dybdeteksturen (bare høy, med symmetriske nabopar så flate gulv ikke blir mørke) og en mild tonekurve. NIVA i 15_rom3d.js har dis og ao per kvalitetsnivå. Enkel grafikk slår alt av. ?lys=gammel slår det nye av for sammenligning, og ?lys=ao viser bare omgivelsesskyggen.
+- Kjente mangler i prøven: vegglamper, vinduer, pilastre, blod på veggene og sprekken til det skjulte rommet ligger bare på sørveggene. Mellomrom mellom rom kan gi en høy vegg som dekker litt av gulvet sørøst for den (ingen gjennomsiktige vegger ennå). Snøens parallakse i shaderen regner fortsatt med 52 grader. Tegningene av ting er laget sett rett forfra.
+- tools/bilder_kamera.py tar sammenligningsbilder av samme sted med ulike valg (kamprom i etasje 2, kjelleren og parken). Testdel 64 i test_ekstra.py sjekker prøven og etterbehandlingen.
+

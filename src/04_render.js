@@ -10,8 +10,33 @@
       brennende skjermkant i blodrus, og drømmesløret mellom etasjene.
       Forvrengning følger «Forvrengning», blink følger «Blink» i innstillingene.
    ============================================================ */
-const CAM_PITCH = 52 * Math.PI / 180;
+/* kameraet: helning (hvor bratt det ser ned) og dreining rundt loddlinja. Standard er 52 grader rett nedover gangene.
+   Prøven med mer isometrisk vinkel velges i adressen: ?kamera=iso (dreid 45 grader, helning 45) eller ?kamera=lav (samme retning,
+   helning 42). ?helning=40 og ?dreining=30 overstyrer tallene. Valget gjelder hele økta, fordi tegningene måles etter vinkelen.
+   Alt som peker mot kameraet (dukker, ting, partikler) bruker KAM, så dreiningen følger med overalt. */
+const KAMERA_VALG = (() => {
+  const s = (typeof location === 'object' ? location.search + location.hash : ''), tall = n => { const m = new RegExp('[?&#]' + n + '=(-?[0-9.]+)').exec(s); return m ? +m[1] : null; };
+  const navn = (/[?&#]kamera=(iso|lav)\b/.exec(s) || [])[1] || '';
+  const std = { '': [52, 0], iso: [45, 45], lav: [42, 0] }[navn];
+  const h = tall('helning'), d = tall('dreining');
+  return { navn: navn || (h !== null || d !== null ? 'egen' : ''), helning: Math.min(80, Math.max(25, h ?? std[0])), dreining: Math.min(80, Math.max(-80, d ?? std[1])) };
+})();
+/* ?lys=gammel slår av den nye etterbehandlingen (dis, omgivelsesskygge og tonekurve), så den kan sammenlignes med den gamle */
+const LYS_NY = !(typeof location === 'object' && /[?&#]lys=gammel\b/.test(location.search + location.hash));
+const LYS_AO_VIS = typeof location === 'object' && /[?&#]lys=ao\b/.test(location.search + location.hash);
+const CAM_PITCH = KAMERA_VALG.helning * Math.PI / 180;
+const CAM_YAW = KAMERA_VALG.dreining * Math.PI / 180;
 const BILL_Y = 1 / Math.cos(CAM_PITCH);
+/* hjelpere for dreiningen: sx er hvor langt en vannrett vektor peker mot høyre på skjermen, sz hvor mye den peker mot kameraet
+   (nedover på skjermen). Uten dreining er sx = x og sz = z, som koden alltid har antatt. */
+const KAM = {
+  cy: Math.cos(CAM_YAW), sy: Math.sin(CAM_YAW), dreid: Math.abs(CAM_YAW) > 1e-4,
+  sx(x, z) { return x * this.cy - z * this.sy; },
+  sz(x, z) { return x * this.sy + z * this.cy; },
+  // fra skjermretning (høyre, mot kameraet) til verden: det motsatte av sx og sz
+  vx(h, m) { return h * this.cy + m * this.sy; },
+  vz(h, m) { return -h * this.sy + m * this.cy; }
+};
 const R = {
   renderer: null, scene: null, camera: null, level: null, dyn: null, lscene: null, geoCache: new Map(), tex: {},
   camT: { x: 0, z: 0 }, trauma: 0, shakeOn: true, flashOn: true, distortOn: true, lightsOn: true, view: 11.5,
@@ -61,8 +86,11 @@ const R = {
     const pw = Math.round(w * this.dpr), ph = Math.round(h * this.dpr);
     this.renderer.setSize(pw, ph, false); this.renderer.domElement.style.width = w + 'px'; this.renderer.domElement.style.height = h + 'px';
     const MS = false; // multisample-mål ga hvit skjerm på enkelte mobil-GPU-er
-    if (this.rt) this.rt.dispose(); this.kastLys();
+    if (this.rt) { if (this.rt.depthTexture) this.rt.depthTexture.dispose(); this.rt.dispose(); } this.kastLys();
     this.rt = MS ? new THREE.WebGLMultisampleRenderTarget(pw, ph) : new THREE.WebGLRenderTarget(pw, ph); if (MS) this.rt.samples = 4;
+    // omgivelsesskyggen (høy kvalitet i 3D) leser dybden fra bildet, så målet får en dybdetekstur når det kan
+    if (this.trengerDybde && this.dybdeOk()) { this.rt.depthTexture = new THREE.DepthTexture(pw, ph); this.rt.depthTexture.type = THREE.UnsignedIntType; }
+    if (this.post) this.post.uniforms.tDybde.value = null;
     if (this.post) { this.post.uniforms.tScene.value = this.rt.texture; this.post.uniforms.uRes.value.set(pw, ph); }
   },
   /* lysbufferen (halv oppløsning) trengs bare uten 3D, der lysplatene lyser opp bildet. Den lages når den brukes og kastes i 3D.
@@ -81,18 +109,36 @@ const R = {
         tBlod: { value: this.blodSkjerm() }, uBlod: { value: 0 }, uBlodFlip: { value: 0 }, uAarer: { value: 0 }, uPuls: { value: 3 },
         tVaatt: { value: null }, uVaatt: { value: 0 }, uVaattPx: { value: new THREE.Vector2(1 / 384, 1 / 216) },
         tUskarp: { value: null }, uTilt: { value: 0 }, uFokus: { value: new THREE.Vector3(.54, .2, .42) }, uSplit: { value: 0 }, uFilm: { value: 0 },
-        uSjokk: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uVarme: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uZoom: { value: new THREE.Vector3() }, uCa: { value: 0 }, uNeg: { value: 0 }, uDrom: { value: 0 }, uLyn: { value: 0 }, uHete: { value: 0 } },
+        uSjokk: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uVarme: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uZoom: { value: new THREE.Vector3() }, uCa: { value: 0 }, uNeg: { value: 0 }, uDrom: { value: 0 }, uLyn: { value: 0 }, uHete: { value: 0 },
+        tDis: { value: null }, uDis: { value: 0 }, uDisFarge: { value: new THREE.Color(1, .92, .84) }, tDybde: { value: null }, uAo: { value: 0 }, uAoR: { value: 12 }, uTone: { value: 0 } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: `
         uniform sampler2D tScene, tLight, tBloom, tBlod, tUskarp; uniform vec2 uRes; uniform float uTime, uMorb, uHurt, uLow, uFlash, uDistort, uLights, uVig, uBloom, uBlod, uBlodFlip, uAarer, uPuls, uTilt, uSplit, uFilm;
         uniform vec3 uAmbient, uLift, uGain; varying vec2 vUv;
         uniform vec4 uSjokk[4], uVarme[4]; uniform vec3 uZoom; uniform float uCa, uNeg, uDrom, uLyn, uHete; uniform vec3 uFokus;
         uniform sampler2D tVaatt; uniform float uVaatt; uniform vec2 uVaattPx;
+        uniform sampler2D tDis, tDybde; uniform float uDis, uAo, uAoR, uTone; uniform vec3 uDisFarge;
         float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
         // årer: rygger i støyen gir tynne, forgreinede linjer
         float rygg(vec2 p){ return 1.0 - abs(vn(p) * 2.0 - 1.0); }
         float aare(vec2 p){ float r = rygg(p) * 0.55 + rygg(p * 2.2 + 3.7) * 0.3 + rygg(p * 4.7 + 9.1) * 0.15; return smoothstep(0.8, 0.95, r); }
+        // omgivelsesskygge fra dybden (3D, høy): kameraet er ortografisk, så dybden er lineær, og et flatt gulv gir samme dybde
+        // midt mellom to motsatte naboer som i midten. Ligger naboparet nærmere kameraet enn midten, er det et innvendig hjørne
+        // (gulvet mot veggen, under møbler og figurer) og blir mørkere. Store sprang (en figur foran gulvet) teller lite.
+        float aoPar(vec2 o, float d0){
+          float a = texture2D(tDybde, vUv + o).x, b = texture2D(tDybde, vUv - o).x;
+          float k = (d0 - (a + b) * 0.5) * 300.0;
+          float sprang = abs(a - b) * 300.0;
+          return clamp(k * 6.0, 0.0, 1.0) * (1.0 - smoothstep(0.3, 0.8, sprang));
+        }
+        float omgivelse(){
+          float d0 = texture2D(tDybde, vUv).x; if (d0 >= 0.9999) return 0.0;
+          vec2 r = vec2(uAoR / uRes.x, uAoR / uRes.y), r2 = r * 0.5;
+          float s = aoPar(vec2(r.x, 0.0), d0) + aoPar(vec2(0.0, r.y), d0) + aoPar(r * 0.7071, d0) + aoPar(vec2(r.x, -r.y) * 0.7071, d0);
+          s += aoPar(vec2(r2.x * 0.92, r2.y * 0.38), d0) + aoPar(vec2(-r2.x * 0.38, r2.y * 0.92), d0) + aoPar(vec2(r2.x * 0.38, r2.y * 0.92), d0) + aoPar(vec2(r2.x * 0.92, -r2.y * 0.38), d0);
+          return s / 8.0;
+        }
         void main(){
           vec2 uv = vUv; vec2 c = uv - 0.5; float asp = uRes.x / uRes.y; float d = length(c * vec2(asp, 1.0));
           // blekkboiling: hele tegningen skjelver litt, åtte ganger i sekundet, som håndtegnet animasjon
@@ -148,8 +194,19 @@ const R = {
           if (uTilt > 0.0) col = mix(col, texture2D(tUskarp, uv).rgb, smoothstep(uFokus.y, uFokus.z, abs(vUv.y - uFokus.x)) * uTilt);
           // lysbufferen finnes bare uten 3D
           if (uLights > 0.0) col *= mix(vec3(1.0), uAmbient + texture2D(tLight, uv).rgb * 1.35, uLights);
+          if (uAo > 0.0) col *= 1.0 - omgivelse() * uAo;
+          if (uAo < 0.0) { gl_FragColor = vec4(vec3(1.0 - omgivelse()), 1.0); return; } // ?lys=ao: bare omgivelsesskyggen, til justering
           if (uBloom > 0.0) col += texture2D(tBloom, uv).rgb * uBloom;
+          // dis: en bred, myk glød rundt alt som lyser (lamper, vinduer, bål), lagt på som skjermblanding så det aldri brenner ut,
+          // og litt farget lys i mørket rundt, som lys som sprer seg i støvete luft
+          if (uDis > 0.0) {
+            vec3 ds = texture2D(tDis, uv).rgb * uDisFarge * uDis; col = 1.0 - (1.0 - col) * (1.0 - min(ds, vec3(1.0)));
+            // lyset henger i lufta: de mørke delene nær en lyskilde løftes mot lysets farge, som dis i et støvete rom
+            float lm = dot(col, vec3(0.299, 0.587, 0.114)); col += ds * (1.0 - smoothstep(0.0, 0.4, lm)) * 0.8;
+          }
           col = col * uGain + uLift;
+          // tonekurve: litt mer kontrast i mellomtonene og litt mettere farger, uten å røre de mørkeste og lyseste
+          if (uTone > 0.0) { vec3 s = clamp(col, 0.0, 1.0); col = mix(col, s * s * (3.0 - 2.0 * s), 0.32 * uTone); float lt = dot(col, vec3(0.299, 0.587, 0.114)); col = mix(vec3(lt), col, 1.0 + 0.14 * uTone); }
           // fargetoning i 3D: kalde skygger og varme høylys
           if (uSplit > 0.0) { float L0 = dot(col, vec3(0.299, 0.587, 0.114)); col *= mix(vec3(1.0), vec3(0.9, 0.95, 1.12), (1.0 - smoothstep(0.0, 0.45, L0)) * uSplit); col *= mix(vec3(1.0), vec3(1.07, 1.0, 0.9), smoothstep(0.45, 1.0, L0) * uSplit); }
           float lum = dot(col, vec3(0.299, 0.587, 0.114));
@@ -266,6 +323,11 @@ const R = {
     r.setRenderTarget(this.rt); r.setClearColor(this.clear || 0x16130c, 1); r.clear(); r.render(this.scene, this.camera);
     if (Q && Q.glod) this.renderBloom(); else if (this.bl) { this.kastPar('bl'); u.tBloom.value = null; }
     if (Q && Q.tilt) this.renderUskarp(); else if (this.us) { this.kastPar('us'); u.tUskarp.value = null; }
+    // ny etterbehandling (3D): dis på middels og høy, omgivelsesskygge bare på høy, tonekurve på alle nivåer i 3D
+    const dis = !!(LYS_NY && Q && Q.dis), ao = !!(LYS_NY && Q && Q.ao && this.rt.depthTexture);
+    if (dis) this.renderDis(); else if (this.ds) { this.kastPar('ds'); u.tDis.value = null; }
+    u.uDis.value = dis ? Q.dis : 0; u.uAo.value = ao ? (LYS_AO_VIS ? -1 : Q.ao) : 0; u.tDybde.value = ao ? this.rt.depthTexture : null; u.uTone.value = LYS_NY && Q ? 1 : 0;
+    u.uAoR.value = Math.max(6, Math.min(26, this.rt.height / 60)); // radius i piksler, følger oppløsningen
     r.setRenderTarget(null); r.render(this.postScene, this.postCam);
   },
   /* ---------- store øyeblikk ----------
@@ -322,6 +384,26 @@ const R = {
     return P.a.texture;
   },
   renderBloom() { this.bl = this.par(this.bl); this.post.uniforms.tBloom.value = this.uskarp(this.bl, this.kjede().lys, 1); },
+  /* dis: det lyse i bildet (myk terskel) i en åttendedels oppløsning, uskarpt tre runder med lange steg, så gløden sprer seg vidt */
+  renderDis() {
+    const r = this.renderer, K = this.kjede(), B = K.blur.uniforms, w = Math.max(2, this.rt.width >> 3), h = Math.max(2, this.rt.height >> 3);
+    if (!this.ds || this.ds.w !== w || this.ds.h !== h) { this.kastPar('ds'); const o = { depthBuffer: false }; this.ds = { w, h, a: new THREE.WebGLRenderTarget(w, h, o), b: new THREE.WebGLRenderTarget(w, h, o) }; }
+    if (!K.myk) {
+      K.myk = K.lys.clone(); K.myk.uniforms = { t: { value: null }, uPx: K.px };
+      K.myk.fragmentShader = K.lys.fragmentShader.replace('c * smoothstep(0.86, 1.0, max(c.r, max(c.g, c.b))) * 1.4', 'c * smoothstep(0.3, 0.95, max(c.r, max(c.g, c.b)))');
+    }
+    const P = this.ds; K.px.value.set(1 / this.rt.width * 2, 1 / this.rt.height * 2); K.q.material = K.myk; K.myk.uniforms.t.value = this.rt.texture; r.setRenderTarget(P.a); r.render(K.sc, this.postCam);
+    K.q.material = K.blur;
+    for (let i = 0; i < 3; i++) {
+      B.t.value = P.a.texture; B.uDir.value.set((1 + i * 2) / w, 0); r.setRenderTarget(P.b); r.render(K.sc, this.postCam);
+      B.t.value = P.b.texture; B.uDir.value.set(0, (1 + i * 2) / h); r.setRenderTarget(P.a); r.render(K.sc, this.postCam);
+    }
+    this.post.uniforms.tDis.value = P.a.texture;
+  },
+  /* dybdetekstur til omgivelsesskyggen: WebGL2, eller WebGL1 med WEBGL_depth_texture */
+  dybdeOk() { const r = this.renderer; return !!(r && (r.capabilities.isWebGL2 || r.extensions.has('WEBGL_depth_texture'))); },
+  /* slår dybdeteksturen av og på (15_rom3d.js, når kvaliteten endres). Målet lages på nytt bare når det trengs */
+  settDybde(paa) { paa = !!paa && LYS_NY; if (paa === !!this.trengerDybde) return; this.trengerDybde = paa; this.resize(); },
   /* uskarp kopi av hele bildet til tilt-shift */
   renderUskarp() { this.us = this.par(this.us); this.post.uniforms.tUskarp.value = this.uskarp(this.us, this.kjede().kopi, 1.5); },
   /* ---------- hjelpere ---------- */
@@ -470,7 +552,7 @@ const R = {
     this.trauma = Math.max(0, this.trauma - dt * 1.9); this.kamTick(dt);
     const s = this.shakeOn ? this.trauma * this.trauma * .32 * (this.shakeK ?? 1) : 0, t = performance.now() * .05;
     const ox = s * (Math.sin(t * 1.3) + Math.sin(t * 2.9) * .5), oz = s * (Math.cos(t * 1.7) + Math.sin(t * 3.3) * .5), D = 60;
-    this.camera.position.set(this.camT.x + ox, Math.sin(CAM_PITCH) * D, this.camT.z + oz + Math.cos(CAM_PITCH) * D);
+    this.camera.position.set(this.camT.x + ox + KAM.sy * Math.cos(CAM_PITCH) * D, Math.sin(CAM_PITCH) * D, this.camT.z + oz + KAM.cy * Math.cos(CAM_PITCH) * D);
     this.camera.lookAt(this.camT.x + ox, 0, this.camT.z + oz);
   },
   snapCamera(x, z) { this.camT.x = x; this.camT.z = z; this.updateCamera(x, z, .016); },
@@ -636,20 +718,23 @@ const Particles = {
      Flyttet 0,25 mot kameraet, så de ikke skjæres av gulvet når de ligger der */
   skrivBlekk() {
     const A = this.mesh.instanceMatrix.array, F = this.aForm.array, cp = Math.cos(CAM_PITCH), sp = Math.sin(CAM_PITCH), L = .25;
+    // kameraets akser i verden: høyre (Rx, 0, Rz), opp (Ux, cp, Uz) og mot kameraet (Tx, sp, Tz). Uten dreining er det (1, 0, 0), (0, cp, -sp) og (0, sp, cp)
+    const Rx = KAM.cy, Rz = -KAM.sy, Ux = -KAM.sy * sp, Uz = -KAM.cy * sp, Tx = KAM.sy * cp, Tz = KAM.cy * cp;
     for (let i = 0; i < this.n; i++) {
       const p = this.d[i], f = p.f, liv = p.life / p.max, fr = Math.min(1, liv * 2), sc = p.s * PART_STR[f];
       let sx = sc, sy = sc, ang, al = 1;
       if (f < 2) {
         // gnister og dråper peker dit de flyr (farten sett fra kameraet) og strekkes ut med farten
-        const ux = p.vx, uy = p.vy * cp - p.vz * sp, v = Math.hypot(ux, uy); if (v > .4) p.ang = Math.atan2(uy, ux);
+        const ux = KAM.sx(p.vx, p.vz), uy = p.vy * cp - KAM.sz(p.vx, p.vz) * sp, v = Math.hypot(ux, uy); if (v > .4) p.ang = Math.atan2(uy, ux);
         const k = f === 0 ? Math.min(2.6, 1 + v * .16) : Math.min(1.7, 1 + v * .07); ang = p.ang; sx *= k * fr; sy *= f === 0 ? fr : fr / Math.sqrt(k);
       } else if (f === 2) { ang = p.rx * .5; sx *= fr; sy *= fr * (.18 + .82 * Math.abs(Math.cos(p.ry))); } // papiret vender seg i lufta
       else { ang = p.rx * .15; const vokst = 1 + (1 - liv) * .8; sx *= vokst; sy *= vokst; al = Math.min(1, liv * 1.7) * .9; } // støvet vokser og blekner
       const c = Math.cos(ang), s = Math.sin(ang), o = i * 16;
-      A[o] = c * sx; A[o + 1] = s * sx * cp; A[o + 2] = -s * sx * sp; A[o + 3] = 0;
-      A[o + 4] = -s * sy; A[o + 5] = c * sy * cp; A[o + 6] = -c * sy * sp; A[o + 7] = 0;
-      A[o + 8] = 0; A[o + 9] = sp; A[o + 10] = cp; A[o + 11] = 0;
-      A[o + 12] = p.x; A[o + 13] = p.y + sp * L; A[o + 14] = p.z + cp * L; A[o + 15] = 1;
+      const ax = c * sx, ay = s * sx, bx = -s * sy, by = c * sy; // flatens akser i skjermplanet
+      A[o] = ax * Rx + ay * Ux; A[o + 1] = ay * cp; A[o + 2] = ax * Rz + ay * Uz; A[o + 3] = 0;
+      A[o + 4] = bx * Rx + by * Ux; A[o + 5] = by * cp; A[o + 6] = bx * Rz + by * Uz; A[o + 7] = 0;
+      A[o + 8] = Tx; A[o + 9] = sp; A[o + 10] = Tz; A[o + 11] = 0;
+      A[o + 12] = p.x + Tx * L; A[o + 13] = p.y + sp * L; A[o + 14] = p.z + Tz * L; A[o + 15] = 1;
       F[i * 2] = f; F[i * 2 + 1] = al;
     }
     this.aForm.updateRange.offset = 0; this.aForm.updateRange.count = this.n * 2; this.aForm.needsUpdate = true;

@@ -380,7 +380,7 @@ BLOBS.klumpunge = [1.0, .8, .5, .08, v => g => {
 class Lagdukke {
   constructor(type, def, opt = {}) {
     this.type = type; this.def = def; this.opt = opt; this.rig = RIG[type] || (RIG[type] = { blob: true, scale: def.scale || 1 });
-    this.root = new THREE.Group(); this.plane = new THREE.Group(); this.root.add(this.plane);
+    this.root = new THREE.Group(); this.plane = new THREE.Group(); this.root.add(this.plane); this.plane.rotation.y = CAM_YAW;
     this.U = makeU({ outline: opt.elite ? 1 : 0, outlineCol: opt.outlineCol, tint: opt.tint });
     this.sc = (opt.scale || 1) * (def.scale || 1); this.flip = 1; this.view = 'f'; this.t = Math.random() * 10; this.speed = 0; this.squash = 0; this.flashT = 0;
     this.headOff = { x: 0, y: 0, vx: 0, vy: 0 };
@@ -389,7 +389,7 @@ class Lagdukke {
     this.deler = def.deler.map(d => { const m = partMesh(d.P(), this.U); m.position.set(d.x || 0, d.y || 0, d.z || 0); this.plane.add(m); return Object.assign({ m }, d); });
     this.meshes = []; this.plane.traverse(o => { if (tegnetDel(o)) this.meshes.push(o); });
   }
-  setFacing(a) { const sx = Math.sin(a); this.flip = sx < -.25 ? -1 : sx > .25 ? 1 : this.flip; }
+  setFacing(a) { const sx = Math.sin(a - CAM_YAW); this.flip = sx < -.25 ? -1 : sx > .25 ? 1 : this.flip; }
   flash(t = .09) { this.flashT = t; }
   hit() { this.squash = 1; }
   setWeapon() { }
