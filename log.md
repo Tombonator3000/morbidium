@@ -1404,3 +1404,8 @@ Alle tidspunkt er UTC.
 - Bygget med bildeløpet: 611 innebygde bilder, 124 deler og 165 lyder. node --check på skriptet er grønn, og test_gen.js gir 1800 av 1800 gyldige etasjer, deterministisk. Arkene bildeløpet klipte i gpt-grafikk/, er satt tilbake, siden Pages-bygget klipper selv.
 - Testdel 41 (menyene med håndkontroll) feilet: den ventet at spaken etter Kameraavstand i fanen Bilde var Skjermristing, men nå kommer Kameravinkel imellom. Resten av sjekken stemte. Testen venter nå vinkel. Del 11 er grønn, også sjekken av at alle fanene i innstillingene får plass. Del 64 og en ny kjøring av del 41 går.
 - memory.md: råd om å bruke patchen og ikke zipen når en økt uten GitHub-tilgang leverer begge, om å rydde gpt-grafikk/ etter bildeløpet lokalt, og om hvordan enkeltdeler av test_ekstra kan kjøres. todo.md: kameraendringene er krysset av som lagt inn.
+
+## 2026-09-28 17:48 Testene er grønne, og kameravinkelen er lagt på main
+- Del 64 (kameraprøven, etterbehandlingen og Kameravinkel i innstillingene): 10 av 10 OK. Del 11 (menyene): alle OK. Første kjøring av del 41, 11 og 64 ga 25 OK og 1 feil, og feilen var sjekken i del 41 som ventet Skjermristing.
+- Del 41 med den rettede sjekken: 9 av 9 OK. Gjennomspillingen (test_spill.py) er grønn uten feil: kamp, rydding, tjeneste, sjef, luke, drøm og død.
+- Grenen claude/dazzling-newton-2iix7q er lagt på main som fast-forward fra 9b1e5af, så Pages bygger og publiserer. Tom trenger ikke laste opp zipen, og bør ikke gjøre det nå, for den ville satt log.md, memory.md og todo.md tilbake til en eldre utgave.
