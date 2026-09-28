@@ -1409,3 +1409,6 @@ Alle tidspunkt er UTC.
 - Del 64 (kameraprøven, etterbehandlingen og Kameravinkel i innstillingene): 10 av 10 OK. Del 11 (menyene): alle OK. Første kjøring av del 41, 11 og 64 ga 25 OK og 1 feil, og feilen var sjekken i del 41 som ventet Skjermristing.
 - Del 41 med den rettede sjekken: 9 av 9 OK. Gjennomspillingen (test_spill.py) er grønn uten feil: kamp, rydding, tjeneste, sjef, luke, drøm og død.
 - Grenen claude/dazzling-newton-2iix7q er lagt på main som fast-forward fra 9b1e5af, så Pages bygger og publiserer. Tom trenger ikke laste opp zipen, og bør ikke gjøre det nå, for den ville satt log.md, memory.md og todo.md tilbake til en eldre utgave.
+
+## 2026-09-28 17:50 Pages publisert med kameravinkelen
+- Pages-byggingen for 4e511f1 (kjøring 50) gikk grønt. Den publiserte siden har BYGG-merket 4e511f1, er like stor som det lokale bygget (12 757 035 byte) og har Kameravinkel under Innstillinger, Bilde, med «Last på nytt».
