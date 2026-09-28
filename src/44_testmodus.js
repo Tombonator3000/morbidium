@@ -224,16 +224,13 @@ addEventListener('unhandledrejection', e => { Testmodus.feil.push({ t: performan
 
 /* ---------- koblingene ---------- */
 {
-  const _sf = startFloor;
-  startFloor = function (...a) { const r = _sf.apply(this, a); try { if (Testmodus.paa()) Testmodus.nyEtasje(G.depth); } catch (e) { console.warn('testmodus', e); } return r; };
+  Kroker.etter('startFloor', () => { try { if (Testmodus.paa()) Testmodus.nyEtasje(G.depth); } catch (e) { console.warn('testmodus', e); } });
   const _hp = hurtPlayer;
   hurtPlayer = function (dmg, src) { const P = G.player, h0 = P ? P.hp : 0, r = _hp(dmg, src); if (P && Testmodus.paa() && P.hp < h0) { const d = h0 - Math.max(P.hp, 0); Testmodus.fanget = (Testmodus.fanget || 0) + d; Testmodus.skade(src && src.type, d); } return r; };
   const _hel = healPlayer;
   healPlayer = function (...a) { const P = G.player, h0 = P ? P.hp : 0, r = _hel.apply(this, a); if (P && Testmodus.paa() && P.hp > h0) { const E = Testmodus.naa(); if (E) E.hel = Math.round((E.hel + P.hp - h0) * 10) / 10; Testmodus.hp = P.hp; } return r; };
-  const _sb = spawnBoss;
-  spawnBoss = function (...a) { const B = _sb.apply(this, a); try { const E = Testmodus.naa(); if (B && E && Testmodus.paa() && !E.sjef) E.sjef = { navn: B.name, t0: performance.now(), sek: null }; } catch (e) { } return B; };
-  const _bd = bossDie;
-  bossDie = function (B) { const r = _bd.apply(this, arguments); try { const E = Testmodus.naa(); if (E && E.sjef && E.sjef.sek == null) E.sjef.sek = Math.round((performance.now() - E.sjef.t0) / 100) / 10; } catch (e) { } return r; };
+  Kroker.etter('spawnBoss', B => { try { const E = Testmodus.naa(); if (B && E && Testmodus.paa() && !E.sjef) E.sjef = { navn: B.name, t0: performance.now(), sek: null }; } catch (e) { } });
+  Kroker.etter('bossDie', () => { try { const E = Testmodus.naa(); if (E && E.sjef && E.sjef.sek == null) E.sjef.sek = Math.round((performance.now() - E.sjef.t0) / 100) / 10; } catch (e) { } });
   // døden og utskrivningen: rapporten lagres, og det kommer en knapp til den
   const knapp = () => { if (!Testmodus.paa()) return; const rad = document.querySelector('#panel .btnrow'); if (!rad || $('dTest')) return; const b = document.createElement('button'); b.className = 'btn'; b.id = 'dTest'; b.textContent = 'Testrapport'; b.onclick = () => Testmodus.apne('rapport'); rad.appendChild(b); };
   const _sd = showDeath;

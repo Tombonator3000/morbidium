@@ -577,6 +577,6 @@ const Hendelse = {
 };
 
 /* kroker: ny etasje, rydding, sjefen svekket fra graven, spyttet fra hjemmebrent stopper ved ny etasje */
-{ const _sf = startFloor; startFloor = function (depth, first) { _sf(depth, first); try { Hendelse.onFloor(); } catch (e) { console.warn('hendelser', e); } }; }
-{ const _cf = clearFloor; clearFloor = function () { Hendelse.fjern(); G.ekstraDukker = []; if (G.run) G.run.fyllT = 0; _cf(); }; }
-{ const _sb = spawnBoss; spawnBoss = function (depth, x, z) { const B = _sb(depth, x, z), sv = G.run && G.run.sjefSvekk && G.run.sjefSvekk[depth]; if (B && sv) { B.hp *= 1 - sv; FX.bubble(B, 'Hvem skrev navnet mitt på den steinen?', 1.8, 'boss'); } return B; }; }
+Kroker.etter('startFloor', () => { try { Hendelse.onFloor(); } catch (e) { console.warn('hendelser', e); } });
+Kroker.foer('clearFloor', () => { Hendelse.fjern(); G.ekstraDukker = []; if (G.run) G.run.fyllT = 0; });
+Kroker.etter('spawnBoss', (B, depth) => { const sv = G.run && G.run.sjefSvekk && G.run.sjefSvekk[depth]; if (B && sv) { B.hp *= 1 - sv; FX.bubble(B, 'Hvem skrev navnet mitt på den steinen?', 1.8, 'boss'); } });

@@ -4069,6 +4069,41 @@ async def main():
         await pg.close()
         sjekk('uten WebGL: feilmeldingen sier at nettleseren må lukkes helt, og har med feilen fra three', 'Lukk nettleseren helt' in ng['tekst'] and 'Error creating WebGL context' in ng['tekst'], ng)
 
+        # 66) Kroker i stedet for innpakning (punkt 4): ingen fil setter de omgjorte funksjonene på nytt, krokene kjører i samme rekkefølge
+        #     som innpakningene ga, prio går foran, en feil i én krok stopper ikke de andre, av() tar en krok bort, og våpnene fra andre filer
+        #     slås opp i VAAPEN_TEGNING og tegnes
+        import re as _re
+        kilde = {f.name: f.read_text(encoding='utf-8') for f in (pathlib.Path(__file__).resolve().parent.parent / 'src').glob('*.js')}
+        KROK = ['startFloor', 'clearFloor', 'spawnBoss', 'bossDie', 'enemyDie', 'drawWeapon', 'spawnProps', 'decorateLevel', 'updateTele', 'updateZones', 'updateProjectiles', 'playerDie']
+        pakket = [f'{f}: {n}' for f, t in sorted(kilde.items()) for n in KROK if _re.search(r'(?<![\w.])' + n + r'\s*=(?![=>])', t)]
+        sjekk('ingen fil pakker inn funksjonene som har fått kroker', not pakket, pakket)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000)
+        kr = await pg.evaluate("""() => { const K = Kroker, ut = { orden: {} }, ord = /(Kraken|Kjeder|Dybde|Glod|Drom|Hendelse|Vaer|Blekk|Nedslag|Vaatt|Kombo|Historie|Testmodus|Mini|Blod|Havet|speil|morke|sjefSvekk|kamZoom|journalen|bossDod|kraken|sjokk|Effekter|Skjult|LYS|Landskap)/;
+          for (const n of ['clearFloor:foer', 'clearFloor:etter', 'startFloor:foer', 'startFloor:etter', 'spawnBoss:etter', 'bossDie:etter', 'enemyDie:etter', 'spawnProps:etter'])
+            ut.orden[n] = (K.l[n] || []).map(x => (x.fn.toString().match(ord) || ['?'])[0]).join(' ');
+          const spor = [], ce = console.error; console.error = () => spor.push('logget');
+          try {
+            K.foer('t66', () => spor.push('f1')); K.foer('t66', () => spor.push('f2')); K.foer('t66', () => spor.push('f0'), -1);
+            K.etter('t66', (r, a) => spor.push('e1:' + r + ':' + a)); K.etter('t66', () => { throw new Error('med vilje'); }); const e3 = K.etter('t66', () => spor.push('e3'));
+            ut.svar = K.kall('t66', (a, b) => { spor.push('kjerne'); return a + b; }, null, [2, 3]); ut.spor = spor.join(' ');
+            spor.length = 0; K.av('t66', e3); K.kall('t66', () => 0, null, []); ut.av = !spor.includes('e3');
+          } finally { console.error = ce; delete K.l['t66:foer']; delete K.l['t66:etter']; }
+          const tegn = id => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.setTransform(60, 0, 0, 60, 64, 120); drawWeapon(id)(g); const d = g.getImageData(0, 0, 128, 128).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; };
+          ut.vaapen = Object.keys(VAAPEN_TEGNING).filter(id => tegn(id) < 40); ut.nVaapen = Object.keys(VAAPEN_TEGNING).length; ut.mopp = tegn('mopp');
+          return ut; }""")
+        kr['errs'] = pg.errs[:6]
+        await pg.close()
+        o = kr['orden']
+        sjekk('krokene kjører i samme rekkefølge som innpakningene: rydding, etasjestart, sjefene, døden og tingene',
+              o == {'clearFloor:foer': 'Kraken Kjeder Dybde Glod Drom Hendelse Vaer', 'clearFloor:etter': 'Blekk Nedslag', 'startFloor:foer': 'Vaatt Kombo',
+                    'startFloor:etter': 'Hendelse Drom Historie Testmodus', 'spawnBoss:etter': 'morke sjefSvekk kamZoom journalen kraken Testmodus',
+                    'bossDie:etter': 'Blod sjokk Kombo bossDod kraken Testmodus', 'enemyDie:etter': 'speil Mini Blod Havet', 'spawnProps:etter': 'LYS Effekter Skjult'}, o)
+        sjekk('Kroker: prio foran, før-krokene sist lagt til først, etter-krokene med svaret først, en feil stopper ikke resten, og av() virker',
+              kr['svar'] == 5 and kr['spor'] == 'f0 f2 f1 kjerne e1:5:2 logget e3' and kr['av'], kr)
+        sjekk('alle våpnene i VAAPEN_TEGNING tegnes, og moppen fra kjernen også', kr['nVaapen'] == 13 and not kr['vaapen'] and kr['mopp'] > 40, [kr['nVaapen'], kr['vaapen'], kr['mopp']])
+        sjekk('ingen konsollfeil (kroker)', not kr['errs'], kr['errs'])
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)

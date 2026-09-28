@@ -269,7 +269,7 @@ Object.assign(Sound.lib, { veggbank: [{ w: 'sine', f: 140, d: .09, pd: .6, v: .3
 
 /* ---------- koblinger ---------- */
 // spawnProps er allerede pakket inn av 17_romtyper (lysene) og 38_effekter (gløden), så alt finnes når tingene gjemmes
-{ const _sp = spawnProps; spawnProps = function () { _sp(); try { Skjult.gjemTing(); } catch (e) { console.warn('det skjulte rommet ble ikke gjemt', e); } }; }
+Kroker.etter('spawnProps', () => { try { Skjult.gjemTing(); } catch (e) { console.warn('det skjulte rommet ble ikke gjemt', e); } });
 // banking: sprekken spør om slaget traff en ting, og hitProps kalles rett før hitCrack i meleeHit
 { const _hp = hitProps; hitProps = function (...a) { const n = _hp.apply(this, a); Spesial.sistProps = n; return n; }; }
 // hvert slag på sprekken: hårstreken vokser. Siste slag knuser veggen (c.broken, F.block og G.run.secrets som før), og så åpnes rommet

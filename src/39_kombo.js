@@ -277,11 +277,11 @@ const Stempel = {
 }; }
 { const _mh = meleeHit; meleeHit = function (k) { Kombo.slag = { treff: 0 }; try { _mh(k); } finally { const S = Kombo.slag; Kombo.slag = null; if (S && S.treff >= 2 && (k.combo === 2 || (k.heavy && k.charge >= .99))) Kombo.finale(k, S.treff); } }; }
 { const _ua = useAbility; useAbility = function (i) { const P = G.player, n0 = P ? P.counters.ability : 0; _ua(i); if (P && P.counters.ability > n0) Kombo.kort(i); }; }
-{ const _bd = bossDie; bossDie = function (B) { _bd(B); Kombo.sjef(B); }; }
+Kroker.etter('bossDie', (_, B) => Kombo.sjef(B));
 { const _sb = stampBig; stampBig = function (t, sub) { _sb(t, sub); if (t === 'SYNERGI' || t === 'FORVANDLING') Kombo.fanfare(t === 'SYNERGI' ? 'synergi' : 'forvandling'); }; }
 // lappen får teksten med en gang som før, og legger seg under stemplene hvis et står
 { const _t = toast; toast = function (t, sub) { _t(t, sub); Stempel.plass(); }; }
-{ const _sf = startFloor; startFloor = function (...a) { Kombo.onFloor(); return _sf.apply(this, a); }; }
+Kroker.foer('startFloor', () => Kombo.onFloor());
 { const _rs = runStats; runStats = function () {
   let s = _rs(); const r = G.run || {};
   if (r.komboMaks >= 5) s += `<dt>Lengste kjede</dt><dd>${r.komboMaks} treff</dd>`;

@@ -36,6 +36,32 @@ const Store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* lagring utilgjengelig */ } }
 };
 
+/* ---------- kroker ----------
+   Systemene kobler seg på spillets gang med navngitte kroker i stedet for å pakke inn funksjonene i hverandre.
+   Kroker.foer(navn, fn) kjører fn før kjernen, Kroker.etter(navn, fn) etter, med svaret fra kjernen først: fn(svar, ...argumentene).
+   Kjernen kaller dem med Kroker.kall(navn, kjerne, this, arguments). Rekkefølgen er den samme som innpakningene ga: før-krokene
+   kjører sist lagt til først (som det ytterste laget), etter-krokene først lagt til først. Trenger en krok en fast plass uansett
+   rekkefølgen i bygget, gi den prio (lavere kjører først, og prio går foran rekkefølgen). En feil i én krok logges og stopper ikke
+   de andre eller kjernen. Hvilke kroker som finnes, står i dokumentasjon/systemer.md under «Kroker». */
+const Kroker = {
+  l: {}, n: 0,
+  leggTil(navn, fn, prio, foer) {
+    const a = this.l[navn] || (this.l[navn] = []); a.push({ fn, prio: prio || 0, n: ++this.n });
+    a.sort((x, y) => x.prio - y.prio || (foer ? y.n - x.n : x.n - y.n)); return fn;
+  },
+  foer(navn, fn, prio) { return this.leggTil(navn + ':foer', fn, prio, true); },
+  etter(navn, fn, prio) { return this.leggTil(navn + ':etter', fn, prio, false); },
+  av(navn, fn) { for (const k of [navn + ':foer', navn + ':etter']) if (this.l[k]) this.l[k] = this.l[k].filter(x => x.fn !== fn); },
+  kall(navn, kjerne, self, args) {
+    const F = this.l[navn + ':foer'], E = this.l[navn + ':etter'];
+    if (F) for (const x of F.slice()) this.prov(navn, x.fn, self, args);
+    const r = kjerne.apply(self, args);
+    if (E) { const a = [r, ...args]; for (const x of E.slice()) this.prov(navn, x.fn, self, a); }
+    return r;
+  },
+  prov(navn, fn, self, a) { try { fn.apply(self, a); } catch (e) { console.error('Kroken ' + navn + ' feilet:', e); } }
+};
+
 /* ---------- input ---------- */
 const Input = {
   keys: {}, pressed: {}, released: {},

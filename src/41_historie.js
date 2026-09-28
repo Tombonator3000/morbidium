@@ -482,7 +482,7 @@ HENDELSER.forstanderen = Historie.hendelse;
 Object.assign(HENDELSER, HENDELSER_HISTORIE);
 // kjettingene går i spilltid, så de står stille bak pausemenyen og samtalepanelet, og forsvinner med etasjen
 { const _ht = Hendelse.tick; Hendelse.tick = function (dt) { _ht.call(this, dt); Kjeder.tick(dt); }; }
-{ const _cf = clearFloor; clearFloor = function () { Kjeder.tom(); _cf(); }; }
+Kroker.foer('clearFloor', () => Kjeder.tom());
 // journalsiden før drømmen: «Les videre» og Escape går begge til innledningen, så valget om å våkne med en gang ikke forsvinner
 { const _v = Samtale.vis; Samtale.vis = function (o) {
   const D = G.drom;
@@ -530,23 +530,22 @@ Object.assign(HENDELSER, HENDELSER_HISTORIE);
   if (B.alive && B.state === 'chase' && G.state === 'play') { B.slengT = (B.slengT ?? rnd(5, 9)) - dt; if (B.slengT <= 0) { B.slengT = rnd(8, 14); const L = LINES.boss[B.type]; if (L && L.length) FX.bubble(B, pick(L), 1.8, 'boss'); } }
 }; }
 // Journalen: svarer seg selv, er svakere uten pennen og sterkere når ingen leser for den under huset
-{ const _s = spawnBoss; spawnBoss = function (...a) {
-  const B = _s.apply(this, a); if (!B) return B; const run = G.run || {};
+Kroker.etter('spawnBoss', B => {
+  if (!B) return; const run = G.run || {};
   if (B.type === 'journalen') {
     setTimeout(() => { if (B.alive) FX.bubble(B, 'Du gjorde. Hver gang du døde.', 2.8, 'boss'); }, 2300);
     if (run.pennen) { B.hp *= .8; setTimeout(() => { if (B.alive) FX.bubble(B, 'Hvem har pennen min?', 2.4, 'boss'); }, 5200); }
     if (run.forstanderLos) { B.max *= 1.2; B.hp *= 1.2; setTimeout(() => { if (B.alive) FX.bubble(B, 'Ingen leser for oss nå. Hører du hvor stille det er?', 2.8, 'boss'); }, 5200); }
   }
   if (B.type === 'hjort' && run.historie && run.historie.tegn === 'hest' && run.historie.sett) setTimeout(() => { if (B.alive) FX.bubble(B, 'I drømmen din var jeg en hvit hest.', 2.6, 'boss'); }, 2400);
-  return B;
-}; }
+});
 // sjefen er alt markert som død, og FX fjerner bobler på døde, så de siste ordene henger på et merke der den sto
-{ const _d = bossDie; bossDie = function (B) {
-  const ord = LINES.bossDod[B.type]; _d(B); if (ord) FX.bubble({ x: B.x, z: B.z, bubbleH: B.bubbleH, alive: true }, ord, 2.6, 'boss');
+Kroker.etter('bossDie', (_, B) => {
+  const ord = LINES.bossDod[B.type]; if (ord) FX.bubble({ x: B.x, z: B.z, bubbleH: B.bubbleH, alive: true }, ord, 2.6, 'boss');
   if (G.run) (G.run.behandlet || (G.run.behandlet = [])).push(B.depth);
-}; }
+});
 // personlige linjer og personalet på hver etasje
-{ const _sf = startFloor; startFloor = function (...a) { const r = _sf.apply(this, a); try { Historie.personlig(); } catch (e) { console.warn('historie', e); } return r; }; }
+Kroker.etter('startFloor', () => { try { Historie.personlig(); } catch (e) { console.warn('historie', e); } });
 // radioen kan spille pasientens egen historie
 { const _r = HENDELSER.radio.samtale; HENDELSER.radio.samtale = function (h) {
   const s = _r.call(this, h), H = G.run && G.run.historie;

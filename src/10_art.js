@@ -302,7 +302,11 @@ function drawShoe(kind) {
   };
 }
 /* ---------- våpen: tegnet med grepet i origo, pekende oppover (negativ y) ---------- */
+/* våpen som tegnes i andre filer (fiender, sjefer, havet og Skinnlauget): VAAPEN_TEGNING[id] = (g, id) => tegning.
+   Før pakket hver fil inn drawWeapon for sitt eget våpen; nå slås det opp her, så rekkefølgen i bygget betyr ingenting */
+const VAAPEN_TEGNING = {};
 function drawWeapon(id) {
+  const egen = VAAPEN_TEGNING[id]; if (egen) return g => egen(g, id);
   return g => {
     if (id === 'mopp') {
       A.cel(g, A.rr(-.035, -1.05, .07, 1.2, .03), '#a8743a', { lw: .035, hi: false, dx: .015, dy: 0 });

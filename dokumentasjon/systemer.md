@@ -3,6 +3,7 @@
 Oppslagsverk over hvordan spillet er bygd, system for system. Flyttet ordrett fra memory.md 28.9., så memory.md kan være kort. Les avsnittet for systemet du jobber med (søk etter overskriften), og skriv nye detaljer om et system her, ikke i memory.md. Det som var dagsaktuelt da det ble skrevet, kan være utdatert; loggen (log.md og logg/) sier hva som skjedde når.
 
 ## Innhold
+- Kroker (01_core.js, punkt 4, 28.9. kveld)
 - Utseende (besluttet etter Toms referanser)
 - Teknikk
 - Gjenbruk og lisenser
@@ -449,3 +450,11 @@ Toms liste med fem skjermbilder (angrepsvarsler, snø, hårruller, skjulte rom, 
 - tools/bilder_kamera.py tar sammenligningsbilder av samme sted med ulike valg (kamprom i etasje 2, kjelleren og parken). Testdel 64 i test_ekstra.py sjekker prøven og etterbehandlingen.
 - Omgivelsesskyggen og dybdeteksturen er bare for PC: D3.Q setter ao til 0 på telefon og TV, også på høy (etter at Toms telefon mistet WebGL 28.9.). Disen og tonekurven er med på telefon.
 - Alt dette kom på main 28.9. kveld fra patchen (Cowork-økta fikk ikke skrive til GitHub). Testdel 41 venter nå at håndkontrollen går fra Kameraavstand til Kameravinkel i fanen Bilde.
+
+## Kroker (01_core.js, punkt 4, 28.9. kveld)
+- Nye systemer kobler seg på spillets gang med navngitte kroker i stedet for å pakke inn funksjonene i hverandre (før var det 146 innpakninger). Kroker.foer(navn, fn, prio) kjører før kjernen, Kroker.etter(navn, fn, prio) etter, med svaret fra kjernen først: fn(svar, ...argumentene). Kroker.av(navn, fn) tar en krok bort. En feil i én krok logges med console.error og stopper verken de andre krokene eller kjernen.
+- Kjernen heter <navn>Kjerne, og navnet kaller den med Kroker.kall(navn, <navn>Kjerne, this, arguments). Funksjonen settes aldri på nytt, så window-eksportene i boot og alle kallene ser den samme funksjonen hele tiden.
+- Rekkefølgen er den samme som innpakningene ga, så ombyggingen ikke endret oppførselen: før-krokene kjører sist lagt til først (som det ytterste laget), etter-krokene først lagt til først, begge i rekkefølgen filene står i build.py. Avhenger en krok av en annen, gi den prio (lavere kjører først, og prio går foran rekkefølgen), så den ikke lenger avhenger av plassen i bygget.
+- Funksjoner med kroker (fil med kjernen): startFloor, clearFloor, decorateLevel (30_game), spawnBoss, bossDie, enemyDie, playerDie (20_actors), spawnProps, updateTele, updateProjectiles (05_world) og updateZones (26_fiender). Rekkefølgen i dag: clearFloor før: Kraken, kjettingene, dybden, gløden, drømmen, hendelsene, været; etter: Blekk, Nedslag. startFloor før: Vaatt, Kombo; etter: hendelsene, drømmen, historien, testmodus. spawnProps etter: lysene (17), gløden (38), det skjulte rommet (48, må komme sist).
+- Våpnene fra andre filer ligger i VAAPEN_TEGNING[id] = (g, id) => tegning (10_art.js), som drawWeapon slår opp først. 13 våpen: stempelboss, skjemabunke, gasskolbe, klump, tang, knippe, hagesaks, storsaks, avgud, reim, bjelle, tommestokk og klubbe.
+- Igjen som innpakninger (etter antall): spawnEnemy (5, endrer typen og svaret, og har et øyeblikksbilde spawnEnemyBare i 28_oppskrift), hurt (4, rekkefølgen betyr noe: vakta for fiender under vann i 49 må ligge ytterst, og 34 setter e.hpFor før døden), charPart (3, tabeller der den ytterste vinner), enemySlip (3), hurtPlayer (3), Sound.play (3), og de med ett eller to lag. Testdel 66 sjekker at ingen fil setter de omgjorte funksjonene på nytt, og rekkefølgen på krokene.

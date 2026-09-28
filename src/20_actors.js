@@ -185,7 +185,9 @@ function useConsumable() {
   else if (id === 'kamfer') { P.kamferT = 5; Sound.play('level'); FX.bubble(P, 'Det brenner i nesen. Bra.', 1.4); }
   else if (id === 'eter') { const tx = P.aimX ?? P.x, tz = P.aimZ ?? P.z; addProj({ type: 'eter', from: 'player', x: P.x, z: P.z, tx, tz, arc: true, dur: .5, h: 2, land: p => { puff(p.tx, p.tz, 6, 1.6, '#cfe8ef'); for (const e of G.enemies) if (e.alive && d2(e.x, e.z, p.tx, p.tz) < 7) { e.sleep = 4; cancelTeles(e); numText(e.x, e.z, 'zzz', 'info', 2.4); } if (G.boss && G.boss.alive && d2(G.boss.x, G.boss.z, p.tx, p.tz) < 9) G.boss.slowT = 3; Sound.play('glass'); } }); }
 }
-function playerDie() {
+/* playerDie: kroker før og etter (Kroker.foer/etter('playerDie', ...)) i stedet for innpakning i andre filer */
+function playerDie() { return Kroker.kall('playerDie', playerDieKjerne, this, arguments); }
+function playerDieKjerne() {
   const P = G.player; if (!P.alive) return;
   P.alive = false; P.hp = 0; Sound.play('die', 1, .7); R.shake(.7); puff(P.x, P.z, 5); slowMo(1.2, .25); Musikk.stopp(.6);
   setTimeout(() => showDeath(), 1600);
@@ -393,7 +395,9 @@ function spawnEnemy(type, x, z, elite, depth) {
   return e;
 }
 function enemySlip(e) { if (e.slip > 0 || e.kind === 'boss') return; e.slip = 1.2; cancelTeles(e); e.state = 'recover'; e.t = 1.2; numText(e.x, e.z, 'SKLI!', 'info', 2.4); Sound.play('bonk', .6, .7); }
-function enemyDie(e, src) {
+/* enemyDie: kroker før og etter (Kroker.foer/etter('enemyDie', ...)) i stedet for innpakning i andre filer */
+function enemyDie() { return Kroker.kall('enemyDie', enemyDieKjerne, this, arguments); }
+function enemyDieKjerne(e, src) {
   const P = G.player; P.counters.kills++; G.run.kills++; Merknad.onKill(e); if (hasDiag('blodtorst')) healPlayer(1, true, true);
   e.deadT = .5; puff(e.x, e.z, 5, 1.2); Sound.play('die'); R.shake(.25); G.hitstop = Math.max(G.hitstop, .06);
   const D = ENEMIES[e.type]; dropTeeth(e.x, e.z, rndi(D.teeth[0], D.teeth[1]) * (e.elite ? 3 : 1));
@@ -488,7 +492,9 @@ function updateEnemy(e, dt) {
    Ved 66 og 33 prosent holder bossen tale. Da tar den 50 prosent mer skade,
    og 12 prosent skade eller Våpenisert monolog (b) avbryter talen.
    ============================================================ */
-function spawnBoss(depth, x, z) {
+/* spawnBoss: kroker før og etter (Kroker.foer/etter('spawnBoss', ...)) i stedet for innpakning i andre filer */
+function spawnBoss() { return Kroker.kall('spawnBoss', spawnBossKjerne, this, arguments); }
+function spawnBossKjerne(depth, x, z) {
   const B0 = typeof sjefFor === 'function' ? sjefFor(depth) : BOSSES[depth] || BOSSES[MAX_DEPTH], type = B0.type, tome = type === 'journalen';
   const bopt = { fixedView: 'f', weapon: B0.weapon, shadow: B0.skygge || 1, scale: 1 };
   const doll = typeof LAGDUKKE === 'object' && LAGDUKKE[type] ? new Lagdukke(type, LAGDUKKE[type], bopt) : new Doll(type, bopt);
@@ -509,7 +515,9 @@ function bossOnHurt(B, d) {
   }
 }
 function bossInterrupt(B) { B.phase = 'fight'; B.state = 'stagger'; B.t = 2.5; B.stagger = 2.5; FX.bubble(B, pick(LINES.interrupted), 1.8, 'boss'); Sound.play('stamp'); R.shake(.4); numText(B.x, B.z, 'AVBRUTT', 'crit', 4); }
-function bossDie(B) {
+/* bossDie: kroker før og etter (Kroker.foer/etter('bossDie', ...)) i stedet for innpakning i andre filer */
+function bossDie() { return Kroker.kall('bossDie', bossDieKjerne, this, arguments); }
+function bossDieKjerne(B) {
   B.deadT = 1.6; cancelTeles(B); slowMo(1.2, .2); R.shake(.8); R.fx.flash = .6; Sound.play('clear'); Sound.play('die', 1, .5);
   for (let i = 0; i < 8; i++) setTimeout(() => puff(B.x + rnd(-1, 1), B.z + rnd(-1, 1), 3, 1.5), i * 90);
   dropTeeth(B.x, B.z, 25 + B.depth * 10); for (let i = 0; i < 2; i++) dropPickup(B.x, B.z, 'heart'); dropPickup(B.x, B.z, 'card', pick(ABILITY_IDS));

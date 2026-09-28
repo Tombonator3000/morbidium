@@ -249,7 +249,7 @@ MONSTER_ART.kapellan = {
   }
 };
 WEAPON_ART.avgud = [.5, .8, .25, .1];
-{ const _dw = drawWeapon; drawWeapon = id => id !== 'avgud' ? _dw(id) : g => {
+VAAPEN_TEGNING.avgud = g => {
   // den sovende, nr. 0: en liten, tykk figur i grønn kleberstein med blekkspruthode og foldede vinger, på en sokkel
   const S = HAV.sten, M = HAV.stenM;
   for (const s of [-1, 1]) A.cel(g, A.blob([[s * .08, -.34], [s * .2, -.56], [s * .22, -.44], [s * .16, -.3]]), Col.dark(S, .8), { line: '#1a2a1a', lw: .025, hi: false });
@@ -262,7 +262,7 @@ WEAPON_ART.avgud = [.5, .8, .25, .1];
   for (let i = 0; i < 4; i++) { const x = -.045 + i * .03; A.curve(g, [x, -.38], [x + (i % 2 ? .02 : -.02), -.32], [x, -.26], .02, M); }
   for (const [x, y] of [[-.06, -.2], [.08, -.28], [-.02, -.52], [.05, -.1]]) A.dot(g, x, y, .01, HAV.stenL);
   A.line(g, [[-.07, -.52], [-.05, -.4]], .014, 'rgba(255,255,255,.35)');
-}; }
+};
 
 /* ============================================================
    OPPFØRSEL
@@ -516,7 +516,7 @@ Object.assign(Grotesk.tick, {
 }; }
 // armen har ingen føtter å skli på, selv i sin egen pytt
 { const _es = enemySlip; enemySlip = function (e) { if (e && e.type === 'avlopsarm') return; return _es(e); }; }
-{ const _d = enemyDie; enemyDie = function (e, src) { _d(e, src); try { Havet.dod(e); } catch (err) { } }; }
+Kroker.etter('enemyDie', (_, e) => { try { Havet.dod(e); } catch (err) { } });
 
 /* ============================================================
    DRAUGPLEIEREN
@@ -1103,9 +1103,9 @@ Object.assign(BOSS_MOVES, {
   malstrom(B, dist, toP, dmg) { Kraken.malstrom(B, dist, toP, dmg); },
   dypkall(B, dist, toP, dmg) { Kraken.dypkall(B, dist, toP, dmg); }
 });
-{ const _sb = spawnBoss; spawnBoss = function (depth, x, z) { const B = _sb(depth, x, z); if (B && B.type === 'kraken') Kraken.start(B); return B; }; }
-{ const _bd = bossDie; bossDie = function (B) { _bd(B); if (B && B.type === 'kraken') Kraken.dod(B); }; }
-{ const _uz = updateZones; updateZones = function (dt) { _uz(dt); Kraken.soner(dt); Kraken.armTick(dt); }; }
-{ const _cf = clearFloor; clearFloor = function () { Kraken.rydd(); _cf(); }; }
+Kroker.etter('spawnBoss', B => { if (B && B.type === 'kraken') Kraken.start(B); });
+Kroker.etter('bossDie', (_, B) => { if (B && B.type === 'kraken') Kraken.dod(B); });
+Kroker.etter('updateZones', (_, dt) => { Kraken.soner(dt); Kraken.armTick(dt); });
+Kroker.foer('clearFloor', () => Kraken.rydd());
 
 Object.assign(window, { nearestEnemy, statusOrd, puddleAt, moveEnt, BOSS_MOVES, laanbareTrekk, addProj, updateProjectiles, Havet, tentakel, tentakelLinje, Kraken, KRAKEN_DELER, roomAt, cancelTeles }); // til testene

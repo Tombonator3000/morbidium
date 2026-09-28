@@ -155,7 +155,7 @@ BOSS_MOVES.rewrite = function (B, dist, toP, dmg) {
   FX.bubble(B, pick(['Jeg blar tilbake.', 'Kjenner du igjen dette kapittelet?', 'Omskrevet.']), 1.4, 'boss');
   BOSS_MOVES[k](B, dist, toP, dmg);
 };
-{ const _sb = spawnBoss; spawnBoss = function (depth, x, z) { const B = _sb(depth, x, z); if (D3.on) D3.morke(1.3, .05); if (B.type === 'klumpen') B.glow && R.setLight(B.glow, .25); return B; }; }
+Kroker.etter('spawnBoss', B => { if (D3.on) D3.morke(1.3, .05); if (B.type === 'klumpen') B.glow && R.setLight(B.glow, .25); });
 
 /* ============================================================
    MINISJEFER
@@ -205,4 +205,4 @@ const Mini = {
   }
   _ct(dt);
 }; }
-{ const _d = enemyDie; enemyDie = function (e, src) { _d(e, src); if (e.mini) try { Mini.dod(e); } catch (err) { } }; }
+Kroker.etter('enemyDie', (_, e) => { if (e.mini) try { Mini.dod(e); } catch (err) { } });

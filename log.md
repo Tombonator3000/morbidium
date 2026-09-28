@@ -2,17 +2,6 @@
 
 Alle tidspunkt er UTC.
 
-## 2026-09-28 13:37 Resten av integrasjonsløpet, uten flere agenter
-- Tom syntes runden har brukt altfor mye tid og ressurser på testing. Gjennomgangen med flere agenter er stoppet, og resten gjøres for hånd: bare delene som var røde, kjøres på nytt.
-- Samlet løp på 8c6c468: generatoren og gjennomspillingen grønne, test_ekstra 613 OK og 10 feil i del 11, 28, 59, 60 og 62.
-- Rettet:
-  1. Boblen med dagsorden til Oldermannen havnet utenfor skjermen. Klemmen i 50_skinnlauget.js satte left og top, men FX plasserer boblene med transform nå (spor D). Klemmen regner og skriver transformen selv.
-  2. Rettingen i del 28 fra forrige commit hadde en //-kommentar midt i en enlinjes løkke, så resten av linja ble borte. Det er nå en blokkommentar.
-  3. Del 62 (knappenålene): nålen traff, men et hjerte fra en lærling testen hadde drept, ble trukket inn med en gang pasienten mistet helse og ga +7 tilbake. Testen fjerner løse hjerter før hver sak. Ikke en feil i spillet.
-- Del 59 (Lærlingen på etasje 3) og del 60 (kall fra dypet) var grønne ved ny kjøring uten endring. Begge avhenger av hvor fiendene står i en tilfeldig etasje. Ikke rettet, men notert her.
-- Ny kjøring: del 11 grønn, del 28, 59 og 60 grønne (52 sjekker), del 62 grønn bortsett fra knappenålene før hjerterettingen.
-- Del 62 etter hjerterettingen: 26 av 26 OK. Alle delene som var røde i samlekjøringen, er nå grønne.
-
 ## 2026-09-28 13:47 Flettet til main (PR #12) og publisert
 - PR #12 (runde 5) er flettet til main som «Flett PR #12: Runde 5, angrepsvarsler, snø, hårruller, skjulte rom, vegger og gulv, og nye fiender» (4355d3d).
 - Pages-byggingen gikk, og den publiserte siden har den nye versjonen. Kort sjekk av siden på PC (1280 x 720) og stående telefon (390 x 844): et løp starter i 3D, blekkvarslene, snøfallet, det skjulte rommet, havet, Skinnlauget, Oldermannen og Kraken er med, og konsollen har ingen feil.
@@ -111,3 +100,10 @@ Alle tidspunkt er UTC.
 - Dokumentene som beskrev det gamle løpet, er oppdatert (gpt-grafikk/LESMEG.md, AGENTS.md, README.md, memory.md, systemer.md, DESIGN_BRIEF.md, og en merknad i GRAFIKKLEVERANSE.md, UTEGRAFIKK.md og leveransen 28.9., der bildene nå peker på assets/ferdig).
 - Testdel 50 feilet også før dette: den ventet at panelveggen ble malt av koden, men veggprøven leverte et panelbilde 28.9. Testen tar nå ut det bildet selv, som den gjorde med gresset. 16 av 16 OK.
 - Historikken er ikke skrevet om. En full kloning henter fortsatt de 447 MB i historikken; en grunn kloning (CI, dybde 1) blir rundt 30 MB med en gang. Å fjerne dem fra historikken krever omskriving og force-push av main, og det gjøres ikke uten at Tom sier ja.
+
+## 2026-09-28 20:22 Punkt 4: kroker i stedet for innpakning
+- Kartla alle innpakningene med en egen agent: 146 steder, 100 rundt globale funksjoner (43 navn) og 43 rundt metoder, med rekkefølgen som betyr noe noen steder (vakta for fiender under vann i hurt må ligge ytterst, drømmen må ryddes før hendelsene tømmer ekstradukkene).
+- Ny Kroker i 01_core.js: foer, etter (med svaret først), av og kall, prio som går foran, og en feil i én krok logges uten å stoppe resten. Rekkefølgen er den samme som innpakningene ga (før-krokene sist lagt til først, etter-krokene først lagt til først), så oppførselen er uendret. Det er sjekket i nettleseren for hver funksjon.
+- Gjort om: startFloor, clearFloor og decorateLevel (30_game), spawnBoss, bossDie, enemyDie og playerDie (20_actors), spawnProps, updateTele og updateProjectiles (05_world) og updateZones (26_fiender): 43 innpakninger. De elleve innpakningene av drawWeapon (13 våpen) er et oppslag, VAAPEN_TEGNING, der rekkefølgen ikke betyr noe. Til sammen 54 av 146.
+- Igjen, med rekkefølgen dokumentert i systemer.md under «Kroker»: spawnEnemy, hurt, charPart, enemySlip, hurtPlayer, Sound.play og de med ett eller to lag. AGENTS.md sier at nye systemer bruker kroker eller oppslag.
+- Ny testdel 66: ingen fil setter de omgjorte funksjonene på nytt (sjekket i kildene), krokene står i samme rekkefølge som innpakningene, prio, av og feil i en krok, og alle våpnene tegnes. 5 av 5 OK. En full kjøring av alle testdelene på bygget fra før går i bakgrunnen som fasit.

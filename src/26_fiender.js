@@ -133,13 +133,14 @@ const ENEMY_ART = {
 };
 { const _cp = charPart; charPart = function (type, piece, v) { const E = ENEMY_ART[type]; if (E && (piece === 'hode' || piece === 'kropp')) { const h = piece === 'hode'; return Art.part(piece + '_' + type + '_f', h ? 1.2 : 1.3, h ? 1.1 : 1.0, h ? .6 : .65, h ? .1 : .08, h ? E.head : E.body); } return _cp(type, piece, v); }; }
 Object.assign(WEAPON_ART, { skjemabunke: [.6, .7, .3, .1], gasskolbe: [.5, .9, .25, .1] });
-{ const _dw = drawWeapon; drawWeapon = id => id === 'skjemabunke' ? g => {
+VAAPEN_TEGNING.skjemabunke = g => {
     for (let i = 0; i < 5; i++) { g.save(); g.translate((i % 2 - .5) * .03, -.08 - i * .07); g.rotate((i % 3 - 1) * .06); A.cel(g, A.rr(-.22, -.06, .44, .08, .01), i === 2 ? '#c8b890' : PAPER, { line: PAPERL, lw: .022, hi: false, soft: false }); g.restore(); }
     A.flat(g, A.rr(-.06, -.46, .12, .04, .01), 'rgba(179,38,30,.7)', 0);
-  } : id === 'gasskolbe' ? g => {
+  };
+VAAPEN_TEGNING.gasskolbe = g => {
     A.cel(g, A.rr(-.14, -.62, .28, .6, .12), '#9ad0e0', { line: '#1f4a5a', lw: .04 }); A.flat(g, A.rr(-.1, -.36, .2, .3, .08), 'rgba(200,240,250,.6)', 0);
     A.cel(g, A.rr(-.06, -.78, .12, .18, .03), '#6b4226', { lw: .03 }); A.line(g, [[-.1, -.48], [.1, -.48]], .02, '#1f4a5a');
-  } : _dw(id); }
+  };
 
 /* ---------- oppførsel ---------- */
 Object.assign(Grotesk.keep, { tvang: 1.0, byrakrat: 5, narkose: 3.6, rotte: .5, oyeblomst: 0 });
@@ -200,7 +201,9 @@ function addGas(x, z, r, t) {
   m.rotation.x = -Math.PI / 2; m.position.set(x, .05, z); m.scale.set(r * 2.3, r * 2.3, 1); m.renderOrder = 2; R.dyn.add(m);
   G.zones.push({ kind: 'gas', x, z, r, t, max: t, mesh: m, puffT: 0 }); puff(x, z, 5, 1.4, '#cfeee4');
 }
-function updateZones(dt) {
+/* updateZones: kroker før og etter (Kroker.foer/etter('updateZones', ...)) i stedet for innpakning i andre filer */
+function updateZones() { return Kroker.kall('updateZones', updateZonesKjerne, this, arguments); }
+function updateZonesKjerne(dt) {
   const P = G.player;
   for (let i = G.zones.length - 1; i >= 0; i--) {
     const zn = G.zones[i]; if (zn.kind !== 'gas') continue;

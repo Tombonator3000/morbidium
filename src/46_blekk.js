@@ -310,8 +310,8 @@ R.telegraph = function (shape, o, dur, eier) { return Blekk.ta(shape, o, dur, ei
     if (g && g.isBlekk) { if (g.kastet) return; g.kastet = true; if (g.g) _kast.call(R, g.g, how, t); else Blekk.slipp(g, how); return; }
     return _kast.call(this, g, how, t);
   };
-  const _ut = updateTele; updateTele = function (dt) { _ut(dt); Blekk.tick(dt); };
-  const _cf = clearFloor; clearFloor = function () { const r = _cf.apply(this, arguments); Blekk.tom(); return r; };
+  Kroker.etter('updateTele', (_, dt) => Blekk.tick(dt));
+  Kroker.etter('clearFloor', () => Blekk.tom());
 }
 
 /* ============================================================
@@ -563,9 +563,9 @@ const Nedslag = {
     if (ny && how === 'fyr') Nedslag.land(t);
     return r;
   };
-  const _ut = updateTele; updateTele = function (dt) { _ut(dt); Nedslag.tick(dt); };
-  const _up = updateProjectiles; updateProjectiles = function (dt) { _up(dt); Nedslag.skygge(); };
-  const _cf = clearFloor; clearFloor = function () { const r = _cf.apply(this, arguments); Nedslag.tom(); return r; };
+  Kroker.etter('updateTele', (_, dt) => Nedslag.tick(dt));
+  Kroker.etter('updateProjectiles', () => Nedslag.skygge());
+  Kroker.etter('clearFloor', () => Nedslag.tom());
   const _hp = hurtPlayer; hurtPlayer = function (dmg, src) { const d = _hp.apply(this, arguments); Nedslag.tungt(d); return d; };
   // lynet i regnværet har sitt eget nedslag (38_effekter.js)
   if (typeof Uvaer === 'object') { const _uv = Uvaer.varsel; Uvaer.varsel = function (x, z) { const n = G.tele.length; _uv.call(this, x, z); if (G.tele.length > n) G.tele[G.tele.length - 1].o.stille = true; }; }

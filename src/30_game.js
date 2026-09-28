@@ -139,7 +139,9 @@ function newRun(awk) {
 
 /* ---------- etasjer ---------- */
 function killObj(o) { if (!o) return; if (o.doll) o.doll.dispose(); for (const k of ['g', 'mesh', 'root', 'light']) if (o[k] && o[k].isObject3D) R.remove(o[k]); }
-function clearFloor() {
+/* clearFloor: kroker før og etter (Kroker.foer/etter('clearFloor', ...)) i stedet for innpakning i andre filer */
+function clearFloor() { return Kroker.kall('clearFloor', clearFloorKjerne, this, arguments); }
+function clearFloorKjerne() {
   for (const e of G.enemies) killObj(e); G.enemies = [];
   if (G.boss) { killObj(G.boss); if (G.boss.glow) R.remove(G.boss.glow); G.boss = null; }
   show('bossBar', false); show('miniBar', false);
@@ -150,7 +152,9 @@ function clearFloor() {
   if (G.titleDolls) { G.titleDolls.forEach(d => d.dispose()); G.titleDolls = null; }
   G.props = []; clearCage(); Items.clear(); clearVFX(); Anim.clear(); Monstre.clear(); Particles.clear(); FX.clear(); G.lock = null; G.trapdoor = null; G.flow = null; G.combat = null; G.corpses = [];
 }
-function decorateLevel() {
+/* decorateLevel: kroker før og etter (Kroker.foer/etter('decorateLevel', ...)) i stedet for innpakning i andre filer */
+function decorateLevel() { return Kroker.kall('decorateLevel', decorateLevelKjerne, this, arguments); }
+function decorateLevelKjerne() {
   const F = G.F, rng = mulberry32(F.seed || 7);
   // det skjulte rommet (48_skjult.js): borte til veggen er slått inn, og null hvis Paint måtte bygge etasjen som før
   Paint.level(F, G.th); G.skjult = Paint.skjult && F.skjult ? Uint8Array.from(F.skjult) : null; G.kartAnelse = G.sprekkKjent = false; if (Paint.decals) Paint.decals(F, Math.round(F.W * F.H / 70)); R.setGrade(Paint.tema(G.th, F));
@@ -168,7 +172,9 @@ function decorateLevel() {
     else if (!r.ute && !G.drom && rng() < .7) { const x = r.x + 2 + Math.floor(rng() * Math.max(1, r.w - 4)); if (wallOK(x) && r.role !== 'secret') Paint.poster(POSTERS[Math.floor(rng() * POSTERS.length)], x + .5, r.z); }
   }
 }
-function startFloor(depth, first) {
+/* startFloor: kroker før og etter (Kroker.foer/etter('startFloor', ...)) i stedet for innpakning i andre filer */
+function startFloor() { return Kroker.kall('startFloor', startFloorKjerne, this, arguments); }
+function startFloorKjerne(depth, first) {
   // et panel som ble åpnet i sekundet før etasjen byttes (kartet eller pausen mens drømmen blekner), ville ellers blitt liggende over den nye etasjen
   if (G.state === 'panel') { const o = G.panelO || {}; show('panel', false); G.panelO = null; if (o.onClose) try { o.onClose(); } catch (e) { } }
   clearFloor();
@@ -808,6 +814,7 @@ function boot() {
   window.MORBIDIUM = G; Object.assign(window, { Items, ITEMS, spawnEnemy, itemIcon, jarPart, pillPart, addonPart, shotPart, LOOKS, PILL_COL, BLOBS, R, hurt, descend, finishCombat, openService, killEntity, Art, RIG, PROPS, CARD_ART, WEAPONS, THEMES, charPart, propArt, weaponPart, shoePart, cardArtCanvas, generateFloor, CONSUMABLES, heartPart, morbPart, bottlePart, cardPart, pigeonPart, stampDecal, handPart, toothPart, starPart, puffPart, barrierArt });
   Object.assign(window, { ROM_ART, UTE_FLATER }); // manifest og grafikkontroll tar også med landskapet
   Object.assign(window, { KAM, KAMERA_VALG, LYS_NY }); // kameraprøven og den nye etterbehandlingen (testdel 64)
+  Object.assign(window, { Kroker, VAAPEN_TEGNING, drawWeapon }); // krokene og våpentegningene (testdel 66)
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };

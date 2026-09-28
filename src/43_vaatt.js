@@ -211,6 +211,5 @@ const Vaatt = {
   Blod.dod = function (e, src) { _dod.call(Blod, e, src); if (e && e.type !== 'flue') Vaatt.naert(e.x, e.z, e.type === 'rotte' ? .3 : 1); };
   const _sjef = Blod.sjefDod;
   Blod.sjefDod = function (B) { _sjef.call(Blod, B); Vaatt.naert(B.x, B.z, 2); };
-  const _sf = startFloor;
-  startFloor = function (...a) { Vaatt.tom(); return _sf.apply(this, a); };
+  Kroker.foer('startFloor', () => Vaatt.tom());
 }

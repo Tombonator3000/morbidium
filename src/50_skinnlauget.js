@@ -158,7 +158,7 @@ MONSTER_ART.laerling = {
   }
 };
 WEAPON_ART.reim = [.5, 1.3, .25, .12];
-{ const _dw = drawWeapon; drawWeapon = id => id !== 'reim' ? _dw(id) : g => {
+VAAPEN_TEGNING.reim = g => {
   // barberreim i oksehud: håndtak med tråd rundt, hull langs midten og en messingspenne ytterst
   A.cel(g, A.rr(-.05, -.22, .1, .26, .03), '#2a1a10', { lw: .03, hi: false });
   for (let i = 0; i < 4; i++) A.line(g, [[-.05, -.04 - i * .05], [.05, -.06 - i * .05]], .012, LAUG.traad);
@@ -167,7 +167,7 @@ WEAPON_ART.reim = [.5, 1.3, .25, .12];
   A.line(g, [[-.035, -.25], [-.045, -1.08]], .008, LAUG.traad); A.line(g, [[.035, -.25], [.045, -1.08]], .008, LAUG.traad);
   A.flat(g, A.rr(-.08, -1.08, .16, .12, .02), null, .05, INK); A.flat(g, A.rr(-.08, -1.08, .16, .12, .02), null, .026, LAUG.messing); A.line(g, [[0, -1.08], [0, -.98]], .018, LAUG.messing);
   A.line(g, [[.02, -.5], [.03, -.9]], .02, 'rgba(255,230,200,.35)');
-}; }
+};
 
 /* ---------- Klokkeren: liten, krumrygget gammel mann med digre ører og tre hårstrå, i en lang lærfrakk ---------- */
 const KLOKK = { hud: '#eedcc8', har: '#c8c0b4' };
@@ -242,7 +242,7 @@ MONSTER_ART.klokker = {
   }
 };
 WEAPON_ART.bjelle = [.5, .75, .25, .1];
-{ const _dw = drawWeapon; drawWeapon = id => id !== 'bjelle' ? _dw(id) : g => {
+VAAPEN_TEGNING.bjelle = g => {
   // den lille sølvbjella fra Avdeling Null: dreid treskaft, kuppel, kant og kolv
   A.cel(g, A.rr(-.035, -.26, .07, .3, .03), '#7a4a28', { lw: .028, hi: false });
   for (const y of [-.06, -.18]) A.cel(g, A.ell(0, y, .05, .025), '#8a5a30', { lw: .018, hi: false });
@@ -251,7 +251,7 @@ WEAPON_ART.bjelle = [.5, .75, .25, .1];
   A.cel(g, A.ell(0, -.62, .17, .035), '#9aa0aa', { line: '#2a2e36', lw: .022, hi: false });
   A.dot(g, .02, -.66, .035, '#5a5e66');
   A.line(g, [[-.06, -.32], [-.1, -.54]], .02, 'rgba(255,255,255,.7)');
-}; }
+};
 
 /* ============================================================
    OPPFØRSEL
@@ -456,7 +456,7 @@ MONSTER_ART.holdning = {
   }
 };
 WEAPON_ART.tommestokk = [.4, 1.3, .2, .1];
-{ const _dw = drawWeapon; drawWeapon = id => id !== 'tommestokk' ? _dw(id) : g => {
+VAAPEN_TEGNING.tommestokk = g => {
   // en gul tommestokk, halvveis brettet ut: fem ledd i sikksakk med svarte streker og messingledd
   let x = 0, y = 0;
   for (let i = 0; i < 5; i++) {
@@ -468,7 +468,7 @@ WEAPON_ART.tommestokk = [.4, 1.3, .2, .1];
     x = nx; y = ny;
   }
   A.line(g, [[-.015, -.02], [-.02, -.18]], .01, 'rgba(255,250,220,.5)');
-}; }
+};
 
 /* ---------- reimene hun kaster: Kjeder.slag med lær i stedet for kjetting, og en messingspenne i stedet for kroken ---------- */
 Object.assign(Laug, {
@@ -719,14 +719,14 @@ MONSTER_ART.oldermann = {
   }
 };
 WEAPON_ART.klubbe = [.6, 1.0, .3, .12];
-{ const _dw = drawWeapon; drawWeapon = id => id !== 'klubbe' ? _dw(id) : g => {
+VAAPEN_TEGNING.klubbe = g => {
   // møteklubba: dreid skaft og et tungt hode med messingbånd
   A.cel(g, A.rr(-.035, -.66, .07, .7, .03), '#6a3a1a', { lw: .026, hi: false });
   A.line(g, [[-.012, -.6], [-.012, -.1]], .01, 'rgba(255,230,200,.35)');
   A.cel(g, A.rr(-.22, -.86, .44, .2, .06), '#7a4a24', { line: '#1a0c04', lw: .03, sk: .7 });
   for (const s of [-1, 1]) { A.line(g, [[s * .13, -.86], [s * .13, -.66]], .03, LAUG.messing); A.cel(g, A.ell(s * .22, -.76, .03, .1), '#5a3218', { lw: .02, hi: false }); }
   A.line(g, [[-.16, -.82], [.1, -.82]], .016, 'rgba(255,230,200,.4)');
-}; }
+};
 // en knappenål i fart: spissen fram, glasshodet bak
 const naalPart = () => Art.part('knappenaal', .3, .9, .15, .45, g => {
   A.line(g, [[0, .26], [0, -.4]], .046, INK); A.line(g, [[0, .26], [0, -.4]], .024, '#e4e8f0');

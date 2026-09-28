@@ -532,17 +532,15 @@ const UTGANGER = {
 };
 
 /* ---------- lys fra de nye tingene, og ute blir rommene lyst av månen, ikke av taklamper ---------- */
-{ const _sp = spawnProps; spawnProps = function () {
-  _sp();
+Kroker.etter('spawnProps', () => {
   const LYS = { lyktestolpe: [4.4, '#ffd8a0', .72, .6], baal: [5, '#ff9a4a', .85, .3], kjele: [3.4, '#ff7a3a', .6, .9], vedovn: [3, '#ff8a4a', .55, .6], spole: [2.8, '#9ad8ff', .45, 1.2], lysskjerm: [1.8, '#e8f0ff', .4, 1], kjempeplante: [1.4, '#ffd84a', .25, 1.4] };
   for (const o of G.props) { const L = LYS[o.kind]; if (!L || o.light) continue; o.light = R.light(o.x, o.z + .3, L[0], L[1], L[2], R.levelL); o.light.userData.y = L[3]; o.lysBase = L[2]; if (o.kind === 'baal' || o.kind === 'spole') o.flakker = true; }
-}; }
-{ const _dl = decorateLevel; decorateLevel = function () {
-  _dl();
+});
+Kroker.etter('decorateLevel', () => {
   const F = G.F; if (!F) return;
   try { if (F.ute) Landskap.traer(F); Vaer.start(F); } catch (e) { console.warn('uteområdene feilet', e); }
-}; }
-{ const _cf = clearFloor; clearFloor = function () { Vaer.stopp(); _cf(); }; }
+});
+Kroker.foer('clearFloor', () => Vaer.stopp());
 /* hvert bilde: været og bål som flakker (kalles fra loop i 30_game.js) */
 const Romtyper = {
   tick(dt) {

@@ -165,13 +165,13 @@ const Dybde = {
 };
 
 /* ---------- koblinger ---------- */
-{ const _dl = decorateLevel; decorateLevel = function () { _dl(); try { Dybde.kontakt(G.F); } catch (e) { console.warn('kontaktskyggene feilet', e); } }; }
-{ const _cf = clearFloor; clearFloor = function () { Dybde.tom(); _cf(); }; }
+Kroker.etter('decorateLevel', () => { try { Dybde.kontakt(G.F); } catch (e) { console.warn('kontaktskyggene feilet', e); } });
+Kroker.foer('clearFloor', () => Dybde.tom());
 // takstøv når det smeller hardt: sjefenes slag, eksplosjoner, lynet og massakrer (høyst hvert 1,2 sekund)
 { const _sh = R.shake.bind(R); R.shake = function (a) { _sh(a); if (a >= .5 && Dybde.stovT <= 0 && G.state === 'play') { Dybde.stovT = 1.2; Dybde.takstov(R.camT.x + rnd(-2, 2), R.camT.z + rnd(-1.5, 1.5), Math.round(8 + a * 14), 3.5 + a * 2); } }; }
 // kameradykk på de store øyeblikkene
-{ const _sb = spawnBoss; spawnBoss = function (...a) { const B = _sb.apply(this, a); R.kamZoom(.12, 2.4); return B; }; }
-{ const _pd = playerDie; playerDie = function () { const levde = G.player && G.player.alive; _pd(); if (levde) R.kamZoom(.22, 3); }; }
+Kroker.etter('spawnBoss', () => R.kamZoom(.12, 2.4));
+{ let levde = false; Kroker.foer('playerDie', () => { levde = !!(G.player && G.player.alive); }); Kroker.etter('playerDie', () => { if (levde) R.kamZoom(.22, 3); }); }
 { const _f = Kombo.flerdrap; Kombo.flerdrap = function (k, e) { _f.call(this, k, e); if (k >= 3) R.kamZoom(.04 + k * .016); }; }
 { const _s = Kombo.sjef; Kombo.sjef = function (B) { _s.call(this, B); R.kamZoom(.16, 1.2); }; }
 { const _fa = Kombo.fanfare; Kombo.fanfare = function (hva) { _fa.call(this, hva); R.kamZoom(.1, .7); }; }

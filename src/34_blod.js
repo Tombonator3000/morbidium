@@ -275,6 +275,6 @@ Items.clearSplats = () => Blod.tom();
   if (d > 0 && e && Blod.on && G.F) try { Blod.treff(e, src, d, hp0); } catch (err) { }
   return d;
 }; }
-{ const _d = enemyDie; enemyDie = function (e, src) { _d(e, src); if (Blod.on) try { Blod.dod(e, src || {}); } catch (err) { } }; }
-{ const _b = bossDie; bossDie = function (B) { _b(B); if (Blod.on) try { Blod.sjefDod(B); } catch (err) { } }; }
-{ const _p = playerDie; playerDie = function () { const P = G.player, levde = P && P.alive; _p(); if (levde && G.F) { Blod.flekk(P.x, P.z, '#7a0a0a', 1.6, .9); if (Blod.on) { Anim.lag('blodsprut', P.x, P.z + .05, { s: 1.2, tint: '#9a1a1a' }); Blod.sprut(P.x, P.z, Math.random() * TAU, '#8a1010', 10, 1.3); } } }; }
+Kroker.etter('enemyDie', (_, e, src) => { if (Blod.on) try { Blod.dod(e, src || {}); } catch (err) { } });
+Kroker.etter('bossDie', (_, B) => { if (Blod.on) try { Blod.sjefDod(B); } catch (err) { } });
+{ let P = null, levde = false; Kroker.foer('playerDie', () => { P = G.player; levde = !!(P && P.alive); }); Kroker.etter('playerDie', () => { if (levde && G.F) { Blod.flekk(P.x, P.z, '#7a0a0a', 1.6, .9); if (Blod.on) { Anim.lag('blodsprut', P.x, P.z + .05, { s: 1.2, tint: '#9a1a1a' }); Blod.sprut(P.x, P.z, Math.random() * TAU, '#8a1010', 10, 1.3); } } }); }

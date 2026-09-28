@@ -104,7 +104,9 @@ function addTele(shape, o, dur, fire, owner) {
   Sound.play('tele', .6); return t;
 }
 function cancelTeles(owner) { if (!owner || !owner.teles) return; for (const t of owner.teles) { t.dead = true; R.kastTele(t.mesh, 'avbryt', t); } owner.teles = []; }
-function updateTele(dt) {
+/* updateTele: kroker før og etter (Kroker.foer/etter('updateTele', ...)) i stedet for innpakning i andre filer */
+function updateTele() { return Kroker.kall('updateTele', updateTeleKjerne, this, arguments); }
+function updateTeleKjerne(dt) {
   for (let i = G.tele.length - 1; i >= 0; i--) {
     const t = G.tele[i];
     if (t.dead) { G.tele.splice(i, 1); continue; }
@@ -273,7 +275,9 @@ function groundEffects(e, dt, speed) {
 
 /* ---------- rekvisitter i drift ---------- */
 const BREAK = { chair: 1, cabinet: 2, crate: 2, garbage: 1, basket: 1, plant: 1, candles: 1, table: 2, papirhaug: 1, bokstabel: 1, linhaug: 1 };
-function spawnProps() {
+/* spawnProps: kroker før og etter (Kroker.foer/etter('spawnProps', ...)) i stedet for innpakning i andre filer */
+function spawnProps() { return Kroker.kall('spawnProps', spawnPropsKjerne, this, arguments); }
+function spawnPropsKjerne() {
   G.props = []; G.npcs = [];
   const F = G.F, th = G.th;
   for (const r of F.rooms) for (const p of r.props) {
@@ -432,7 +436,9 @@ function addProj(o) {
   if (p.arc) { p.sx = p.x; p.sz = p.z; p.t = 0; }
   G.projectiles.push(p); return p;
 }
-function updateProjectiles(dt) {
+/* updateProjectiles: kroker før og etter (Kroker.foer/etter('updateProjectiles', ...)) i stedet for innpakning i andre filer */
+function updateProjectiles() { return Kroker.kall('updateProjectiles', updateProjectilesKjerne, this, arguments); }
+function updateProjectilesKjerne(dt) {
   const P = G.player;
   for (let i = G.projectiles.length - 1; i >= 0; i--) {
     const p = G.projectiles[i];

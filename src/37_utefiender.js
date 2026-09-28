@@ -94,12 +94,12 @@ MONSTER_ART.gartner = {
 };
 WEAPON_ART.hagesaks = [.8, 1.5, .4, .12];
 WEAPON_ART.storsaks = [1.2, 2.4, .6, .12];
-{ const _dw = drawWeapon; drawWeapon = id => id === 'hagesaks' || id === 'storsaks' ? g => {
+VAAPEN_TEGNING.hagesaks = VAAPEN_TEGNING.storsaks = (g, id) => {
   const k = id === 'storsaks' ? 1.55 : 1;
   for (const s of [-1, 1]) A.line(g, [[0, 0], [s * .1 * k, -.35 * k]], .1 * k, WOOD);
   A.cel(g, A.ell(0, -.4 * k, .07 * k, .07 * k), '#8a9096', { lw: .025, hi: false });
   for (const s of [-1, 1]) A.cel(g, A.poly([[0, -.42 * k], [s * .1 * k, -.5 * k], [s * .05 * k, -1.2 * k], [-s * .02 * k, -1.25 * k]]), '#c8ccd0', { line: '#2f3a40', lw: .03 });
-} : _dw(id); }
+};
 
 /* ---------- Kråka: svart, blank, med ett lyst øye. Svever og slår med vingene ---------- */
 const KRA = { f: '#1a1a22', L: '#000000', blank: '#3a3a4a' };

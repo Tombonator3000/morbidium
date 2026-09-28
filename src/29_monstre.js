@@ -141,10 +141,10 @@ MONSTER_ART.kasteren = {
   }
 };
 WEAPON_ART.klump = [.5, .5, .25, .14];
-{ const _dw = drawWeapon; drawWeapon = id => id !== 'klump' ? _dw(id) : g => {
+VAAPEN_TEGNING.klump = g => {
   A.cel(g, A.blob([[-.13, -.08], [-.15, -.2], [-.05, -.3], [.08, -.29], [.15, -.18], [.1, -.07], [0, -.04]]), '#6b4423', { line: '#2a1408', lw: .035, sk: .7 });
   A.line(g, [[-.07, -.18], [.02, -.23], [.08, -.18]], .02, '#3a2210');
-}; }
+};
 
 /* ---------- Trillepasienten: gammel mann med bandasje rundt hodet i en knirkende rullestol ---------- */
 const TRIL = { hud: '#e8c4a0', tre: '#7a4a28', treL: '#2a1408', jern: '#8a9096', teppe: '#a83a3a', teppe2: '#3a6a4a', kjole: '#c8d8e8' };
@@ -307,12 +307,12 @@ MONSTER_ART.tannlege = {
   }
 };
 WEAPON_ART.tang = [.7, 1.4, .35, .12];
-{ const _dw = drawWeapon; drawWeapon = id => id !== 'tang' ? _dw(id) : g => {
+VAAPEN_TEGNING.tang = g => {
   for (const s of [-1, 1]) { A.line(g, [[s * .06, 0], [s * .1, -.5], [s * .03, -.7]], .09, INK); A.line(g, [[s * .06, 0], [s * .1, -.5], [s * .03, -.7]], .05, '#b4bcc2'); }
   A.cel(g, A.ell(0, -.7, .06, .06), '#8a9096', { lw: .025, hi: false });
   for (const s of [-1, 1]) A.cel(g, A.blob([[0, -.72], [s * .12, -.86], [s * .1, -1.1], [s * .02, -1.16], [s * .02, -.92]]), '#b4bcc2', { line: '#2f3a40', lw: .035 });
   A.cel(g, A.blob([[-.03, -1.14], [.03, -1.14], [.03, -1.06], [-.03, -1.06]]), '#f4dc7a', { lw: .015, hi: false }); // en gulltann i tangen
-}; }
+};
 
 /* ---------- Den hodeløse portieren: uniform med gullknapper, halsstump, hodet under armen ---------- */
 const PORT = { uni: '#2e4a3a', uniL: '#0e1a14', gull: '#d4b048', hud: '#e8d0b8' };
@@ -353,11 +353,11 @@ function portierHode() {
   });
 }
 Object.assign(WEAPON_ART, { knippe: [.8, 1.0, .4, .12] });
-{ const _dw = drawWeapon; drawWeapon = id => id !== 'knippe' ? _dw(id) : g => {
+VAAPEN_TEGNING.knippe = g => {
   A.line(g, [[0, 0], [0, -.3]], .06, INK); A.line(g, [[0, 0], [0, -.3]], .03, '#8a7020');
   A.flat(g, A.ell(0, -.5, .2, .2), null, .07, '#8a7020'); A.flat(g, A.ell(0, -.5, .2, .2), null, .035, '#e8c040');
   for (let i = 0; i < 5; i++) { const a = -1.2 + i * .6; g.save(); g.translate(Math.cos(a) * .2, -.5 + Math.sin(a) * .2); g.rotate(a + Math.PI / 2); A.cel(g, A.rr(-.03, 0, .06, .3, .02), '#d4b048', { lw: .025, hi: false }); A.cel(g, A.rr(-.03, .24, .1, .05, .01), '#d4b048', { lw: .02, hi: false }); g.restore(); }
-}; }
+};
 
 /* ---------- Klumpunge: en liten klump kjøtt med ett ansikt ---------- */
 RIG.klumpunge = { blob: true, scale: .6, tentacles: 3, tentW: .07, tentCol: '#c8807a', tentLen: .1, tentSpread: .5, tentWave: .1, pulse: 9 };
@@ -525,8 +525,8 @@ function addRoyk(x, z, r, t) {
   m.rotation.x = -Math.PI / 2; m.position.set(x, .06, z); m.scale.set(r * 2.4, r * 2.4, 1); m.renderOrder = 2; R.dyn.add(m);
   G.zones.push({ kind: 'royk', x, z, r, t, max: t, mesh: m, puffT: 0 }); puff(x, z, 5, 1.5, '#3a2a44');
 }
-{ const _uz = updateZones; updateZones = function (dt) {
-  _uz(dt); const P = G.player;
+Kroker.etter('updateZones', (_, dt) => {
+  const P = G.player;
   for (let i = G.zones.length - 1; i >= 0; i--) {
     const zn = G.zones[i]; if (zn.kind !== 'royk') continue;
     zn.t -= dt; zn.puffT -= dt; zn.mesh.material.opacity = .75 * Math.min(1, zn.t / 1.2, (zn.max - zn.t) / .4 + .2);
@@ -534,7 +534,7 @@ function addRoyk(x, z, r, t) {
     if (P && P.alive && d2(P.x, P.z, zn.x, zn.z) < zn.r * zn.r) { P.roykT = .15; addMorb(dt * 5); if (Math.random() < dt * .8) whisper(); }
     if (zn.t <= 0) { R.remove(zn.mesh); G.zones.splice(i, 1); }
   }
-}; }
+});
 Object.assign(Grotesk.ai, {
   kasteren(e, T, dist, toT) {
     if (dist > 11 || !los(e.x, e.z, T.x, T.z)) return;
@@ -665,15 +665,14 @@ Object.assign(Grotesk.tick, {
 });
 /* Speilpasienten knuses: skår i alle retninger, og sju års ulykke resten av etasjen */
 function skarPart() { return Art.part('glasskar', .4, .4, .2, .2, g => A.cel(g, A.poly([[-.14, .1], [-.02, -.16], [.15, -.04], [.04, .14]]), '#c8dce8', { lw: .025, hi: false })); }
-{ const _d = enemyDie; enemyDie = function (e, src) {
-  _d(e, src);
+Kroker.etter('enemyDie', (_, e, src) => {
   if (e.type === 'speil') {
     Sound.play('glassknus');
     for (let k = 0; k < 7; k++) { const a = k / 7 * TAU + Math.random() * .3, m = propSprite(null, e.x, e.z, { P: skarPart(), shadow: false, y: 1 }); R.dyn.add(m); addProj({ type: 'skar', from: 'enemy', x: e.x, z: e.z, vx: Math.sin(a) * 7, vz: Math.cos(a) * 7, dmg: 5, life: .7, r: .2, y: 1, cause: 'speil', spin: 18, mesh: m }); }
     const b = G.run.buffs || (G.run.buffs = {}); b.ulykke = (b.ulykke || 0) + 1; toast('Sju års ulykke', 'Mindre flaks resten av etasjen');
   }
   if (e.type === 'koret' && e.lys) { R.remove(e.lys); e.lys = null; }
-}; }
+});
 { const _s = Items.stat.bind(Items); Items.stat = function (n) { let v = _s(n); if (n === 'luck' && G.run && G.run.buffs && G.run.buffs.ulykke) v -= 6 * G.run.buffs.ulykke; return v; }; }
 /* Speilpasienten viser ansiktet ditt i speilet */
 { const _se = spawnEnemy; spawnEnemy = function (type, x, z, elite, depth) {

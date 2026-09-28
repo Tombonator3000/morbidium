@@ -35,13 +35,13 @@ BOSS_ART.arkivar = {
   }
 };
 WEAPON_ART.stempelboss = [.9, 1.4, .45, .1];
-{ const _dw = drawWeapon; drawWeapon = id => id !== 'stempelboss' ? _dw(id) : g => {
+VAAPEN_TEGNING.stempelboss = g => {
   A.cel(g, A.ell(0, -1.2, .16, .13), '#8a5a34', { line: '#2a1408' });
   A.cel(g, A.rr(-.06, -1.1, .12, .5, .03), '#a8743e', { line: '#2a1408', lw: .035, hi: false });
   A.cel(g, A.rr(-.36, -.64, .72, .36, .04), '#6b4226', { line: '#2a1408' });
   A.cel(g, A.rr(-.38, -.3, .76, .16, .03), '#b3261e', { line: '#3a0a08', lw: .04 });
   A.flat(g, A.rr(-.26, -.54, .52, .16, .02), '#f6ead0', .02, '#2a1408'); A.line(g, [[-.18, -.46], [.18, -.46]], .03, '#b3261e');
-}; }
+};
 function cagePart() {
   return Art.part('isolatvegg', 1.1, 1.5, .55, .05, g => {
     A.cel(g, A.rr(-.46, -1.3, .92, 1.3, .06), PADD, { line: PADDL, lw: .045 });
