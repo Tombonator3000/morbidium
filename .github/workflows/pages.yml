@@ -29,9 +29,12 @@ jobs:
         run: node tools/test_gen.js > /tmp/test_gen.txt || (tail -5 /tmp/test_gen.txt; exit 1)
       - name: Chromium til røyktesten
         run: python -m playwright install --with-deps chromium
-      - name: Røyktest
+      - name: Røyktest (den selvstendige fila)
         run: python3 tools/test_roek.py
-      - run: mkdir -p _site && cp dist/morbidium.html _site/index.html
+      - name: Røyktest (nettutgaven, over http)
+        run: python3 tools/test_roek.py --mappe dist/web
+      # nettutgaven er siden (bildene og lydene som egne filer), og den selvstendige fila ligger ved siden av som morbidium.html
+      - run: mkdir -p _site && cp -r dist/web/. _site/ && cp dist/morbidium.html _site/morbidium.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

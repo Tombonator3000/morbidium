@@ -50,7 +50,8 @@ const Oppskrift = {
     return (this._deler = out);
   },
   delPart(k, kind, head) {
-    const m = DELER_META[k], img = Art.img[k]; if (!m || !img) return null;
+    const m = DELER_META[k], img = Art.img[k]; if (!m) return null;
+    if (!img || !img.complete || !img.naturalWidth) { Art.hent(k); return null; } // ikke hentet ennå (nettutgaven): koden tegner denne gangen
     const draw = (s, W, H, ax, ay) => { const P = Art.part('del_' + kind + '_' + k + (head ? '_' + head.key : ''), W, H, ax, ay, g => g.drawImage(img, -m.bw * s / 2, -m.bh * s, m.bw * s, m.bh * s)); P.dw = m.bw * s; P.dh = m.bh * s; return P; };
     if (kind === 'hode') return draw(Math.min(1.08 / m.bw, .92 / m.bh), 1.2, 1.1, .6, .1);
     if (kind === 'kropp') return draw(Math.min(1.24 / m.bw, .86 / m.bh), 1.3, 1.0, .65, .08);
@@ -59,8 +60,10 @@ const Oppskrift = {
   },
   /* setter delene på dukken: hode og kropp per visning, hatt/hår/tilbehør som tillegg som følger hodet */
   kleDeler(d, hode, kropp, topp, topKind, tb) {
-    const H = hode ? Object.fromEntries(Object.entries(hode).map(([v, k]) => [v, this.delPart(k, 'hode')])) : null;
-    const B = kropp ? Object.fromEntries(Object.entries(kropp).map(([v, k]) => [v, this.delPart(k, 'kropp')])) : null;
+    // mangler en visning (delen er ikke hentet ennå i nettutgaven), tegner koden hodet eller kroppen som på en vanlig fiende
+    const alle = o => o && Object.values(o).every(Boolean) ? o : null;
+    const H = alle(hode ? Object.fromEntries(Object.entries(hode).map(([v, k]) => [v, this.delPart(k, 'hode')])) : null);
+    const B = alle(kropp ? Object.fromEntries(Object.entries(kropp).map(([v, k]) => [v, this.delPart(k, 'kropp')])) : null);
     if (H || B) d.setParts(H, B);
     const ref = H ? (H.f || H.s) : null;
     for (const [set, kind] of [[topp, topKind], [tb, 'tilbehor']]) {

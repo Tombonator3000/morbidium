@@ -114,7 +114,7 @@ const Lydbank = {
   },
   /* av og på (innstillingen «Innspilte lyder») */
   sett(on) { this.paa = on !== false; if (this.paa && Sound.ready) this.start(); if (!this.paa) Stemning.stoppAlle(.3); },
-  /* pakker ut alle lydene, fire om gangen, effektene først */
+  /* pakker ut alle lydene, fire om gangen, effektene først (i nettutgaven hentes hver fil først når den står for tur) */
   start() {
     if (this.startet || !this.paa || !Sound.ready || typeof LYDFILER !== 'object') return;
     if (G.meta && G.meta.settings && G.meta.settings.opptak === false) { this.paa = false; return; }
@@ -131,9 +131,16 @@ const Lydbank = {
     try { const O = window.OfflineAudioContext || window.webkitOfflineAudioContext; this.dek[sr] = O ? new O(1, 1, sr) : null; } catch (e) { this.dek[sr] = null; }
     return this.dek[sr];
   },
+  /* lydfila som bytes: base64 i den selvstendige fila, en egen fil i nettutgaven (build.py), som hentes først når lydene pakkes ut */
+  bytes(k) {
+    if (BYGG.ute) return fetch(LYDFILER[k]).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); });
+    const s = atob(LYDFILER[k]), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return Promise.resolve(u.buffer);
+  },
   pakkUt(k) {
+    return this.bytes(k).then(ab => this.dekod(k, ab), () => { this.feil++; });
+  },
+  dekod(k, ab) {
     return new Promise(ferdig => {
-      let ab; try { const s = atob(LYDFILER[k]), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); ab = u.buffer; } catch (e) { this.feil++; ferdig(); return; }
       const m = LYD_META[k] || {}, kopi = ab.slice(0);
       // base64-teksten slippes når lyden er pakket ut, så den ikke ligger i minnet to ganger
       const ok = b => { if (b && b.length) { this.buf[k] = b; this.forsink[k] = this.maalForsinkelse(b); this.klar++; LYDFILER[k] = null; } else this.feil++; ferdig(); };

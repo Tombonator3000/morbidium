@@ -28,7 +28,9 @@ jobs:
         run: node tools/test_gen.js > /tmp/test_gen.txt || (tail -5 /tmp/test_gen.txt; exit 1)
       - name: Chromium til røyktesten
         run: python -m playwright install --with-deps chromium
-      - name: Røyktest
+      - name: Røyktest (den selvstendige fila)
         run: python3 tools/test_roek.py
+      - name: Røyktest (nettutgaven, over http)
+        run: python3 tools/test_roek.py --mappe dist/web
       - name: Dokumentene er korte nok (bare varsel)
         run: python3 tools/rydd_dokumenter.py --sjekk || echo "::warning::Kjør python3 tools/rydd_dokumenter.py (log.md, todo.md eller memory.md er for lange)"

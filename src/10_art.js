@@ -17,13 +17,46 @@ const Col = {
 };
 
 const Art = {
-  cache: new Map(), img: {},
-  /* innebygde bilder dekodes før spillet starter, så tegninger som kopieres én gang (kort i HUD og journal) får bildet med en gang */
+  cache: new Map(), img: {}, hentes: {},
+  /* Bildene før spillet starter. I den selvstendige fila (build.py) er alt med, og alt dekodes før tittelen, så tegninger som kopieres
+     én gang (kort i HUD og journal) får bildet med en gang. I nettutgaven (BYGG.ute) er SPRITES adresser: startsettet (Art.iStart) hentes
+     og dekodes før tittelen, og resten hentes etterpå i bakgrunnen, fire om gangen, fiendene i de øverste etasjene først (Art.bakgrunn).
+     Alt annet som bruker bilder, tåler at bildet kommer senere: Art.part og Paint.bilde tegner selv først og bytter når bildet er der. */
   preload(ms = 4000) {
     const keys = Object.keys(SPRITES); if (!keys.length) return Promise.resolve();
-    const all = keys.map(k => new Promise(res => { const im = new Image(); this.img[k] = im; im.onload = im.onerror = () => res(); im.src = SPRITES[k]; }));
-    return Promise.race([Promise.all(all), new Promise(res => setTimeout(res, ms))]);
+    if (!BYGG.ute) return Promise.race([Promise.all(keys.map(k => this.hent(k))), new Promise(res => setTimeout(res, ms))]);
+    const start = keys.filter(k => this.iStart(k)), resten = keys.filter(k => !this.iStart(k));
+    return Promise.race([Promise.all(start.map(k => this.hent(k))), new Promise(res => setTimeout(res, 20000))]).then(() => { this.bakgrunn(resten); });
   },
+  /* startsettet i nettutgaven: det som sjekkes med en gang eller kopieres én gang (UI-settet, glassene, animasjonsarkene, pasienten og
+     det pasienten har på seg), og flatene (gulv, vegger og bakke), så etasjene bygges med bildene */
+  iStart(k) { return /^(ui_|anim_|glass|sko_|pynt_|tillegg_|lik$|hode_pasient|kropp_(pasient|tvang|skjorte|pyjamas|serk)|gulv_|vegg_|bakke_)/.test(k); },
+  /* henter og dekoder ett bilde. Gir bildet, eller null når det ikke finnes eller ikke kan leses */
+  hent(k) {
+    if (!SPRITES[k]) return Promise.resolve(null);
+    if (this.klar(k)) return Promise.resolve(this.img[k]);
+    if (this.hentes[k]) return this.hentes[k];
+    const im = this.img[k] || (this.img[k] = new Image());
+    return (this.hentes[k] = new Promise(res => {
+      const ferdig = ok => { delete this.hentes[k]; res(ok ? im : null); };
+      im.addEventListener('load', () => ferdig(true), { once: true }); im.addEventListener('error', () => ferdig(false), { once: true });
+      if (!im.src) im.src = SPRITES[k]; else if (im.complete) ferdig(!!im.naturalWidth);
+    }));
+  },
+  klar(k) { const im = this.img[k]; return !!(im && im.complete && im.naturalWidth); },
+  /* resten i nettutgaven: delene til oppskriftene først (som bilder, fordi mestrene ser etter dem med en gang), så fiendene etter
+     etasjen de hører hjemme i (de øverste først), så alt annet. De siste legges bare i nettleserens hurtigbuffer og dekodes først når
+     noe tegner dem */
+  bakgrunn(keys) {
+    const del = k => typeof DELER_META === 'object' && !!DELER_META[k], dyp = {};
+    if (typeof DEPTH_ENEMIES === 'object') for (let d = MAX_DEPTH; d >= 1; d--) for (const t of DEPTH_ENEMIES[d] || []) dyp[t] = d;
+    const rang = k => { if (del(k)) return 0; const m = /^(?:hode|kropp)_([a-z]+)|^([a-z]+)_/.exec(k), t = m && (m[1] || m[2]); return t && dyp[t] ? dyp[t] : 3.5; };
+    const kø = keys.slice().sort((a, b) => rang(a) - rang(b)); let aktive = 0;
+    const neste = () => { while (aktive < 4 && kø.length) { const k = kø.shift(); aktive++; (del(k) ? this.hent(k) : fetch(SPRITES[k], { priority: 'low' }).then(r => r.blob())).catch(() => { }).then(() => { aktive--; neste(); }); } };
+    neste();
+  },
+  /* alle bildene som bilder, for testene som vil ha alt klart (i nettutgaven) */
+  lastAlt() { return Promise.all(Object.keys(SPRITES).map(k => this.hent(k))); },
   part(key, w, h, ax, ay, draw) {
     if (this.cache.has(key)) return this.cache.get(key);
     const c = document.createElement('canvas'); c.width = Math.ceil(w * PX); c.height = Math.ceil(h * PX);
@@ -34,7 +67,7 @@ const Art = {
     P.tex.anisotropy = 4;
     if (SPRITES[key]) {
       const put = img => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height); P.tex.needsUpdate = true; };
-      const pre = this.img[key]; if (pre && pre.complete && pre.naturalWidth) put(pre); else { const img = new Image(); img.onload = () => put(img); img.src = SPRITES[key]; }
+      if (this.klar(key)) put(this.img[key]); else this.hent(key).then(img => { if (img) put(img); }); // kommer bildet senere, byttes tegningen ut da
     }
     this.cache.set(key, P); return P;
   },
