@@ -1421,3 +1421,8 @@ Alle tidspunkt er UTC.
 - Kommer grafikken ikke tilbake på åtte sekunder, lagres et trinn lettere til neste lasting (automatisk kvalitet: høy til middels til lav, og så uten 3D), og feilmeldingen sier det. Før startet «Last inn på nytt» med samme oppsett og kunne krasje likt. Feilmeldingen viser nå også telefon eller PC, 3D og kvalitet, og oppløsningen (window.__glInfo).
 - AGENTS.md: bruk R.coarse, ikke pointer: coarse alene. memory.md og todo.md oppdatert.
 - Ny testdel 65: 5 av 5 OK (telefon med fin peker får telefonoppsettet, høy på telefon uten dybdetekstur, mistet grafikk gir lettere start og riktig melding, PC med berøringsskjerm er PC). Del 64, 37 og 36 kjører.
+
+## 2026-09-28 18:25 Mobilrettingen testet og lagt på main
+- Del 65, 64, 37 og 36: 63 av 63 OK (telefon med fin peker, kameraprøven og omgivelsesskyggen på PC, skyggekart på telefon, og mobiloppsettet med mistet grafikk som kommer tilbake).
+- Målt på nytt som telefon med fin peker (384 x 832, dpr 3,75): middels, oppløsning 1,5, ingen dybdetekstur og 33 til 48 MB, mot høy, oppløsning 2, dybdetekstur og 68 til 82 MB før rettingen.
+- Lagt på main som fast-forward, så Pages publiserer.
