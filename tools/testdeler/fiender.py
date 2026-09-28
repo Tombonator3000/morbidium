@@ -2,7 +2,7 @@
 
 Testdeler fra test_ekstra.py. Kjøres med python3 tools/test_ekstra.py --system fiender eller --del N.
 """
-from .felles import sjekk, ny_side, start_lop, URL, URL3D, HB_PLASS
+from .felles import sjekk, ny_side, start_lop, URL, URL3D, HB_PLASS, FAST
 
 
 async def del_5(b):
@@ -200,28 +200,30 @@ async def del_58(b):
 
 async def del_59(b):
     # 59) Skinnlauget: Lærlingen og Klokkeren går til angrep på tre etasjer, laugets stans deler én nedkjøling, bjella treffer i sølvringen
-    #     og ikke utenfor, høyst ti kjettinger samtidig, én klokker per rom, fiendeindeksen og Enkel grafikk
+    #     og ikke utenfor, høyst ti kjettinger samtidig, én klokker per rom, fiendeindeksen og Enkel grafikk.
+    #     Med testklokka og faste etasjer (felles.FAST): samme etasje, samme plasser og samme tallrekke hver gang, og all venting er spilltid.
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg)
-    la = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} },
-            til = async (f, t = 4, maks = 40000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
-            spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); };
+    la = await pg.evaluate(FAST + """(async () => { const G = MORBIDIUM, P = G.player, ut = { etasjer: {} },
+            til = async (f, t = 4) => { if (!f()) Klokke.til(f, t); return !!f(); }, spill = async t => { Klokke.spol(t); };
           if (typeof Laug !== 'object') return { mangler: true };
           // alle treff fra lauget går gjennom Laug.treff, som gir true når pasienten tok skade
           const skade = {}, _lt = Laug.treff; Laug.treff = function (shape, o, dmg, src) { const r = _lt.apply(Laug, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
-          const rom = () => { const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 8 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; return r; };
+          let R0 = null; const rom = () => { P.x = R0.cx + .5; P.z = R0.cz + .5; return R0; }, midt = (dx, dz) => plass(R0, R0.cx + .5 + dx, R0.cz + .5 + dz);
+          // stedene fiendene settes, sett fra midten av rommet: de må være frie i etasjen som velges
+          const STEDER = [[2.4, 0], [-4.5, 1], [-5, 0], ...[0, 1, 2, 3, 4].map(i => [Math.sin(i / 5 * Math.PI * 2) * 4.5, Math.cos(i / 5 * Math.PI * 2) * 4.5])];
           const ved = (dx, dz) => freeSpot(P.x + dx, P.z + dz, 3), mot = e => [Math.hypot(P.x - e.x, P.z - e.z), Math.atan2(P.x - e.x, P.z - e.z)];
           try {
             // hver type, på etasje 3, 4 og 6: legger an innen 6 sekunder spilltid og skader en pasient med 400 i helse innen 20
             for (const d of [3, 4, 6]) {
-              startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); rom(); P.hp = P.maxHp = 400; P.invuln = 0; for (const k in skade) delete skade[k];
-              const s1 = ved(2.4, 0), l = spawnEnemy('laerling', s1.x, s1.z, false, d), s2 = ved(-4.5, 1), k = spawnEnemy('klokker', s2.x, s2.z, false, d); k.kallT = 1e9;
-              const g0 = G.time, t0 = performance.now(), E = { l: {}, k: {} };
-              while (G.time - g0 < 20 && performance.now() - t0 < 120000) { await vent(60); const t = G.time - g0; if (P.hp < 150) P.hp = 400;
+              R0 = fastEtasje(d, undefined, [11, 11], STEDER); ut.etasjer[d] = { frø: G.run.seed, rom: R0.id }; P.hp = P.maxHp = 400; P.invuln = 0; for (const k in skade) delete skade[k];
+              const s1 = midt(2.4, 0), l = spawnEnemy('laerling', s1.x, s1.z, false, d), s2 = midt(-4.5, 1), k = spawnEnemy('klokker', s2.x, s2.z, false, d); k.kallT = 1e9;
+              const g0 = G.time, E = { l: {}, k: {} };
+              Klokke.til(() => { const t = G.time - g0; if (P.hp < 150) P.hp = 400;
                 if (l.state === 'wind' && E.l.wind === undefined) E.l.wind = t; if (k.state === 'wind' && E.k.wind === undefined) E.k.wind = t;
                 if (skade.laerling && E.l.skade === undefined) E.l.skade = t; if (skade.klokker && E.k.skade === undefined) E.k.skade = t;
-                if (E.l.skade !== undefined && E.k.skade !== undefined) break; }
-              ut.etasjer[d] = E; for (const e of [l, k]) if (e.alive) killEntity(e, {}); await spill(.3);
+                return E.l.skade !== undefined && E.k.skade !== undefined; }, 20);
+              Object.assign(ut.etasjer[d], E); for (const e of [l, k]) if (e.alive) killEntity(e, {}); await spill(.3);
             }
             rolig(); rom(); P.hp = P.maxHp = 9999; P.invuln = 0;
             // laugets stans: av tre på under to sekunder får pasienten bare den første, og etter nedkjølingen kommer den igjen
@@ -229,7 +231,7 @@ async def del_59(b):
             for (let i = 0; i < 3; i++) { P.invuln = 0; P.iframe = 0; P.stunT = 0; Laug.treff('circle', o, 1, { type: 'laerling', x: P.x, z: P.z }, .6, 'SPENT FAST'); stans.push(P.stunT > 0); await spill(.3); }
             await spill(2.2); P.invuln = 0; P.stunT = 0; Laug.treff('circle', o, 1, { type: 'klokker', x: P.x, z: P.z }, .35, 'HEKTET'); stans.push(P.stunT > 0); ut.stans = stans;
             // bjella: lyden kommer først, sølvringen treffer den som står i den, og ikke den som har gått to ruter ut av den
-            const s3 = ved(-5, 0), k = spawnEnemy('klokker', s3.x, s3.z, false, 4); k.kallT = 1e9; await til(() => k.state !== 'spawn');
+            const s3 = midt(-5, 0), k = spawnEnemy('klokker', s3.x, s3.z, false, 4); k.kallT = 1e9; await til(() => k.state !== 'spawn');
             const sp = Sound.play, lyder = []; Sound.play = function (n) { lyder.push(n); return sp.apply(Sound, arguments); };
             const ring = async utenfor => {
               await spill(.8); k.state = 'chase'; k.ringT = 0; k.stun = 0; P.invuln = 0; P.iframe = 0; skade.klokker = 0; lyder.length = 0; const [dist, a] = mot(k);
@@ -243,21 +245,21 @@ async def del_59(b):
             const a1 = spawnEnemy('klokker', ved(4, 3).x, ved(4, 3).z, false, 4), a2 = spawnEnemy('klokker', ved(-4, 3).x, ved(-4, 3).z, false, 4); ut.enKlokker = [a1.type, a2.type]; killEntity(a1, {}); killEntity(a2, {});
             // fem klokkere som ringer stort samtidig vil ha 25 kjettinger, men det blir aldri flere enn ti
             Laug.flereKlokkere = true; const kl = [];
-            for (let i = 0; i < 5; i++) { const v = i / 5 * Math.PI * 2, s = ved(Math.sin(v) * 5, Math.cos(v) * 5), e = spawnEnemy('klokker', s.x, s.z, false, 4); e.kallT = 1e9; kl.push(e); }
+            for (let i = 0; i < 5; i++) { const v = i / 5 * Math.PI * 2, s = midt(Math.sin(v) * 4.5, Math.cos(v) * 4.5), e = spawnEnemy('klokker', s.x, s.z, false, 4); e.kallT = 1e9; kl.push(e); }
             Laug.flereKlokkere = false; await til(() => kl.every(e => e.state !== 'spawn'));
             for (const e of kl) { e.ringN = 2; e.ringT = 0; e.state = 'chase'; const [dist, a] = mot(e); Grotesk.ai.klokker(e, P, dist, a); e.cd = 99; }
-            let maks = 0; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 2.2 && performance.now() - t0 < 40000) { maks = Math.max(maks, Kjeder.liste.length); await vent(30); } }
+            let maks = 0; Klokke.til(() => { maks = Math.max(maks, Kjeder.liste.length); return false; }, 2.2);
             ut.kjeder = maks; for (const e of kl) killEntity(e, {}); await spill(1);
             // Enkel grafikk: ingen kjettinger tegnes, men treffet og skaden kommer som før
-            R.safe = true; const s4 = ved(-5, 0), ks = spawnEnemy('klokker', s4.x, s4.z, false, 4); ks.kallT = 1e9; await til(() => ks.state !== 'spawn'); rom();
+            R.safe = true; const s4 = midt(-5, 0), ks = spawnEnemy('klokker', s4.x, s4.z, false, 4); ks.kallT = 1e9; await til(() => ks.state !== 'spawn'); rom();
             Laug.sistTreff = -1; ks.ringN = 2; ks.ringT = 0; ks.state = 'chase'; P.invuln = 0; skade.klokker = 0; { const [dist, a] = mot(ks); Grotesk.ai.klokker(ks, P, dist, a); } ks.cd = 99;
-            let kjS = 0; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.6 && performance.now() - t0 < 30000) { kjS = Math.max(kjS, Kjeder.liste.length); await vent(40); } }
+            let kjS = 0; Klokke.til(() => { kjS = Math.max(kjS, Kjeder.liste.length); return false; }, 1.6);
             ut.safe = { kjeder: kjS, treff: Laug.sistTreff > 0, skade: skade.klokker > 0 }; R.safe = false; killEntity(ks, {});
-          } finally { Laug.treff = _lt; R.safe = false; Laug.flereKlokkere = false; }
+          } finally { Laug.treff = _lt; R.safe = false; Laug.flereKlokkere = false; Klokke.slipp(); }
           ut.info = ['laerling', 'klokker'].every(t => (FIENDE_INFO[t] || [])[0] && FIENDE_INFO[t][1] && FIENDE_REKKE.includes(t) && MESTER_TITTEL[t] && FIENDESTEMME[t] && LINES[t] && DEATH_CAUSES[t]) && !ROLLER.laerling && !ROLLER.klokker;
           ut.bilde = ['laerling', 'klokker'].map(t => { const c = fiendeBilde(t, 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); });
           ut.pulje = { 3: DEPTH_ENEMIES[3].filter(t => t === 'laerling').length, 4: [DEPTH_ENEMIES[4].filter(t => t === 'laerling').length, DEPTH_ENEMIES[4].filter(t => t === 'klokker').length], 6: [DEPTH_ENEMIES[6].filter(t => t === 'laerling').length, DEPTH_ENEMIES[6].filter(t => t === 'klokker').length] };
-          return ut; }""")
+          return ut; })()""")
     sjekk('Skinnlauget finnes (Laug i 50_skinnlauget.js)', not la.get('mangler'), la.get('mangler', ''))
     if not la.get('mangler'):
         E = la['etasjer']
@@ -285,18 +287,18 @@ async def del_59(b):
     await pg.screenshot(path='/tmp/e_59_handbok.png')
     sjekk('ingen konsollfeil (Skinnlauget i håndboka)', not pg.errs, pg.errs[:6])
     await pg.close()
-    # 3D: begge i kamp, med kjettinger fra mørket (én runde, 3D er tungt i programvaregrafikk)
+    # 3D: begge i kamp, med kjettinger fra mørket. Testklokka står når vilkåret er nådd, så skjermbildet viser kjettingene
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg, url=URL3D)
-    d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+    d3 = await pg.evaluate(FAST + """(() => { const G = MORBIDIUM, P = G.player, ut = {};
           if (typeof Laug !== 'object') return { mangler: true };
-          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; ut.d3 = D3.on;
-          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 8 && r.h >= 8) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
-          const s1 = freeSpot(P.x + 2.2, P.z + .3, 3), l = spawnEnemy('laerling', s1.x, s1.z, false, 4), s2 = freeSpot(P.x - 3.8, P.z - 1.2, 3), k = spawnEnemy('klokker', s2.x, s2.z, false, 4); k.kallT = 1e9;
-          const S = { l: {}, k: {} }, g0 = G.time, t0 = performance.now(); let kj = 0;
-          while (G.time - g0 < 14 && performance.now() - t0 < 150000) { await vent(80); P.hp = 9999; S.l[l.state] = 1; S.k[k.state] = 1; kj = Math.max(kj, Kjeder.liste.length); if (S.l.wind && S.k.wind && kj && k.state === 'wind' && Kjeder.liste.length) break; }
-          ut.S = S; ut.kjeder = kj; return ut; }""")
+          const r = fastEtasje(4, undefined, [11, 11], [[2.2, .3], [-3.8, -1.2]]); P.hp = P.maxHp = 9999; ut.d3 = D3.on;
+          const s1 = plass(r, P.x + 2.2, P.z + .3), l = spawnEnemy('laerling', s1.x, s1.z, false, 4), s2 = plass(r, P.x - 3.8, P.z - 1.2), k = spawnEnemy('klokker', s2.x, s2.z, false, 4); k.kallT = 1e9;
+          const S = { l: {}, k: {} }; let kj = 0;
+          Klokke.til(() => { P.hp = 9999; S.l[l.state] = 1; S.k[k.state] = 1; kj = Math.max(kj, Kjeder.liste.length); return S.l.wind && S.k.wind && kj && k.state === 'wind' && Kjeder.liste.length; }, 14);
+          ut.S = S; ut.kjeder = kj; return ut; })()""")
     sjekk('i 3D legger begge an, og krokene kommer fra mørket', not d3.get('mangler') and d3.get('d3') and d3['S']['l'].get('wind') and d3['S']['k'].get('wind') and d3['kjeder'] > 0, d3)
+    await pg.wait_for_timeout(300)
     await pg.screenshot(path='/tmp/e_59_laug_3d.png')
     sjekk('ingen konsollfeil (Skinnlauget i 3D)', not pg.errs, pg.errs[:6])
     await pg.close()
@@ -304,35 +306,36 @@ async def del_59(b):
 
 async def del_60(b):
     # 60) Havet under huset: Avløpsarmen ligger under risten og kan ikke treffes der, er aldri lenge under når pasienten står nær,
-    #     det er aldri mer enn tre av dem, grepet drar pasienten til risten, og Kapellanens preken, avbrutte preken, kall og død
+    #     det er aldri mer enn tre av dem, grepet drar pasienten til risten, og Kapellanens preken, avbrutte preken, kall og død.
+    #     Med testklokka og faste etasjer (felles.FAST): samme etasje, samme plasser og samme tallrekke hver gang, og all venting er spilltid.
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg)
-    hv = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} },
-            til = async (f, t = 4, maks = 120000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
-            spill = async (t, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+    hv = await pg.evaluate(FAST + """(async () => { const G = MORBIDIUM, P = G.player, ut = { etasjer: {}, frø: {} },
+            til = async (f, t = 4) => { if (!f()) Klokke.til(f, t); return !!f(); }, spill = async t => { Klokke.spol(t); },
             iKastere = e => Dybde.kastere().some(k => k.k === e), sluk = r => G.props.filter(p => p.kind === 'drain' && p.room === r.id);
           if (typeof Havet !== 'object') return { mangler: true };
           const skade = {}, _ht = Havet.treff; Havet.treff = function (shape, o, dmg, src) { const r = _ht.apply(Havet, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
-          // et kamprom med rist, og et fritt sted et stykke unna risten (med sikt)
-          const rom = () => { const rs = G.F.rooms.filter(r => r.role === 'combat' && r.w >= 7 && r.h >= 7 && sluk(r).length).sort((a, b) => b.w * b.h - a.w * a.h); return rs[0] || G.F.rooms.find(r => sluk(r).length) || G.F.rooms[0]; };
-          const ved = (s, d) => { for (let i = 0; i < 24; i++) { const v = i / 24 * Math.PI * 2, x = s.x + Math.sin(v) * d, z = s.z + Math.cos(v) * d; if (!solid(Math.floor(x), Math.floor(z)) && !solid(Math.floor(x + .3), Math.floor(z)) && !solid(Math.floor(x - .3), Math.floor(z)) && los(s.x, s.z, x, z)) return { x, z }; } return freeSpot(s.x + d, s.z, 3); };
+          // et fritt sted i samme rom et stykke unna risten, med sikt (null når det ikke finnes)
+          const ved = (s, d) => { const rid = G.F.roomId[Math.floor(s.z) * G.F.W + Math.floor(s.x)]; for (let i = 0; i < 24; i++) { const v = i / 24 * Math.PI * 2, x = s.x + Math.sin(v) * d, z = s.z + Math.cos(v) * d; if (!solid(Math.floor(x), Math.floor(z)) && !solid(Math.floor(x + .3), Math.floor(z)) && !solid(Math.floor(x - .3), Math.floor(z)) && G.F.roomId[Math.floor(z) * G.F.W + Math.floor(x)] === rid && los(s.x, s.z, x, z)) return { x, z }; } return null; };
+          // en fast etasje med et kamprom med rist, der alle stedene testen bruker rundt risten, finnes (felles.FAST)
+          const harSluk = r => r.props.some(p => p.k === 'drain'), stederOk = r => { const s = sluk(r)[0]; return !!s && [2.4, 2.5, 3, 4, 5].every(d => ved(s, d)); };
+          const etasje = d => fastEtasje(d, harSluk, [7, 7], [], stederOk);
           const mot = e => [Math.hypot(P.x - e.x, P.z - e.z), Math.atan2(P.x - e.x, P.z - e.z)];
           try {
             // hver type der den hører hjemme: legger an innen 6 sekunder spilltid og skader en pasient med 400 i helse innen 20
             for (const d of [3, 4, 6]) {
-              startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); const r = rom(), s = sluk(r)[0]; if (!s) { ut.etasjer[d] = { utenSluk: true }; continue; }
+              const r = etasje(d), s = sluk(r)[0]; ut.frø[d] = G.run.seed; if (!s) { ut.etasjer[d] = { utenSluk: true }; continue; }
               P.hp = P.maxHp = 400; P.invuln = 0; for (const k in skade) delete skade[k];
               const a = spawnEnemy('avlopsarm', s.x, s.z, false, d), p0 = ved(s, 2.4); P.x = p0.x; P.z = p0.z;
               let k = null; if (d >= 4) { const ks = ved(s, 5); k = spawnEnemy('kapellan', ks.x, ks.z, false, d); k.kallT = 1e9; }
-              const g0 = G.time, t0 = performance.now(), E = { a: {}, k: {} };
-              while (G.time - g0 < 20 && performance.now() - t0 < 150000) { await vent(60); const t = G.time - g0; if (P.hp < 150) P.hp = 400; P.x = p0.x; P.z = p0.z;
+              const g0 = G.time, E = { a: {}, k: {} };
+              Klokke.til(() => { const t = G.time - g0; if (P.hp < 150) P.hp = 400; P.x = p0.x; P.z = p0.z;
                 if (a.state === 'wind' && E.a.wind === undefined) E.a.wind = t; if (skade.avlopsarm && E.a.skade === undefined) E.a.skade = t;
                 if (k) { if (k.state === 'wind' && E.k.wind === undefined) E.k.wind = t; if (skade.kapellan && E.k.skade === undefined) E.k.skade = t; }
-                if (E.a.skade !== undefined && (!k || E.k.skade !== undefined)) break; }
+                return E.a.skade !== undefined && (!k || E.k.skade !== undefined); }, 20);
               if (!k) delete E.k; ut.etasjer[d] = E; for (const e of [a, k]) if (e && e.alive) killEntity(e, {}); await spill(.3);
             }
-            startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6;
-            const r = rom(), s = sluk(r)[0];
+            const r = etasje(4), s = sluk(r)[0]; P.hp = P.maxHp = 1e6;
             // under risten: ingen skade, ingen lykteskygge, ikke nærmest. Pasienten langt unna, så den blir liggende
             P.x = s.x + 30; P.z = s.z + 30; const a = spawnEnemy('avlopsarm', s.x, s.z, false, 4); a.hp = a.max = 1e6; await til(() => a.state !== 'spawn');
             const hu = a.hp; ut.under = { dukket: a.dukket === true, skjult: !a.doll.root.visible, skade: hurt(a, 30, { from: 'player' }), hp: a.hp === hu, skygge: iKastere(a), naermest: nearestEnemy(a.x, a.z, 99) === a, iSluk: Math.hypot(a.x - s.x, a.z - s.z) < .05 };
@@ -342,9 +345,9 @@ async def del_60(b):
             // armen lever: tuppen flytter seg selv når armen står stille
             a.cd = 99; await til(() => !a.anim && a.state === 'chase', 3); const tp = a.doll.deler[0].m.position, t1 = [tp.x, tp.y]; await spill(.4); ut.oppe.lever = Math.hypot(tp.x - t1[0], tp.y - t1[1]);
             // med pasienten innen fem ruter er den aldri under lenger enn 2,6 sekunder spilltid, og den dykker og kommer opp igjen
-            a.cd = 0; let under = 0, maksUnder = 0, dykk = 0, sist = a.dukket; { const g0 = G.time, t0 = performance.now(); let gt = G.time;
-              while (G.time - g0 < 14 && performance.now() - t0 < 120000) { await vent(40); const dt = G.time - gt; gt = G.time; P.x = p1.x; P.z = p1.z; P.hp = 1e6;
-                if (a.dukket) { under += dt; maksUnder = Math.max(maksUnder, under); } else under = 0; if (a.dukket && !sist) dykk++; sist = a.dukket; } }
+            a.cd = 0; let under = 0, maksUnder = 0, dykk = 0, sist = a.dukket; { let gt = G.time;
+              Klokke.til(() => { const dt = G.time - gt; gt = G.time; P.x = p1.x; P.z = p1.z; P.hp = 1e6;
+                if (a.dukket) { under += dt; maksUnder = Math.max(maksUnder, under); } else under = 0; if (a.dukket && !sist) dykk++; sist = a.dukket; return false; }, 14); }
             ut.rettferdig = { maksUnder, dykk, avstand: Math.hypot(p1.x - s.x, p1.z - s.z) };
             // grepet: armen oppe, pasienten fem ruter unna med sikt, og etter treffet er pasienten nærmere risten
             await til(() => !a.dukket && a.fase === 'opp' && a.state !== 'wind', 4); a.faseT = .5; a.cd = 99; const hj = a.hjem, p2 = ved(hj, 5); P.x = p2.x; P.z = p2.z; P.invuln = 0; P.iframe = 0; P.hp = 1e6; skade.avlopsarm = 0;
@@ -390,14 +393,14 @@ async def del_60(b):
             const kd = freeSpot(k.x + 1, k.z, 2); kult.x = kd.x; kult.z = kd.z; kult.state = 'chase'; await spill(.1); killEntity(k, {}); ut.dod = { pose: kult.state === 'pose' && kult.pose > 0 }; killEntity(kult, {}); await spill(.8);
             // Enkel grafikk: arm og kapellan i kamp uten feil
             R.safe = true; const sa = spawnEnemy('avlopsarm', s.x, s.z, false, 4), sk = spawnEnemy('kapellan', ved(s, 4).x, ved(s, 4).z, false, 4); const p3 = ved(s, 2.4); P.x = p3.x; P.z = p3.z; P.hp = 1e6; P.invuln = 999;
-            const S = {}; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 5 && performance.now() - t0 < 40000) { await vent(60); S[sa.state] = 1; S['k' + sk.state] = 1; } } ut.safe = S; R.safe = false;
+            const S = {}; Klokke.til(() => { S[sa.state] = 1; S['k' + sk.state] = 1; return false; }, 5); ut.safe = S; R.safe = false;
             for (const e of [sa, sk]) if (e.alive) killEntity(e, {});
-          } finally { Havet.treff = _ht; R.safe = false; }
+          } finally { Havet.treff = _ht; R.safe = false; Klokke.slipp(); }
           ut.info = ['avlopsarm', 'kapellan'].every(t => (FIENDE_INFO[t] || [])[0] && FIENDE_INFO[t][1] && FIENDE_REKKE.includes(t) && MESTER_TITTEL[t] && FIENDESTEMME[t] && LINES[t] && DEATH_CAUSES[t]) && !ROLLER.avlopsarm && !ROLLER.kapellan;
           ut.bilde = ['avlopsarm', 'kapellan'].map(t => { const c = fiendeBilde(t, 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); });
           const tell = (d, t) => DEPTH_ENEMIES[d].filter(x => x === t).length;
           ut.pulje = { 3: [tell(3, 'avlopsarm'), tell(3, 'kapellan')], 4: [tell(4, 'avlopsarm'), tell(4, 'kapellan')], 6: [tell(6, 'avlopsarm'), tell(6, 'kapellan')] };
-          return ut; }""")
+          return ut; })()""")
     sjekk('Havet under huset finnes (Havet i 49_havet.js)', not hv.get('mangler'), hv.get('mangler', ''))
     if not hv.get('mangler'):
         E = hv['etasjer']
@@ -438,18 +441,20 @@ async def del_60(b):
     await pg.screenshot(path='/tmp/e_60_handbok.png')
     sjekk('ingen konsollfeil (Havet i håndboka)', not pg.errs, pg.errs[:6])
     await pg.close()
-    # 3D: armen kommer opp av risten og legger an, og Kapellanen preker (én runde, 3D er tungt i programvaregrafikk)
+    # 3D: armen kommer opp av risten og legger an, og Kapellanen preker. Testklokka står når vilkåret er nådd, så skjermbildet viser det
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg, url=URL3D)
-    d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+    d3 = await pg.evaluate(FAST + """(() => { const G = MORBIDIUM, P = G.player, ut = {};
           if (typeof Havet !== 'object') return { mangler: true };
-          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; ut.d3 = D3.on;
-          const r = G.F.rooms.filter(r => r.role === 'combat' && G.props.some(p => p.kind === 'drain' && p.room === r.id)).sort((a, b) => b.w * b.h - a.w * a.h)[0] || G.F.rooms[0], s = G.props.find(p => p.kind === 'drain' && p.room === r.id) || { x: r.x + r.w / 2, z: r.z + r.h / 2 };
-          const p0 = freeSpot(s.x - 2.2, s.z + .3, 2); P.x = p0.x; P.z = p0.z; R.snapCamera(P.x, P.z);
-          const a = spawnEnemy('avlopsarm', s.x, s.z, false, 4), ks = freeSpot(s.x - 3, s.z - 2.5, 3), k = spawnEnemy('kapellan', ks.x, ks.z, false, 4); k.kallT = 1e9;
-          const S = { a: {}, k: {} }, g0 = G.time, t0 = performance.now(); let baand = 0;
-          while (G.time - g0 < 14 && performance.now() - t0 < 150000) { await vent(80); P.hp = 1e6; P.invuln = 999; S.a[a.fase + ':' + a.state] = 1; if (k.preken) S.k.preken = 1; baand = Math.max(baand, a.doll.back.n); if (S.a['opp:wind'] && S.k.preken) break; }
-          ut.S = S; ut.baand = baand; return ut; }""")
+          const sluk = r => G.props.filter(p => p.kind === 'drain' && p.room === r.id);
+          const ved = (s, d) => { const rid = G.F.roomId[Math.floor(s.z) * G.F.W + Math.floor(s.x)]; for (let i = 0; i < 24; i++) { const v = i / 24 * Math.PI * 2, x = s.x + Math.sin(v) * d, z = s.z + Math.cos(v) * d; if (!solid(Math.floor(x), Math.floor(z)) && !solid(Math.floor(x + .3), Math.floor(z)) && !solid(Math.floor(x - .3), Math.floor(z)) && G.F.roomId[Math.floor(z) * G.F.W + Math.floor(x)] === rid && los(s.x, s.z, x, z)) return { x, z }; } return null; };
+          const r = fastEtasje(4, r => r.props.some(p => p.k === 'drain'), [7, 7], [], r => { const s = sluk(r)[0]; return !!s && !!ved(s, 2.2) && !!ved(s, 3.9); }), s = sluk(r)[0];
+          P.hp = P.maxHp = 1e6; ut.d3 = D3.on;
+          const p0 = ved(s, 2.2); P.x = p0.x; P.z = p0.z; R.snapCamera(P.x, P.z);
+          const a = spawnEnemy('avlopsarm', s.x, s.z, false, 4), ks = ved(s, 3.9), k = spawnEnemy('kapellan', ks.x, ks.z, false, 4); k.kallT = 1e9;
+          const S = { a: {}, k: {} }; let baand = 0;
+          Klokke.til(() => { P.hp = 1e6; P.invuln = 999; S.a[a.fase + ':' + a.state] = 1; if (k.preken) S.k.preken = 1; baand = Math.max(baand, a.doll.back.n); return S.a['opp:wind'] && S.k.preken; }, 14);
+          ut.S = S; ut.baand = baand; return ut; })()""")
     sjekk('i 3D kommer armen opp av risten og legger an, og Kapellanen preker', not d3.get('mangler') and d3.get('d3') and d3['S']['a'].get('opp:wind') and d3['S']['k'].get('preken') and 0 < d3['baand'] < 3200, d3)
     await pg.screenshot(path='/tmp/e_60_havet_3d.png')
     sjekk('ingen konsollfeil (Havet under huset i 3D)', not pg.errs, pg.errs[:6])
