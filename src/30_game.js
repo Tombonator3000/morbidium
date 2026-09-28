@@ -746,7 +746,13 @@ function loop(now) {
 function boot() {
   const step = window.bootStep || (() => { });
   step('Starter WebGL');
-  R.init($('game'));
+  try { R.init($('game')); } catch (e) {
+    // nettleseren gir ikke siden WebGL i det hele tatt (three: «Error creating WebGL context»). Det skjer som regel etter at grafikken har
+    // krasjet: da stenger Chrome WebGL for siden til nettleseren startes helt på nytt, og det hjelper ikke å laste inn siden igjen
+    const m = (e && e.message) || String(e);
+    if (/WebGL context/i.test(m) && window.showErr) { showErr('Nettleseren gir ikke spillet grafikk (WebGL) nå. Det skjer som regel etter at grafikken har krasjet: da stenger Chrome WebGL for siden til nettleseren er startet helt på nytt, og det hjelper ikke å laste inn siden igjen. Lukk nettleseren helt (sveip den bort blant de åpne appene, eller velg Tving avslutning under Innstillinger, Apper, Chrome) og åpne spillet igjen. (' + m + ')'); return; }
+    throw e;
+  }
   try { const gl = R.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); window.__gl = (R.renderer.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1') + ', ' + (ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)) + ', maks tekstur ' + gl.getParameter(gl.MAX_TEXTURE_SIZE) + ', dpr ' + (devicePixelRatio || 1); } catch (e) { window.__gl = 'ukjent GPU'; }
   // feilmeldingen viser også hvordan spillet tegnet da det skjedde: telefon eller PC, 3D og kvalitet, og oppløsningen
   window.__glInfo = () => window.__gl + ', ' + (R.coarse ? 'telefon' : 'PC') + ', ' + (R.safe || G.meta.settings.simple ? 'enkel grafikk' : D3.on ? '3D ' + D3.Q().navn : '2D') + ', oppløsning ' + R.dpr;
