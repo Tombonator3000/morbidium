@@ -11,11 +11,12 @@ Tom sendte fem skjermbilder og ba om: (1) flottere effekter når fiender angripe
 - [x] Snøen på bakken: snøbildet Tom leverte 27.9. over uteområdet, hvite topper, snøbånd og istapper på veggene, snø på bakken utenfor og kaldere lys. Uten bildet maler koden snøen selv.
 - [x] Det skjulte rommet finnes ikke før man bryter seg inn: gangen og rommet er ikke tegnet, opplyst eller vist på kartet, og sprekken er vanlig vegg med en svak flekk ny puss. Hint i lag (trekk, kalde drag, dumpt slag mot vanlige vegger, én boble, tipset første gang, monokkelen) og et innbrudd med brist, støv, lys og møbler som kommer fram.
 - [x] Svaret på om ChatGPT skal lage vegger og gulv: ja for veggene nå, gulvene inne først når gulvet tegnes med egne fliser. Uteflatene Tom leverte 27.9. er i spillet. Teksturløpet tar imot resten (tegneliste 11 og 12).
-- [x] Nye fiender: Skinnlauget av 1887 (Lærlingen, Klokkeren, Holdningssøsteren og minisjefen Oldermann Nålepute) og havet under huset (Avløpsarmen, Kapellanen og Draugpleieren). Tegnet i kode, med tegneliste 13 til ChatGPT.
+- [x] Nye fiender: Skinnlauget av 1887 (Lærlingen, Klokkeren, Holdningssøsteren og minisjefen Oldermann Nålepute), havet under huset (Avløpsarmen, Kapellanen og Draugpleieren) og sjefen Kraken. Tegnet i kode, med tegneliste 13 til ChatGPT.
 - [x] Tomrom inne ser ikke lenger ut som mørke rom (murfronter i stedet for panel og puss), og gangene har små taklamper i 3D.
 - [ ] Tom: bestill prøven i tegneliste 11 (panel, fliser, mur, tapet og stein) og vis den til Claude før resten. Liste 12 (gulvene inne) venter på egne gulvfliser. Liste 13 (de nye fiendene) når det passer.
 - [ ] Tom: prøv de nye fiendene. Skinnlauget fra etasje 3 (Oldermannen som minisjef fra etasje 2), havet fra etasje 3. Er bukket og bjella tydelige varsler, kan dagsorden leses i farten på telefon, og er tonen riktig?
 - [ ] Tom: er flekken ved sprekken for svak på telefon? Styrken står i Skjult.flekk i 48_skjult.js.
+- [ ] Claude, senere: håndboka rekker under skjermkanten på liggende telefon (844 x 390) på alle sider (fantes før runde 5).
 - [ ] Claude, senere: gulvene inne med egne fliser (B5 i planen), så liste 12 kan bestilles. Biter (Particles) også når hekken eller krattet slås inn ute; de ble svarte før blekkpartiklene kom, og nå har de farge.
 - [ ] Tom: er varslene passe sterke og tydelige? Se bildene 46_varsel_* og 49_nedslag_*. Styrken kan justeres i Blekk.
 - [ ] Tom: er det nok snø på telefonen, eller skal det være mer? Mengden står i SNO_BUDSJETT i 47_sno.js.
