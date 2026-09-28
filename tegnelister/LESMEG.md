@@ -2,14 +2,15 @@
 
 Laget av `tools/lag_tegnelister.py` fra `assets/manifest.json`. Ikke rediger for hånd; kjør skriptet på nytt når bilder er levert.
 
-Status: 544 av 588 bilder i manifestet er levert. De 44 som mangler, er samlet i 44 ark og bilder fordelt på 2 lister, én ChatGPT-samtale per liste. I tillegg kommer 0 delark til oppskriftssystemet.
+Status: 558 av 630 bilder i manifestet er levert. De 72 som mangler, er samlet i 38 ark og bilder fordelt på 3 lister, én ChatGPT-samtale per liste. I tillegg kommer 0 delark til oppskriftssystemet.
 
 Hvert ark er én PNG. Et figurark gir seks bilder (hode og kropp fra tre kanter), et «ni ting»-ark opptil ni. Store ting som trær, porter og sjefskropper tegnes som enkeltbilder, fordi en rute på malen blir for liten til dem. Referansebildene i `referanse/` viser dagens kodetegninger i samme rutenett som malen; last dem opp sammen med malen, så ser ChatGPT hva som skal i hver rute.
 
 | Liste | Innhold | Ark | Bilder |
 |---|---|---|---|
-| [11. Veggene og bakken ute](11_vegger_og_bakken.md) | Panelveggen, Flisveggen, Murveggen, Hekken, Bakken i Parken, Panelveggen i Underetasjen, ... | 20 | 20 |
-| [12. Gulvene](12_gulv.md) | Plankegulvet, Sjakkgulvet, Sjakkgulvet i Underetasjen, Sjakkgulvet i Kjelleren, Sjakkgulvet i Dypet, Plankegulvet i Underetasjen, ... | 24 | 24 |
+| [11. Veggene](11_vegger.md) | Panelveggen, Flisveggen, Murveggen, Tapetveggen, Steinveggen, Panelveggen i Underetasjen, ... | 14 | 14 |
+| [12. Gulvene inne](12_gulv.md) | Plankegulvet, Sjakkgulvet, Sjakkgulvet i Underetasjen, Sjakkgulvet i Kjelleren, Sjakkgulvet i Dypet, Plankegulvet i Underetasjen, ... | 16 | 16 |
+| [13. Havet under huset og Skinnlauget](13_havet_og_skinnlauget.md) | laerling, klokker, holdning, oldermann, kapellan, draug, ... | 8 | 42 |
 
 Rekkefølgen følger «Neste bestilling» i `DESIGN_BRIEF.md`: fiendene som synes mest først, møblene sist. Historien (liste 10) er ny og kort, bare to bestillinger, og kan tas når som helst. Liste 11 og 12 er teksturer til veggene, bakken ute og gulvene. De har sin egen stilblokk (den står i lista), fordi en tekstur skal dekke hele bildet, og gulvene i liste 12 venter til gulvet tegnes med egne fliser i spillet. Det som ikke har bilde ennå, tegnes av koden som før, så spillet får aldri hull.
 
@@ -36,23 +37,17 @@ Samme oversikt finnes som regneark i `tegneliste.csv`.
 | 11a | `vegg_panel.png` |  | 1 |
 | 11b | `vegg_fliser.png` |  | 1 |
 | 11c | `vegg_mur.png` |  | 1 |
-| 11d | `vegg_hekk.png` |  | 1 |
-| 11e | `bakke_park.png` |  | 1 |
+| 11d | `vegg_tapet.png` |  | 1 |
+| 11e | `vegg_stein.png` |  | 1 |
 | 11f | `vegg_panel_3.png` |  | 1 |
 | 11g | `vegg_panel_4.png` |  | 1 |
 | 11h | `vegg_panel_6.png` |  | 1 |
-| 11i | `vegg_tapet.png` |  | 1 |
-| 11j | `vegg_stein.png` |  | 1 |
-| 11k | `vegg_polstret.png` |  | 1 |
-| 11l | `vegg_tre.png` |  | 1 |
-| 11m | `vegg_paviljong.png` |  | 1 |
-| 11n | `vegg_tommer.png` |  | 1 |
-| 11o | `vegg_skog.png` |  | 1 |
-| 11p | `vegg_steinmur.png` |  | 1 |
-| 11q | `vegg_gjerde.png` |  | 1 |
-| 11r | `vegg_ruin.png` |  | 1 |
-| 11s | `vegg_forheng.png` |  | 1 |
-| 11t | `bakke_skog.png` |  | 1 |
+| 11i | `vegg_polstret.png` |  | 1 |
+| 11j | `vegg_tre.png` |  | 1 |
+| 11k | `vegg_paviljong.png` |  | 1 |
+| 11l | `vegg_tommer.png` |  | 1 |
+| 11m | `vegg_gjerde.png` |  | 1 |
+| 11n | `vegg_forheng.png` |  | 1 |
 | 12a | `gulv_planker.png` |  | 1 |
 | 12b | `gulv_sjakk.png` |  | 1 |
 | 12c | `gulv_sjakk_3.png` |  | 1 |
@@ -68,12 +63,12 @@ Samme oversikt finnes som regneark i `tegneliste.csv`.
 | 12m | `gulv_sekskant.png` |  | 1 |
 | 12n | `gulv_stein.png` |  | 1 |
 | 12o | `gulv_betong.png` |  | 1 |
-| 12p | `gulv_brostein.png` |  | 1 |
-| 12q | `gulv_gress.png` |  | 1 |
-| 12r | `gulv_grus.png` |  | 1 |
-| 12s | `gulv_jord.png` |  | 1 |
-| 12t | `gulv_mose.png` |  | 1 |
-| 12u | `gulv_sti.png` |  | 1 |
-| 12v | `gulv_myr.png` |  | 1 |
-| 12w | `gulv_is.png` |  | 1 |
-| 12x | `gulv_sikksakk.png` |  | 1 |
+| 12p | `gulv_sikksakk.png` |  | 1 |
+| 13a | `figur_laerling.png` | mal_figur.png | 6 |
+| 13b | `figur_klokker.png` | mal_figur.png | 6 |
+| 13c | `figur_holdning.png` | mal_figur.png | 6 |
+| 13d | `figur_oldermann.png` | mal_figur.png | 6 |
+| 13e | `figur_kapellan.png` | mal_figur.png | 6 |
+| 13f | `figur_draug.png` | mal_figur.png | 6 |
+| 13g | `avlopsarm_tupp.png` |  | 1 |
+| 13h | `ark__vaapen_reim__vaapen_bjelle__vaapen_tommestokk__vaap....png` | mal_ni_ting.png | 5 |

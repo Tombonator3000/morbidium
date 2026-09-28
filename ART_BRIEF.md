@@ -10,7 +10,7 @@ Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke red
 4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).
 5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.
 
-Status: 544 av 588 bilder er levert. Kolonnen «Levert» viser hvilke.
+Status: 558 av 630 bilder er levert. Kolonnen «Levert» viser hvilke.
 
 ## Stilblokk (lim inn i ChatGPT)
 
@@ -25,24 +25,64 @@ Technical: PNG with a TRANSPARENT background. Exactly one object, centered, full
 - Gjennomsiktig bakgrunn er best. Hvit eller ensfarget bakgrunn går også, verktøyet fjerner den fra kantene og innover.
 - Ikke tegn skygge på bakken. Spillet legger på skygge og lys selv.
 
-## Runde 15: gulv, vegger og bakken (44 bilder, 0 levert)
+## Runde 17: havet under huset og Skinnlauget (42 bilder, 0 levert)
 
-Teksturer: flater som gjentas bortover veggene og bakken, ikke ting. De lages i en egen ChatGPT-samtale med stilblokken for teksturer i `DESIGN_BRIEF.md` (del D), ikke den vanlige, fordi bildet skal dekke hele flata. Ferdige prompter med referansebilder står i tegneliste 11 (veggene og bakken ute, start med prøven på fem bilder) og 12 (gulvene). Gulvene bestilles først når Claude sier at gulvet tegnes med egne fliser i spillet. Teppet og drivhusglasset tegnes fortsatt av koden.
+De nye fiendene fra runde 5, tegnet i kode til nå. Havet under huset (Avløpsarmen, Kapellanen og Draugpleieren) er Lovecraft i 1923: tentakler, blekk og sjøvann. Skinnlauget av 1887 (Lærlingen, Klokkeren, Holdningssøsteren og Oldermann Nålepute) er Avdeling Nulls høflige lærlaug: håndverkere med reimer, spenner, kroker og dagsorden, som tar smerte som et håndverk med skjemaer og etikette. Det er en parodi, men ikke noe seksuelt, ingen fetisjutstyr og ingenting hentet fra filmene. Samme mal og tre retninger som de andre figurene.
 
 | Filnavn | Beskrivelse til ChatGPT | Format | Levert |
 |---|---|---|---|
-| `bakke_park.png` | A dark night lawn (#243a1c) with irregular patches of #2e4a24 and #1a2c14, short grass strokes in muted green, a few fallen leaves. | kvadrat |  |
-| `bakke_skog.png` | A dark forest floor at night (#1a2216) with fallen needles (#5a4628), moss (#26301e), small roots and twigs. | kvadrat |  |
+| `avlopsarm_tupp.png` | the tip of a dark sea-green tentacle rising from a drain, curling, with pale suckers underneath and ONE lidless yellow eye with a goat pupil near the tip | kvadrat |  |
+| `hode_draug_b.png` | HEAD ONLY (no neck, no body) of the Drowned Orderly of 1887: a pale blue-green hospital orderly in a soaked white uniform with seaweed and barnacles, hollow sad eyes, water dripping, carrying an old enamel bedpan. back view, facing away | kvadrat |  |
+| `hode_draug_f.png` | HEAD ONLY (no neck, no body) of the Drowned Orderly of 1887: a pale blue-green hospital orderly in a soaked white uniform with seaweed and barnacles, hollow sad eyes, water dripping, carrying an old enamel bedpan. front view, facing the viewer | kvadrat |  |
+| `hode_draug_s.png` | HEAD ONLY (no neck, no body) of the Drowned Orderly of 1887: a pale blue-green hospital orderly in a soaked white uniform with seaweed and barnacles, hollow sad eyes, water dripping, carrying an old enamel bedpan. side view, facing right | kvadrat |  |
+| `hode_holdning_b.png` | HEAD ONLY (no neck, no body) of the Posture Sister of the Leather Guild: a strict, upright nurse in a grey dress with a starched collar, a stiff leather posture brace with many laced straps and small buckles over the dress, hair in a tight bun, a thin satisfied smile. back view, facing away | kvadrat |  |
+| `hode_holdning_f.png` | HEAD ONLY (no neck, no body) of the Posture Sister of the Leather Guild: a strict, upright nurse in a grey dress with a starched collar, a stiff leather posture brace with many laced straps and small buckles over the dress, hair in a tight bun, a thin satisfied smile. front view, facing the viewer | kvadrat |  |
+| `hode_holdning_s.png` | HEAD ONLY (no neck, no body) of the Posture Sister of the Leather Guild: a strict, upright nurse in a grey dress with a starched collar, a stiff leather posture brace with many laced straps and small buckles over the dress, hair in a tight bun, a thin satisfied smile. side view, facing right | kvadrat |  |
+| `hode_kapellan_b.png` | HEAD ONLY (no neck, no body) of the Chaplain from the sea under the house: a knee-high curate in a black cassock with a white Lutheran ruff, a squid-dome head with sad yellow eyes, a beard of short tentacles over the ruff, a collection box and a drain-cover medallion on a chain. back view, facing away | stående |  |
+| `hode_kapellan_f.png` | HEAD ONLY (no neck, no body) of the Chaplain from the sea under the house: a knee-high curate in a black cassock with a white Lutheran ruff, a squid-dome head with sad yellow eyes, a beard of short tentacles over the ruff, a collection box and a drain-cover medallion on a chain. front view, facing the viewer | stående |  |
+| `hode_kapellan_s.png` | HEAD ONLY (no neck, no body) of the Chaplain from the sea under the house: a knee-high curate in a black cassock with a white Lutheran ruff, a squid-dome head with sad yellow eyes, a beard of short tentacles over the ruff, a collection box and a drain-cover medallion on a chain. side view, facing right | stående |  |
+| `hode_klokker_b.png` | HEAD ONLY (no neck, no body) of the Bell-Ringer of the Leather Guild: a small bald old man with very large ears and a grey fringe, a long dark red coat with brass buttons and a leather belt with small steel hooks, a patient, satisfied smile. back view, facing away | liggende |  |
+| `hode_klokker_f.png` | HEAD ONLY (no neck, no body) of the Bell-Ringer of the Leather Guild: a small bald old man with very large ears and a grey fringe, a long dark red coat with brass buttons and a leather belt with small steel hooks, a patient, satisfied smile. front view, facing the viewer | liggende |  |
+| `hode_klokker_s.png` | HEAD ONLY (no neck, no body) of the Bell-Ringer of the Leather Guild: a small bald old man with very large ears and a grey fringe, a long dark red coat with brass buttons and a leather belt with small steel hooks, a patient, satisfied smile. side view, facing right | liggende |  |
+| `hode_laerling_b.png` | HEAD ONLY (no neck, no body) of the Apprentice of the Leather Guild of 1887: a polite, eager young craftsman with round glasses and neat side-parted hair, a brown leather apron with cross-stitching, crossed leather straps over a white shirt, a few small steel hooks hanging from the apron; he looks proud of his work. back view, facing away | kvadrat |  |
+| `hode_laerling_f.png` | HEAD ONLY (no neck, no body) of the Apprentice of the Leather Guild of 1887: a polite, eager young craftsman with round glasses and neat side-parted hair, a brown leather apron with cross-stitching, crossed leather straps over a white shirt, a few small steel hooks hanging from the apron; he looks proud of his work. front view, facing the viewer | kvadrat |  |
+| `hode_laerling_s.png` | HEAD ONLY (no neck, no body) of the Apprentice of the Leather Guild of 1887: a polite, eager young craftsman with round glasses and neat side-parted hair, a brown leather apron with cross-stitching, crossed leather straps over a white shirt, a few small steel hooks hanging from the apron; he looks proud of his work. side view, facing right | kvadrat |  |
+| `hode_oldermann_b.png` | HEAD ONLY (no neck, no body) of Alderman Pincushion, master of the Leather Guild: a stout old gentleman in a long black leather frock coat with a sash of guild medals, big mutton chops, a walrus moustache and a lorgnette; on his bald crown sits a red velvet pincushion full of pins, held on by a strap under the chin (the pins are only in the cushion, never in him). back view, facing away | kvadrat |  |
+| `hode_oldermann_f.png` | HEAD ONLY (no neck, no body) of Alderman Pincushion, master of the Leather Guild: a stout old gentleman in a long black leather frock coat with a sash of guild medals, big mutton chops, a walrus moustache and a lorgnette; on his bald crown sits a red velvet pincushion full of pins, held on by a strap under the chin (the pins are only in the cushion, never in him). front view, facing the viewer | kvadrat |  |
+| `hode_oldermann_s.png` | HEAD ONLY (no neck, no body) of Alderman Pincushion, master of the Leather Guild: a stout old gentleman in a long black leather frock coat with a sash of guild medals, big mutton chops, a walrus moustache and a lorgnette; on his bald crown sits a red velvet pincushion full of pins, held on by a strap under the chin (the pins are only in the cushion, never in him). side view, facing right | kvadrat |  |
+| `kropp_draug_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Drowned Orderly of 1887: a pale blue-green hospital orderly in a soaked white uniform with seaweed and barnacles, hollow sad eyes, water dripping, carrying an old enamel bedpan. back view, facing away | kvadrat |  |
+| `kropp_draug_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Drowned Orderly of 1887: a pale blue-green hospital orderly in a soaked white uniform with seaweed and barnacles, hollow sad eyes, water dripping, carrying an old enamel bedpan. front view, facing the viewer | kvadrat |  |
+| `kropp_draug_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Drowned Orderly of 1887: a pale blue-green hospital orderly in a soaked white uniform with seaweed and barnacles, hollow sad eyes, water dripping, carrying an old enamel bedpan. side view, facing right | kvadrat |  |
+| `kropp_holdning_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Posture Sister of the Leather Guild: a strict, upright nurse in a grey dress with a starched collar, a stiff leather posture brace with many laced straps and small buckles over the dress, hair in a tight bun, a thin satisfied smile. back view, facing away | kvadrat |  |
+| `kropp_holdning_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Posture Sister of the Leather Guild: a strict, upright nurse in a grey dress with a starched collar, a stiff leather posture brace with many laced straps and small buckles over the dress, hair in a tight bun, a thin satisfied smile. front view, facing the viewer | kvadrat |  |
+| `kropp_holdning_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Posture Sister of the Leather Guild: a strict, upright nurse in a grey dress with a starched collar, a stiff leather posture brace with many laced straps and small buckles over the dress, hair in a tight bun, a thin satisfied smile. side view, facing right | kvadrat |  |
+| `kropp_kapellan_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Chaplain from the sea under the house: a knee-high curate in a black cassock with a white Lutheran ruff, a squid-dome head with sad yellow eyes, a beard of short tentacles over the ruff, a collection box and a drain-cover medallion on a chain. back view, facing away | kvadrat |  |
+| `kropp_kapellan_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Chaplain from the sea under the house: a knee-high curate in a black cassock with a white Lutheran ruff, a squid-dome head with sad yellow eyes, a beard of short tentacles over the ruff, a collection box and a drain-cover medallion on a chain. front view, facing the viewer | kvadrat |  |
+| `kropp_kapellan_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Chaplain from the sea under the house: a knee-high curate in a black cassock with a white Lutheran ruff, a squid-dome head with sad yellow eyes, a beard of short tentacles over the ruff, a collection box and a drain-cover medallion on a chain. side view, facing right | kvadrat |  |
+| `kropp_klokker_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Bell-Ringer of the Leather Guild: a small bald old man with very large ears and a grey fringe, a long dark red coat with brass buttons and a leather belt with small steel hooks, a patient, satisfied smile. back view, facing away | kvadrat |  |
+| `kropp_klokker_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Bell-Ringer of the Leather Guild: a small bald old man with very large ears and a grey fringe, a long dark red coat with brass buttons and a leather belt with small steel hooks, a patient, satisfied smile. front view, facing the viewer | kvadrat |  |
+| `kropp_klokker_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Bell-Ringer of the Leather Guild: a small bald old man with very large ears and a grey fringe, a long dark red coat with brass buttons and a leather belt with small steel hooks, a patient, satisfied smile. side view, facing right | kvadrat |  |
+| `kropp_laerling_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Apprentice of the Leather Guild of 1887: a polite, eager young craftsman with round glasses and neat side-parted hair, a brown leather apron with cross-stitching, crossed leather straps over a white shirt, a few small steel hooks hanging from the apron; he looks proud of his work. back view, facing away | kvadrat |  |
+| `kropp_laerling_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Apprentice of the Leather Guild of 1887: a polite, eager young craftsman with round glasses and neat side-parted hair, a brown leather apron with cross-stitching, crossed leather straps over a white shirt, a few small steel hooks hanging from the apron; he looks proud of his work. front view, facing the viewer | kvadrat |  |
+| `kropp_laerling_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Apprentice of the Leather Guild of 1887: a polite, eager young craftsman with round glasses and neat side-parted hair, a brown leather apron with cross-stitching, crossed leather straps over a white shirt, a few small steel hooks hanging from the apron; he looks proud of his work. side view, facing right | kvadrat |  |
+| `kropp_oldermann_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Alderman Pincushion, master of the Leather Guild: a stout old gentleman in a long black leather frock coat with a sash of guild medals, big mutton chops, a walrus moustache and a lorgnette; on his bald crown sits a red velvet pincushion full of pins, held on by a strap under the chin (the pins are only in the cushion, never in him). back view, facing away | kvadrat |  |
+| `kropp_oldermann_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Alderman Pincushion, master of the Leather Guild: a stout old gentleman in a long black leather frock coat with a sash of guild medals, big mutton chops, a walrus moustache and a lorgnette; on his bald crown sits a red velvet pincushion full of pins, held on by a strap under the chin (the pins are only in the cushion, never in him). front view, facing the viewer | kvadrat |  |
+| `kropp_oldermann_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of Alderman Pincushion, master of the Leather Guild: a stout old gentleman in a long black leather frock coat with a sash of guild medals, big mutton chops, a walrus moustache and a lorgnette; on his bald crown sits a red velvet pincushion full of pins, held on by a strap under the chin (the pins are only in the cushion, never in him). side view, facing right | kvadrat |  |
+| `vaapen_avgud.png` | a small grey-green soapstone idol of a squatting squid-headed figure with folded wings | stående |  |
+| `vaapen_bjelle.png` | a small silver handbell with a black wooden handle | stående |  |
+| `vaapen_klubbe.png` | a heavy dark wooden gavel with a brass band | stående |  |
+| `vaapen_reim.png` | a long brown leather strap with a polished brass buckle at the end (a weapon) | stående |  |
+| `vaapen_tommestokk.png` | a yellow wooden folding ruler, half unfolded | stående |  |
+
+## Runde 16: vegger og gulv inne (30 bilder, 0 levert)
+
+Teksturer: flater som gjentas bortover veggene og bakken, ikke ting. De lages i en egen ChatGPT-samtale med stilblokken for teksturer i `DESIGN_BRIEF.md` (del D), ikke den vanlige, fordi bildet skal dekke hele flata. Ferdige prompter med referansebilder står i tegneliste 11 (veggene, start med prøven på fem bilder) og 12 (gulvene inne). Gulvene bestilles først når Claude sier at gulvet tegnes med egne fliser i spillet. Uteflatene (gulvene ute, snøen, hekken, steinmuren, skogkanten og ruinen) ble levert 27.9. og står i runde 15. Teppet og drivhusglasset tegnes fortsatt av koden.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
 | `gulv_betong.png` | Poured concrete, #86867e and #76766e in soft patches, joint lines every 2 metres (at 0 and 50 percent), old stains, two hairline cracks. | kvadrat |  |
-| `gulv_brostein.png` | Rounded cobbles in 3 rows per metre, each row shifted by half a stone, #7a7266 to #9a9282, dark joints #2e2a24, a light top on each stone. | kvadrat |  |
 | `gulv_fliser.png` | Small white tiles, 3 x 3 per square metre (12 x 12 in the image), #e8e6de, grout #9a9a92, a few #d2cab6 and #c4d4d0 tiles, two or three cracked dark ones (#3a342c). | kvadrat |  |
-| `gulv_gress.png` | Short night lawn, #3a5428 and #46622e, lighter blades #8cb45a, a few daisies, no path. | kvadrat |  |
-| `gulv_grus.png` | Raked gravel #9a8c70 and #8a7e64 with dark and light pebbles and a few larger stones (#6a6254). | kvadrat |  |
-| `gulv_is.png` | Frozen pond ice #b8d0dc and #a4c0d0, white cracks, darker depth patches (#3c5a78), a few trapped bubbles. | kvadrat |  |
-| `gulv_jord.png` | Tilled soil #4a3a28 and #5a4630 in soft furrows running left to right, small clods. | kvadrat |  |
 | `gulv_linoleum.png` | A big checker of 2 x 2 metre squares (2 x 2 in the image) in #a8987a and #8a7c64, fine dark specks, a few scuffs, one curved scratch. | kvadrat |  |
-| `gulv_mose.png` | Moss #2e3a20 and #3a4a26 with clumps of #4a5e2c, #26301a and #5a6a34, a few twigs. | kvadrat |  |
-| `gulv_myr.png` | Peat bog #34331e with black pools (#10140e) that have a faint pale glint, tufts of sedge (#968c46). | kvadrat |  |
 | `gulv_parkett.png` | Basket-weave parquet: each square metre is 2 x 2 blocks of 3 slats, alternating horizontal and vertical, #8a5a34 to #b07a48, seams #28160a. | kvadrat |  |
 | `gulv_planker.png` | Floorboards, 3 per metre, staggered end joints, small nail heads, a slightly worn lane along the middle; boards #b9a878, seams #3c2814. | kvadrat |  |
 | `gulv_planker_3.png` | Exactly the same as gulv_planker, only these colours: damp grey-green painted boards (#8aa89c), seams #1e3331. | kvadrat |  |
@@ -55,12 +95,10 @@ Teksturer: flater som gjentas bortover veggene og bakken, ikke ting. De lages i 
 | `gulv_sjakk_4.png` | Exactly the same as gulv_sjakk, only these colours: light #cbbf9c, dark #b3a684, grout #4a3f2c. | kvadrat |  |
 | `gulv_sjakk_6.png` | Exactly the same as gulv_sjakk, only these colours: light #7a6488, dark #5a4668, grout #1a1024. | kvadrat |  |
 | `gulv_stein.png` | Irregular flagstones, one to three per square metre, #7a7466 to #8e8676, dark joints #3a352c, a little moss in some joints. | kvadrat |  |
-| `gulv_sti.png` | Packed dirt #4a3c2a and #56462e with pine needles, a few roots, moss toward the edges. | kvadrat |  |
 | `gulv_tre.png` | Dark oak boards, 3 per metre, #7a5236 to #9a6a44, staggered joints, a few knots. | kvadrat |  |
 | `vegg_fliser.png` | Layout from the bottom: 0-68% small square glazed tiles, about 6 per metre, off-white (#eeece4), grout #b8bab4, a few pale green (#c8d8d4) and beige (#d4c8a8) tiles, two or three rust drips (#7a461e) from the top row; 68-70% a dark trim; 70-100% plaster (#d8d4c4) with a few stains. | liggende |  |
 | `vegg_forheng.png` | Heavy deep-red velvet curtains (#5a0a0e) in vertical folds with lit ridges (#c82c34), floor length, dreamlike and a little wrong; the fold rhythm continues across the left and right edges. | liggende |  |
 | `vegg_gjerde.png` | A wrought-iron fence (#16161a) with spear-tipped bars, about 6 per metre, and two horizontal rails, on a grey stone base (#6a665e) along the bottom 22%. EXCEPTION to the style block: TRANSPARENT between and above the bars. | liggende |  |
-| `vegg_hekk.png` | A dense clipped hedge seen from the side: small leaves in #1c2c14, #2c4420 and #385a28, lighter leaf highlights in the upper half, darker toward the ground; the top edge is a soft row of rounded leaf bumps; no trunks, no flowers. | liggende |  |
 | `vegg_mur.png` | Red brick in running bond, about 8 courses per metre, bricks #8a4a36 to #a45a40 with a few darker (#5a3e30), mortar #4a3024, damp green-black along the bottom 10%, a few iron wall hooks. | liggende |  |
 | `vegg_panel.png` | Layout from the bottom: 0-7% dark skirting (#3b3322); 7-43% tongue-and-groove wainscot (#6f8a55), narrow vertical boards, each with a light edge; 43-46% a dado rail with a light top edge; 46-94% pale plaster (#ddd4ad) with faint brown water stains, two hairline cracks and a little flaking paint; 94-100% a slightly darker plaster band. | liggende |  |
 | `vegg_panel_3.png` | Exactly the same layout as vegg_panel, only these colours: plaster #c4ddd3, wainscot #3f6e6a, skirting #1e3331 (a damp hydrotherapy basement). | liggende |  |
@@ -68,13 +106,31 @@ Teksturer: flater som gjentas bortover veggene og bakken, ikke ting. De lages i 
 | `vegg_panel_6.png` | Exactly the same layout as vegg_panel, only these colours: plaster #57445f, wainscot #2c1d36, skirting #140c1a (dim, violet and a little wet). | liggende |  |
 | `vegg_paviljong.png` | Layout from the bottom: 0-7% a green-painted base (#5e7a4a) with a dark top edge; 7-100% white horizontal clapboard (#d8d0b8), boards about 14 cm high with a thin shadow under each, crossed by a flat white-painted rail at 43-46% and a white cornice board at 94-100%; no corner posts. | liggende |  |
 | `vegg_polstret.png` | Quilted padded canvas (#e2d8be), diagonal tufting forming diamonds about 25 cm wide, a cloth button at every crossing, a few brown stains, one torn seam with stuffing. | liggende |  |
-| `vegg_ruin.png` | A crumbling stone wall with a jagged broken top edge, stones #6a665c to #807a6c in dark joints, moss patches. EXCEPTION to the style block: TRANSPARENT above the broken edge. | liggende |  |
-| `vegg_skog.png` | The edge of a dark night forest from the side: birch trunks (#d8d4c8 with black marks) and spruce trunks (#2a2018) of varied widths, dense needles (#10200e, #1a3014) in the upper half, almost black toward the ground; the top edge is canopy, no sky. | liggende |  |
 | `vegg_stein.png` | Grey dressed stone blocks of uneven length, 3 to 4 courses per metre, #6a6660 to #848078, dark joints #2e2a26, chipped corners, old soot. | liggende |  |
-| `vegg_steinmur.png` | A low dry-stone wall of rounded field stones (#6e6a60 to #8a8676) in dark joints, green moss (#3e5a28) along the top. | liggende |  |
 | `vegg_tapet.png` | Layout from the bottom: 0-43% dark wood wainscot (#6a5a40) with framed panels; 43-46% a wooden rail; 46-100% faded damask wallpaper (#bca27c) with a darker pattern (#5a3228) in vertical strips, one peeling seam, one water stain. | liggende |  |
 | `vegg_tommer.png` | Round horizontal logs, about 4 per metre, lit on top (#8a6440) and dark underneath (#3e2814), pale chinking (#c8b48a) between them, cracks and knots, no log ends. | liggende |  |
 | `vegg_tre.png` | Vertical board-and-batten, boards about 17 cm wide, #6a4a2c to #86603a, dark gaps, a few knots and nail heads. | liggende |  |
+
+## Runde 15: uteflater og grantrær (14 bilder, 14 levert)
+
+Bakketeksturer er sett rett ovenfra, fyller hele bildet og dekker 4 x 4 spillruter. Vegger er sett rett forfra og gjentas vannrett. Flater beskjæres ikke og får ikke fjernet bakgrunn. Granen er en vanlig gjennomsiktig rekvisitt. Se UTEGRAFIKK.md for leveranse og kontroll.
+
+| Filnavn | Beskrivelse til ChatGPT | Format | Levert |
+|---|---|---|---|
+| `gulv_brostein.png` | seamless overhead irregular warm grey cobblestones with dark narrow joints | kvadrat | ja |
+| `gulv_gress.png` | seamless overhead garden grass in muted olive green, scattered hand-inked grass tufts | kvadrat | ja |
+| `gulv_grus.png` | seamless overhead warm beige gravel with small irregular stones | kvadrat | ja |
+| `gulv_is.png` | seamless overhead pale blue-grey frozen pond ice with fine cracks | kvadrat | ja |
+| `gulv_jord.png` | seamless overhead dark warm garden soil, small stones and fine roots | kvadrat | ja |
+| `gulv_mose.png` | seamless overhead olive moss carpet with sparse spruce needles | kvadrat | ja |
+| `gulv_myr.png` | seamless overhead peat, damp moss and shallow dark pools | kvadrat | ja |
+| `gulv_sno.png` | seamless overhead connected powder snow with subtle grey-blue creases, no separate oval patches | kvadrat | ja |
+| `gulv_sti.png` | seamless overhead trampled brown forest trail with scattered spruce needles | kvadrat | ja |
+| `prop_gran.png` | one tall slightly crooked Norwegian spruce tree with drooping green branch tiers, short brown trunk and roots; transparent background, no ground shadow | stående | ja |
+| `vegg_hekk.png` | dense clipped olive-green hedge foliage, flat front view, tileable horizontally, fully opaque | kvadrat | ja |
+| `vegg_ruin.png` | low crumbling stone wall, irregular broken top edge and transparent sky above, flat front view, tileable horizontally | liggende | ja |
+| `vegg_skog.png` | dense dark forest of pale birch trunks and spruce foliage, flat front view, tileable horizontally | stående | ja |
+| `vegg_steinmur.png` | low old dry-stone garden wall with moss on top, flat front view, tileable horizontally | liggende | ja |
 
 ## Runde 14: historien (12 bilder, 12 levert)
 

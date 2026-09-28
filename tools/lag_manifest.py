@@ -25,6 +25,8 @@ JS = r"""() => {
   const maler = [null, 'eget', 'likhus', 'toalett', 'soppel', 'vask', 'operasjon', 'begravelse', 'kapell', 'vaktbod'];
   for (const tm of maler) for (let d = 1; d <= 6; d++) for (let s = 1; s <= 5; s++) { const F = generateFloor(s * 101 + d * 7 + (tm ? tm.length : 0), d, tm ? { startTemplate: tm, startCombat: true } : {}); for (const r of F.rooms) for (const p of r.props) if (p.k !== 'npc' && p.k !== 'puddle') { safe(() => propArt(p)); safe(() => propArt(Object.assign({}, p, { opened: true }))); } }
   for (const k of ['corpse', 'barrier', 'trapdoor']) safe(() => propArt({ k }));
+  // Også landskapsdekor som aldri legges i rommets props, for eksempel gran.
+  for (const f of Object.values(typeof ROM_ART === 'object' ? ROM_ART : {})) safe(() => f({}));
   // utvidelsen: utgangene, hendelsene, drømmene og flisa til Vedkubbemannen
   for (const U of Object.values(typeof UTGANGER === 'object' ? UTGANGER : {})) safe(() => propArt({ k: U.k }));
   for (const [k, f] of Object.entries(typeof HEND_ART === 'object' ? HEND_ART : {})) { safe(() => f()); if (k === 'lampemann') safe(() => f(true)); }
@@ -38,6 +40,8 @@ JS = r"""() => {
   for (const k of Object.keys(LOOKS)) safe(() => addonPart(k)); safe(() => shotPart('slim'));
   const skip = k => k.includes('~') || k.includes('undefined') || /^(lik_|likb|del_|lommeplukk_|glassakt_|glassbilde_|animr_|speilbilde_|ord_|stempelfall|skjemavegg|lokkedue|isolatvegg|pille$|klyse|nokler_p|prop_gravstein_)/.test(k) || (k.startsWith('glass_') && k !== 'glass_tomt') || (k.startsWith('kappe_') && !k.startsWith('kappe_kultist'));
   for (const [k, P] of Art.cache) if (!skip(k)) out[k] = { w: P.w, h: P.h, ax: P.ax, ay: P.ay, px: [P.canvas.width, P.canvas.height] };
+  for (const [k, [w, h]] of Object.entries(typeof UTE_FLATER === 'object' ? UTE_FLATER : {}))
+    out[k] = { w, h, ax: w / 2, ay: h / 2, px: [Math.round(w * 128), Math.round(h * 128)], tekstur: true };
   for (const v of ['f', 'b', 's']) if (out['kropp_trille_' + v]) out['kropp_trille_' + v].bunn = .52; // stolen går ned til gulvet under hofta
   // spriteark: én rute er w x h enheter, rutene ligger på én rad
   for (const [k, D] of Object.entries(typeof ANIM === 'object' ? ANIM : {})) out['anim_' + k] = { w: D.w, h: D.h, ax: D.ax, ay: D.ay, ruter: [D.n, 1], n: D.n, fps: D.fps, px: [Math.round(D.w * 128) * D.n, Math.round(D.h * 128)] };
@@ -47,12 +51,13 @@ JS = r"""() => {
   // teksturer (DESIGN_BRIEF.md del D, tegneliste 11 og 12): gulv og bakke er 4 x 4 ruter i 512 x 512, vegger 1,5 ganger så brede som høye
   // i 128 px per enhet. flis sier hvilken vei bildet skal gå i ett med seg selv, alfa at gjennomsiktigheten er med vilje (gjerdet og ruinen).
   // Teppet (farge per rom og gullkant) og drivhusglasset males av koden. _3, _4 og _6 er fargene i Underetasjen, Kjelleren og Dypet.
-  const flis = () => ({ w: 4, h: 4, ax: 2, ay: 2, px: [512, 512], flis: 'begge' });
-  for (const st of ['sjakk', 'planker', ...Object.keys(GULV).filter(k => k !== 'teppe')]) out['gulv_' + st] = flis();
+  // Uteflatene Tom har levert (UTE_FLATER over, tekstur: true: gress, grus, jord, mose, myr, is, sti, brostein, snø, hekk, steinmur, skog og ruin)
+  // beholder sine mål og sin behandling, og bestilles ikke på nytt. Bakken ute bruker gress- og mosebildet, så den har ingen egne nøkler.
+  const flis = () => ({ w: 4, h: 4, ax: 2, ay: 2, px: [512, 512], flis: 'begge' }), ny = k => !(out[k] && out[k].tekstur);
+  for (const st of ['sjakk', 'planker', ...Object.keys(GULV).filter(k => k !== 'teppe')]) if (ny('gulv_' + st)) out['gulv_' + st] = flis();
   for (const st of ['sjakk', 'planker']) for (const d of [3, 4, 6]) out['gulv_' + st + '_' + d] = flis();
-  for (const k of ['bakke_park', 'bakke_skog']) out[k] = flis();
   for (const [st, V] of Object.entries(VEGG)) if (st !== 'glass') for (const d of st === 'panel' ? ['', '_3', '_4', '_6'] : ['']) {
-    const h = V.h || 2.3, w = +(1.5 * h).toFixed(3);
+    const h = V.h || 2.3, w = +(1.5 * h).toFixed(3); if (!ny('vegg_' + st + d)) continue;
     out['vegg_' + st + d] = Object.assign({ w, h, ax: +(w / 2).toFixed(3), ay: 0, px: [Math.round(192 * h), Math.round(128 * h)], flis: 'vannrett' }, V.alfa ? { alfa: true } : {});
   }
   window.__kur = Object.assign(Object.fromEntries(Object.entries(ITEMS).map(([k, v]) => [k, { name: v.name, desc: v.desc }])), Object.fromEntries(Object.entries(AKTIVE).map(([k, v]) => ['akt:' + k, { name: v.name, desc: v.desc }])), Object.fromEntries(Object.entries(LOMMERUSK).map(([k, v]) => ['lomme:' + k, { name: v.name, desc: v.desc }])));

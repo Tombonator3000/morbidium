@@ -15,6 +15,26 @@ function hRute(x, z, k = 0) {
 }
 const blandF = (a, b, k) => { const A1 = Col.rgb(a), B1 = Col.rgb(b); return Col.hex(A1[0] + (B1[0] - A1[0]) * k, A1[1] + (B1[1] - A1[1]) * k, A1[2] + (B1[2] - A1[2]) * k); };
 
+/* Bildene males inn i de eksisterende lerretene. Ingen nye sceneobjekter eller tegnekall.
+   Hele bakkeruta dekker 4 x 4 spillruter, med samme utsnitt i alle rom. */
+const UTE_FLATER = {
+  gulv_gress: [4, 4], gulv_grus: [4, 4], gulv_jord: [4, 4],
+  gulv_mose: [4, 4], gulv_myr: [4, 4], gulv_is: [4, 4],
+  gulv_sti: [4, 4], gulv_brostein: [4, 4], gulv_sno: [4, 4],
+  vegg_hekk: [2, 1.7], vegg_steinmur: [2, 1.2],
+  vegg_skog: [2, 2.8], vegg_ruin: [2, 1.1]
+};
+function uteBilde(key) {
+  const im = Art.img[key];
+  return im && im.complete && im.naturalWidth ? im : null;
+}
+function uteBakkeBilde(key, g, px, py, T, c) {
+  const im = uteBilde(key); if (!im) return false;
+  const n = 4, sx = ((c.x % n) + n) % n, sy = ((c.z % n) + n) % n;
+  g.drawImage(im, sx * im.width / n, sy * im.height / n, im.width / n, im.height / n, px, py, T, T);
+  return true;
+}
+
 /* ---------- gulv: GULV[stil](g, px, py, T, c), c = { x, z, th, rom, kant: { n, s, w, e }, ute } ---------- */
 const GULV = {
   tre(g, px, py, T, c) {
@@ -160,7 +180,13 @@ const GULV = {
     g.fillStyle = 'rgba(90,110,60,.35)'; if (hRute(c.x, c.z, 395) < .5) { g.beginPath(); g.arc(px + (hRute(c.x, c.z, 396) < .5 ? 0 : T), py + T * .5, T * .25, 0, TAU); g.fill(); }
   }
 };
-/* snøen på gulvet males som ett lag over hele uteområdet i Paint.snoDekke (12_paint.js), ikke her rute for rute */
+/* snøen på gulvet males som ett lag over hele uteområdet i Paint.snoDekke (12_paint.js), ikke her rute for rute.
+   Finnes snøbildet fra ChatGPT (gulv_sno), er det det som legges over uterutene der */
+// Manglende eller uleselige bilder beholder den opprinnelige kodetegningen.
+for (const st of ['gress', 'grus', 'jord', 'mose', 'myr', 'is', 'sti', 'brostein']) {
+  const tegn = GULV[st];
+  GULV[st] = (g, px, py, T, c) => { if (!uteBakkeBilde('gulv_' + st, g, px, py, T, c)) tegn(g, px, py, T, c); };
+}
 
 /* ---------- vegger: VEGG[stil] = { h, lav, topp, alfa, tegn(g, w, hp, th, rng) }. Lerretet er 2 enheter bredt og h høyt (128 px per enhet). ---------- */
 const VEGG = {
@@ -401,19 +427,16 @@ const Landskap = {
     g.fillStyle = '#eef3f8'; for (let i = 0; i < 90; i++) g.fillRect(rng() * S, rng() * S, k, k);
   },
   /* en stor flate under hele etasjen: gress i parken, mose og barnåler i skogen.
-     Bilde fra ChatGPT (bakke_park, bakke_skog) dekker 4 x 4 ruter og tegnes i 512 x 512, 256 x 256 på telefon og TV; snøen legges oppå som før */
+     Bildene fra ChatGPT (gulv_gress i parken, gulv_mose i skogen, gulv_sno oppå i snøvær) dekker 4 x 4 ruter og tegnes i 512 x 512, 256 x 256 på telefon og TV */
   bakke(F, th, L) {
     const skog = F.depth === 5, sno = F.vaer === 'sno', B = 24, S = R.coarse || R.tv ? 256 : 512;
-    // i snøvær males snøbakken over bildet fra ChatGPT, som er sommer; den gjentas hver tiende rute
-    const im = R.lowTex || sno ? null : Paint.bilde(skog ? 'bakke_skog' : 'bakke_park', F); let kastet = false;
-    const legg = tex => {
-      if (kastet || !im.naturalWidth) return tex;
-      const c = tex.image, g = c.getContext('2d'); c.width = c.height = S; g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, S, S);
-      tex.repeat.set((F.W + B * 2) / 4, (F.H + B * 2) / 4); tex.fraBilde = skog ? 'bakke_skog' : 'bakke_park'; tex.needsUpdate = true; return tex;
-    };
+    // bakken er bildet av gresset (Parken) eller mosen (Nattskogen) fra ChatGPT over 4 x 4 ruter, med snøbildet oppå i snøvær
+    // (Toms uteflater, UTE_FLATER). Mangler bildet, eller det snør uten snøbilde, maler koden bakken (snøbakken gjentas hver tiende rute).
+    // Telefon og TV får 256 punkter, som den malte bakken
+    const vinter = sno && uteBilde('gulv_sno'), im = sno && !vinter ? null : uteBilde(skog ? 'gulv_mose' : 'gulv_gress');
     const SS = sno && !R.lowTex ? S : 256, rute = sno ? 10 : 5;
-    const tex = im && im.complete ? legg(R.canvasTex(1, 1, () => { }, true)) : R.canvasTex(SS, SS, g => this.malBakke(g, skog, sno, SS), true);
-    if (!tex.fraBilde) { tex.repeat.set((F.W + B * 2) / rute, (F.H + B * 2) / rute); if (im) { im.addEventListener('load', () => legg(tex), { once: true }); tex.addEventListener('dispose', () => { kastet = true; }); } }
+    const tex = im ? R.canvasTex(S, S, (g, w, h) => { g.imageSmoothingQuality = 'high'; g.drawImage(im, 0, 0, w, h); if (vinter) { g.globalAlpha = .88; g.drawImage(vinter, 0, 0, w, h); g.globalAlpha = 1; } }, true) : R.canvasTex(SS, SS, g => this.malBakke(g, skog, sno, SS), true);
+    if (im) { tex.fraBilde = skog ? 'gulv_mose' : 'gulv_gress'; tex.repeat.set((F.W + B * 2) / 4, (F.H + B * 2) / 4); } else tex.repeat.set((F.W + B * 2) / rute, (F.H + B * 2) / rute);
     const m = new THREE.Mesh(new THREE.PlaneGeometry(F.W + B * 2, F.H + B * 2), new THREE.MeshBasicMaterial({ map: tex, color: sno ? (skog ? 0xa0a8b8 : 0xb0b8c8) : skog ? 0x8a94a4 : 0x9aa4b4 }));
     m.rotation.x = -Math.PI / 2; m.position.set(F.W / 2, -.03, F.H / 2); m.userData.d3 = true; L.add(m);
     Paint.mesh.bakke = m; Paint.owned.push(tex, m.material, m.geometry);
@@ -428,11 +451,13 @@ const Landskap = {
     const rng = mulberry32((F.seed || 3) * 17 + 5), skog = F.depth === 5, tetthet = skog ? .32 : .16, ut = [];
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
       const i = z * W + x; if (avst[i] === 0 || wh[i] || avst[i] < 2 || avst[i] > 7 || rng() > tetthet) continue;
-      ut.push([x + .5 + (rng() - .5) * .6, z + .5 + (rng() - .5) * .6, rng(), vedSkjult(x, z)]);
+      ut.push([x + .5 + (rng() - .5) * .6, z + .5 + (rng() - .5) * .6, rng(), hRute(x, z, 51), vedSkjult(x, z)]);
     }
-    ut.sort((a, b) => a[2] - b[2]);
+    // Utvalget må være uavhengig av treslaget. Laveste r først fjernet granene
+    // i parken (r >= .85) og bjørkene i skogen når taket på antall ble nådd.
+    ut.sort((a, b) => a[3] - b[3]);
     const tint = new THREE.Color(F.vaer === 'sno' ? (skog ? '#8a98b6' : '#9aaac6') : skog ? '#6a7898' : '#7a8aa8'); // lysere i snøen
-    for (const [x, z, r, skjult] of ut.slice(0, skog ? 140 : 90)) {
+    for (const [x, z, r, , skjult] of ut.slice(0, skog ? 140 : 90)) {
       const k = skog ? (r < .55 ? 'gran' : 'bjork') : (r < .45 ? 'tre' : r < .85 ? 'busk' : 'gran');
       const g = propSprite(null, x, z, { P: ROM_ART[k]({}), shadow: false }); g.userData.U.uTint.value.copy(tint); g.userData.m.scale.multiplyScalar(.85 + r * .35); R.level.add(g); if (skjult) this.skjulteTraer.push(g);
     }

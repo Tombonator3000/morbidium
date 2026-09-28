@@ -1,0 +1,14 @@
+Bilder og reserver: {'bilder': 14, 'feil': []}
+Scene: 3d-hage-klart.png {'seed': 3, 'weather': 'klart', 'room': 'hage', 'time': 0.2, 'three': True, 'simple': False, 'traer': {'prop_tre': 43, 'prop_busk': 41, 'prop_gran': 14}}
+Scene: 3d-hage-sno.png {'seed': 10, 'weather': 'sno', 'room': 'hage', 'time': 1.3500000000000005, 'three': True, 'simple': False, 'traer': {'prop_busk': 43, 'prop_tre': 51, 'prop_gran': 9}}
+Scene: 3d-drivhus-regn.png {'seed': 1, 'weather': 'regn', 'room': 'drivhus', 'time': 2.549999999999999, 'three': True, 'simple': False, 'traer': {'prop_busk': 47, 'prop_tre': 43, 'prop_gran': 12}}
+Scene: 3d-bjorkeskog-taake.png {'seed': 3, 'weather': 'taake', 'room': 'bjorkeskog', 'time': 3.7499999999999947, 'three': True, 'simple': False, 'traer': {'prop_bjork': 82, 'prop_gran': 77}}
+Scene: 3d-myr-taake.png {'seed': 3, 'weather': 'taake', 'room': 'myr', 'time': 4.94999999999999, 'three': True, 'simple': False, 'traer': {'prop_bjork': 82, 'prop_gran': 77}}
+Scene: 3d-ruin-taake.png {'seed': 3, 'weather': 'taake', 'room': 'ruin', 'time': 6.149999999999986, 'three': True, 'simple': False, 'traer': {'prop_bjork': 82, 'prop_gran': 77}}
+Scene: enkel-hage-klart.png {'seed': 3, 'weather': 'klart', 'room': 'hage', 'time': 0.016600000000000135, 'three': False, 'simple': True, 'traer': {'prop_tre': 43, 'prop_busk': 41, 'prop_gran': 14}}
+Scene: enkel-hage-sno.png {'seed': 10, 'weather': 'sno', 'room': 'hage', 'time': 1.2333000000000003, 'three': False, 'simple': True, 'traer': {'prop_busk': 43, 'prop_tre': 51, 'prop_gran': 9}}
+Scene: enkel-drivhus-regn.png {'seed': 1, 'weather': 'regn', 'room': 'drivhus', 'time': 2.533099999999999, 'three': False, 'simple': True, 'traer': {'prop_busk': 47, 'prop_tre': 43, 'prop_gran': 12}}
+Scene: enkel-bjorkeskog-taake.png {'seed': 3, 'weather': 'taake', 'room': 'bjorkeskog', 'time': 3.799799999999997, 'three': False, 'simple': True, 'traer': {'prop_bjork': 82, 'prop_gran': 77}}
+Scene: enkel-myr-taake.png {'seed': 3, 'weather': 'taake', 'room': 'myr', 'time': 5.016400000000009, 'three': False, 'simple': True, 'traer': {'prop_bjork': 82, 'prop_gran': 77}}
+Scene: enkel-ruin-taake.png {'seed': 3, 'weather': 'taake', 'room': 'ruin', 'time': 6.332900000000015, 'three': False, 'simple': True, 'traer': {'prop_bjork': 82, 'prop_gran': 77}}
+Feil: []
