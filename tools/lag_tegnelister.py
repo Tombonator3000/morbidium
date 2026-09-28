@@ -197,12 +197,14 @@ LISTER = [
                                 'gulv_tre', 'gulv_parkett', 'gulv_linoleum', 'gulv_fliser', 'gulv_sekskant', 'gulv_stein', 'gulv_betong', 'gulv_sikksakk']]},
   # runde 5: de nye fiendene, tegnet i kode til nå (ART_BRIEF.md runde 17)
   {'nr': 13, 'fil': '13_havet_og_skinnlauget.md', 'tittel': 'Havet under huset og Skinnlauget',
-   'merk': 'De nye fiendene fra runde 5. De er tegnet av koden nå og kan spilles uten bildene, så lista kan tas når det passer. Havet under huset '
+   'merk': 'De nye fiendene fra runde 5, og Kraken, den nye sjefen. De er tegnet av koden nå og kan spilles uten bildene, så lista kan tas når det passer. Havet under huset '
            '(Avløpsarmen, Kapellanen og Draugpleieren) er Lovecraft i 1923: tentakler, blekk og sjøvann. Skinnlauget av 1887 (Lærlingen, Klokkeren, '
            'Holdningssøsteren og Oldermann Nålepute) er et høflig lærlaug av håndverkere med reimer, spenner og dagsorden. Parodien ligger i tonen: '
            'ikke noe seksuelt, ikke fetisjutstyr og ingenting hentet fra filmene. Referansebildet viser dagens tegning.',
    'ark': [figur('laerling'), figur('klokker'), figur('holdning'), figur('oldermann'), figur('kapellan'), figur('draug'),
            enkelt('avlopsarm_tupp', ekstra='It rises straight up out of a round drain in the floor; draw only the upper part of the tentacle with the eye.'),
+           ark('kraken', 'Kraken', ['kraken_kappe', 'kraken_oye', 'kraken_pupill', 'kraken_nebb', 'kraken_skum', 'kraken_bandasje'],
+               ekstra='These are the separate parts of one giant sea monster boss; the game puts the eye, pupil and beak on the mantle.'),
            ark('vaapen_nye', 'Våpnene til Skinnlauget og Kapellanen', ['vaapen_reim', 'vaapen_bjelle', 'vaapen_tommestokk', 'vaapen_klubbe', 'vaapen_avgud'],
                ekstra='Each weapon alone in its cell, held by nobody, handle down.')]},
 ]

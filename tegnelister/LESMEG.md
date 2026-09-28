@@ -2,7 +2,7 @@
 
 Laget av `tools/lag_tegnelister.py` fra `assets/manifest.json`. Ikke rediger for hånd; kjør skriptet på nytt når bilder er levert.
 
-Status: 558 av 630 bilder i manifestet er levert. De 72 som mangler, er samlet i 38 ark og bilder fordelt på 3 lister, én ChatGPT-samtale per liste. I tillegg kommer 0 delark til oppskriftssystemet.
+Status: 558 av 636 bilder i manifestet er levert. De 78 som mangler, er samlet i 39 ark og bilder fordelt på 3 lister, én ChatGPT-samtale per liste. I tillegg kommer 0 delark til oppskriftssystemet.
 
 Hvert ark er én PNG. Et figurark gir seks bilder (hode og kropp fra tre kanter), et «ni ting»-ark opptil ni. Store ting som trær, porter og sjefskropper tegnes som enkeltbilder, fordi en rute på malen blir for liten til dem. Referansebildene i `referanse/` viser dagens kodetegninger i samme rutenett som malen; last dem opp sammen med malen, så ser ChatGPT hva som skal i hver rute.
 
@@ -10,7 +10,7 @@ Hvert ark er én PNG. Et figurark gir seks bilder (hode og kropp fra tre kanter)
 |---|---|---|---|
 | [11. Veggene](11_vegger.md) | Panelveggen, Flisveggen, Murveggen, Tapetveggen, Steinveggen, Panelveggen i Underetasjen, ... | 14 | 14 |
 | [12. Gulvene inne](12_gulv.md) | Plankegulvet, Sjakkgulvet, Sjakkgulvet i Underetasjen, Sjakkgulvet i Kjelleren, Sjakkgulvet i Dypet, Plankegulvet i Underetasjen, ... | 16 | 16 |
-| [13. Havet under huset og Skinnlauget](13_havet_og_skinnlauget.md) | laerling, klokker, holdning, oldermann, kapellan, draug, ... | 8 | 42 |
+| [13. Havet under huset og Skinnlauget](13_havet_og_skinnlauget.md) | laerling, klokker, holdning, oldermann, kapellan, draug, ... | 9 | 48 |
 
 Rekkefølgen følger «Neste bestilling» i `DESIGN_BRIEF.md`: fiendene som synes mest først, møblene sist. Historien (liste 10) er ny og kort, bare to bestillinger, og kan tas når som helst. Liste 11 og 12 er teksturer til veggene, bakken ute og gulvene. De har sin egen stilblokk (den står i lista), fordi en tekstur skal dekke hele bildet, og gulvene i liste 12 venter til gulvet tegnes med egne fliser i spillet. Det som ikke har bilde ennå, tegnes av koden som før, så spillet får aldri hull.
 
@@ -71,4 +71,5 @@ Samme oversikt finnes som regneark i `tegneliste.csv`.
 | 13e | `figur_kapellan.png` | mal_figur.png | 6 |
 | 13f | `figur_draug.png` | mal_figur.png | 6 |
 | 13g | `avlopsarm_tupp.png` |  | 1 |
-| 13h | `ark__vaapen_reim__vaapen_bjelle__vaapen_tommestokk__vaap....png` | mal_ni_ting.png | 5 |
+| 13h | `ark__kraken_kappe__kraken_oye__kraken_pupill__kraken_neb....png` | mal_ni_ting.png | 6 |
+| 13i | `ark__vaapen_reim__vaapen_bjelle__vaapen_tommestokk__vaap....png` | mal_ni_ting.png | 5 |
