@@ -32,8 +32,8 @@ const Dybde = {
      etter drapet: testdel 30 venter at den er borte etter 0,3 sekunder, og på en treg maskin kan det bildet alene ta så lang tid */
   kastere() {
     const L = [];
-    for (const e of G.enemies || []) if (e.alive && e.doll && e.state !== 'spawn') L.push({ k: e, x: e.x, z: e.z, b: e.r * 2.2, h: 1, U: e.doll.U });
-    if (G.boss && G.boss.alive && G.boss.doll) L.push({ k: G.boss, x: G.boss.x, z: G.boss.z, b: 2, h: 1.4, U: G.boss.doll.U });
+    for (const e of G.enemies || []) if (e.alive && e.doll && e.state !== 'spawn' && !e.dukket && e.doll.root.visible) L.push({ k: e, x: e.x, z: e.z, b: e.r * 2.2, h: 1, U: e.doll.U }); // under vann (e.dukket) og usynlig: ingen skygge
+    if (G.boss && G.boss.alive && G.boss.doll && !G.boss.dukket && G.boss.doll.root.visible) L.push({ k: G.boss, x: G.boss.x, z: G.boss.z, b: 2, h: 1.4, U: G.boss.doll.U });
     for (const n of G.npcs || []) if (n.doll) L.push({ k: n, x: n.x, z: n.z, b: .9, h: 1, U: n.doll.U });
     for (const d of G.ekstraDukker || []) if (d.root && d.root.parent && d.root.visible) L.push({ k: d, x: d.root.position.x, z: d.root.position.z, b: .9, h: 1, U: d.U });
     for (const o of G.props || []) {
@@ -87,7 +87,7 @@ const Dybde = {
     if (R.safe || !F || !R.level || !Paint.wallH) return;
     const W = F.W, H = F.H, PX = 8, c = document.createElement('canvas'); c.width = W * PX; c.height = H * PX;
     const g = c.getContext('2d'), wh = Paint.wallH, VG = typeof VEGG === 'object' ? VEGG : {};
-    const gulv = (x, z) => x >= 0 && z >= 0 && x < W && z < H && F.tiles[z * W + x] > 0;
+    const gulv = (x, z) => x >= 0 && z >= 0 && x < W && z < H && gulvSynlig(z * W + x); // ikke det skjulte rommet før veggen er slått inn
     const vegg = (x, z) => { if (x < 0 || z < 0 || x >= W || z >= H) return 0; const h = wh[z * W + x]; if (!h) return 0; const st = Paint.wallS && Paint.wallS[z * W + x], V = VG[st] || {}; return V.alfa ? .35 : 1; };
     const strek = (x0, y0, x1, y1, a) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; };
     for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
@@ -120,7 +120,7 @@ const Dybde = {
     this.stovInit(); if (!this.stovMesh) return;
     for (let i = 0; i < n && this.stov.length < this.MAKS; i++) {
       const a = Math.random() * TAU, d = Math.sqrt(Math.random()) * r, px = x + Math.sin(a) * d, pz = z + Math.cos(a) * d;
-      if (tIdx(px, pz) < 0 || !G.F.tiles[tIdx(px, pz)]) continue;
+      if (!gulvSynlig(tIdx(px, pz))) continue; // ikke ned i det skjulte rommet bak veggen
       this.stov.push({ x: px, z: pz, y: rnd(4.5, 7.5), vy: -rnd(0, 2), s: rnd(.6, 1.5), spin: rnd(-8, 8), a: Math.random() * TAU, landet: 0 });
     }
     Sound.play('knirk', .5, rnd(.7, .9));

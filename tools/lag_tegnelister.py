@@ -8,6 +8,8 @@ som kan limes rett inn:
   spriteark     anim_<navn>.png, like store ruter på én rad
   UI            ui_<navn>.png, rammer og ringer til HUD-en og menyene
   delark        hoder_/hatter_/har_/tilbehor_/kropper_<serie>.png til oppskriftssystemet
+  tekstur       vegg_/gulv_/bakke_<stil>.png, flater som gjentas (liste 11 og 12). Egen stilblokk per liste (stil),
+                fordi den vanlige ber om gjennomsiktig bakgrunn; stilblokken for teksturer står i DESIGN_BRIEF.md, del D.
 
 Hva som mangler, regnes ut av assets/manifest.json minus det som ligger i gpt-grafikk/ (samme regel
 som i ART_BRIEF.md). Kjør skriptet igjen når bilder er levert, så krymper listene. Et ark der noen
@@ -56,7 +58,36 @@ NAVN = {'kasteren': 'Kasteren', 'trille': 'Trillepasienten', 'speil': 'Speilpasi
         'prop_tre': 'Parktreet', 'prop_bjork': 'Bjørka', 'prop_bjork_dod': 'Den døde bjørka', 'prop_lysthus': 'Lysthuset',
         'hoder_pasienter': 'Pasienthoder', 'hoder_kultister': 'Kultisthoder', 'kropper_pasienter': 'Pasientklær', 'kropper_kultister': 'Kultistklær',
         'hatter_kultister': 'Kultisthatter', 'tilbehor_ansikt': 'Ansiktstilbehør', 'har_personale': 'Frisyrer til personalet', 'kropper_personale': 'Klær til byråkrater og leger',
-        'hatter_pasienter': 'Pasienthatter', 'har_pasienter': 'Pasientfrisyrer', 'har_kultister': 'Kultistfrisyrer'}
+        'hatter_pasienter': 'Pasienthatter', 'har_pasienter': 'Pasientfrisyrer', 'har_kultister': 'Kultistfrisyrer',
+        # teksturene (liste 11 og 12)
+        'vegg_panel': 'Panelveggen', 'vegg_fliser': 'Flisveggen', 'vegg_mur': 'Murveggen', 'vegg_hekk': 'Hekken',
+        'vegg_panel_3': 'Panelveggen i Underetasjen', 'vegg_panel_4': 'Panelveggen i Kjelleren', 'vegg_panel_6': 'Panelveggen i Dypet',
+        'vegg_tapet': 'Tapetveggen', 'vegg_stein': 'Steinveggen', 'vegg_polstret': 'Den polstrede veggen', 'vegg_tre': 'Treveggen',
+        'vegg_paviljong': 'Paviljongveggen', 'vegg_tommer': 'Tømmerveggen', 'vegg_skog': 'Skogkanten', 'vegg_steinmur': 'Steinmuren',
+        'vegg_gjerde': 'Smijernsgjerdet', 'vegg_ruin': 'Ruinmuren', 'vegg_forheng': 'De røde forhengene',
+        'gulv_planker': 'Plankegulvet', 'gulv_sjakk': 'Sjakkgulvet', 'gulv_sjakk_3': 'Sjakkgulvet i Underetasjen', 'gulv_sjakk_4': 'Sjakkgulvet i Kjelleren',
+        'gulv_sjakk_6': 'Sjakkgulvet i Dypet', 'gulv_planker_3': 'Plankegulvet i Underetasjen', 'gulv_planker_4': 'Plankegulvet i Kjelleren',
+        'gulv_planker_6': 'Plankegulvet i Dypet', 'gulv_tre': 'Tregulvet', 'gulv_parkett': 'Parketten', 'gulv_linoleum': 'Linoleumen',
+        'gulv_fliser': 'Småflisene', 'gulv_sekskant': 'Sekskantmosaikken', 'gulv_stein': 'Steinhellene', 'gulv_betong': 'Betongen',
+        'gulv_brostein': 'Brosteinen', 'gulv_gress': 'Gresset', 'gulv_grus': 'Grusen', 'gulv_jord': 'Jorda', 'gulv_mose': 'Mosen',
+        'gulv_sti': 'Stien', 'gulv_myr': 'Myra', 'gulv_is': 'Isen', 'gulv_sikksakk': 'Sikksakkgulvet'}
+# hvor teksturene brukes i spillet (ROMSTIL i 03_generator.js, korridorene, uteetasjene og drømmene)
+BRUK = {'vegg_panel': 'korridorene, venterom, arkiv, kartotek, journalrom, spisesal, kafeteria og sjefsrommene i Mottaket',
+        'vegg_panel_3': 'de samme veggene i Underetasjen', 'vegg_panel_4': 'de samme veggene i Kjelleren', 'vegg_panel_6': 'de samme veggene i Dypet',
+        'vegg_fliser': 'bad, behandling, elektro, tannlege, røntgen, kjøkken, frisør, medisin, vaskeri, likhus, toalett, vaskerom og operasjon',
+        'vegg_mur': 'kjeller, fyrrom, gårdsrom, lysgård, søppelrom og det hemmelige rommet', 'vegg_hekk': 'gangene i Parken, hage, lysthus, fontene, isdam og sjefsrommet i Parken',
+        'vegg_tapet': 'sovesal, dagligstue, direktørens kontor, bibliotek, eget rom og skattkammeret', 'vegg_stein': 'kapell, likkapell, begravelse, det forbannede rommet og blodofferet',
+        'vegg_polstret': 'isolatet', 'vegg_tre': 'vaktmesteren og vaktboden', 'vegg_paviljong': 'paviljongene i Parken', 'vegg_tommer': 'koiene i Nattskogen',
+        'vegg_skog': 'gangene og rommene i Nattskogen', 'vegg_steinmur': 'kirkegården og gårdsplassen', 'vegg_gjerde': 'liggehallen', 'vegg_ruin': 'ruinen i Nattskogen',
+        'vegg_forheng': 'drømmen i kapittel 5',
+        'gulv_planker': 'korridorene i Mottaket', 'gulv_planker_3': 'korridorene i Underetasjen', 'gulv_planker_4': 'korridorene i Kjelleren', 'gulv_planker_6': 'korridorene i Dypet',
+        'gulv_sjakk': 'venterom, tannlege, frisør, kafeteria og sjefsrommene i Mottaket, og paviljongene i Parken',
+        'gulv_sjakk_3': 'de samme rommene i Underetasjen', 'gulv_sjakk_4': 'de samme rommene i Kjelleren', 'gulv_sjakk_6': 'de samme rommene i Dypet',
+        'gulv_tre': 'sovesal, spisesal, bibliotek, eget rom, vaktbod, liggehallen og koiene', 'gulv_parkett': 'arkiv, kartotek, direktørens kontor, journalrom og skattkammeret',
+        'gulv_linoleum': 'behandling, isolat, elektro, røntgen og medisin', 'gulv_fliser': 'kjøkken, vaskeri og operasjon', 'gulv_sekskant': 'bad og toalett',
+        'gulv_stein': 'kjeller, fyrrom, lysgård, det hemmelige rommet, det forbannede rommet, blodofferet og ruinen', 'gulv_betong': 'likkapell, likhus, vaktmester, søppelrom og vaskerom',
+        'gulv_brostein': 'gårdsrommet', 'gulv_gress': 'hage, lysthus, kirkegård, lysning og sjefsrommet i Nattskogen', 'gulv_grus': 'fontene, gårdsplass, gangene i Parken og sjefsrommet i Parken',
+        'gulv_jord': 'drivhuset', 'gulv_mose': 'bjørkeskogen og tjernet', 'gulv_sti': 'gangene i Nattskogen', 'gulv_myr': 'myra', 'gulv_is': 'isdammen', 'gulv_sikksakk': 'drømmen i kapittel 5'}
 
 def figur(typ, ansikt=True, ekstra=''): return {'type': 'figur', 'typ': typ, 'ansikt': ansikt, 'ekstra': ekstra}
 def ark(slug, tittel, keys, ekstra=''): return {'type': 'ark', 'slug': slug, 'tittel': tittel, 'keys': keys, 'ekstra': ekstra}
@@ -64,6 +95,7 @@ def enkelt(k, ekstra=''): return {'type': 'enkelt', 'keys': [k], 'ekstra': ekstr
 def anim(k): return {'type': 'anim', 'keys': [k]}
 def ui(k): return {'type': 'ui', 'keys': [k]}
 def delark(fil, hva, items, farg=False): return {'type': 'del', 'fil': fil, 'hva': hva, 'items': items, 'farg': farg}
+def tekstur(k): return {'type': 'tekstur', 'keys': [k]}
 
 UTEN_ANSIKT = 'The face is a completely blank sheet of paper: no eyes, no nose, no mouth, no shading at all. Everything else is drawn normally.'
 MED_ANSIKT = 'Exactly the same clothes, hair and build as the faceless version drawn earlier in this conversation, so the game can swap one for the other.'
@@ -144,6 +176,37 @@ LISTER = [
            enkelt('prop_forstander', ekstra='He is a quiet, tired old man, not a villain. The desk is far too big for him. The hooks are fine and silver, almost elegant.'),
            enkelt('prop_venterom', ekstra='This stands against a wall in the game, like a doorway. Deep red velvet, a dreamlike and slightly wrong mood, never scary in an obvious way.'),
            enkelt('prop_skrin', ekstra='A beautiful and slightly wrong object, like a jewel box made by a surgeon.')]},
+  # teksturene (DESIGN_BRIEF.md del D): egen samtale og egen stilblokk. Prøven på fem bilder først; gulvene først når
+  # gulvet tegnes med egne fliser (til da presses et gulvbilde ned til 24 til 32 punkter per rute i floorCanvas)
+  {'nr': 11, 'fil': '11_vegger.md', 'tittel': 'Veggene', 'stil': 'tekstur',
+   'prove': ['vegg_panel', 'vegg_fliser', 'vegg_mur', 'vegg_tapet', 'vegg_stein'],
+   'merk': 'Skal ChatGPT tegne vegger og gulv, så det ser bedre ut? Ja for veggene, og det kan begynne nå. Uteflatene (gulvene ute, snøen, hekken, steinmuren, skogkanten og ruinen) ble levert 27.9. og er i spillet, så de står ikke her. Veggene tegnes i omtrent den '
+           'oppløsningen skjermen viser dem i, så detaljene fra ChatGPT kommer med, og i dag gjentar hver vegg de samme flekkene annenhver rute (se veggen '
+           'i kafeteriaen). Gulvene i liste 12 må vente til gulvet tegnes med egne fliser i spillet. I dag males hele gulvet inn i ett stort bilde med 24 til '
+           '32 punkter per rute, så et gulv fra ChatGPT ville blitt presset ned til noe uskarpt. Teppet og drivhusglasset tegnes fortsatt av koden. Den mørke '
+           'gangen på skjermbilde 9 kommer av lyset og ikke av teksturene, så den blir ikke lysere av nye bilder; det er en egen oppgave. '
+           'Bruk en egen ChatGPT-samtale med stilblokken for teksturer under, ikke den vanlige. {prove}Referansebildet viser dagens tegning i samme målestokk, '
+           'og bildeløpet retter kanter som ikke går helt i ett.',
+   'ark': [tekstur(k) for k in ['vegg_panel', 'vegg_fliser', 'vegg_mur', 'vegg_tapet', 'vegg_stein', 'vegg_panel_3', 'vegg_panel_4', 'vegg_panel_6',
+                                'vegg_polstret', 'vegg_tre', 'vegg_paviljong', 'vegg_tommer', 'vegg_gjerde', 'vegg_forheng']]},
+  {'nr': 12, 'fil': '12_gulv.md', 'tittel': 'Gulvene inne', 'stil': 'tekstur',
+   'merk': 'Gulvene. Bestill dem først når Claude sier at gulvet tegnes med egne fliser i spillet, ellers presses bildene ned til 24 til 32 punkter per rute. '
+           'Start samtalen med stilblokken for teksturer under, og last opp to godkjente vegger fra liste 11 som stilreferanse. Plankegulvet og sjakkgulvet først; '
+           'de dekker mest.',
+   'ark': [tekstur(k) for k in ['gulv_planker', 'gulv_sjakk', 'gulv_sjakk_3', 'gulv_sjakk_4', 'gulv_sjakk_6', 'gulv_planker_3', 'gulv_planker_4', 'gulv_planker_6',
+                                'gulv_tre', 'gulv_parkett', 'gulv_linoleum', 'gulv_fliser', 'gulv_sekskant', 'gulv_stein', 'gulv_betong', 'gulv_sikksakk']]},
+  # runde 5: de nye fiendene, tegnet i kode til nå (ART_BRIEF.md runde 17)
+  {'nr': 13, 'fil': '13_havet_og_skinnlauget.md', 'tittel': 'Havet under huset og Skinnlauget',
+   'merk': 'De nye fiendene fra runde 5, og Kraken, den nye sjefen. De er tegnet av koden nå og kan spilles uten bildene, så lista kan tas når det passer. Havet under huset '
+           '(Avløpsarmen, Kapellanen og Draugpleieren) er Lovecraft i 1923: tentakler, blekk og sjøvann. Skinnlauget av 1887 (Lærlingen, Klokkeren, '
+           'Holdningssøsteren og Oldermann Nålepute) er et høflig lærlaug av håndverkere med reimer, spenner og dagsorden. Parodien ligger i tonen: '
+           'ikke noe seksuelt, ikke fetisjutstyr og ingenting hentet fra filmene. Referansebildet viser dagens tegning.',
+   'ark': [figur('laerling'), figur('klokker'), figur('holdning'), figur('oldermann'), figur('kapellan'), figur('draug'),
+           enkelt('avlopsarm_tupp', ekstra='It rises straight up out of a round drain in the floor; draw only the upper part of the tentacle with the eye.'),
+           ark('kraken', 'Kraken', ['kraken_kappe', 'kraken_oye', 'kraken_pupill', 'kraken_nebb', 'kraken_skum', 'kraken_bandasje'],
+               ekstra='These are the separate parts of one giant sea monster boss; the game puts the eye, pupil and beak on the mantle.'),
+           ark('vaapen_nye', 'Våpnene til Skinnlauget og Kapellanen', ['vaapen_reim', 'vaapen_bjelle', 'vaapen_tommestokk', 'vaapen_klubbe', 'vaapen_avgud'],
+               ekstra='Each weapon alone in its cell, held by nobody, handle down.')]},
 ]
 
 # ---------- hva som mangler ----------
@@ -174,8 +237,9 @@ def ovrige(dekket):
     for t in typer: ut.append(figur(t)); igjen = [k for k in igjen if k not in figurnokler(t)]
     for k in [k for k in igjen if k.startswith('anim_')]: ut.append(anim(k))
     for k in [k for k in igjen if k.startswith('ui_')]: ut.append(ui(k))
+    for k in [k for k in igjen if man[k].get('flis')]: ut.append(tekstur(k))
     for k in [k for k in igjen if man[k].get('tekstur')]: ut.append(enkelt(k))
-    igjen = [k for k in igjen if not k.startswith(('anim_', 'ui_')) and not man[k].get('tekstur')]
+    igjen = [k for k in igjen if not k.startswith(('anim_', 'ui_')) and not man[k].get('flis') and not man[k].get('tekstur')]
     for k in [k for k in igjen if stor(k)]: ut.append(enkelt(k))
     små = [k for k in igjen if not stor(k)]
     for i in range(0, len(små), 9): ut.append(ark(f'ovrige_{i // 9 + 1}', f'Øvrige {i // 9 + 1}', små[i:i + 9]))
@@ -278,14 +342,27 @@ def prompt(a, ref):
         L.append('Keep every drawing inside its own cell. Do not draw the magenta guides.')
         if a['farg']: L.append('Draw all fabric in light neutral grey (around #d8d8d8) with a darker grey shade, so the game can dye it. Keep skin, metal, leather and paper in their real colors.')
         L.append('Items: ' + ' '.join(f'{i + 1}) {setning(x)}' for i, x in enumerate(a['items'])))
+    elif t == 'tekstur':
+        L.append(B.tekstur_prompt(a['rest'][0]))
+        if ref: L.append('The attached image shows how the game paints this surface today, over the same area. Use it only for the layout and the scale; paint it properly in the texture style.')
     return '\n'.join(L)
 
-def stilblokk():
+def stilblokk(hvilken=None):
+    """Stilblokken fra DESIGN_BRIEF.md: den vanlige, eller den for teksturer (del D), som ikke ber om gjennomsiktig bakgrunn."""
     t = (ROT / 'DESIGN_BRIEF.md').read_text(encoding='utf-8')
+    if hvilken == 'tekstur':
+        m = re.search(r'Stilblokk for teksturer[^\n]*\n+```(?:text)?\n(.*?)\n```', t, re.S)
+        return m.group(1) if m else B.TEKSTUR_STIL
     m = re.search(r'## Stilblokk[^\n]*\n+```\n(.*?)\n```', t, re.S)
     return m.group(1) if m else B.STIL
 
-TYPENAVN = {'figur': 'figurark', 'ark': '«ni ting»-ark', 'enkelt': 'enkeltbilde', 'anim': 'spriteark', 'ui': 'UI-bilde', 'del': 'delark'}
+def merk(L):
+    """Innledningen til lista. Liste 11 nevner prøven så lenge noe av den mangler."""
+    prove = [NAVN.get(k, k) for k in L.get('prove', []) if k in MANGLER]
+    tekst = (f"Bestill prøven først ({', '.join(prove[:-1]) + ' og ' + prove[-1] if len(prove) > 1 else prove[0]}), og vis bildene til Claude før resten, så de kan sjekkes på mobil og PC. " if prove else '')
+    return L['merk'].replace('{prove}', tekst)
+
+TYPENAVN = {'figur': 'figurark', 'ark': '«ni ting»-ark', 'enkelt': 'enkeltbilde', 'anim': 'spriteark', 'ui': 'UI-bilde', 'del': 'delark', 'tekstur': 'tekstur'}
 def tittel(a):
     if a['type'] == 'figur': return NAVN.get(a['typ'], a['typ'])
     if a['type'] == 'ark': return a['tittel']
@@ -304,24 +381,37 @@ def gir(a):
 
 def antall(a): return 0 if a['type'] == 'del' else len(a['rest'])
 
+def bruk(k):
+    """Hvor en tekstur brukes, og hvor stor den blir i spillet."""
+    w, h = man[k]['px']; tlf = ', 256 x 256 på telefon og TV' if k.startswith('bakke_') else ''
+    return f"Brukes i: {BRUK.get(k, k)}. Blir {w} x {h} punkter i spillet{tlf}."
+
 # ---------- skriving ----------
-def hvordan(stil):
-    return ['## Slik gjør du det', '',
-            '1. Start en ny samtale i ChatGPT og lim inn stilblokken under. Bruk samme samtale for hele lista, så stilen holder seg.',
-            '2. For hvert ark: last opp malen fra `maler/` (står ved arket), og referansebildet hvis det står et. Lim inn prompten.',
-            '3. Last ned resultatet som PNG og gi det nøyaktig filnavnet som står ved arket.',
-            '4. Last fila opp til `gpt-grafikk/` i repoet (Add file, Upload files) og commit til `main`. Resten går av seg selv.', '',
-            '## Stilblokk (lim inn først)', '', '```text', stil, '```', '']
+def hvordan(stil, tekstur=False):
+    if tekstur:
+        steg = ['1. Start en ny samtale i ChatGPT og lim inn stilblokken for teksturer under (ikke den vanlige). Bruk samme samtale for hele lista, så stilen holder seg.',
+                '2. For hvert bilde: last opp referansebildet som står ved det, og lim inn prompten. Det trengs ingen mal.',
+                '3. Last ned resultatet som PNG og gi det nøyaktig filnavnet som står ved bildet.',
+                '4. Last fila opp til `gpt-grafikk/` i repoet (Add file, Upload files) og commit til `main`. Resten går av seg selv: bildet skaleres, '
+                'kantene rettes hvis de ikke går helt i ett, og det lagres som WebP.']
+    else:
+        steg = ['1. Start en ny samtale i ChatGPT og lim inn stilblokken under. Bruk samme samtale for hele lista, så stilen holder seg.',
+                '2. For hvert ark: last opp malen fra `maler/` (står ved arket), og referansebildet hvis det står et. Lim inn prompten.',
+                '3. Last ned resultatet som PNG og gi det nøyaktig filnavnet som står ved arket.',
+                '4. Last fila opp til `gpt-grafikk/` i repoet (Add file, Upload files) og commit til `main`. Resten går av seg selv.']
+    return ['## Slik gjør du det', ''] + steg + ['', '## Stilblokk for teksturer (lim inn først)' if tekstur else '## Stilblokk (lim inn først)', '', '```text', stil, '```', '']
 
 def skriv_liste(L, stil):
+    if L.get('stil'): stil = stilblokk(L['stil'])  # teksturene har sin egen stilblokk
     ut = [f"# Tegneliste {L['nr']}: {L['tittel']}", '',
           'Laget av `tools/lag_tegnelister.py`. Ikke rediger for hånd; kjør skriptet på nytt når bilder er levert, så forsvinner det som er ferdig.', '',
-          L['merk'], ''] + hvordan(stil)
+          merk(L), ''] + hvordan(stil, L.get('stil') == 'tekstur')
     for i, a in enumerate(L['ark']):
         ref = ref_gyldig(a); nr = f"{L['nr']}{chr(97 + i)}"
         ut += [f"## {nr}. {tittel(a)} ({TYPENAVN[a['type']]})", '', f'Filnavn: `{filnavn(a)}`', '']
         if mal(a): ut += [f'Mal: `maler/{mal(a)}`', '']
         ut += [f'Gir: {gir(a)}', '']
+        if a['type'] == 'tekstur': ut += [bruk(a['rest'][0]), '']
         if ref: ut += [f"Referanse (last opp sammen med {'malen' if mal(a) else 'prompten'}): `tegnelister/referanse/{ref_navn(a)}`", '', f'![Dagens tegning](referanse/{ref_navn(a)})', '']
         ut += ['```text', prompt(a, ref), '```', '']
     (UT / L['fil']).write_text('\n'.join(ut), encoding='utf-8')
@@ -343,6 +433,8 @@ def skriv(lister):
     ut += [f"| [{L['nr']}. {L['tittel']}]({L['fil']}) | {', '.join(dict.fromkeys(tittel(a) for a in L['ark'][:6]))}{', ...' if len(L['ark']) > 6 else ''} | {len(L['ark'])} | {sum(antall(a) for a in L['ark']) or 'delark'} |" for L in lister]
     ut += ['', 'Rekkefølgen følger «Neste bestilling» i `DESIGN_BRIEF.md`: fiendene som synes mest først, møblene sist. '
            'Historien (liste 10) er ny og kort, bare to bestillinger, og kan tas når som helst. '
+           'Liste 11 og 12 er teksturer til veggene, bakken ute og gulvene. De har sin egen stilblokk (den står i lista), fordi en tekstur skal dekke hele bildet, '
+           'og gulvene i liste 12 venter til gulvet tegnes med egne fliser i spillet. '
            'Det som ikke har bilde ennå, tegnes av koden som før, så spillet får aldri hull.', ''] + hvordan(stil)
     ut += ['## Alle ark', '', 'Samme oversikt finnes som regneark i `tegneliste.csv`.', '', '| Nr | Filnavn | Mal | Bilder |', '|---|---|---|---|']
     rader = []
@@ -361,6 +453,7 @@ JS_BILDER = r"""(keys) => {
   const out = {};
   for (const k of keys) {
     if (k.startsWith('anim_')) { const R0 = Anim.rammer(k.slice(5)); if (R0) out[k] = R0.map(P => P.canvas.toDataURL('image/png')); continue; }
+    if (/^(gulv|vegg|bakke)_/.test(k)) { const c = Paint.referanse(k); if (c) out[k] = [c.toDataURL('image/png')]; continue; } // teksturene: i samme målestokk som bildet som skal leveres
     const P = Art.cache.get(k); if (P && P.canvas) out[k] = [P.canvas.toDataURL('image/png')];
   }
   return out;
@@ -372,7 +465,7 @@ def lag_referanser(lister):
     from PIL.PngImagePlugin import PngInfo
     from playwright.async_api import async_playwright
     import lag_manifest as LM
-    ark_ = [a for L in lister for a in L['ark'] if a['type'] in ('figur', 'ark', 'enkelt', 'anim')]
+    ark_ = [a for L in lister for a in L['ark'] if a['type'] in ('figur', 'ark', 'enkelt', 'anim', 'tekstur')]
     trengs = sorted({k for a in ark_ for k in a['rest']})
     async def hent():
         async with async_playwright() as p:
@@ -416,6 +509,10 @@ def lag_referanser(lister):
             if not R0: tomme.append(k); continue
             ut = rutenett(len(R0), 1, C)
             for i, s in enumerate(R0): lim(ut, bilde(s), i * C, 0, C, True, hel=True)
+        elif t == 'tekstur':  # hele flata i spillets målestokk; gjerdet og ruinen er utklipp og legges på papirfargen
+            k = rest[0]
+            if k not in data: tomme.append(k); continue
+            im = bilde(data[k][0]); ut = Image.new('RGBA', im.size, BG + (255,)); ut.alpha_composite(im)
         else:
             k = rest[0]
             if k not in data: tomme.append(k); continue
@@ -520,6 +617,9 @@ const lister = $('#lister');
 for (const L of DATA.lister) {
   const sek = el('section', { class: 'liste', id: 'liste' + L.nr });
   sek.append(el('header', {}, el('h2', { text: `${L.nr}. ${L.tittel}` }), el('p', { text: L.merk })));
+  // teksturene har sin egen stilblokk i stedet for den øverst på siden
+  if (L.stil) { const kb = el('button', { class: 'knapp', type: 'button', text: 'Kopier stilblokken' }); kb.onclick = () => kopier(L.stil, kb, 'Kopier stilblokken');
+    sek.append(el('div', { class: 'papir' }, el('div', { class: 'rad', style: 'display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap' }, el('h2', { style: 'margin:0', text: 'Stilblokk for denne lista (i stedet for den øverst)' }), kb), el('pre', { text: L.stil }))); }
   for (const A of L.ark) {
     const kort = el('article', { class: 'ark papir' + (A.ref ? ' med-ref' : ''), id: 'ark' + A.nr });
     const cb = el('input', { type: 'checkbox', id: 'lev-' + A.nr });
@@ -527,15 +627,16 @@ for (const L of DATA.lister) {
     cb.onchange = () => { if (cb.checked) levert[A.fil] = 1; else delete levert[A.fil]; lagre(); kort.classList.toggle('ferdig', cb.checked); skjul(); };
     const kopiFil = el('button', { class: 'knapp', type: 'button', text: 'Kopier filnavn' }); kopiFil.onclick = () => kopier(A.fil, kopiFil, 'Kopier filnavn');
     const kopiP = el('button', { class: 'knapp', type: 'button', text: 'Kopier prompten' }); kopiP.onclick = () => kopier(A.prompt, kopiP, 'Kopier prompten');
-    kort.append(
+    kort.append(...[ // DOM-append skriver «null» for en tom plass, så de tomme tas ut
       el('div', { class: 'topp' }, el('span', { class: 'nr', text: A.nr }), el('h3', { text: A.tittel }), el('span', { class: 'merke', text: A.type })),
       el('div', { class: 'fil' }, el('code', { text: A.fil }), kopiFil),
       A.mal ? el('div', { class: 'linje', html: `Mal: <b>maler/${A.mal}</b>` }) : null,
       el('div', { class: 'linje', text: 'Gir: ' + A.gir }),
+      A.bruk ? el('div', { class: 'linje', text: A.bruk }) : null,
       A.ref ? el('div', { class: 'bilde' }, el('img', { class: 'ref', src: A.ref, alt: 'Dagens kodetegning for ' + A.tittel, loading: 'lazy' }), el('div', { class: 'linje', text: 'Referanse: last opp sammen med ' + (A.mal ? 'malen' : 'prompten') })) : null,
       el('pre', { text: A.prompt }),
       el('div', { class: 'rad' }, kopiP, el('label', { class: 'levert', for: 'lev-' + A.nr }, cb, el('span', { text: 'Levert' })))
-    );
+    ].filter(Boolean));
     sek.append(kort);
   }
   lister.append(sek);
@@ -546,7 +647,7 @@ $('#fot').textContent = 'Laget av tools/lag_tegnelister.py ' + DATA.dato + '. Av
 </script>
 """
 
-KORT = {1: 'Fiender', 2: 'Koret og Klumpen', 3: 'Spriteark', 4: 'HUD', 5: 'Parken og skogen', 6: 'Hendelsene', 7: 'Drømmene', 8: 'Møblene', 9: 'Delark', 10: 'Historien'}
+KORT = {1: 'Fiender', 2: 'Koret og Klumpen', 3: 'Spriteark', 4: 'HUD', 5: 'Parken og skogen', 6: 'Hendelsene', 7: 'Drømmene', 8: 'Møblene', 9: 'Delark', 10: 'Historien', 11: 'Vegger og bakken', 12: 'Gulv'}
 def skriv_side(lister, sti):
     """Én side til mobilen med alle arkene, kopieringsknapper og referansebildene (lagt ved som referanse/ref_*.png)."""
     import datetime
@@ -555,8 +656,8 @@ def skriv_side(lister, sti):
         ark = []
         for i, a in enumerate(L['ark']):
             ref = ref_gyldig(a)
-            ark.append({'nr': f"{L['nr']}{chr(97 + i)}", 'tittel': tittel(a), 'type': TYPENAVN[a['type']], 'fil': filnavn(a), 'mal': mal(a) or '', 'gir': re.sub(r'`', '', gir(a)), 'prompt': prompt(a, ref), 'ref': f'referanse/{ref_navn(a)}' if ref else ''})
-        data['lister'].append({'nr': L['nr'], 'tittel': L['tittel'], 'kort': KORT.get(L['nr'], L['tittel']), 'merk': re.sub(r'`', '', L['merk']), 'ark': ark})
+            ark.append({'nr': f"{L['nr']}{chr(97 + i)}", 'tittel': tittel(a), 'type': TYPENAVN[a['type']], 'fil': filnavn(a), 'mal': mal(a) or '', 'gir': re.sub(r'`', '', gir(a)), 'bruk': bruk(a['rest'][0]) if a['type'] == 'tekstur' else '', 'prompt': prompt(a, ref), 'ref': f'referanse/{ref_navn(a)}' if ref else ''})
+        data['lister'].append({'nr': L['nr'], 'tittel': L['tittel'], 'kort': KORT.get(L['nr'], L['tittel']), 'merk': re.sub(r'`', '', merk(L)), 'stil': stilblokk(L['stil']) if L.get('stil') else '', 'ark': ark})
     sti = Path(sti); sti.parent.mkdir(parents=True, exist_ok=True)
     sti.write_text(SIDE_HTML.replace('__DATA__', json.dumps(data, ensure_ascii=False).replace('</', '<\\/')), encoding='utf-8')
     return sti

@@ -16,6 +16,8 @@
      stavelser, som mumlingen personalet har ellers. Den og fanfarene kan slås
      av under Lyd. Det som blinker, følger «Hvite glimt», og det som forvrenger,
      følger «Forvrengning».
+   - Stemplene på skjermen (Stempel): det store stempelet står i kø, og
+     kombostempelet, det store stempelet og lappen legger seg under hverandre.
    ============================================================ */
 
 /* ---------- stemmen: stavelser med formanter, som en pompøs overlege i en katedral ---------- */
@@ -152,6 +154,8 @@ const Kombo = {
   perfekt() {
     if (G.time < this.perfektT || G.state !== 'play') return; this.perfektT = G.time + 2.2;
     const P = G.player; this.tall.perfekt++; this.spill('perfekt'); slowMo(.45, .3); R.fx.ca = Math.max(R.fx.ca, .8); R.zoomStot(P.x, P.z, .22);
+    // «bom» fra den samme unnvikelsen: ordet under sier det samme, og de lå oppå hverandre (6.png). Med «Vis tall» av er ordet skjult, og da står «bom»
+    if (!document.body.classList.contains('uten-tall')) FX.fjern(it => it.str === 'bom' && G.time - it.tSist < .3);
     numText(P.x, P.z, pick(['PÅ HÅRET', 'UNNSLUPPET', 'IKKE I DAG', 'FOR SENT, DOKTOR']), 'crit', 2.7);
     if (this.n > 0) this.t = this.VINDU; // en perfekt unnvikelse holder kjeden i live
   },
@@ -183,7 +187,7 @@ const Kombo = {
   stempel(ord, under) {
     const el = this.el('kstempel'); if (!el) return;
     el.innerHTML = esc(ord) + (under ? '<small>' + esc(under) + '</small>' : ''); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
-    clearTimeout(this.stH); this.stH = setTimeout(() => el.classList.remove('on'), 1500);
+    clearTimeout(this.stH); this.stH = setTimeout(() => { el.classList.remove('on'); Stempel.plass(true); }, 1500); Stempel.plass();
   },
   vis(pang) {
     const el = this.el('kombo'); if (!el) return;
@@ -209,6 +213,55 @@ const Kombo = {
   }
 };
 
+/* ---------- stemplene på skjermen: kø for det store stempelet, og stemplene og lappen under hverandre ----------
+   Kombostempelet (#kstempel) kommer med en gang, og et nytt tar over for det gamle. Det store stempelet (#bigstamp, stampBig)
+   venter til det forrige har stått i 0,7 sekunder: høyst tre i kø, og like stempler hoppes over. Står begge, legges det store
+   8 px under kombostempelet, og så lenge et stempel står, ligger lappen (#toast) i nedre tredjedel, under stemplene. */
+const Stempel = {
+  ko: [], vistT: 0, naa: null, h: 0, kh: 0, MIN: 700,
+  stor(t, sub = '') {
+    const el = $('bigstamp'); if (!el) return;
+    const ms = performance.now() - this.vistT, lik = k => !!k && k[0] === t && k[1] === sub;
+    if (this.ko.length || (el.classList.contains('on') && ms < this.MIN)) {
+      if (!lik(this.naa) && !this.ko.some(lik) && this.ko.length < 3) this.ko.push([t, sub]);
+      if (!this.kh) this.kh = setTimeout(() => this.neste(), Math.max(0, this.MIN - ms));
+      return;
+    }
+    this.vis(t, sub);
+  },
+  neste() { this.kh = 0; const k = this.ko.shift(); if (k) this.vis(k[0], k[1]); },
+  vis(t, sub) {
+    const el = $('bigstamp'); el.innerHTML = esc(t) + (sub ? '<small>' + esc(sub) + '</small>' : '');
+    // tar det over for et stempel som står, slås det ned på nytt: tilbake til av uten overgang, og så inn igjen
+    el.style.transition = 'none'; el.classList.remove('on'); el.style.top = ''; void el.offsetWidth; el.style.transition = ''; el.classList.add('on');
+    Sound.play('stamp'); this.vistT = performance.now(); this.naa = [t, sub];
+    clearTimeout(this.h); this.h = setTimeout(() => { el.classList.remove('on'); this.naa = null; this.plass(true); }, 1500);
+    if (this.ko.length && !this.kh) this.kh = setTimeout(() => this.neste(), this.MIN);
+    this.plass();
+  },
+  /* plassene regnes ut når et stempel eller en lapp kommer: de som står, legges under hverandre fra der de hører hjemme (lappen
+     i nedre tredjedel), og høyden på den skrå boksen er bredde·sin + høyde·cos. Stakken skal slutte over evnekortene: den skyves
+     opp så langt det trengs, og er det ikke plass likevel (liggende telefon med alle tre), blir stemplene litt mindre.
+     Når et stempel går (ut), blir de andre stående der de er, og lappen går opp igjen først når den selv er borte. */
+  plass(ut) {
+    const H = innerHeight, k = $('kstempel'), b = $('bigstamp'), t = $('toast'); if (!k || !b || !t) return;
+    const kOn = k.classList.contains('on'), bOn = b.classList.contains('on'), tOn = t.classList.contains('on');
+    if (!kOn && !bOn) { if (!ut || !tOn) { t.classList.remove('lav'); t.style.top = t.style.scale = ''; } return; }
+    if (ut) return;
+    const hoy = (el, grad, s) => { const r = grad * Math.PI / 180; return (el.offsetWidth * Math.sin(r) + el.offsetHeight * Math.cos(r)) * s; };
+    t.classList.toggle('lav', tOn); const L = [];
+    // kombostempelet står 7 grader på skrå og vokser til 1,1 før det blekner
+    for (const [el, on, grad, s] of [[k, kOn, 7, 1.12], [b, bOn, 8, 1], [t, tOn, 4, 1]]) if (on) { el.style.top = el.style.scale = ''; L.push({ el, h: hoy(el, grad, s), y: parseFloat(getComputedStyle(el).top) || 0 }); }
+    let bunn = -1e9; for (const it of L) { it.y = Math.max(it.y, bunn + 8 + it.h / 2); bunn = it.y + it.h / 2; }
+    const kr = $('cards') && $('cards').getBoundingClientRect(), hi = kr && kr.height > 0 && kr.top > H * .45 ? kr.top - 16 : H - 6, lo = Math.max(8, H * .03); // -16: tallene og myntene på kortene stikker opp over kanten
+    const d = Math.min(Math.max(0, bunn - hi), Math.max(0, L[0].y - L[0].h / 2 - lo)); bunn -= d; for (const it of L) it.y -= d;
+    let f = 1;
+    // lappen holder størrelsen (den har forklaringen), så det er stemplene som krymper
+    if (bunn > hi) { const S = L.filter(it => it.el !== t), fast = L.length > S.length ? L[L.length - 1].h : 0; f = Math.max(.55, (hi - lo - fast - 8 * (L.length - 1)) / S.reduce((s, it) => s + it.h, 0)); let y = lo; for (const it of L) { const h = it.el === t ? it.h : it.h * f; it.y = y + h / 2; y += h + 8; } }
+    for (const it of L) { it.el.style.top = it.y.toFixed(1) + 'px'; if (f < 1 && it.el !== t) it.el.style.scale = f.toFixed(3); }
+  }
+};
+
 /* ---------- koblinger ---------- */
 { const _h = hurt; hurt = function (e, dmg, src = {}) {
   const levde = !!(e && e.alive), hp0 = levde ? e.hp : 0, d = _h(e, dmg, src);
@@ -226,6 +279,8 @@ const Kombo = {
 { const _ua = useAbility; useAbility = function (i) { const P = G.player, n0 = P ? P.counters.ability : 0; _ua(i); if (P && P.counters.ability > n0) Kombo.kort(i); }; }
 { const _bd = bossDie; bossDie = function (B) { _bd(B); Kombo.sjef(B); }; }
 { const _sb = stampBig; stampBig = function (t, sub) { _sb(t, sub); if (t === 'SYNERGI' || t === 'FORVANDLING') Kombo.fanfare(t === 'SYNERGI' ? 'synergi' : 'forvandling'); }; }
+// lappen får teksten med en gang som før, og legger seg under stemplene hvis et står
+{ const _t = toast; toast = function (t, sub) { _t(t, sub); Stempel.plass(); }; }
 { const _sf = startFloor; startFloor = function (...a) { Kombo.onFloor(); return _sf.apply(this, a); }; }
 { const _rs = runStats; runStats = function () {
   let s = _rs(); const r = G.run || {};
@@ -237,3 +292,5 @@ Object.assign(MERKNADER, {
   blodrus: { navn: 'Blodrus', krav: 'Slå 50 ganger på rad uten å bli truffet.', gir: 'Kunngjøreren kjenner navnet ditt.' },
   massakre: { navn: 'Massakre', krav: 'Slå fem fiender i hjel på et øyeblikk.', gir: 'Applaus fra pasientene, og en side i årsrapporten.' }
 });
+// til testene (del 45): tekstene, stemplene og lappen
+Object.assign(window, { FX, numText, toast, Stempel });

@@ -1,1 +1,40 @@
 nr;liste;type;filnavn;mal;bilder;nokler
+11a;Veggene;tekstur;vegg_panel.png;;1;vegg_panel
+11b;Veggene;tekstur;vegg_fliser.png;;1;vegg_fliser
+11c;Veggene;tekstur;vegg_mur.png;;1;vegg_mur
+11d;Veggene;tekstur;vegg_tapet.png;;1;vegg_tapet
+11e;Veggene;tekstur;vegg_stein.png;;1;vegg_stein
+11f;Veggene;tekstur;vegg_panel_3.png;;1;vegg_panel_3
+11g;Veggene;tekstur;vegg_panel_4.png;;1;vegg_panel_4
+11h;Veggene;tekstur;vegg_panel_6.png;;1;vegg_panel_6
+11i;Veggene;tekstur;vegg_polstret.png;;1;vegg_polstret
+11j;Veggene;tekstur;vegg_tre.png;;1;vegg_tre
+11k;Veggene;tekstur;vegg_paviljong.png;;1;vegg_paviljong
+11l;Veggene;tekstur;vegg_tommer.png;;1;vegg_tommer
+11m;Veggene;tekstur;vegg_gjerde.png;;1;vegg_gjerde
+11n;Veggene;tekstur;vegg_forheng.png;;1;vegg_forheng
+12a;Gulvene inne;tekstur;gulv_planker.png;;1;gulv_planker
+12b;Gulvene inne;tekstur;gulv_sjakk.png;;1;gulv_sjakk
+12c;Gulvene inne;tekstur;gulv_sjakk_3.png;;1;gulv_sjakk_3
+12d;Gulvene inne;tekstur;gulv_sjakk_4.png;;1;gulv_sjakk_4
+12e;Gulvene inne;tekstur;gulv_sjakk_6.png;;1;gulv_sjakk_6
+12f;Gulvene inne;tekstur;gulv_planker_3.png;;1;gulv_planker_3
+12g;Gulvene inne;tekstur;gulv_planker_4.png;;1;gulv_planker_4
+12h;Gulvene inne;tekstur;gulv_planker_6.png;;1;gulv_planker_6
+12i;Gulvene inne;tekstur;gulv_tre.png;;1;gulv_tre
+12j;Gulvene inne;tekstur;gulv_parkett.png;;1;gulv_parkett
+12k;Gulvene inne;tekstur;gulv_linoleum.png;;1;gulv_linoleum
+12l;Gulvene inne;tekstur;gulv_fliser.png;;1;gulv_fliser
+12m;Gulvene inne;tekstur;gulv_sekskant.png;;1;gulv_sekskant
+12n;Gulvene inne;tekstur;gulv_stein.png;;1;gulv_stein
+12o;Gulvene inne;tekstur;gulv_betong.png;;1;gulv_betong
+12p;Gulvene inne;tekstur;gulv_sikksakk.png;;1;gulv_sikksakk
+13a;Havet under huset og Skinnlauget;figurark;figur_laerling.png;mal_figur.png;6;hode_laerling_f hode_laerling_b hode_laerling_s kropp_laerling_f kropp_laerling_b kropp_laerling_s
+13b;Havet under huset og Skinnlauget;figurark;figur_klokker.png;mal_figur.png;6;hode_klokker_f hode_klokker_b hode_klokker_s kropp_klokker_f kropp_klokker_b kropp_klokker_s
+13c;Havet under huset og Skinnlauget;figurark;figur_holdning.png;mal_figur.png;6;hode_holdning_f hode_holdning_b hode_holdning_s kropp_holdning_f kropp_holdning_b kropp_holdning_s
+13d;Havet under huset og Skinnlauget;figurark;figur_oldermann.png;mal_figur.png;6;hode_oldermann_f hode_oldermann_b hode_oldermann_s kropp_oldermann_f kropp_oldermann_b kropp_oldermann_s
+13e;Havet under huset og Skinnlauget;figurark;figur_kapellan.png;mal_figur.png;6;hode_kapellan_f hode_kapellan_b hode_kapellan_s kropp_kapellan_f kropp_kapellan_b kropp_kapellan_s
+13f;Havet under huset og Skinnlauget;figurark;figur_draug.png;mal_figur.png;6;hode_draug_f hode_draug_b hode_draug_s kropp_draug_f kropp_draug_b kropp_draug_s
+13g;Havet under huset og Skinnlauget;enkeltbilde;avlopsarm_tupp.png;;1;avlopsarm_tupp
+13h;Havet under huset og Skinnlauget;«ni ting»-ark;ark__kraken_kappe__kraken_oye__kraken_pupill__kraken_nebb__kraken_skum__kraken_bandasje.png;mal_ni_ting.png;6;kraken_kappe kraken_oye kraken_pupill kraken_nebb kraken_skum kraken_bandasje
+13i;Havet under huset og Skinnlauget;«ni ting»-ark;ark__vaapen_reim__vaapen_bjelle__vaapen_tommestokk__vaapen_klubbe__vaapen_avgud.png;mal_ni_ting.png;5;vaapen_reim vaapen_bjelle vaapen_tommestokk vaapen_klubbe vaapen_avgud

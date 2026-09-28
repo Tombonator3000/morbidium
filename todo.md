@@ -1,5 +1,30 @@
 # Morbidium: gjøremål
 
+## Toms liste, runde 5 (26. og 27.9.)
+Tom sendte fem skjermbilder og ba om: (1) flottere effekter når fiender angriper, (2) snø som ser bedre ut, (3) hårruller som sitter på hodet, (4) skjulte rom som skjules bedre, (5) svar på om ChatGPT skal lage vegger og gulv, (6) flere fiender: Cthulhu og tentakelmonstre, og en Hellraiser-parodi med lærentusiaster. Skjermbildene viste også stempler oppå hverandre («IKKBONKG») og blod på skjermen som rant i rette streker.
+- [x] Angrepsvarslene tegnes i blekk (Blekkvarsel): omrisset tegner seg inn, fyllet feier over, låsen blinker, etterbildet står igjen, store angrep får tegn og sprekker, og fargen følger skadetypen. Varslene følger fienden der treffet gjør det. Lekkasjen i grafikkminnet fra varsler og hugg er tettet.
+- [x] Blekkpartikler (dråper, gnister, papirbiter og støv) i stedet for svarte klosser, og nedslag med merker i gulvet, sjokkbølge, risting, skrensemerker og skygger under det som kastes.
+- [x] Tekstene og stemplene legger seg ikke oppå hverandre («IKKBONKG» er borte).
+- [x] Blodet på glasset renner som blod: buktende, smalner, perler seg og tørker ovenfra.
+- [x] Hårrullene og annen pynt sitter på hodet i alle retninger og på alle tegningene. Kontrollene fra GRAFIKKLEVERANSE.md: hjortens kropp løftet over beina, frisyrene og ansiktstilbehøret til personalet rettet, trillepasienten, speilpasienten, hjertene og rammene var i orden.
+- [x] Snøfallet i tre lag med ekte fnugg, vind og kast, lys fra lampene og snø i lyktelyset.
+- [x] Snøen på bakken: snøbildet Tom leverte 27.9. over uteområdet, hvite topper, snøbånd og istapper på veggene, snø på bakken utenfor og kaldere lys. Uten bildet maler koden snøen selv.
+- [x] Det skjulte rommet finnes ikke før man bryter seg inn: gangen og rommet er ikke tegnet, opplyst eller vist på kartet, og sprekken er vanlig vegg med en svak flekk ny puss. Hint i lag (trekk, kalde drag, dumpt slag mot vanlige vegger, én boble, tipset første gang, monokkelen) og et innbrudd med brist, støv, lys og møbler som kommer fram.
+- [x] Svaret på om ChatGPT skal lage vegger og gulv: ja for veggene nå, gulvene inne først når gulvet tegnes med egne fliser. Uteflatene Tom leverte 27.9. er i spillet. Teksturløpet tar imot resten (tegneliste 11 og 12).
+- [x] Nye fiender: Skinnlauget av 1887 (Lærlingen, Klokkeren, Holdningssøsteren og minisjefen Oldermann Nålepute), havet under huset (Avløpsarmen, Kapellanen og Draugpleieren) og sjefen Kraken. Tegnet i kode, med tegneliste 13 til ChatGPT.
+- [x] Tomrom inne ser ikke lenger ut som mørke rom (murfronter i stedet for panel og puss), og gangene har små taklamper i 3D.
+- [ ] Tom: bestill prøven i tegneliste 11 (panel, fliser, mur, tapet og stein) og vis den til Claude før resten. Liste 12 (gulvene inne) venter på egne gulvfliser. Liste 13 (de nye fiendene) når det passer.
+- [ ] Tom: prøv de nye fiendene. Skinnlauget fra etasje 3 (Oldermannen som minisjef fra etasje 2), havet fra etasje 3. Er bukket og bjella tydelige varsler, kan dagsorden leses i farten på telefon, og er tonen riktig?
+- [ ] Tom: er flekken ved sprekken for svak på telefon? Styrken står i Skjult.flekk i 48_skjult.js.
+- [ ] Claude, senere: håndboka rekker under skjermkanten på liggende telefon (844 x 390) på alle sider (fantes før runde 5).
+- [ ] Claude, senere: gulvene inne med egne fliser (B5 i planen), så liste 12 kan bestilles. Biter (Particles) også når hekken eller krattet slås inn ute; de ble svarte før blekkpartiklene kom, og nå har de farge.
+- [ ] Tom: er varslene passe sterke og tydelige? Se bildene 46_varsel_* og 49_nedslag_*. Styrken kan justeres i Blekk.
+- [ ] Tom: er det nok snø på telefonen, eller skal det være mer? Mengden står i SNO_BUDSJETT i 47_sno.js.
+- [ ] Claude, senere: i 2D med lys blir varsler ved lamper og ved pasienten bleke, og strømgnister og lyn synes dårlig på lyse gulv. Kan løses ved å tegne varslene etter lysgangingen.
+- [ ] Claude, senere: resten av A7 (halvmåne-shader på huggene, stråler som bånd, fartsstrek på prosjektiler, ANIM-oppføringer så ChatGPT kan levere ark), starBurst som bruker materialet om igjen, og større marger i partikkelarket hvis nabotegningen synes rundt små partikler på telefon.
+- [ ] Claude, senere: eyeliner fra siden stikker foran ansiktet (tegningen har to øyne), og liket av menn i morgenkåpe viser ikke pynten.
+- [ ] Claude, senere: blodet på glasset kan tørke mot brunrødt i den ledige blå kanalen, og snø på hoder og ting, fotspor, knirkende fottrinn og frost på glasset (C9 i planen).
+- [ ] Claude, senere: flere eldre testdeler venter i sanntid (wait_for_timeout før en sjekk på skade eller tid). De bør vente på G.time. Morbidium-sjekken i del 28 er rettet (testpytten får kort liv og testen venter til pytten og gløden er borte).
 ## Utegrafikk 2026-09-27
 - [x] Finne grafikk som den gamle manifestkontrollen overså: gran og uteflater.
 - [x] Lage og koble inn 14 nye PNG-er til hage, Nattskogen og snødekke.
@@ -9,7 +34,7 @@
 
 ## Grafikkleveranse 2026-09-26
 - [x] Alle bestillingene i de ti tegnelistene levert. 544 av 544 manifestbilder, ingen manglende delark.
-- [ ] Claude: kontroller Den hvite hjortens kropp mot hals og animerte bein i spillet. Se GRAFIKKLEVERANSE.md for konkret festepunkt og øvrig visuell kontroll.
+- [x] Claude: kontroller Den hvite hjortens kropp mot hals og animerte bein i spillet. Gjort i runde 5: kroppen lå for lavt og er løftet .8 når bildet finnes. De andre kontrollene (trillepasienten, speilpasienten, hjerter og rammer, hatter, hår og ansiktstilbehør) er også gjort, se runde 5 over.
 
 ## Venter på Tom
 - [ ] Spille prototypen og si hva som føles feil i utseende og kamp.
@@ -41,7 +66,7 @@ Tom sendte et bilde av et HD-2D-spill og ba om å undersøke bedre grafikk med 2
 - [ ] Tom: er gloriene og tilt-shiften passe sterke? Før og etter ble sendt i samtalen (for_etter_pc.jpg og for_etter_mobil.jpg). Styrken står i Glorie.STYRKE og NIVA.tilt.
 - [ ] Tom: figurene kaster nå måneskygge etter hele tegningen, som tegningen er ment. Det koster noen ekstra tegnekall per figur på telefon. Si fra om det hakker på mobilen (testmodus viser bilder i sekundet).
 - [ ] Tom: kråka og koret svever nå synlig, og små fiender hopper. Før holdt en feil dem på gulvet. Si om det ser riktig ut.
-- [ ] Tom: skal hemmelige rom skjules på kartene til de er funnet?
+- [x] Tom: skal hemmelige rom skjules på kartene til de er funnet? Gjort i runde 5: de synes ikke før veggen er slått inn, men kartpillen og plantegningen gir en stiplet anelse.
 - [ ] Tom: skal «Enkel grafikk» også slå av regn, snø og ildfluer, og skal «Lys og skygge» av også slå av glød og tilt-shift? I dag gjør de ikke det.
 - [ ] Claude, senere: gloriene tegnes som punkter, og en glorie forsvinner brått når midten går ut av skjermkanten. Kan løses med små flater i stedet for punkter.
 - [ ] Claude, senere: i TV-modus laster tilbake på tittelen spillet én gang til rett etter at siden er lastet på nytt (nettleseren lar ikke siden fange et steg fra før omlastingen).

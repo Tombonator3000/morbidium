@@ -121,7 +121,9 @@ async def main():
           const r = G.F.rooms.filter(r => r.role === 'combat').sort((a, b) => b.w * b.h - a.w * a.h)[0]; const c = freeSpot(r.x + r.w / 2, r.z + r.h / 2, 3); P.x = c.x; P.z = c.z; R.snapCamera(P.x, P.z);
           const types = ['tvang', 'byrakrat', 'narkose', 'rotte', 'oyeblomst']; types.forEach((t, i) => { const a = i / types.length * Math.PI * 2, s = freeSpot(P.x + Math.sin(a) * 3.2, P.z + Math.cos(a) * 3.2, 2); spawnEnemy(t, s.x, s.z, false, 3); }); }""")
         await pg.wait_for_timeout(1400); await pg.screenshot(path='/tmp/e_8fiender.png')
-        await pg.wait_for_timeout(5000); await pg.screenshot(path='/tmp/e_9fiender_kamp.png')
+        # til fiendene har rukket å slå: spilletid og ikke sanntid, for programvaregrafikken på en travel maskin kan gå på en åttendedel av full fart
+        await pg.evaluate("async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 6 && G.player.hp >= 400 && performance.now() - t0 < 90000) await new Promise(r => setTimeout(r, 100)); }")
+        await pg.screenshot(path='/tmp/e_9fiender_kamp.png')
         st = await pg.evaluate("() => ({ n: MORBIDIUM.enemies.filter(e => e.alive).length, types: [...new Set(MORBIDIUM.enemies.map(e => e.type))], hp: Math.round(MORBIDIUM.player.hp), gas: MORBIDIUM.zones.filter(z => z.kind === 'gas').length })")
         sjekk('nye fiender lever og rotter kom i flokk', st['n'] >= 7 and len(st['types']) == 5, st)
         sjekk('fiendene gjorde skade', st['hp'] < 400, st['hp'])
@@ -302,7 +304,7 @@ async def main():
             for side in range(await pg.evaluate("(k) => hbSider(HANDBOK[k])", k)):
                 if side: await pg.click('#hNext'); await pg.wait_for_timeout(150)
                 kap.append(await pg.evaluate(HB_PLASS))
-        sjekk('pasienthåndboka har ti kapitler med fiendeindeks, og alle sidene får plass', nkap == 10 and len(kap) == 18 and all(kap), kap)
+        sjekk('pasienthåndboka har ti kapitler med fiendeindeks, og alle sidene får plass', nkap == 10 and len(kap) >= 18 and all(kap), kap)
         await pg.click('[data-close]'); await pg.wait_for_timeout(300)
         await pg.click('#tArch'); await pg.wait_for_timeout(400)
         a = await pg.evaluate("() => ({ mapper: document.querySelectorAll('.mappe').length, portrett: document.querySelectorAll('.mappe canvas').length })")
@@ -577,7 +579,8 @@ async def main():
                 if side: await pg.click('#hNext'); await pg.wait_for_timeout(150)
                 smal.append(await pg.evaluate(HB_PLASS))
         await pg.screenshot(path='/tmp/e_10indeks_smal.png')
-        sjekk('fiendeindeksen får plass på smal skjerm, to kort per side', len(smal) == 16 and all(smal), smal)
+        forvent = await pg.evaluate("() => [8, 9].reduce((a, k) => a + Math.ceil(HANDBOK[k].indeks.length / 2), 0)")  # vokser når nye fiender kommer i indeksen
+        sjekk('fiendeindeksen får plass på smal skjerm, to kort per side', len(smal) == forvent and forvent >= 16 and all(smal), (forvent, smal))
         sjekk('ingen konsollfeil (smal indeks)', not pg.errs, pg.errs[:6])
         await pg.close()
 
@@ -724,7 +727,7 @@ async def main():
         # 28) Effekter og shadere: sjokkbølger, zoom, negativ og lyn i etterbehandlingen, glød fra ting, lynet, teslaspolen, regnringer og drømmesløret
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await start_lop(pg)
-        ef = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, u = R.post.uniforms, ut = {};
+        ef = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, u = R.post.uniforms, ut = {};
           rolig(); P.hp = P.maxHp = 9999;
           // etterbehandlingen: alt slår inn neste bilde og dør ut av seg selv
           R.sjokk(P.x, P.z, 1.2); R.zoomStot(P.x, P.z, .8); R.negativ(.1); R.fx.lyn = 1; await vent(120);
@@ -734,15 +737,19 @@ async def main():
           R.distortOn = false; R.flashOn = false; R.sjokk(P.x, P.z, 1); R.zoomStot(P.x, P.z, 1); R.negativ(); R.fx.lyn = 1; await vent(120);
           ut.skaansom = u.uSjokk.value[0].w === 0 && u.uZoom.value.z === 0 && u.uNeg.value === 0 && u.uLyn.value === 0; R.distortOn = true; R.flashOn = true; await vent(900);
           // glød: alle typene lages, og tingene med ild, damp eller lys får sine når etasjen bygges
-          ut.typer = Object.keys(GLOD_TYPER).filter(t => { const E = Glod.lag(P.x, .3, P.z, t, { liv: 1 }); return E && E.pts.parent; });
+          ut.typer = Object.keys(GLOD_TYPER).filter(t => { const E = Glod.lag(P.x, .3, P.z, t, { liv: 1 }); return E && E.pts.parent; }); ut.antall = Object.keys(GLOD_TYPER).length;
           const sett = new Set(); let kilder = 0, dekket = 0;
-          for (let d = 1; d <= 6; d++) { startFloor(d, false); await vent(80); for (const E of Glod.liste) sett.add(E.type); for (const o of G.props) if (['baal', 'vedovn', 'kjele', 'komfyr', 'gryte', 'candles', 'kjempeplante', 'lyktestolpe'].includes(o.kind)) { kilder++; if (Glod.liste.some(E => E.eier === o)) dekket++; } ut['glod' + d] = Glod.liste.every(E => !E.eier || G.props.includes(E.eier) || G.puddles.includes(E.eier)); }
+          for (let d = 1; d <= 6; d++) { startFloor(d, false); await vent(80); for (const E of Glod.liste) sett.add(E.type); for (const o of G.props) if (['baal', 'vedovn', 'kjele', 'komfyr', 'gryte', 'candles', 'kjempeplante', 'lyktestolpe'].includes(o.kind) && !o.skjult) { kilder++; /* ting i det skjulte rommet gløder først etter innbruddet */ if (Glod.liste.some(E => E.eier === o)) dekket++; } ut['glod' + d] = Glod.liste.every(E => !E.eier || G.props.includes(E.eier) || G.puddles.includes(E.eier)); }
           ut.sett = [...sett]; ut.kilder = kilder; ut.dekket = dekket;
-          const p = addPuddle(P.x, P.z, 'morb', 1, 3); ut.morbPytt = !!(p && p.glod && p.glod.pts); await spill(3.6); await vent(300); ut.morbBorte = !Glod.liste.includes(p.glod);
+          // addPuddle slår sammen med en lilla pytt i nærheten og beholder den lengste levetiden, så testpytten får kort liv selv,
+          // og vi venter til både pytten og gløden er borte (høyst 8 s spilltid), i stedet for en fast ventetid
+          const p = addPuddle(P.x, P.z, 'morb', 1, 3); ut.morbPytt = !!(p && p.glod && p.glod.pts); if (p) p.life = Math.min(p.life, 3);
+          { const gm0 = G.time, rt0 = performance.now(); while (p && (G.puddles.includes(p) || Glod.liste.includes(p.glod)) && G.time - gm0 < 8 && performance.now() - rt0 < 120000) await vent(50);
+            ut.morbBorte = !!p && !G.puddles.includes(p) && !Glod.liste.includes(p.glod); if (!ut.morbBorte) ut.morbInfo = { spilltid: +(G.time - gm0).toFixed(2), liv: p && +p.life.toFixed(2), iPytter: !!p && G.puddles.includes(p), iGlod: !!p && Glod.liste.includes(p.glod), state: G.state }; }
           R.safe = true; ut.enkel = Glod.lag(P.x, 0, P.z, 'gnister') === null && Lyn.slag(0, 0, 0, 1, 0, 1) === null; R.safe = false;
           // lynet: varsel på bakken, så nedslag som treffer fienden der, og deg om du står der
           startFloor(1, false); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2;
-          const s1 = freeSpot(P.x + 3, P.z, 3), e = spawnEnemy('pleier', s1.x, s1.z, false, 1); e.hp = e.max = 500; e.stun = 99;
+          const s1 = freeSpot(P.x + 3, P.z, 3), e = spawnEnemy('pleier', s1.x, s1.z, false, 1); e.hp = e.max = 500; e.stun = 99; e.mArmor = 1; // av og til blir den en pansret mester (Oppskrift.mester) og tar da 34 og ikke 45
           let lyn = 0; const _sl = Lyn.slag; Lyn.slag = function () { lyn++; return _sl.apply(this, arguments); };
           const hp0 = P.hp; Uvaer.varsel(e.x, e.z); Uvaer.varsel(P.x, P.z); await spill(1.3);
           ut.lyn = lyn >= 2 && e.hp <= 455 && P.hp < hp0 - 5 && G.fxl.some(f => f.max === 20); ut.lynInfo = [lyn, Math.round(e.hp), Math.round(hp0 - P.hp), G.fxl.length];
@@ -757,7 +764,7 @@ async def main():
           return ut; }""")
         sjekk('sjokkbølge, zoomslag, negativ og lynblink slår inn i etterbehandlingen og dør ut av seg selv', ef['paa'] and ef['av'], ef)
         sjekk('uten forvrengning og hvite glimt blir sjokkbølger, zoom, negativ og lynblink borte', ef['skaansom'], ef)
-        sjekk('alle typene glød (gnister, glør, damp, røyk, sporer, Morbidium, møll og kombo) lages på skjermkortet', len(ef['typer']) == 8, ef['typer'])
+        sjekk('alle typene glød (gnister, glør, damp, røyk, sporer, Morbidium, møll, kombo og de som kommer til) lages på skjermkortet', len(ef['typer']) == ef['antall'] >= 8, ef['typer'])
         sjekk('bål, ovner, kjeler, gryter, stearinlys, kjempeplanter og lyktestolper gløder og ryker, og gløden følger etasjen', ef['kilder'] > 0 and ef['dekket'] == ef['kilder'] and all(ef['glod%d' % d] for d in range(1, 7)), ef)
         sjekk('Morbidium stiger fra lilla pytter og forsvinner med pytten, og enkel grafikk lager ingen glød eller lyn', ef['morbPytt'] and ef['morbBorte'] and ef['enkel'], ef)
         sjekk('lynet varsler på bakken, slår ned og treffer fienden og pasienten som står der, og svir gulvet', ef['lyn'], ef)
@@ -771,7 +778,7 @@ async def main():
         # 29) Kombo: treffkjeden med nivåer, flerdrap, overkill, miljødrap, perfekt unnvikelse, tredje slag, kortkjede, sjefdrap og fanfarer
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await start_lop(pg, url=URL + '?2d')
-        ko = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, T = Kombo.tall, ut = {};
+        ko = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, T = Kombo.tall, ut = {};
           Sound.init(); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.face = 0;
           const lag = (dx, dz, hp = 1e6) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy('pleier', s.x, s.z, false, 1); e.hp = e.max = hp; e.stun = 99; e.state = 'chase'; return e; };
           // treffkjeden: 22 treff gir tredje nivå, telleren og den brennende kanten
@@ -841,7 +848,7 @@ async def main():
           addPuddle(P.x + .8, P.z, 'wet', 1.2, 60); await vent(500); ut.speil = R.water.u.uLysF.value.some(v => v.x + v.y + v.z > 0);
           ut.taake = !D3.on || !D3.q.taake || (!!D3.taakeLys && D3.taakeLys.f.value.some(v => v.x + v.y + v.z > 0));
           // takstøv inne når det smeller, og det lander og blir borte
-          Dybde.stovT = 0; R.shake(.8); ut.stov = Dybde.stov.length > 0; await spill(2.6); ut.stovBorte = Dybde.stov.length === 0;
+          Dybde.stovT = 0; R.shake(.8); ut.stov = Dybde.stov.length > 0; await spill(3.2); ut.stovBorte = Dybde.stov.length === 0;
           // kameradykk når sjefen kommer, og ikke uten skjermristing
           spawnBoss(G.depth, P.x + 3, P.z - 2); await vent(900); ut.dykk = R.camera.zoom > 1.04 && R.kam.holdT > 0;
           if (G.boss) killEntity(G.boss, {}); R.kam.hold = R.kam.kick = R.kam.holdT = 0; await vent(900); R.shakeOn = false; R.kamZoom(.2, 2); await vent(500); ut.dykkAv = Math.abs(R.camera.zoom - 1) < .01; R.shakeOn = true; R.kam.hold = R.kam.holdT = 0;
@@ -1996,6 +2003,1957 @@ async def main():
         sjekk('et panel som er åpent når etasjen byttes, lukkes, og kartets lerret frigjøres', gj['kart'] and gj['lukket'], gj)
         sjekk('lappen for å snakke ligger over kortene i TV-modus', gj['lapp']['over'], gj['lapp'])
         sjekk('ingen konsollfeil (etter flettingen)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 50) Teksturer fra ChatGPT
+        #     Bildeløpet for teksturer (ren Python), veggene og bakken ute tar bildet når det finnes og maler ellers som før,
+        #     drømmegulvet er mindre på telefon, og tegneliste 11 og 12 har alle teksturene som mangler
+        import base64, io, json, re, tempfile
+        from urllib.parse import unquote, urlparse
+        from PIL import Image
+        ROT50 = pathlib.Path(unquote(urlparse(URL3D).path)).parent.parent  # roten til bygget som testes
+        sys.path.insert(0, str(ROT50 / 'tools')); import behandle_bilder as BB
+        man = json.loads((ROT50 / 'assets' / 'manifest.json').read_text(encoding='utf-8'))
+        def proveflate(w, h, farger, hard=True):
+            """en syntetisk tekstur: striper i farger, med en hard søm (venstre halvdel mørk, høyre lys) og litt gjennomsiktighet"""
+            im = Image.new('RGBA', (w, h), farger[0] + (255,)); px = im.load()
+            for y in range(h):
+                for x in range(w):
+                    c = farger[(y * len(farger)) // h]; k = (.55 + .45 * x / w) if hard else 1; s = ((x // 24 + y // 24) % 2) * 14
+                    px[x, y] = (min(255, int(c[0] * k) + s), min(255, int(c[1] * k) + s), min(255, int(c[2] * k) + s), 255)
+            for y in range(40, 90):
+                for x in range(40, 90): px[x, y] = (0, 0, 0, 0)
+            return im
+        with tempfile.TemporaryDirectory() as tmp:
+            sti = pathlib.Path(tmp) / 'gulv_planker.png'; rå = proveflate(1024, 1024, [(40, 70, 30), (60, 100, 40), (30, 60, 24)]); rå.save(sti)
+            ut = BB.behandle(sti, man['gulv_planker']); for_ = BB.saum(rå.convert('RGB').resize((512, 512), Image.LANCZOS), 'x')[0]; etter = BB.saum(ut, 'x')[0]
+            sjekk('bildeløpet: et gulv med hard søm blir 512 x 512 uten gjennomsiktighet, og sømmen minst halvert', ut.size == (512, 512) and ut.mode == 'RGB' and etter <= for_ * .5, (ut.size, ut.mode, round(for_, 1), round(etter, 1)))
+            sti = pathlib.Path(tmp) / 'vegg_panel.png'; proveflate(1536, 1024, [(220, 212, 173)] * 5 + [(111, 138, 85)] * 4 + [(59, 51, 34)], False).save(sti)
+            vut = BB.behandle(sti, man['vegg_panel'])
+            sjekk('bildeløpet: en vegg på 1536 x 1024 til en vegg på 2,3 meter blir 442 x 294', vut.size == (442, 294), vut.size)
+            def data_url(im):
+                b = io.BytesIO(); im.save(b, 'WEBP', quality=85); return 'data:image/webp;base64,' + base64.b64encode(b.getvalue()).decode()
+            panel_url, bakke_url = data_url(vut), data_url(ut)
+        # de genererte listene: alle teksturer som ikke er levert, står i liste 11 og 12, med filnavn, nøkkel, referanse og prompt
+        tl = ROT50 / 'tegnelister'; teks = [k for k, m in man.items() if m.get('flis')]
+        levert = {p.stem for p in (ROT50 / 'assets' / 'ferdig').glob('*.*')} if (ROT50 / 'assets' / 'ferdig').exists() else set()
+        tekst = ''.join((tl / f).read_text(encoding='utf-8') for f in ('11_vegger.md', '12_gulv.md') if (tl / f).exists())
+        poster = re.findall(r'(?m)^## (1[12][a-z])\. .*\n\nFilnavn: `([a-z0-9_]+)\.png`\n\nGir: `([a-z0-9_]+)`\n\nBrukes i: .*\n\nReferanse \(last opp sammen med prompten\): `tegnelister/referanse/ref_\2\.png`\n\n!\[[^\]]*\]\(referanse/ref_\2\.png\)\n\n```text\n(?:FLOOR|WALL|GROUND) texture \2: ', tekst)
+        mangler = sorted(set(teks) - levert)
+        sjekk('tegneliste 11 og 12 har hver tekstur som mangler, med filnavn, nøkkel, referansebilde og prompt', len(teks) == 30 and sorted(p[1] for p in poster) == mangler and all(p[1] == p[2] and (tl / 'referanse' / f'ref_{p[1]}.png').exists() for p in poster), (len(teks), len(poster), len(mangler)))
+        stil = re.search(r'## Stilblokk for teksturer.*?```text\n(.*?)\n```', tekst, re.S)
+        sjekk('stilblokken for teksturer ber om et helt dekket bilde, ikke gjennomsiktig bakgrunn', bool(stil) and 'OPAQUE' in stil.group(1) and 'TRANSPARENT background' not in stil.group(1))
+        les = (tl / 'LESMEG.md').read_text(encoding='utf-8'); csvn = [r for r in (tl / 'tegneliste.csv').read_text(encoding='utf-8').splitlines()[1:] if r.split(';')[2:3] == ['tekstur']]
+        sjekk('LESMEG og regnearket har liste 11 og 12', '11_vegger.md' in les and '12_gulv.md' in les and len(csvn) == len(mangler), len(csvn))
+
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg)
+        tk = await pg.evaluate("""async ([panel, bakke]) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const bygg = async d => { G.run.dromVent = 0; startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(150); };
+          const vegg = st => { const m = Paint.mesh.vegger.find(v => v.userData.veggStil === st); return m && m.material.map; }, mål = t => t && [t.image.width, t.image.height, t.fraBilde || ''];
+          const last = (k, src) => new Promise(r => { SPRITES[k] = src; const im = Art.img[k] = new Image(); im.onload = im.onerror = () => r(im.naturalWidth); im.src = src; });
+          delete Art.img.gulv_gress; // Toms gressbilde (levert 27.9.) tas ut, så bakken males av koden
+          await bygg(2); ut.malt = mål(vegg('panel')); await bygg(1); ut.maltBakke = mål(Paint.mesh.bakke.material.map); ut.vaer1 = G.F.vaer;
+          ut.lastet = [await last('vegg_panel', panel), await last('gulv_gress', bakke)];
+          await bygg(2); const t = vegg('panel'); ut.panel = mål(t); ut.rep = t && +t.repeat.x.toFixed(4);
+          await bygg(3); ut.panel3 = mål(vegg('panel')); // Underetasjen har egne farger (vegg_panel_3), og uten det bildet maler koden
+          await bygg(1); const bk = Paint.mesh.bakke.material.map; ut.bakke = mål(bk); ut.bakkeRep = +(bk.repeat.x * 4 - G.F.W).toFixed(2);
+          const c0 = R.coarse; R.coarse = true; await bygg(1); ut.bakkeTlf = mål(Paint.mesh.bakke.material.map);
+          // en drøm på telefon: gulvet er høyst 1200 punkter bredt, kartet får det fortsatt, og veggene beholder drømmens farger
+          G.run.dromVent = 2; startFloor(2, false); await vent(200); ut.drom = !!G.drom; const gm = Paint.mesh.gulv.material.map.image; ut.dromGulv = gm.width; ut.dromKart = Kart.gulvBilde() === gm;
+          ut.dromVegger = Paint.mesh.vegger.filter(v => v.material.map.fraBilde).length; R.coarse = c0; Drom.hopp(); await vent(200);
+          // et bilde som ikke er pakket ut ennå, males først og byttes når det kommer; et ødelagt bilde males av koden
+          const ny = document.createElement('canvas'); ny.width = 300; ny.height = 200; const ng = ny.getContext('2d'); ng.fillStyle = '#' + (Math.random() * 0xffffff | 0).toString(16).padStart(6, '0'); ng.fillRect(0, 0, 300, 200);
+          SPRITES.vegg_mur = ny.toDataURL(); delete Art.img.vegg_mur; const tm = Paint.wallTex(G.th, 'mur', G.F); ut.sakte = [tm.image.width]; // en ny adresse, så nettleseren ikke har bildet ferdig fra før
+          for (let i = 0; i < 100 && !tm.fraBilde; i++) await vent(50); ut.sakte.push(tm.image.width, tm.fraBilde || ''); tm.dispose();
+          SPRITES.vegg_tre = 'data:image/webp;base64,AAAA'; delete Art.img.vegg_tre; const tf = Paint.wallTex(G.th, 'tre', G.F); await vent(300); const tf2 = Paint.wallTex(G.th, 'tre', G.F);
+          ut.odelagt = [tf.image.width, !!tf.fraBilde, tf2.image.width, !!tf2.fraBilde]; tf.dispose(); tf2.dispose(); delete SPRITES.vegg_mur; delete SPRITES.vegg_tre;
+          // lette teksturer maler som før; Enkel grafikk tar bildet og bygger uten feil
+          R.lowTex = true; await bygg(2); ut.lowTex = mål(vegg('panel')); R.lowTex = false;
+          const s = G.meta.settings; s.simple = true; applySettings(); await bygg(2); ut.enkel = mål(vegg('panel')); s.simple = false; applySettings(); await bygg(2);
+          return ut; }""", [panel_url, bakke_url])
+        sjekk('uten bilder er veggen og bakken malt som før (256 punkter bred)', tk['malt'][:2] == [256, 296] and tk['malt'][2] == '' and tk['maltBakke'] == ([512, 512, ''] if tk.get('vaer1') == 'sno' else [256, 256, '']), [tk['malt'], tk['maltBakke'], tk.get('vaer1')])
+        sjekk('panelveggen fra bildet er 442 x 294 og gjentas hver 3,45 rute (repeat .5797)', tk['lastet'][0] == 442 and tk['panel'] == [442, 294, 'vegg_panel'] and abs(tk['rep'] - .5797) < .001, [tk['panel'], tk['rep']])
+        sjekk('i Underetasjen maler koden panelveggen når vegg_panel_3 mangler', tk['panel3'][0] == 256 and tk['panel3'][2] == '', tk['panel3'])
+        sjekk('bakken i Parken fra bildet er 512 punkter over 4 x 4 ruter, 256 på telefon', tk['bakke'] == [512, 512, 'gulv_gress'] and tk['bakkeRep'] == 48 and tk['bakkeTlf'] == [256, 256, 'gulv_gress'], [tk['bakke'], tk['bakkeRep'], tk['bakkeTlf']])
+        sjekk('en drøm på telefon har et gulv på høyst 1200 punkter, kartet får det, og veggene tar ikke bildene', tk['drom'] and 0 < tk['dromGulv'] <= 1200 and tk['dromKart'] and tk['dromVegger'] == 0, [tk['dromGulv'], tk['dromKart'], tk['dromVegger']])
+        sjekk('et bilde som pakkes ut, males først og byttes når det kommer; et ødelagt bilde males av koden', tk['sakte'] == [256, 442, 'vegg_mur'] and tk['odelagt'] == [256, False, 256, False], [tk['sakte'], tk['odelagt']])
+        sjekk('lette teksturer maler veggen, og Enkel grafikk tar bildet', tk['lowTex'][0] == 256 and tk['lowTex'][2] == '' and tk['enkel'] == [442, 294, 'vegg_panel'], [tk['lowTex'], tk['enkel']])
+        await pg.screenshot(path='/tmp/e_50_2d.png')
+        sjekk('ingen konsollfeil (teksturer i 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: rommene får samme tekstur i sine egne materialer, og en etasje med bilder bygget på nytt holder grafikkminnet i ro
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await pg.goto(URL3D); await pg.wait_for_timeout(2500); await pg.evaluate("() => localStorage.clear()")
+        await start_lop(pg, url=URL3D)
+        t3 = await pg.evaluate("""async ([panel, bakke]) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          const bygg = async d => { G.run.dromVent = 0; startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(300); };
+          const last = (k, src) => new Promise(r => { SPRITES[k] = src; const im = Art.img[k] = new Image(); im.onload = im.onerror = () => r(im.naturalWidth); im.src = src; });
+          await last('vegg_panel', panel); await last('gulv_gress', bakke); await bygg(2); await bygg(1);
+          const mem = () => R.renderer.info.memory; await bygg(2); const m0 = [mem().textures, mem().geometries];
+          const v = Paint.mesh.vegger.find(v => v.userData.veggStil === 'panel'); ut.d3 = D3.on; ut.map = v && v.material.map && v.material.map.fraBilde; ut.type = v && v.material.type;
+          for (const d of [1, 2, 1, 2]) await bygg(d); const m1 = [mem().textures, mem().geometries]; ut.minne = [m1[0] - m0[0], m1[1] - m0[1]]; return ut; }""", [panel_url, bakke_url])
+        sjekk('3D: panelveggen bruker bildet i rommets eget materiale', t3['d3'] and t3['map'] == 'vegg_panel' and t3['type'] != 'MeshBasicMaterial', t3)
+        sjekk('3D: etasjer med bilder bygget på nytt holder grafikkminnet i ro', t3['minne'][0] <= 6 and t3['minne'][1] <= 12, t3['minne'])
+        await pg.screenshot(path='/tmp/e_50_3d.png')
+        sjekk('ingen konsollfeil (teksturer i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 51) Det skjulte rommet
+        #     Gangen og rommet bak den sprukne veggen er ikke der før veggen er slått inn: sprekken er vanlig vegg, gulvet, lysene og tingene
+        #     bak står skjult, kartet viser det ikke gjennom veggen, og hendelser, dekaler og lyn havner ikke der. Et tungt slag åpner det
+        SKJ51 = """() => { const G = MORBIDIUM; let s0 = null;
+          for (let s = 1; s < 400; s++) { const F = generateFloor(s * 7919, 2, {}); if (F.rooms.some(r => r.role === 'cursed') && F.rooms.some(r => r.role === 'offer')) { s0 = s; G.run.seed = s * 7919 - 2 * 7919; startFloor(2, false); break; } }
+          const F = G.F, P = G.player; for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; G.rooms.forEach(s => s.cleared = true); Bygg.alt();
+          const c = Spesial.cracks[Math.floor(Spesial.cracks.length / 2)], hemm = F.rooms.find(r => r.role === 'secret'), par = F.rooms[hemm.parent];
+          const tx = Math.floor(c.x), tz = Math.floor(c.z); let ix = tx, iz = tz; if (tz === par.z - 1) iz = tz + 1; else if (tz === par.z + par.h) iz = tz - 1; else if (tx === par.x - 1) ix = tx + 1; else ix = tx - 1;
+          P.x = ix + .5; P.z = iz + .5; P.face = Math.atan2(c.x - P.x, c.z - P.z); P.hp = P.maxHp; R.snapCamera(P.x, P.z); G.seen.fill(0); return s0; }"""
+        # tilstanden: hva som synes, lysene i rommet, tellingen av firkanter per del og kartet
+        TILST51 = """() => { const G = MORBIDIUM, F = G.F, PM = Paint.mesh, hemm = F.rooms.find(r => r.role === 'secret'), S = F.skjult;
+          const del = d => [...(PM.vegger || []), ...(PM.toppEkstra || [])].filter(m => m.userData.del === d);
+          const lysSum = L => { const c = L.material.color; return c.r + c.g + c.b; };
+          const ting = G.props.filter(o => o.room === hemm.id), pd = Items.pedestals.filter(p => Math.floor(p.x) >= hemm.x && Math.floor(p.x) < hemm.x + hemm.w && Math.floor(p.z) >= hemm.z && Math.floor(p.z) < hemm.z + hemm.h);
+          const fyll = R.levelL.children.filter(L => L.userData.fyll && Math.floor(L.position.x) >= hemm.x && Math.floor(L.position.x) < hemm.x + hemm.w && Math.floor(L.position.z - .3) >= hemm.z && Math.floor(L.position.z - .3) < hemm.z + hemm.h);
+          const lys = [...ting.filter(o => o.light).map(o => o.light), ...pd.filter(p => p.light).map(p => p.light), ...fyll];
+          let synlige = 0, skjulte = 0; for (let i = 0; i < F.tiles.length; i++) if (F.tiles[i]) { if (S && S[i]) skjulte++; else synlige++; }
+          let iSett = 0; if (S) for (let i = 0; i < S.length; i++) if (S[i] && G.seen[i]) iSett++;
+          return { harSkjult: !!S, gSkjult: !!G.skjult, gulvSkjult: PM.gulvSkjult ? PM.gulvSkjult.visible : null, gulvFirk: PM.gulv.geometry.attributes.position.count / 6, synlige, skjulte,
+            aapen: del('aapen').map(m => m.visible), lukket: del('lukket').concat(del('sprekk')).map(m => m.visible), nSprekk: del('sprekk').length,
+            veggPaaSprekk: F.crack.every(i => Paint.wallH[i] > 0), ting: ting.length, tingSynlig: ting.filter(o => o.g.visible).length, pd: pd.length, pdSynlig: pd.filter(p => p.g.visible).length,
+            lys: lys.length, lysSum: +lys.reduce((a, L) => a + lysSum(L), 0).toFixed(3), lysMin: lys.length ? +Math.min(...lys.map(lysSum)).toFixed(3) : 0, iSett, secrets: G.run.secrets || 0,
+            block: F.crack.map(i => F.block[i]), brutt: Spesial.cracks.every(c => c.broken), gTid: +G.time.toFixed(2) }; }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        s51 = await pg.evaluate(SKJ51)
+        await pg.wait_for_timeout(600)
+        t0 = await pg.evaluate(TILST51)
+        sjekk('det skjulte: generatoren merker gangen og rommet, og etasjen bygges lukket (skjult gulv, åpne deler skjult, sprekken er vegg)', s51 is not None and t0['harSkjult'] and t0['gSkjult'] and t0['gulvSkjult'] is False and t0['aapen'] and not any(t0['aapen']) and t0['lukket'] and all(t0['lukket']) and t0['nSprekk'] >= 1 and t0['veggPaaSprekk'], t0)
+        sjekk('det skjulte: hovedgulvet har bare de synlige rutene', t0['gulvFirk'] == t0['synlige'] and t0['skjulte'] > 20, (t0['gulvFirk'], t0['synlige'], t0['skjulte']))
+        sjekk('det skjulte: tingene og glasset i rommet synes ikke, og lysene der er slukket', t0['ting'] > 0 and t0['tingSynlig'] == 0 and t0['pdSynlig'] == 0 and t0['lys'] >= 2 and t0['lysSum'] == 0, t0)
+        # to sekunder spilltid ved sprekken: ingen skjult rute kommer på kartet
+        sett = await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 2 && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 50));
+          let n = 0; for (let i = 0; i < G.skjult.length; i++) if (G.skjult[i] && G.seen[i]) n++; let naer = 0; for (let i = 0; i < G.seen.length; i++) if (G.seen[i]) naer++; return { n, naer, tid: +(G.time - g0).toFixed(2) }; }""")
+        sjekk('det skjulte: står du ved sprekken i to sekunder, kommer ingenting bak veggen på kartet', sett['n'] == 0 and sett['naer'] > 40 and sett['tid'] >= 2, sett)
+        steder = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, S = G.skjult, ut = { gang: 0, vegg: 0, iSkjult: 0 }; const akt = Hendelse.aktive; Hendelse.aktive = [];
+          for (const pl of ['gang', 'vegg']) for (let k = 0; k < 50; k++) { const st = Hendelse.finnSted(pl, () => (k + .5) / 50); if (!st) continue; ut[pl]++; const tz = Math.floor(pl === 'vegg' ? st.vz : st.z), i = tz * F.W + Math.floor(st.x); if (S[i] || (pl === 'vegg' && S[i - F.W])) ut.iSkjult++; }
+          Hendelse.aktive = akt; let lyn = 0; for (let k = 0; k < 400; k++) { const i = Math.floor(Math.random() * F.tiles.length); if (S[i] && gulvSynlig(i)) lyn++; }
+          const st0 = Dybde.stov.length; Dybde.takstov(F.crack[0] % F.W + .5, (F.crack[0] / F.W | 0) + .5, 40, 4); const stov = Dybde.stov.slice(st0), stovSkjult = stov.filter(k => S[Math.floor(k.z) * F.W + Math.floor(k.x)]).length;
+          return Object.assign(ut, { lyn, stov: stov.length, stovSkjult, pytt: !!addPuddle(F.crack[0] % F.W + .5, (F.crack[0] / F.W | 0) + .5, 'wet', 1, 5) }); }""")
+        sjekk('det skjulte: hendelser (også ikke på sprekken), lyn, takstøv og pytter havner ikke bak veggen', steder['gang'] + steder['vegg'] > 0 and steder['iSkjult'] == 0 and steder['lyn'] == 0 and steder['stov'] > 0 and steder['stovSkjult'] == 0 and not steder['pytt'], steder)
+        kart = await pg.evaluate("""() => { const G = MORBIDIUM; visHeleKartet(); const t = Kart.tall()[0][1]; let n = 0; for (let i = 0; i < G.skjult.length; i++) if (G.skjult[i] && G.seen[i]) n++; const a = G.kartAnelse; Kart.apne(); const leg = [...document.querySelectorAll('#kartark .kleg li')].map(l => l.textContent); closePanel(); G.seen.fill(0); return { t, n, a, leg }; }""")
+        sjekk('det skjulte: hele kartet (kartpillen, plantegningen) gir 100 % uten rommet bak veggen, bare en anelse', kart['t'] == '100 %' and kart['n'] == 0 and kart['a'] and any('visket ut' in l for l in kart['leg']), kart)
+        await pg.evaluate("() => { const G = MORBIDIUM; G.kartAnelse = false; R.snapCamera(G.player.x, G.player.z); }")
+        await pg.wait_for_timeout(500); await pg.screenshot(path='/tmp/e_51_skjult_for.png')
+        # et tungt slag som i del 6: veggen faller, og innen halvannet sekund spilltid er rommet der, med lys
+        await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time; startSwing(true, 1); for (let i = 0; i < 400 && !Spesial.cracks.every(c => c.broken) && G.time - g0 < 5; i++) await new Promise(r => setTimeout(r, 50)); }""")
+        t1 = await pg.evaluate(TILST51)
+        await pg.evaluate("async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.5 && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 50)); }")
+        t2 = await pg.evaluate(TILST51)
+        sjekk('det skjulte: et tungt slag knuser veggen med en gang (c.broken, F.block, G.run.secrets)', t1['brutt'] and t1['secrets'] == 1 and not any(t1['block']) and not t1['gSkjult'], t1)
+        sjekk('det skjulte: etter innbruddet er gulvet, de åpne delene, tingene og glasset der, og lysene tent', t2['gulvSkjult'] is True and all(t2['aapen']) and not any(t2['lukket']) and t2['tingSynlig'] == t2['ting'] and t2['pdSynlig'] == t2['pd'] and t2['lysMin'] > 0, t2)
+        tenner = await pg.evaluate("() => MORBIDIUM.pickups.filter(k => k.kind === 'tooth' || k.kind === 'cons').length")
+        sjekk('det skjulte: tennene og pillen ligger der inne etter innbruddet', tenner >= 4, tenner)
+        await pg.wait_for_timeout(500); await pg.screenshot(path='/tmp/e_51_skjult_etter.png')
+        # firkantene: felles pluss lukket er det samme som et vanlig bygg der det skjulte er tomrom, og felles pluss åpen det samme som et bygg uten skjul
+        firk = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, PM = () => Paint.mesh, n = m => m.geometry.attributes.position.count / 6;
+          const tell = () => { const d = {}; for (const m of [PM().topp, ...(PM().toppEkstra || []), ...PM().vegger]) { const k = m.userData.del || ''; d[k] = (d[k] || 0) + n(m); } return d; };
+          const delt = tell(); const S = F.skjult;
+          const Fl = Object.assign({}, F, { tiles: F.tiles.map((t, i) => S[i] ? 0 : t), skjult: null }); Paint.level(Fl, G.th); const lukket = tell()[''];
+          const Fa = Object.assign({}, F, { skjult: null }); Paint.level(Fa, G.th); const aapen = tell()[''];
+          Paint.level(F, G.th); return { delt, lukket, aapen }; }""")
+        d = firk['delt']
+        sjekk('det skjulte: felles pluss lukket og felles pluss åpen gir like mange vegg- og toppfirkanter som vanlige bygg av hver', d.get('', 0) + d.get('lukket', 0) + d.get('sprekk', 0) == firk['lukket'] and d.get('', 0) + d.get('aapen', 0) == firk['aapen'] and d.get('aapen', 0) > 0, firk)
+        sjekk('ingen konsollfeil (det skjulte, 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: listene på sprekken er egne og forsvinner, tåka ligger ikke over det skjulte, og gulvet der blir toon som resten
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        await pg.evaluate(SKJ51)
+        await pg.wait_for_timeout(1500)
+        d3a = await pg.evaluate("""() => { const G = MORBIDIUM, S = G.skjult, PM = Paint.mesh, tm = D3.taakeMask; let taake = 0; if (tm) for (let i = 0; i < S.length; i++) if (S[i] && tm.image.data[i]) taake++;
+          return { on: D3.on, gulv: PM.gulvSkjult.material.type, synlig: PM.gulvSkjult.visible, taake, harTaake: !!tm, lister: (D3.sprekkDeler || []).length, listerSynlig: (D3.sprekkDeler || []).filter(m => m.visible).length }; }""")
+        await pg.screenshot(path='/tmp/e_51_skjult_for3d.png')
+        await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time; startSwing(true, 1); for (let i = 0; i < 600 && !Spesial.cracks.every(c => c.broken) && G.time - g0 < 5; i++) await new Promise(r => setTimeout(r, 50));
+          const g1 = G.time, t0 = performance.now(); while (G.time - g1 < 1.5 && performance.now() - t0 < 40000) await new Promise(r => setTimeout(r, 50)); }""")
+        d3b = await pg.evaluate("""() => { const G = MORBIDIUM, F = G.F, PM = Paint.mesh, tm = D3.taakeMask; let taake = 0; if (tm) for (let i = 0; i < F.tiles.length; i++) if (F.skjult[i] && tm.image.data[i]) taake++;
+          return { skjult: !!G.skjult, synlig: PM.gulvSkjult.visible, taake, listerSynlig: (D3.sprekkDeler || []).filter(m => m.visible).length, secrets: G.run.secrets || 0 }; }""")
+        await pg.screenshot(path='/tmp/e_51_skjult_etter3d.png')
+        sjekk('det skjulte i 3D: gulvet bak er toon og skjult, tåka ligger ikke der, og listene på sprekken er egne', d3a['on'] and d3a['gulv'] == 'MeshToonMaterial' and d3a['synlig'] is False and d3a['taake'] == 0 and d3a['lister'] == d3a['listerSynlig'], d3a)
+        sjekk('det skjulte i 3D: etter innbruddet er gulvet der, tåka dekker det, og listene på sprekken er borte', not d3b['skjult'] and d3b['synlig'] and d3b['listerSynlig'] == 0 and d3b['secrets'] == 1 and (not d3a['harTaake'] or d3b['taake'] > 0), d3b)
+        # en sprekk i en nordvegg: listene langs veggen fortsetter over sprekken i egne InstancedMesh, og de er borte når veggen faller
+        nord = await pg.evaluate("""async () => { const G = MORBIDIUM; let s0 = null;
+          for (let s = 1; s < 300 && s0 === null; s++) { const F = generateFloor(s * 7919 + 2 * 7919, 2, {}), h = F.rooms.find(r => r.role === 'secret'), p = F.rooms[h.parent]; if (F.crack.every(i => ((i / F.W) | 0) === p.z - 1) && ['panel', 'tapet', 'paviljong'].includes(p.vegg)) s0 = s; }
+          if (s0 === null) return null; G.run.seed = s0 * 7919; startFloor(2, false); await new Promise(r => setTimeout(r, 300));
+          const F = G.F, c = Spesial.cracks[1], lister = (D3.sprekkDeler || []).length, synlig = (D3.sprekkDeler || []).filter(m => m.visible).length, pos = new THREE.Vector3(), mx = new THREE.Matrix4();
+          const paaSprekk = (D3.sprekkDeler || []).every(im => { for (let k = 0; k < im.count; k++) { im.getMatrixAt(k, mx); pos.setFromMatrixPosition(mx); if (!F.crack.includes(Math.floor(pos.z - 1) * F.W + Math.floor(pos.x))) return false; } return true; });
+          Spesial.damage(c, 9); const skjult = !!G.skjult, g0 = G.time, t0 = performance.now(); while (Skjult.vis && G.time - g0 < 2 && performance.now() - t0 < 40000) await new Promise(r => setTimeout(r, 50)); // innbruddet senker listene med veggen (B4)
+          return { s0, lister, synlig, paaSprekk, etter: (D3.sprekkDeler || []).filter(m => m.visible).length, skjult }; }""")
+        sjekk('det skjulte i 3D: listene på en sprukken nordvegg er egne, ligger bare på sprekken og forsvinner ved innbruddet', nord is not None and nord['lister'] > 0 and nord['synlig'] == nord['lister'] and nord['paaSprekk'] and nord['etter'] == 0 and not nord['skjult'], nord)
+        sjekk('ingen konsollfeil (det skjulte, 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 52) Vinter
+        #     Snøen på gulvet er ett lag over hele uteområdet (ingen kutt langs rutene), dekker 75 til 85 % og er aldri helt hvit,
+        #     veggene mot snøen får hvit topp og et snøbånd, bakken ute er snø, lyset er kaldere, og etasjer uten snø har ingen snø
+        V52 = """() => { const G = MORBIDIUM, finn = v => { for (let s = 1; s < 900; s++) if (v(generateFloor(s + 7919, 1, {}))) return s; return null; };
+          window._v52 = { sno: finn(F => F.vaer === 'sno' && F.rooms.some(r => r.template === 'liggehall')), regn: finn(F => F.vaer === 'regn') }; return window._v52; }"""
+        # dekket, kuttene langs rutene, veggene, toppene og bakken i etasjen som står
+        MAAL52 = """() => { const G = MORBIDIUM, F = G.F, c = Paint.mesh.gulv.material.map.image, T = c.width / F.W, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data, cw = c.width;
+          const lum = k => (.2126 * d[k] + .7152 * d[k + 1] + .0722 * d[k + 2]) / 255, ute = i => { if (!F.tiles[i]) return false; const rid = F.roomId[i]; return rid >= 0 ? !!F.rooms[rid].ute : !!F.ute; };
+          const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+          const snoFarge = k => Math.abs(d[k] - 228) + Math.abs(d[k + 1] - 235) + Math.abs(d[k + 2] - 243) < 12 || Math.abs(d[k] - 179) + Math.abs(d[k + 1] - 191) + Math.abs(d[k + 2] - 210) < 8;
+          const r1 = mulberry32(5); let n = 0, lys = 0, maks = 0, sf = 0;
+          for (let t = 0; t < 100000 && n < 400; t++) { const x = r1() * F.W, z = r1() * F.H; if (!ute(Math.floor(z) * F.W + Math.floor(x))) continue; const k = (Math.floor(z * T) * cw + Math.floor(x * T)) * 4; n++; if (lum(k) > .72) lys++; if (snoFarge(k)) sf++; maks = Math.max(maks, d[k], d[k + 1], d[k + 2]); }
+          // 200 rutegrenser mellom to uteruter: forskjellen over grensen mot forskjellen mellom to kolonner midt i ruta. Bare par der minst
+          // ett punkt er snø (lysstyrke over .72) telles: bar bakke har sine egne fuger langs rutene, og det er ikke snøen som er kuttet
+          const r2 = mulberry32(9), d2 = (a, b) => { const x = lum(a), y = lum(b); return Math.max(x, y) > .72 ? Math.abs(x - y) : 0; }; let over = 0, inne = 0, nb = 0;
+          for (let t = 0; t < 50000 && nb < 200; t++) { const x = 1 + Math.floor(r2() * (F.W - 1)), z = 1 + Math.floor(r2() * (F.H - 1)), i = z * F.W + x, loddrett = nb % 2 === 0, j = loddrett ? i - 1 : i - F.W; if (!ute(i) || !ute(j)) continue;
+            for (let k = 2; k < T - 2; k++) { if (loddrett) { const y = z * T + k, p = (y * cw + x * T - 1) * 4, q = (y * cw + x * T + T / 2 - 1) * 4; over += d2(p, p + 4); inne += d2(q, q + 4); }
+              else { const xx = x * T + k, p = ((z * T - 1) * cw + xx) * 4, q = ((z * T + T / 2 - 1) * cw + xx) * 4; over += d2(p, p + cw * 4); inne += d2(q, q + cw * 4); } }
+            nb++; }
+          const sv = Paint.mesh.vegger.filter(m => m.userData.sno), hk = sv.find(m => m.userData.veggStil === 'hekk') || sv.find(m => !(VEGG[m.userData.veggStil] || {}).alfa);
+          let topp12 = 0; if (hk) { const im = hk.material.map.image, dd = im.getContext('2d').getImageData(0, 0, im.width, 12).data; for (let k = 0; k < dd.length; k += 4) topp12 += (.2126 * dd[k] + .7152 * dd[k + 1] + .0722 * dd[k + 2]) / 255; topp12 /= dd.length / 4; }
+          const ca = Paint.mesh.topp.geometry.attributes.color.array; let snoTopp = 0; for (let k = 0; k < ca.length; k += 3) if (Math.abs(ca[k] - .875) < .05 && Math.abs(ca[k + 1] - .902) < .05 && Math.abs(ca[k + 2] - .937) < .05) snoTopp++;
+          const bk = Paint.mesh.bakke.material.map, bi = bk.image, bd = bi.getContext ? bi.getContext('2d').getImageData(0, 0, bi.width, bi.height).data : null; let bl = 0; if (bd) { for (let k = 0; k < bd.length; k += 16) bl += (.2126 * bd[k] + .7152 * bd[k + 1] + .0722 * bd[k + 2]) / 255; bl /= bd.length / 16; }
+          const amb = R.post.uniforms.uAmbient.value;
+          // fronter som vender inn i en paviljong (et innerom sør for veggen): ingen av dem har snøbånd og istapper
+          const inn = ms => ms.reduce((n, m) => { const p = m.geometry.attributes.position.array; for (let k = 0; k < p.length; k += 18) { const x = Math.floor(p[k] + 1e-4), z = Math.round(p[k + 2]), i = z * F.W + x; if (z < F.H && F.tiles[i] && !ute(i)) n++; } return n; }, 0);
+          return { vaer: F.vaer, T, n, innSno: inn(sv), innAlle: inn(Paint.mesh.vegger), dekke: +(lys / Math.max(1, n)).toFixed(3), maks, snoFarge: sf, over: +(over / Math.max(1, nb)).toFixed(3), inne: +(inne / Math.max(1, nb)).toFixed(3), nb,
+            snoVegger: sv.length, stil: hk && hk.userData.veggStil, topp12: +topp12.toFixed(3), snoTopp, bakke: +bl.toFixed(3), bakkeRute: +((F.W + 48) / bk.repeat.x).toFixed(2), amb: '#' + amb.getHexString() }; }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        fro = await pg.evaluate(V52)
+        m52 = await pg.evaluate("""async () => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), S = window._v52, ut = {};
+          const bygg = async s => { G.run.seed = s; G.run.dromVent = 0; startFloor(1, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(150); };
+          await bygg(S.sno); ut.sno = (""" + MAAL52 + """)(); await bygg(S.regn); ut.regn = (""" + MAAL52 + """)();
+          R.lowTex = true; await bygg(S.sno); ut.lett = (""" + MAAL52 + """)(); R.lowTex = false;
+          const st = G.meta.settings; st.simple = true; applySettings(); await bygg(S.sno); ut.enkel = (""" + MAAL52 + """)(); st.simple = false; applySettings();
+          // byggetiden: hele startFloor med snø, og Paint.level (gulvet, veggene og bakken, der snøen males) med og uten snø på samme etasje.
+          // Uten snø er startFloor minus forskjellen; beste av fem (maskinen er delt, så ett av tre kunne bli forstyrret)
+          const ts = [], ls = [], lr = [], ferdig = () => Paint.mesh.gulv.material.map.image.getContext('2d').getImageData(0, 0, 1, 1); // lerretet tegnes først når det leses
+          for (let k = 0; k < 5; k++) { G.run.seed = S.sno; G.run.dromVent = 0; let t0 = performance.now(); startFloor(1, false); ferdig(); ts.push(performance.now() - t0); await vent(100);
+            const Fr = Object.assign({}, G.F, { vaer: 'regn' }); t0 = performance.now(); Paint.level(Fr, G.th); ferdig(); lr.push(performance.now() - t0); await vent(50);
+            t0 = performance.now(); Paint.level(G.F, G.th); ferdig(); ls.push(performance.now() - t0); await vent(100); }
+          const a = Math.min(...ts), b = Math.min(...ls), c = Math.min(...lr); ut.tid = [Math.round(a), Math.round(a - (b - c)), Math.round(b), Math.round(c)];
+          await bygg(S.sno); const P = G.player, r = G.F.rooms.find(r => r.template === 'liggehall'); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null;
+          P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.invuln = 999; R.snapCamera(P.x, P.z); return ut; }""")
+        s5, r5, l5, e5 = m52['sno'], m52['regn'], m52['lett'], m52['enkel']
+        sjekk('vinter: frøene finnes (Parken med snø og liggehall, og Parken i regn)', fro['sno'] is not None and fro['regn'] is not None and s5['vaer'] == 'sno' and r5['vaer'] == 'regn', fro)
+        sjekk('vinter: snøen dekker minst 70 % av uterutene (lysstyrke over .72), og ingen punkter er helt hvite', s5['n'] == 400 and s5['dekke'] >= .7 and s5['maks'] < 250, s5)
+        sjekk('vinter: ingen kutt langs rutene (forskjellen over 200 rutegrenser er høyst 1,5 ganger den midt i rutene)', s5['nb'] == 200 and s5['over'] <= 1.5 * s5['inne'], (s5['over'], s5['inne'], s5['nb']))
+        sjekk('vinter: veggene mot snøen har snøbånd (øverste 12 punkter lyse) og hvit topp', s5['snoVegger'] > 0 and s5['topp12'] > .8 and s5['snoTopp'] > 0, (s5['snoVegger'], s5['stil'], s5['topp12'], s5['snoTopp']))
+        sjekk('vinter: fronter som vender inn i en paviljong har ikke snøbånd eller istapper', s5['innAlle'] > 0 and s5['innSno'] == 0, (s5['innAlle'], s5['innSno']))
+        sjekk('vinter: bakken ute er snø (Toms snøbilde hver fjerde rute, malt hver tiende), og lyset er kaldere', s5['bakke'] > .7 and min(abs(s5['bakkeRute'] - 4), abs(s5['bakkeRute'] - 10)) < .01 and s5['amb'] != r5['amb'], (s5['bakke'], s5['bakkeRute'], s5['amb'], r5['amb']))
+        sjekk('vinter: en Parken uten snø har ingen snøfarger, snøvegger, snøtopper eller snøbakke', r5['snoFarge'] <= 2 and r5['snoVegger'] == 0 and r5['snoTopp'] == 0 and r5['bakke'] < .5 and min(abs(r5['bakkeRute'] - 4), abs(r5['bakkeRute'] - 5)) < .01, r5)
+        sjekk('vinter: lette teksturer og Enkel grafikk har også snøen', l5['T'] == 16 and l5['dekke'] >= .6 and l5['maks'] < 250 and e5['dekke'] >= .7 and e5['snoVegger'] > 0, (l5['T'], l5['dekke'], e5['dekke'], e5['snoVegger']))
+        sjekk('vinter: etasjen med snø bygges på høyst 1,3 ganger tiden uten (samme frø, beste av fem: startFloor, uten snø, Paint.level med og uten)', m52['tid'][0] <= 1.3 * m52['tid'][1], m52['tid'])
+        await pg.wait_for_timeout(800); await pg.screenshot(path='/tmp/e_52_vinter_2d.png')
+        sjekk('ingen konsollfeil (vinter, 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: kaldt lys fra snøen, lavere relieff, lys tåke, og snøetasjer bygget på nytt holder grafikkminnet i ro
+        for vp, navn in (({'width': 1280, 'height': 720}, '1280'), ({'width': 390, 'height': 844}, '390x844')):
+            pg = await ny_side(b, viewport=vp, **({'is_mobile': True, 'has_touch': True} if vp['width'] < 600 else {}))
+            await start_lop(pg, url=URL3D)
+            await pg.evaluate(V52)
+            d3 = await pg.evaluate("""async (mobil) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), S = window._v52, ut = {};
+              const bygg = async s => { G.run.seed = s; G.run.dromVent = 0; startFloor(1, false); await vent(300); };
+              const lys = () => { const h = D3.ting.find(o => o.isHemisphereLight), g = Paint.mesh.gulv.material; return { hemi: h && '#' + h.groundColor.getHexString(), mane: D3.mane && +D3.mane.intensity.toFixed(2), bump: g.bumpScale, farge: g.color && '#' + g.color.getHexString(), type: g.type }; };
+              await bygg(S.regn); ut.regn = lys(); await bygg(S.sno); ut.sno = lys();
+              if (!mobil) { const mem = () => R.renderer.info.memory, m0 = [mem().textures, mem().geometries]; for (const s of [S.regn, S.sno, S.regn, S.sno]) await bygg(s); ut.minne = [mem().textures - m0[0], mem().geometries - m0[1]]; }
+              const P = G.player, r = G.F.rooms.find(r => r.template === 'liggehall'); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null;
+              P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.invuln = 999; R.snapCamera(P.x, P.z); ut.d3 = D3.on; return ut; }""", vp['width'] < 600)
+            if vp['width'] > 600:
+                sjekk('vinter i 3D: blått lys fra snøen, sterkere måne, lavere relieff og dempet gulv, og regnværet er som før', d3['d3'] and d3['sno']['hemi'] == '#4a5470' and d3['sno']['mane'] > d3['regn']['mane'] and abs(d3['sno']['bump'] - .45) < .01 and d3['sno']['farge'] != '#ffffff' and d3['regn']['hemi'] == '#2a1a14' and abs(d3['regn']['bump'] - .7) < .01 and d3['regn']['farge'] == '#ffffff', d3)
+                sjekk('vinter i 3D: snøetasjer bygget på nytt holder grafikkminnet i ro', d3['minne'][0] <= 6 and d3['minne'][1] <= 12, d3['minne'])
+            await pg.evaluate("async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1 && performance.now() - t0 < 20000) await new Promise(r => setTimeout(r, 50)); }")
+            await pg.screenshot(path=f'/tmp/e_52_vinter_{navn}.png')
+            sjekk(f'ingen konsollfeil (vinter, 3D {navn})', not pg.errs, pg.errs[:6])
+            await pg.close()
+        # 53) Hint og innbrudd
+        #     Sprekken er en flekk nyere puss (ingen murkasse), trekken høres dempet bak veggen innen fem ruter og dragene blåser ut av den,
+        #     et slag mot en vanlig vegg gir et dumpt slag (høyst hvert 0,4 sekund, ikke når en fiende treffes), én boble per etasje og ett tips,
+        #     og innbruddet går gjennom bristen, synkingen, byttet og lysene på under halvannet sekund spilltid, også med enkel grafikk
+        # OPP53: en etasje med en sprekk etter ønske (nord: nordveggen i et innerom, hekk: sørveggen i en hekk ute som i 10.png), med pasienten foran
+        OPP53 = """async (o) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)); let s0 = null;
+          const passer = F => { const h = F.rooms.find(r => r.role === 'secret'); if (!h || !F.crack || !F.crack.length) return false; const p = F.rooms[h.parent], rad = i => (i / F.W) | 0;
+            return o.hvor === 'nord' ? !p.ute && F.crack.every(i => rad(i) === p.z - 1) && ['panel', 'tapet', 'paviljong'].includes(p.vegg) : !!p.ute && F.crack.every(i => rad(i) === p.z + p.h); };
+          for (let s = 1; s < 900; s++) { if (!passer(generateFloor(s + o.d * 7919, o.d, {}))) continue; G.run.seed = s; G.run.dromVent = 0; startFloor(o.d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
+            if (o.hvor !== 'hekk' || (Skjult.info && Skjult.info.st === 'hekk')) { s0 = s; break; } }
+          if (s0 === null) return null;
+          const P = G.player, I = Skjult.info; for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; G.rooms.forEach(s => s.cleared = true); Bygg.alt();
+          P.x = I.cx; P.z = I.ez + I.uz * (o.avst || 1.2); P.face = Math.atan2(0, -I.uz); P.hp = P.maxHp; P.invuln = 999; R.snapCamera(P.x, P.z); await vent(300);
+          return { s0, side: I.side, st: I.st, ute: I.ute, meshes: I.meshes.map(m => m.userData.dekal), sprite: Spesial.cracks.some(c => c.g), eid: Paint.owned.includes(I.tex) && Paint.owned.includes(I.mat) }; }"""
+        # pasienten et gitt antall ruter rett ut fra midten av sprekken (fra midten av sprekkruta)
+        STILL53 = "(d) => { const G = MORBIDIUM, P = G.player, I = Skjult.info; P.x = I.cx; P.z = I.ez - I.uz * .5 + I.uz * d; R.snapCamera(P.x, P.z); }"
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        n53 = await pg.evaluate(OPP53, {'d': 2, 'hvor': 'nord'})
+        sjekk('hint: en sprekk i en nordvegg har flekken (flate og støv, i Paint.owned) og ingen murkasse', n53 is not None and n53['side'] == 'n' and 'flate' in n53['meshes'] and 'stov' in n53['meshes'] and not n53['sprite'] and n53['eid'], n53)
+        # trekken: dempet vind innen fem ruter (lavpass under 900 på tre ruter), ingenting på ni ruter eller i kamp, og dragene langs gulvet
+        tr = await pg.evaluate("""(still) => { const G = MORBIDIUM, ut = {}, still_ = eval(still), maal = () => { const M = Stemning.maal(); return M.trekk_vind ? M.trekk_vind.map(v => +v.toFixed(3)) : null; };
+          const glod = () => { Skjult.trekk(); const E = Skjult.trekkE; return E && Glod.liste.includes(E) ? +E.mat.uniforms.uStyrke.value.toFixed(2) : null; };
+          still_(3); ut.tre = maal(); ut.gl3 = glod(); ut.gruppe = !!(Lydbank.gruppeListe().trekk_vind || []).length; ut.rot = Skjult.trekkE ? +Skjult.trekkE.pts.rotation.y.toFixed(2) : null;
+          G.combat = {}; ut.kamp = maal(); G.combat = null;
+          still_(2); ut.gl2 = glod(); still_(7); ut.gl7 = glod(); G.sprekkKjent = true; ut.gl7m = glod(); G.sprekkKjent = false; still_(9); ut.ni = maal(); ut.gl9 = glod(); return ut; }""", STILL53)
+        sjekk('hint: trekken bak veggen høres dempet på tre ruter (lavpass høyst 900) og ikke på ni ruter eller i kamp', tr['tre'] is not None and tr['tre'][0] > 0 and tr['tre'][1] <= 900 and tr['ni'] is None and tr['kamp'] is None and tr['gruppe'], tr)
+        sjekk('hint: kalde drag langs gulvet nær sprekken (fullt på to ruter, ingen på ni), og monokkelen viser dem fra åtte ruter', tr['gl3'] is not None and 0 < tr['gl3'] < 1 and tr['gl2'] == 1 and tr['gl7'] is None and tr['gl7m'] is not None and tr['gl9'] is None and tr['rot'] is not None, tr)
+        # banking: slag mot en vanlig vegg i foreldrerommet (nordveggen, et stykke fra sprekken)
+        bk = await pg.evaluate("""async () => { const G = MORBIDIUM, F = G.F, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), h = F.rooms.find(r => r.role === 'secret'), p = F.rooms[h.parent];
+          // en rute i foreldrerommet inntil en vanlig vegg, langt fra sprekken og uten ting i nærheten
+          let st = null; for (let z = p.z; z < p.z + p.h && !st; z++) for (let x = p.x; x < p.x + p.w && !st; x++) { if (solid(x, z) || F.crack.some(c => Math.hypot(c % F.W - x, ((c / F.W) | 0) - z) < 4) || G.props.some(o => o.alive !== false && Math.hypot(o.x - x - .5, o.z - z - .5) < 2)) continue;
+            for (const [dx, dz] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) { const i = (z + dz) * F.W + x + dx; if (Paint.wallH[i] > 0 && !F.crack.includes(i)) { st = { x, z, dx, dz }; break; } } }
+          if (!st) return null;
+          const lyder = [], _p = Sound.play; Sound.play = function (n, ...a) { lyder.push([n, +G.time.toFixed(3)]); return _p.call(this, n, ...a); };
+          P.x = st.x + .5 + st.dx * .05; P.z = st.z + .5 + st.dz * .05; P.face = Math.atan2(st.dx, st.dz); R.snapCamera(P.x, P.z); Spesial.bankT = -9;
+          startSwing(false); const g0 = G.time, t0 = performance.now(); while (P.atk && G.time - g0 < 3 && performance.now() - t0 < 20000) await vent(30);
+          const ekte = lyder.filter(l => l[0] === 'veggbank').length; lyder.length = 0;
+          const t00 = G.time; for (let k = 0; k < 24; k++) { G.time += .1; meleeHit({ heavy: false, combo: 0, charge: 0 }); } const tider = lyder.filter(l => l[0] === 'veggbank').map(l => l[1]); G.time = t00 + 2.4; lyder.length = 0;
+          const e = spawnEnemy('pleier', P.x + st.dx * .2, P.z + st.dz * .2, false, 2); e.state = 'chase'; e.cd = 99; e.hp = 1e6; e.maxHp = 1e6; G.time += 1; meleeHit({ heavy: false, combo: 0, charge: 0 }); const medFiende = lyder.filter(l => l[0] === 'veggbank').length; killEntity(e, {}); G.combat = null; G.lock = null;
+          lyder.length = 0; P.face += Math.PI; G.time += 1; meleeHit({ heavy: false, combo: 0, charge: 0 }); const luft = lyder.filter(l => l[0] === 'veggbank').length;
+          Sound.play = _p; let min = 9; for (let k = 1; k < tider.length; k++) min = Math.min(min, tider[k] - tider[k - 1]); return { ekte, n: tider.length, min: +min.toFixed(2), medFiende, luft }; }""")
+        sjekk('hint: et slag mot en vanlig vegg gir et dumpt slag, høyst ett per 0,4 sekund spilltid', bk is not None and bk['ekte'] == 1 and 4 <= bk['n'] <= 7 and bk['min'] >= .4 - 1e-6, bk)
+        sjekk('hint: ingen banking når slaget treffer en fiende eller bare luft', bk is not None and bk['medFiende'] == 0 and bk['luft'] == 0, bk)
+        # ordene: høyst én boble på tjue sekunder spilltid ved sprekken, og tipset første gang (også ved et nytt løp er det vist)
+        ord_ = await pg.evaluate("""async (still) => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)); eval(still)(1.6); for (const e of G.enemies) if (e.alive) killEntity(e, {});
+          const alle = new Set([...Skjult.ord(), 'Det trekker herfra.', 'Den veggen ser tynn ut.', 'Er det noen der inne?']), bobler = [], _b = FX.bubble; FX.bubble = function (hvem, s, ...a) { if (hvem === P) bobler.push(s); return _b.call(this, hvem, s, ...a); };
+          if (G.meta.tips) delete G.meta.tips.sprekk; G.meta.settings.tips = true; Spesial.sagt = false; Spesial.naerT = 0;
+          // tipsene vises etter en ventetid i faktisk tid, så et tips fra starten av løpet (kartet) kan komme etter og skrive over: alle som vises, noteres
+          let tEl = document.getElementById('tips'); if (!tEl) { tEl = document.createElement('div'); tEl.id = 'tips'; document.getElementById('hud').appendChild(tEl); }
+          const sett = [], mo = new MutationObserver(() => sett.push(tEl.textContent)); mo.observe(tEl, { childList: true, subtree: true, characterData: true });
+          // tre sekunder i spillets egen løkke, og resten av de tjue sekundene med Spesial.update i steg på en tidel (maskinen er for treg til tjue sekunder spilltid)
+          const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 3 && performance.now() - t0 < 60000) { P.hp = P.maxHp; await vent(100); } let tid = G.time - g0; const n3 = bobler.filter(s => alle.has(s)).length;
+          while (tid < 20) { Spesial.update(.1); tid += .1; }
+          for (let i = 0; i < 60 && !sett.some(t => t.includes('murt igjen')); i++) await vent(100); mo.disconnect();
+          FX.bubble = _b; const el = document.getElementById('tips'); return { tid: +tid.toFixed(1), ekte: +(G.time - g0).toFixed(1), n3, n: bobler.filter(s => alle.has(s)).length, bobler: bobler.slice(0, 6), tips: !!(G.meta.tips && G.meta.tips.sprekk), tekst: sett.find(t => t.includes('murt igjen')) || (el ? el.textContent : '') }; }""", STILL53)
+        sjekk('hint: nøyaktig én boble på tjue sekunder spilltid ved sprekken (den første etter to sekunder), og tipset om murte vegger', ord_['tid'] >= 20 and ord_['ekte'] >= 2.5 and ord_['n3'] == 1 and ord_['n'] == 1 and ord_['tips'] and 'murt igjen' in ord_['tekst'], ord_)
+        await pg.evaluate(STILL53, 1.8); await pg.wait_for_timeout(700); await pg.screenshot(path='/tmp/e_53_hint_2d.png')
+        # et vanlig slag på sprekken: hult, «Det knaker», og hårstreken vokser et steg
+        sl = await pg.evaluate("""async (still) => { const G = MORBIDIUM, P = G.player, I = Skjult.info; eval(still)(1.1); P.face = Math.atan2(0, -I.uz); const lyder = [], _p = Sound.play; Sound.play = function (n, ...a) { lyder.push(n); return _p.call(this, n, ...a); };
+          Spesial.bankT = -9; Spesial.bank(P.x, P.z, P.face, 1.2, 1.4); const direkte = lyder.includes('veggbank'); lyder.length = 0; // sprekken svarer aldri massivt, heller ikke når slaget bommet på den
+          G.time += 1; meleeHit({ heavy: false, combo: 0, charge: 0 }); Sound.play = _p; return { steg: I.steg, lyder, hp: Spesial.cracks.map(c => c.hp), direkte }; }""", STILL53)
+        sjekk('hint: et vanlig slag på sprekken svarer hult (ingen banking) og hårstreken vokser', sl['steg'] == 1 and 'bonk' in sl['lyder'] and 'veggbank' not in sl['lyder'] and not sl['direkte'] and min(sl['hp']) == 2, sl)
+        # innbruddet: et tungt slag, og stegene i forløpet i spilltid etter bristen
+        FORLOP53 = """async (skudd) => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), tider = {}, ut = { lyder: [], bobler: [] };
+          const _p = Sound.play; Sound.play = function (n, ...a) { ut.lyder.push(n); return _p.call(this, n, ...a); }; const _b = FX.bubble; FX.bubble = function (hvem, s, ...a) { if (hvem === P) ut.bobler.push(s); return _b.call(this, hvem, s, ...a); };
+          const orig = {}; for (const k of ['brist', 'synk0', 'bytt', 'vekk', 'slutt']) { orig[k] = Skjult[k]; Skjult[k] = function (...a) { tider[k] = G.time; const r = orig[k].apply(this, a); if (k === 'brist') ut.brist = (Skjult.vis.brist || []).length; return r; }; }
+          const _f = Skjult.forlop; Skjult.forlop = function (dt) { const r = _f.call(this, dt); if (ut.stopp === undefined) ut.stopp = +G.hitstop.toFixed(3); return r; };
+          const rydd = () => { for (const k in orig) Skjult[k] = orig[k]; Skjult.forlop = _f; Sound.play = _p; FX.bubble = _b; };
+          P.face = Math.atan2(0, -Skjult.info.uz); startSwing(true, 1); const g0 = G.time, t0 = performance.now();
+          while (!tider.brist && G.time - g0 < 5 && performance.now() - t0 < 30000) await vent(20);
+          if (skudd && tider.brist) { while (!(Skjult.vis && Skjult.vis.t > .04) && performance.now() - t0 < 30000) await vent(10); slowMo(60, .0005); ut.skudd = true; rydd(); return ut; }
+          const g1 = G.time, t1 = performance.now(); while ((Skjult.vis || !tider.slutt) && G.time - g1 < 3 && performance.now() - t1 < 40000) await vent(30);
+          rydd();
+          const t = k => tider[k] !== undefined ? +(tider[k] - tider.brist).toFixed(2) : null, PM = Paint.mesh, I = Skjult.info;
+          return Object.assign(ut, { synk0: t('synk0'), bytt: t('bytt'), vekk: t('vekk'), slutt: t('slutt'), ferdig: !Skjult.vis, gulv: PM.gulvSkjult && PM.gulvSkjult.visible,
+            sprekkSynlig: [...PM.vegger, ...(PM.toppEkstra || [])].filter(m => m.userData.del === 'sprekk' && m.visible).length, dekalSynlig: I ? I.meshes.filter(m => m.visible && m.userData.dekal !== 'stov' && m.userData.dekal !== 'rusk').length : -1,
+            rusk: I ? I.meshes.some(m => m.userData.dekal === 'rusk') : false, secrets: G.run.secrets || 0, lys: Skjult.lys.length, tent: Skjult.lys.filter(L => L.material.color.r + L.material.color.g + L.material.color.b > 0).length,
+            trekk: Glod.liste.filter(E => E.type === 'trekk').length }); }"""
+        ib = await pg.evaluate(FORLOP53, False)
+        rekke = [ib.get(k) for k in ('synk0', 'bytt', 'vekk', 'slutt')]
+        sjekk('innbrudd: bristen med stopp i slaget, sprekkveggen som bristbilde og bruddlyden', ib.get('brist', 0) >= 2 and ib['stopp'] > 0 and 'murbrudd' in ib['lyder'], ib)
+        sjekk('innbrudd: veggen synker, byttet, rommet våkner og ruskene ligger der, i rekkefølge og innen halvannet sekund spilltid', None not in rekke and rekke == sorted(rekke) and .15 <= rekke[0] <= .3 and rekke[3] <= 1.5 and ib['ferdig'] and ib['rusk'], rekke)
+        sjekk('innbrudd: etterpå er gulvet der, sprekkveggen og flekken borte, lysene tent og «Visste jeg det.» sagt', ib['gulv'] and ib['sprekkSynlig'] == 0 and ib['dekalSynlig'] == 0 and ib['secrets'] == 1 and ib['lys'] >= 2 and ib['tent'] == ib['lys'] and 'Visste jeg det.' in ib['bobler'], ib)
+        await pg.wait_for_timeout(600); await pg.screenshot(path='/tmp/e_53_brudd_2d.png')
+        # enkel grafikk: flekken og innbruddet virker, men uten drag og partikler
+        sf = await pg.evaluate("""async (still) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), s = G.meta.settings, frø = G.run.seed; s.simple = true; applySettings();
+          G.run.seed = frø; G.run.dromVent = 0; startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null;
+          const P = G.player; P.invuln = 999; eval(still)(2); Skjult.trekk(); await vent(300); const ut = { safe: R.safe, dekal: !!(Skjult.info && Skjult.info.meshes.length), trekkE: !!Skjult.trekkE, glod: Glod.liste.length };
+          let tS = null; const _s = Skjult.slutt; Skjult.slutt = function () { tS = G.time; return _s.call(this); };
+          const g0 = G.time; Spesial.damage(Spesial.cracks[0], 9); const t0 = performance.now(); while (Skjult.vis && G.time - g0 < 3 && performance.now() - t0 < 30000) await vent(30); Skjult.slutt = _s;
+          Object.assign(ut, { tid: tS === null ? null : +(tS - g0).toFixed(2), ferdig: !Skjult.vis, gulv: Paint.mesh.gulvSkjult.visible, trekk: Glod.liste.filter(E => E.type === 'trekk').length });
+          s.simple = false; applySettings(); return ut; }""", STILL53)
+        sjekk('innbrudd med enkel grafikk: flekken er der, ingen drag, og innbruddet blir ferdig innen halvannet sekund uten feil', sf['safe'] and sf['dekal'] and not sf['trekkE'] and sf['trekk'] == 0 and sf['ferdig'] and sf['tid'] is not None and sf['tid'] <= 1.5 and sf['gulv'], sf)
+        # hekken ute (10.png): visnet flekk, klokka som tikker inne i hekken i stedet for vinden, og innbruddet med blader
+        hk = await pg.evaluate(OPP53, {'d': 1, 'hvor': 'hekk', 'avst': 1.8})
+        hkl = await pg.evaluate("""(still) => { eval(still)(3); const M = Stemning.maal(); return { tikk: M.trekk_tikk ? M.trekk_tikk.map(v => +v.toFixed(2)) : null, vind: !!M.trekk_vind, ord: Skjult.ord()[0] }; }""", STILL53)
+        sjekk('hint ute: sprekken i en hekk er en visnet flekk, og klokka tikker inne i hekken i stedet for vinden', hk is not None and hk['st'] == 'hekk' and hk['side'] == 's' and not hk['sprite'] and 'topp' in hk['meshes'] and hkl['tikk'] is not None and not hkl['vind'], (hk, hkl))
+        await pg.evaluate(STILL53, 1.8); await pg.wait_for_timeout(700); await pg.screenshot(path='/tmp/e_53_hint_park_2d.png')
+        ihk = await pg.evaluate(FORLOP53, False)
+        sjekk('innbrudd ute: bladene og kvisten (lovbrudd) uten murstein i bristen, og rommet er åpent innen halvannet sekund', 'lovbrudd' in ihk['lyder'] and ihk.get('brist') == 0 and ihk['ferdig'] and ihk['gulv'] and ihk['slutt'] is not None and ihk['slutt'] <= 1.5, ihk)
+        await pg.wait_for_timeout(600); await pg.screenshot(path='/tmp/e_53_brudd_park_2d.png')
+        sjekk('ingen konsollfeil (hint og innbrudd, 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: flekken, dragene og bristbildet, i et innerom og i hekken
+        for hvor, d, avst in (('nord', 2, 1.8), ('hekk', 1, 1.8)):
+            pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+            await start_lop(pg, url=URL3D)
+            o3 = await pg.evaluate(OPP53, {'d': d, 'hvor': hvor, 'avst': avst})
+            g3 = await pg.evaluate("""async () => { const G = MORBIDIUM, g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.5 && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 50));
+              const I = Skjult.info; return { on: D3.on, trekk: !!Skjult.trekkE, mat: I && I.mat.type, dekal: I ? I.meshes.length : 0 }; }""")
+            await pg.screenshot(path=f'/tmp/e_53_hint_{hvor}_3d.png')
+            sjekk(f'hint i 3D ({hvor}): flekken står på veggen og dragene blåser ut av den', o3 is not None and g3['on'] and g3['dekal'] >= 2 and g3['trekk'] and not o3['sprite'], (o3, g3))
+            b3 = await pg.evaluate(FORLOP53, True)
+            await pg.wait_for_timeout(300); await pg.screenshot(path=f'/tmp/e_53_brist_{hvor}_3d.png')
+            await pg.evaluate("async () => { const G = MORBIDIUM; G.slow.t = 0; G.slow.s = 1; const g0 = G.time, t0 = performance.now(); while ((Skjult.vis || G.time - g0 < 1.6) && performance.now() - t0 < 40000) await new Promise(r => setTimeout(r, 50)); }")
+            f3 = await pg.evaluate("() => ({ ferdig: !Skjult.vis, gulv: Paint.mesh.gulvSkjult.visible, skjult: !!MORBIDIUM.skjult })")
+            await pg.screenshot(path=f'/tmp/e_53_brudd_{hvor}_3d.png')
+            sjekk(f'innbrudd i 3D ({hvor}): bristbildet vises inne (ute bare blader), og rommet er åpent etterpå', b3.get('skudd') and (b3.get('brist', 0) >= 2 if hvor == 'nord' else b3.get('brist') == 0) and f3['ferdig'] and f3['gulv'] and not f3['skjult'], (b3.get('brist'), f3))
+            sjekk(f'ingen konsollfeil (hint og innbrudd, 3D {hvor})', not pg.errs, pg.errs[:6])
+            await pg.close()
+        # 44) Varsler og slag uten lekkasje
+        #     Varsler som går av, avbrytes eller ryddes bort når etasjen byttes, og hugg legger ikke igjen geometri på skjermkortet,
+        #     shaderne bygges ikke på nytt for hvert angrep, og R.kastTele får vite hvorfor varselet kastes.
+        #     Før rettingen: +1500 geometrier for 300 varsler, +101 for 20 avbrutte og +60 for 60 hugg.
+        VL_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
+            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            // til ingen varsler eller hugg er igjen: spillet må gå, men taket i sanntid er romslig, for mange varsler samtidig er tungt i programvaregrafikk
+            tomt = async () => { const t0 = performance.now(); while ((G.tele.length || VFX.slashes.length) && performance.now() - t0 < 120000) await vent(50); await spill(.1); },
+            ramme = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))),
+            info = R.renderer.info.memory, former = ['circle', 'rect', 'cone'], buer = [1.2, 1.6, 2.2, Math.PI * 2 - .01], ut = {};
+          // blekkvarslene (del 46) lager ingen geometri per varsel, så her måles den gamle tegningen, som enkel grafikk og overløpet fortsatt bruker
+          Blekk.av = true; rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3);
+          // oppvarming: ett varsel av hver form og ett hugg per bue, så det som lages én gang (ringene til huggene og shaderne), er laget
+          for (let i = 0; i < 4; i++) { addTele(former[i % 3], { x: P.x + 2, z: P.z, r: 1.2, w: .6, len: 3, a: i, arc: 1.4 }, .2, null, null); slashFx(P.x, P.z, i, 1.4, buer[i], i % 2 === 0); }
+          await tomt();"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        vl = await pg.evaluate("""async () => { """ + VL_HJELP + """
+          // shaderne telles rett på WebGL: et materiale som kastes, tar shaderen med seg når ingen andre bruker den, og da bygges den på nytt neste gang
+          const gl = R.renderer.getContext(), lp = gl.linkProgram; let lenk = 0; gl.linkProgram = function (p) { lenk++; return lp.call(this, p); };
+          // 300 varsler som går av: sirkel, rektangel og kjegle om hverandre. Toppen viser at de faktisk kom på skjermkortet
+          const g0 = info.geometries;
+          for (let i = 0; i < 300; i++) { const a = i * .37; addTele(former[i % 3], { x: P.x + Math.sin(a) * 2, z: P.z + Math.cos(a) * 2, r: 1 + (i % 5) * .3, w: .6, len: 4, a, arc: 1.4, color: [0xff4a22, 0x9ad0e0, 0xb36be0][i % 3] }, .3, null, null); }
+          await ramme(); const topp = info.geometries - g0; await tomt(); await spill(.5);
+          ut.fyr = { topp, dg: info.geometries - g0, igjen: G.tele.length };
+          // 20 varsler på én eier, som så stanses: de går ikke av og frigjøres
+          const g1 = info.geometries, eier = { alive: true, stun: 0, sleep: 0 }; let fyrt = 0;
+          for (let i = 0; i < 20; i++) addTele(former[i % 3], { x: P.x + 1, z: P.z + (i % 4) * .5, r: 1.2, w: .6, len: 3, a: i, arc: 1.2 }, 5, () => fyrt++, eier);
+          await ramme(); const midt = info.geometries - g1; cancelTeles(eier); await spill(.3);
+          ut.avbrutt = { midt, dg: info.geometries - g1, igjen: G.tele.length, eier: eier.teles.length, fyrt };
+          // 60 hugg: ringen deles av alle hugg med samme bue, og materialene brukes om igjen
+          const g2 = info.geometries;
+          for (let i = 0; i < 60; i++) { slashFx(P.x + (i % 3) - 1, P.z, i * .3, 1 + (i % 5) * .4, buer[i % 4], i % 2 === 0); if (i % 10 === 9) await ramme(); }
+          await tomt(); ut.hugg = { dg: info.geometries - g2, igjen: VFX.slashes.length };
+          // ringen er like stor som før: indre radius 0,68 r, ytre r, buen rundet til 0,05 (helt rundt som før) og midt foran
+          slashFx(P.x, P.z, 0, 2, 1.62, false); slashFx(P.x, P.z, 1, 3, 1.6, false); slashFx(P.x, P.z, 2, 3.8, Math.PI * 2 - .01, true);
+          const S = VFX.slashes.slice(-3), maal = s => { const q = s.m.geometry.parameters, k = s.m.scale.x; return [q.innerRadius * k, q.outerRadius * k, q.thetaLength, q.thetaStart + q.thetaLength / 2].map(v => +v.toFixed(3)); };
+          ut.maal = { a: maal(S[0]), b: maal(S[1]), c: maal(S[2]), delt: S[0].m.geometry === S[1].m.geometry }; await tomt();
+          // hugg og varsler én og én, hvert ferdig før det neste kommer: ingen shader bygges på nytt
+          lenk = 0;
+          for (let i = 0; i < 8; i++) { slashFx(P.x, P.z, i, 1.5, buer[i % 4], i % 2 === 0); await tomt(); }
+          for (let i = 0; i < 6; i++) { addTele(former[i % 3], { x: P.x + 2, z: P.z, r: 1.3, w: .6, len: 3, a: i, arc: 1.4, color: 0x9ad0e0 }, .2, null, null); await tomt(); }
+          ut.lenk = lenk;
+          // hvorfor varselet kastes: 'fyr' når angrepet går av, 'avbryt' når eieren er stanset eller stoppes, og 'rydd' når etasjen byttes
+          const hvorfor = [], _k = R.kastTele; R.kastTele = function (g, how) { hvorfor.push(how); return _k.apply(this, arguments); };
+          const e1 = { alive: true, stun: 0, sleep: 0 }, e2 = { alive: true, stun: 0, sleep: 0 }, e3 = { alive: true, stun: 0, sleep: 0 }, gikk = [];
+          addTele('circle', { x: P.x + 2, z: P.z, r: 1 }, .2, () => gikk.push(1), e1); addTele('circle', { x: P.x - 2, z: P.z, r: 1 }, .2, () => gikk.push(2), e2); e2.stun = 5;
+          addTele('rect', { x: P.x, z: P.z + 1, a: 0, w: .6, len: 3 }, 5, () => gikk.push(3), e3); await ramme(); cancelTeles(e3); await tomt();
+          ut.hvorfor = { liste: hvorfor.slice().sort(), gikk }; hvorfor.length = 0;
+          // etasjen byttes med varsler og hugg i lufta: alt tas ut, og geometrien til varselet frigjøres
+          const t = addTele('circle', { x: P.x, z: P.z + 2, r: 1.5 }, 5, null, null); for (let i = 0; i < 5; i++) slashFx(P.x, P.z, i, 1.5, 1.6, true); await ramme();
+          let n = 0, kastet = 0; t.mesh.traverse(o => { if (o.geometry) { n++; o.geometry.addEventListener('dispose', () => kastet++); } });
+          startFloor(G.depth, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200);
+          ut.rydd = { hvorfor: hvorfor.slice(), n, kastet, ute: !t.mesh.parent, tele: G.tele.length, hugg: VFX.slashes.length };
+          R.kastTele = _k; gl.linkProgram = lp;
+          return ut; }""")
+        sjekk('300 varsler som går av, legger ikke igjen geometri på skjermkortet', vl['fyr']['topp'] >= 1000 and vl['fyr']['dg'] <= 2 and vl['fyr']['igjen'] == 0, vl['fyr'])
+        sjekk('20 varsler på en eier som stanses, går ikke av og legger ikke igjen geometri', vl['avbrutt']['midt'] >= 60 and vl['avbrutt']['dg'] <= 2 and vl['avbrutt']['igjen'] == 0 and vl['avbrutt']['eier'] == 0 and vl['avbrutt']['fyrt'] == 0, vl['avbrutt'])
+        naer = lambda a, b: len(a) == len(b) and all(abs(x - y) < .002 for x, y in zip(a, b))
+        m = vl['maal']
+        sjekk('60 hugg legger høyst igjen to geometrier, og ringen deles og er like stor som før', vl['hugg']['dg'] <= 2 and vl['hugg']['igjen'] == 0 and m['delt'] and naer(m['a'], [1.36, 2, 1.6, -1.571]) and naer(m['b'], [2.04, 3, 1.6, -1.571]) and naer(m['c'], [2.584, 3.8, 6.273, -1.571]), {'hugg': vl['hugg'], 'maal': m})
+        sjekk('shaderne til varsler og hugg bygges ikke på nytt for hvert angrep', vl['lenk'] <= 2, vl['lenk'])
+        r_ = vl['rydd']
+        sjekk('varselet kastes med fyr, avbryt (stanset eier og cancelTeles) og rydd når etasjen byttes, og bare det som går av, treffer', vl['hvorfor'] == {'liste': ['avbryt', 'avbryt', 'fyr'], 'gikk': [1]} and 'rydd' in r_['hvorfor'] and r_['n'] == 4 and r_['kastet'] == 4 and r_['ute'] and r_['tele'] == 0 and r_['hugg'] == 0, {'hvorfor': vl['hvorfor'], 'rydd': r_})
+        sjekk('ingen konsollfeil (varsler og hugg i 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # én runde i 3D
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        v3 = await pg.evaluate("""async () => { """ + VL_HJELP + """
+          ut.d3 = D3.on; const g0 = info.geometries;
+          for (let i = 0; i < 60; i++) { const a = i * .41; addTele(former[i % 3], { x: P.x + Math.sin(a) * 2, z: P.z + Math.cos(a) * 2, r: 1 + (i % 4) * .3, w: .6, len: 4, a, arc: 1.4 }, .4, null, null); if (i % 3 === 0) slashFx(P.x, P.z, a, 1.6, buer[i % 4], i % 2 === 0); }
+          await ramme(); ut.topp = info.geometries - g0; await tomt(); await spill(.5); ut.dg = info.geometries - g0;
+          return ut; }""")
+        sjekk('3D: 60 varsler og 20 hugg legger ikke igjen geometri', v3['d3'] and v3['topp'] >= 200 and v3['dg'] <= 2, v3)
+        sjekk('ingen konsollfeil (varsler og hugg i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 45) Tekster og stempler
+        #     Flytende tekster legger seg ikke oppå hverandre eller over snakkebobler (IKKE I DAG, BONK og bom i 6.png), sju like ord
+        #     blir ett med ×7, «bom» forsvinner når den perfekte unnvikelsen har sitt eget ord, høyst tre store ord lever samtidig,
+        #     og det store stempelet, kombostempelet og lappen står under hverandre og i kø. PC (1280x720) og liggende telefon (844x390).
+        HJELP45 = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
+          const rute = e => { const b = e.getBoundingClientRect(); return { s: e.id || e.textContent, x0: b.left, y0: b.top, x1: b.right, y1: b.bottom }; };
+          const tekster = () => [...document.querySelectorAll('#fx .dmg')].filter(e => getComputedStyle(e).display !== 'none').map(rute);
+          const kryss = L => { const p = []; for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i], c = L[j]; if (a.x0 < c.x1 - 1 && c.x0 < a.x1 - 1 && a.y0 < c.y1 - 1 && c.y0 < a.y1 - 1) p.push(a.s + ' / ' + c.s); } return p; };
+          const inni = L => L.every(a => a.x0 >= -1 && a.y0 >= -1 && a.x1 <= innerWidth + 1 && a.y1 <= innerHeight + 1), kort = L => L.map(a => [a.s, Math.round(a.x0), Math.round(a.y0), Math.round(a.x1), Math.round(a.y1)]);
+          const klar = async () => { rolig(); G.meta.settings.tips = false; P.hp = P.maxHp = 9999; P.roll = P.iframe = P.invuln = 0; const r = G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; await ramme(4); FX.clear(); };"""
+        TRE45 = """async () => { """ + HJELP45 + """
+          await klar(); FX.text(P.x, 2.7, P.z, 'IKKE I DAG', 'crit', 4); FX.text(P.x + .3, 2.6, P.z, 'BONK', 'crit', 4); FX.text(P.x, 1.6, P.z, 'bom', 'info', 4);
+          await ramme(20); const L = tekster(); return { n: L.length, kryss: kryss(L), inni: inni(L), transform: [...document.querySelectorAll('#fx .dmg')].every(e => e.style.transform.startsWith('translate3d') && !e.style.left), L: kort(L) }; }"""
+        TEKST45 = """async () => { """ + HJELP45 + """
+          await klar(); ut.tre = await (""" + TRE45 + """)();
+          // sju AVSLÅTT på ett bilde blir én tekst
+          FX.clear(); for (let i = 0; i < 7; i++) FX.text(P.x + (i % 3) * .2, 1.6, P.z, 'AVSLÅTT', 'stamp', 1);
+          await ramme(2); ut.sju = [...document.querySelectorAll('#fx .dmg')].filter(e => e.textContent.startsWith('AVSLÅTT')).map(e => e.textContent);
+          // perfekt unnvikelse: ordet til kunngjøreren, og ingen «bom» fra den samme unnvikelsen
+          FX.clear(); const n0 = Kombo.tall.perfekt, PERF = ['PÅ HÅRET', 'UNNSLUPPET', 'IKKE I DAG', 'FOR SENT, DOKTOR'];
+          Kombo.perfektT = 0; P.invuln = 0; P.roll = .3; P.iframe = .3; hurt(P, 3, { type: 'test' }); await ramme(2);
+          let ord = [...document.querySelectorAll('#fx .dmg')].map(e => e.textContent); ut.perfekt = { ord, kjort: Kombo.tall.perfekt === n0 + 1, bom: ord.some(s => s.startsWith('bom')), ordet: ord.some(s => PERF.includes(s)) };
+          // mens kunngjøreren hviler (2,2 s), er «bom» det eneste ordet, og da blir det stående
+          P.invuln = 0; P.roll = .3; P.iframe = .3; hurt(P, 3, { type: 'test' }); await ramme(1); ut.perfekt.bomIgjen = [...document.querySelectorAll('#fx .dmg')].some(e => e.textContent.startsWith('bom')); P.roll = P.iframe = 0;
+          // høyst tre store ord: de to eldste av fem blekner og blir borte, de tre nyeste står
+          FX.clear(); for (let i = 0; i < 5; i++) FX.text(P.x - 3 + i * 1.5, 2.4, P.z + (i % 2) * 2.5, 'ORD ' + i, 'crit', 4);
+          for (let i = 0; i < 90 && document.querySelectorAll('#fx .dmg.crit').length > 3; i++) await ramme(1);
+          ut.tak = [...document.querySelectorAll('#fx .dmg.crit')].map(e => e.textContent);
+          // tall som er skjult (Vis tall av), tar ikke plass fra en info-tekst på samme sted
+          FX.clear(); document.body.classList.add('uten-tall'); FX.text(P.x, 1.6, P.z, '12', '', 3); FX.text(P.x, 1.6, P.z, 'Benektet', 'info', 3); await ramme(3);
+          const inf = FX.items.find(it => it.str === 'Benektet'); ut.utenTall = !!inf && Math.abs(inf.mx) < 1 && Math.abs(inf.my) < 1; document.body.classList.remove('uten-tall');
+          // en tekst legger seg ikke over en snakkeboble
+          FX.clear(); FX.bubble(P, 'Jeg har det helt fint, takk.', 4); FX.text(P.x, P.bubbleH, P.z, 'HER', 'crit', 4); await ramme(8);
+          const bob = [...document.querySelectorAll('#fx .bubble')].map(rute), her = tekster().filter(a => a.s === 'HER'); ut.boble = { kryss: kryss(bob.concat(her)), n: bob.length + her.length };
+          FX.clear(); return ut; }"""
+        STEMPEL45 = """async () => { """ + HJELP45 + """
+          const $ = id => document.getElementById(id), k = $('kstempel'), b = $('bigstamp'), t = $('toast'), borte = async () => { for (let i = 0; i < 120 && (b.classList.contains('on') || k.classList.contains('on') || Stempel.ko.length); i++) await vent(50); };
+          await klar(); await borte();
+          // alle tre på en gang: det store stempelet, kombostempelet og lappen står under hverandre (målt når kombostempelet har landet)
+          stampBig('RYDDET', 'Rommet er friskmeldt'); Kombo.stempel('KIRURGISK', '20 treff på rad'); toast('Test', 'Lappen'); ut.lappStraks = t.textContent === 'TestLappen';
+          for (let i = 0; i < 80; i++) { if (k.getAnimations().every(a => a.currentTime >= 350) && !b.getAnimations().length) break; await vent(25); }
+          const S = [t, k, b].map(rute), kt = $('cards').getBoundingClientRect().top; ut.tre = { kryss: kryss(S), inni: inni(S), lav: t.classList.contains('lav'), overKort: S.every(a => a.y1 <= kt + 1), kortTopp: Math.round(kt), S: kort(S) };
+          // køen: RYDDET står, DIAGNOSE venter til RYDDET har stått i 0,7 sekunder
+          await borte(); const t0 = performance.now(); stampBig('RYDDET'); stampBig('DIAGNOSE', 'Hypokondri'); const straks = b.textContent;
+          for (let i = 0; i < 400 && !b.textContent.startsWith('DIAGNOSE'); i++) await vent(20);
+          const t1 = performance.now(), diag = b.textContent; for (let i = 0; i < 400 && b.classList.contains('on'); i++) await vent(20);
+          ut.ko = { straks, diag, ryddet: Math.round(t1 - t0), diagnose: Math.round(performance.now() - t1) };
+          // like stempler hoppes over, og høyst tre venter
+          await borte(); stampBig('A'); stampBig('B'); stampBig('B'); stampBig('C'); stampBig('A'); stampBig('D'); stampBig('E'); ut.koen = Stempel.ko.map(q => q[0]);
+          await borte(); toast('Uten stempel', ''); ut.lappOppe = !t.classList.contains('lav') && !t.style.top;
+          return ut; }"""
+        UA45 = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        for navn, kw in (('PC', {'viewport': {'width': 1280, 'height': 720}}), ('liggende telefon', {'viewport': {'width': 844, 'height': 390}, 'has_touch': True, 'is_mobile': True, 'device_scale_factor': 2, 'user_agent': UA45})):
+            pg = await ny_side(b, **kw)
+            await start_lop(pg)
+            tk = await pg.evaluate(TEKST45)
+            tre = tk['tre']
+            sjekk(f'{navn}: IKKE I DAG, BONK og bom på samme sted legger seg ved siden av hverandre, innenfor skjermen og med transform', tre['n'] == 3 and not tre['kryss'] and tre['inni'] and tre['transform'], tre)
+            sjekk(f'{navn}: sju AVSLÅTT på ett bilde blir én tekst, «AVSLÅTT ×7»', tk['sju'] == ['AVSLÅTT ×7'], tk['sju'])
+            sjekk(f'{navn}: perfekt unnvikelse viser kunngjørerens ord uten «bom», og «bom» står når kunngjøreren hviler', tk['perfekt']['kjort'] and tk['perfekt']['ordet'] and not tk['perfekt']['bom'] and tk['perfekt']['bomIgjen'], tk['perfekt'])
+            sjekk(f'{navn}: høyst tre store ord samtidig, og det er de nyeste som står', tk['tak'] == ['ORD 2', 'ORD 3', 'ORD 4'], tk['tak'])
+            sjekk(f'{navn}: skjulte tall tar ikke plass, og en tekst legger seg ikke over en snakkeboble', tk['utenTall'] and tk['boble']['n'] == 2 and not tk['boble']['kryss'], (tk['utenTall'], tk['boble']))
+            if navn == 'PC':
+                await pg.evaluate(TRE45); await pg.screenshot(path='/tmp/e_45_tekst.png')
+            st = await pg.evaluate(STEMPEL45)
+            sjekk(f'{navn}: det store stempelet, kombostempelet og lappen står under hverandre uten å overlappe og over evnekortene, og lappen får teksten med en gang', st['lappStraks'] and not st['tre']['kryss'] and st['tre']['inni'] and st['tre']['lav'] and st['tre']['overKort'], st['tre'])
+            ko = st['ko']
+            sjekk(f'{navn}: et nytt stort stempel venter til det forrige har stått i 0,7 sekunder, og står selv minst like lenge', ko['straks'] == 'RYDDET' and ko['diag'] == 'DIAGNOSEHypokondri' and 680 <= ko['ryddet'] < 8000 and ko['diagnose'] >= 700, ko)
+            sjekk(f'{navn}: like stempler hoppes over, høyst tre venter, og lappen er tilbake oppe når stemplene er borte', st['koen'] == ['B', 'C', 'D'] and st['lappOppe'], (st['koen'], st['lappOppe']))
+            sjekk(f'ingen konsollfeil (tekster og stempler, {navn})', not pg.errs, pg.errs[:6])
+            await pg.close()
+        # og en gang i 3D
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        tre = await pg.evaluate(TRE45)
+        sjekk('3D: IKKE I DAG, BONK og bom legger seg ved siden av hverandre', tre['n'] == 3 and not tre['kryss'] and tre['inni'], tre)
+        sjekk('ingen konsollfeil (tekster og stempler i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 46) Blekkvarsel
+        #     Alle angrepsvarsler tegnes av én blekkshader (46_blekk.js): 30 varsler koster høyst to tegnekall (varslene og lysplatene),
+        #     ingen geometri per varsel, plassene er frie etter bruk og etter etasjebytte, formen i shaderen er den samme som inShape,
+        #     sonen er tegnet inne i sirkelen og ikke utenfor, varselet følger eieren, etterbildet og den grå oppløsningen varer som de skal,
+        #     alle fargene i koden har en skadetype som leses på mørkt gulv, og enkel grafikk tegner på den gamle måten.
+        import re as _re, io as _io
+        from PIL import Image as _Img
+        import urllib.parse as _up
+        _src = pathlib.Path(_up.unquote(URL3D[len('file://'):])).parent.parent / 'src'
+        farger = {}
+        for _f in sorted(_src.glob('*.js')):
+            for _m in _re.findall(r'color: 0x([0-9a-fA-F]+)', _f.read_text(encoding='utf-8')): farger.setdefault(int(_m, 16), set()).add(_f.name)
+        # nye fiender i spor C (49 og 50) kan bruke gjettingen fra fargetonen, resten skal stå i TELE_FARGE
+        maa_sta = [c for c, fs in farger.items() if any(not (f.startswith('49_') or f.startswith('50_')) for f in fs)]
+        BK_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
+            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            tomt = async () => { const t0 = performance.now(); while (G.tele.length && performance.now() - t0 < 120000) await vent(50); await spill(.4); },
+            rydd = () => { for (const t of G.tele) R.kastTele(t.mesh, 'rydd', t); G.tele = []; Blekk.tom(); },
+            kall = () => { const i = R.renderer.info; i.autoReset = false; i.reset(); R.render(0); const n = i.render.calls; i.autoReset = true; return n; },
+            eier = () => ({ alive: true, stun: 0, sleep: 0 }), ut = {};"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        bk = await pg.evaluate("""async () => { """ + BK_HJELP + """
+          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); rydd();
+          // tegnekall: 30 varsler samtidig mot ingen
+          addTele('circle', { x: P.x, z: P.z + 2, r: 1 }, .1, null, null); await tomt(); const k0 = kall(), E = eier(), former = ['circle', 'rect', 'cone'];
+          for (let i = 0; i < 30; i++) { const a = i * .41; addTele(former[i % 3], { x: P.x + Math.sin(a) * 3, z: P.z + Math.cos(a) * 3, r: 1 + (i % 4) * .4, w: .3 + (i % 3) * .5, len: 4, a, arc: 1.4, color: [0xb3261e, 0x9ad0e0, 0xb36be0, 0xffe25a][i % 4] }, 30, null, E); }
+          await spill(.05); ut.kall = { k0, k1: kall(), blekk: G.tele.filter(t => t.mesh.isBlekk).length, kval: Blekk.kval() }; cancelTeles(E); await tomt();
+          // 300 varsler: 48 i blekk, resten på den gamle måten, og ingenting blir liggende
+          const info = R.renderer.info.memory, g0 = info.geometries;
+          for (let i = 0; i < 300; i++) { const a = i * .37; addTele(former[i % 3], { x: P.x + Math.sin(a) * 2, z: P.z + Math.cos(a) * 2, r: 1 + (i % 5) * .3, w: .6, len: 4, a, arc: 1.4 }, .3, null, null); }
+          ut.pool = { blekk: G.tele.filter(t => t.mesh.isBlekk).length, gamle: G.tele.filter(t => t.mesh.isGroup).length, fulle: Blekk.ledige };
+          await tomt(); ut.pool.dg = info.geometries - g0; ut.pool.ledige = Blekk.ledige;
+          for (let i = 0; i < 10; i++) addTele(former[i % 3], { x: P.x + i * .3, z: P.z, r: 1.2, w: .6, len: 3, a: i, arc: 1.2 }, 5, null, null);
+          await spill(.05); ut.pool.for = Blekk.ledige; startFloor(G.depth, false); ut.pool.etter = Blekk.ledige;
+          for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.2);
+          // formen: speilet i JS av avstandsfeltet i shaderen mot inShape, 2000 punkter per form (ikke de nærmere kanten enn 0,05)
+          const S = [['circle', { r: 1.7 }], ['circle', { r: .5 }], ['rect', { w: .35, len: 10, a: .66 }], ['rect', { w: 2.4, len: 6, a: -2.1 }], ['cone', { r: 2.2, arc: 1.6, a: .4 }],
+            ['cone', { r: 2.8, arc: 2.2, a: 3 }], ['cone', { r: .5, arc: 1.9, a: 1 }], ['cone', { r: 3, arc: 4.2, a: -1 }], ['cone', { r: 2, arc: Math.PI * 2 - .01, a: 2 }]];
+          ut.form = { n: 0, naer: 0, feil: [], inne: 0 };
+          for (const [f, o0] of S) {
+            const o = Object.assign({ x: P.x + .3, z: P.z - .2 }, o0), t = addTele(f, o, 30, null, null); await spill(.02); const s = Blekk.finn(t), R_ = (o.len || o.r) + 1;
+            let feil = 0; for (let k = 0; k < 2000; k++) { const x = o.x + (Math.random() * 2 - 1) * R_, z = o.z + (Math.random() * 2 - 1) * R_, d = Blekk.avstand(s, x, z); if (Math.abs(d) < .05) { ut.form.naer++; continue; } ut.form.n++; if (d < 0) ut.form.inne++; if ((d < 0) !== inShape(t, x, z)) feil++; }
+            if (feil) ut.form.feil.push(f + ' ' + JSON.stringify(o0) + ': ' + feil); rydd();
+          }
+          // følger eieren: blekk og den gamle tegningen
+          const B = Object.assign(eier(), { x: P.x + 1, z: P.z }), tf = addTele('circle', { x: B.x, z: B.z, r: 3, folg: B }, 5, null, B); await spill(.05); B.x += 2; B.z += .5; await spill(.1);
+          const sf = Blekk.finn(tf); ut.folg = { sx: sf.x, sz: sf.z, bx: B.x, bz: B.z }; rydd();
+          Blekk.av = true; const B2 = Object.assign(eier(), { x: P.x - 1, z: P.z }), tg = addTele('circle', { x: B2.x, z: B2.z, r: 2, folg: B2 }, 5, null, B2); await spill(.05); B2.x -= 2; await spill(.1);
+          ut.folg.gammel = { gx: tg.mesh.position.x, bx: B2.x, gruppe: !!tg.mesh.isGroup }; Blekk.av = false; rydd();
+          // etterbildet når angrepet går av, grå oppløsning når eieren stanses
+          const t1 = addTele('circle', { x: P.x + 2, z: P.z, r: 1 }, .3, null, null), s1 = Blekk.finn(t1), E2 = eier(), t2 = addTele('circle', { x: P.x - 2, z: P.z, r: 1 }, 5, null, E2), s2 = Blekk.finn(t2);
+          await spill(.05); cancelTeles(E2); ut.slutt = { st2: s2.state }; const t0 = performance.now(); let st1 = 0;
+          while ((s1.bruk || s2.bruk) && performance.now() - t0 < 60000) { if (s1.bruk && s1.state === 1) st1 = 1; await vent(10); }
+          Object.assign(ut.slutt, { st1, l1: s1.logg, l2: s2.logg, ledige: Blekk.ledige });
+          // enkel grafikk: den gamle tegningen, også for et blekkvarsel som allerede er ute
+          const tb = addTele('circle', { x: P.x, z: P.z + 2, r: 1.2 }, 5, null, null); await spill(.05); const varBlekk = !!tb.mesh.isBlekk;
+          R.safe = true; const ts = [addTele('circle', { x: P.x, z: P.z, r: 1 }, 5, null, null), addTele('rect', { x: P.x, z: P.z, w: .6, len: 3, a: 1 }, 5, null, null), addTele('cone', { x: P.x, z: P.z, r: 2, arc: 1.4, a: 2 }, 5, null, null)];
+          await spill(.1); ut.safe = { gruppe: ts.every(t => t.mesh instanceof THREE.Group), varBlekk, over: !!(tb.mesh.g && tb.mesh.g.isGroup), ledige: Blekk.ledige, synlig: Blekk.mesh.visible };
+          rydd(); R.safe = false; await spill(.1);
+          // skadetypene: fra o.type, fargen og eieren
+          ut.typer = [teleType({ type: 'strom', color: 0xb3261e }), teleType({ color: 0x3a2a44 }), teleType({}, { type: 'oppasser' }), teleType({}, { type: 'kultist' }), teleType({}), teleType({ color: 0x123456 })];
+          return ut; }""")
+        k = bk['kall']
+        sjekk('30 varsler samtidig koster høyst to tegnekall (varslene og lysplatene)', k['blekk'] == 30 and k['k1'] - k['k0'] <= 2 and k['kval'] == 1, k)
+        po = bk['pool']
+        sjekk('300 varsler: 48 plasser i blekk, resten på den gamle måten, ingen geometri blir liggende og plassene er frie etterpå og etter etasjebytte', po['blekk'] == 48 and po['gamle'] == 252 and po['fulle'] == 0 and po['dg'] <= 2 and po['ledige'] == 48 and po['for'] == 38 and po['etter'] == 48, po)
+        fo = bk['form']
+        sjekk('formen i shaderen er den samme som inShape (2000 punkter per form, ni former)', not fo['feil'] and fo['n'] > 15000 and fo['inne'] > 2000, fo)
+        f_ = bk['folg']
+        sjekk('varselet følger eieren (o.folg), også på den gamle måten', abs(f_['sx'] - f_['bx']) < 1e-6 and abs(f_['sz'] - f_['bz']) < 1e-6 and f_['gammel']['gruppe'] and abs(f_['gammel']['gx'] - f_['gammel']['bx']) < 1e-6, f_)
+        sl = bk['slutt']; l1, l2 = sl['l1'] or {}, sl['l2'] or {}
+        sjekk('etterbildet ligger høyst 0,18 s (fritt første bilde etter), den grå oppløsningen høyst 0,15 s, og plassene er frie',
+              sl['st1'] == 1 and l1.get('state') == 1 and l1['t'] >= .18 and l1['t'] - l1['dt'] < .18 + 1e-6 and sl['st2'] == 2 and l2.get('state') == 2 and l2['t'] >= .15 and l2['t'] - l2['dt'] < .15 + 1e-6 and sl['ledige'] == 48, sl)
+        sa = bk['safe']
+        sjekk('enkel grafikk: alle varsler tegnes på den gamle måten, og et blekkvarsel som er ute, går over til den', sa['gruppe'] and sa['varBlekk'] and sa['over'] and sa['ledige'] == 48, sa)
+        sjekk('skadetypen kommer fra o.type, så fargen, så eieren', bk['typer'][:5] == ['strom', 'gass', 'gift', 'morb', 'fysisk'] and bk['typer'][5] in ('vann', 'gass', 'morb'), bk['typer'])
+        fa = await pg.evaluate("""(fs) => { const ut = { mangler: [], ukjent: [], lum: {} };
+          for (const c of fs.alle) if (!TELE_TYPE[teleType({ color: c })]) ut.ukjent.push(c.toString(16));
+          for (const c of fs.maa) if (!TELE_FARGE[c]) ut.mangler.push(c.toString(16));
+          for (const [k, T] of Object.entries(TELE_TYPE)) { const c = new THREE.Color(T.farge); ut.lum[k] = +(.2126 * c.r + .7152 * c.g + .0722 * c.b).toFixed(3); }
+          return ut; }""", {'alle': list(farger), 'maa': maa_sta})
+        sjekk('alle %d fargene i koden har en skadetype, og hver type er lys nok (luminans minst 0,35)' % len(farger), len(farger) >= 48 and not fa['mangler'] and not fa['ukjent'] and len(fa['lum']) == 11 and min(fa['lum'].values()) >= .35, fa)
+        # pikslene: sonen er tegnet inne i sirkelen og ikke utenfor (snitt over 9 x 9 punkter, før og etter)
+        pos = await pg.evaluate("""async () => { """ + BK_HJELP + """
+          // innendørs (ingen regn som endrer pikslene), i det største rommet
+          G.run.seed = 11; startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200);
+          const inne = r => !Vaer.ute(r.x + r.w / 2, r.z + r.h / 2), rr = G.F.rooms.filter(inne);
+          rolig(); R.shakeOn = false; rydd(); const r = (rr.length ? rr : G.F.rooms).slice().sort((a, b) => b.w * b.h - a.w * a.h)[0], c = freeSpot(r.x + r.w / 2 - .4, r.z + r.h / 2, 3);
+          P.x = c.x; P.z = c.z; P.vx = P.vz = 0; R.snapCamera(P.x, P.z); await spill(.6);
+          const q = (x, z) => { const s = R.project(x, 0, z); return [Math.round(s.x), Math.round(s.y)]; };
+          return { inne: q(P.x + 3 + .75, P.z), ute: q(P.x + 3 + 2.1, P.z), rinne: q(P.x - 1.2, P.z - 2.5), rute: q(P.x - 2.3, P.z - 2.5) }; }""")
+        def flekk(png, xy):
+            im = _Img.open(_io.BytesIO(png)).convert('RGB'); x0, y0 = xy
+            px = [im.getpixel((x0 + i, y0 + j)) for i in range(-4, 5) for j in range(-4, 5)]
+            return [sum(p[k] for p in px) / len(px) for k in range(3)]
+        for_ = await pg.screenshot()
+        await pg.evaluate("""async () => { """ + BK_HJELP + """
+          const t = addTele('circle', { x: P.x + 3, z: P.z, r: 1.5 }, 30, null, null); t.t = 3; const u = addTele('rect', { x: P.x - 1.2, z: P.z - .5, a: Math.PI, w: .8, len: 4 }, 30, null, null); u.t = 3; await spill(.15); }""")
+        etter = await pg.screenshot()
+        await pg.screenshot(path='/tmp/e_46_piksler.png')
+        dlt = lambda xy: sum(abs(a - b) for a, b in zip(flekk(for_, xy), flekk(etter, xy))) / 3
+        px_ = {k: round(dlt(v), 1) for k, v in pos.items()}
+        sjekk('pikslene: sirkelen er fylt inne (endring over 25, banen over 15) og urørt utenfor (under 8)', px_['inne'] > 25 and px_['ute'] < 8 and px_['rinne'] > 15 and px_['rute'] < 8, px_)
+        sjekk('ingen konsollfeil (blekkvarsel i 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # én runde i 3D: shaderen lenker, høy kvalitet, ett tegnekall, og ingen geometri blir liggende
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        b3 = await pg.evaluate("""async () => { """ + BK_HJELP + """
+          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); rydd(); ut.d3 = D3.on;
+          addTele('circle', { x: P.x, z: P.z + 2, r: 1 }, .1, null, null); await tomt(); const k0 = kall(), g0 = R.renderer.info.memory.geometries, former = ['circle', 'rect', 'cone'], B = Object.assign(eier(), { kind: 'boss', type: 'krok' });
+          for (let i = 0; i < 24; i++) { const a = i * .5; addTele(former[i % 3], { x: P.x + Math.sin(a) * 2.5, z: P.z + Math.cos(a) * 2.5, r: 1 + (i % 4) * .6, w: .4 + (i % 3) * .6, len: 5, a, arc: 1.6, color: [0xb3261e, 0x9ad0e0, 0xffe25a, 0x3a2a44][i % 4], stille: true }, 1.2, null, i % 5 ? null : B); } // stille: nedslagene (merkene og lynene) prøves i del 49
+          await spill(.3); const q = R.renderer.properties.get(Blekk.mat), pr = q.currentProgram || q.program;
+          const k2 = kall(); Blekk.mesh.visible = false; const k3 = kall(); Blekk.mesh.visible = true;
+          Object.assign(ut, { k: k2 - k0, egne: k2 - k3, blekk: G.tele.filter(t => t.mesh.isBlekk).length, kval: Blekk.kval(), lenket: !!pr && !(pr.diagnostics && !pr.diagnostics.runnable) && !Blekk.brutt, lys: Blekk.lys.visible });
+          await tomt(); ut.dg = R.renderer.info.memory.geometries - g0; ut.ledige = Blekk.ledige; return ut; }""")
+        await pg.screenshot(path='/tmp/e_46_3d.png')
+        sjekk('3D: shaderen lenker, høy kvalitet, 24 varsler koster høyst to tegnekall, ingen lysplater, og ingenting blir liggende', b3['d3'] and b3['lenket'] and b3['blekk'] == 24 and b3['k'] <= 2 and b3['egne'] == 1 and b3['kval'] == 2 and not b3['lys'] and b3['dg'] <= 1 and b3['ledige'] == 48, b3)
+        sjekk('ingen konsollfeil (blekkvarsel i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 47) Blod som renner
+        #     Blodet på glasset renner som ekte blod (10.png): ingen lange, rette streker fra toppen, sporene smalner og slingrer, en dråpe
+        #     renner et stykke og stanser, høyst seks bloddråper renner samtidig, og lerretet lastes opp annethvert bilde når ingenting renner.
+        RENN47 = """async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
+          for (const e of G.enemies) if (e.alive) killEntity(e, {}); P.hp = P.maxHp = 100; P.invuln = 999; Sound.vaerType = null; G.F.ute = false; Vaatt.tom(); await vent(200);
+          const V = Vaatt, mr = Math.random; let fr = 4747; Math.random = () => { fr |= 0; fr = fr + 0x6D2B79F5 | 0; let t = Math.imul(fr ^ fr >>> 15, 1 | fr); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+          try {
+            // tolv tunge treff med hvert sitt frø og 8 sekunder etter hvert: den lengste loddrette stripen med blod i en kolonne av lerretet, målt hvert sekund.
+            // Ett treff alene gir en håndfull spor, og hvor mange av dem som slingrer og smalner, avhenger av frøet og av hvor mye Blod.treff trakk fra Math.random før
+            // (etasjen), så ett treff med «alle sporene» feilet omtrent hver tredje gang. Andelene over tolv treff er stabile.
+            V.tom(); V.init(); const k = V.kk(), W = V.W, H = V.H, alle = new Set(); let stripe = 0, maksGlir = 0;
+            for (let h = 0; h < 12; h++) {
+              fr = 4747 + 131 * h; V.tom(); Blod.treff(P, { x: P.x + 2, z: P.z }, 80);
+              for (let i = 1; i <= 160; i++) {
+                V.fysikk(.05); for (const s of V.spor) if (s.blod) alle.add(s); maksGlir = Math.max(maksGlir, V.draper.filter(d => d.glir && d.blod).length);
+                if (i % 20 === 0) { V.tegn(); const D = V.g.getImageData(0, 0, W, H).data; for (let x = 0; x < W; x++) { let n = 0; for (let y = 0; y < H; y++) { n = D[(y * W + x) * 4 + 1] > 20 ? n + 1 : 0; if (n > stripe) stripe = n; } } }
+              }
+            }
+            // sporene med minst seks punkter: smalere nederst enn øverst, og de slingrer (andelen av alle sporene, og hvor mye de smalner i midten)
+            const lange = [...alle].filter(s => s.p.length >= 24).map(s => { const p = s.p, xs = p.filter((_, i) => i % 4 === 0); return { forst: p[2], sist: p[p.length - 2], bredde: Math.max(...xs) - Math.min(...xs) }; }), n = Math.max(1, lange.length), fh = lange.map(s => s.sist / s.forst).sort((a, b) => a - b);
+            ut.tungt = { stripe, H, maksGlir, spor: alle.size, lange: lange.length, smalner: +(lange.filter(s => s.sist <= .8 * s.forst).length / n).toFixed(2), slingrer: +(lange.filter(s => s.bredde >= 1.5 * k).length / n).toFixed(2), forhold: +(fh[fh.length >> 1] || 1).toFixed(2), punkter: [...alle].every(s => s.p.length % 4 === 0) };
+            // 30 enkeltdråper på r = 3,5 k: hvor langt de renner før de stanser
+            const L = []; for (let n = 0; n < 30; n++) { V.tom(); const d = V.ny(W * (.1 + .8 * n / 29), H * .2, 3.5 * k, true); d.ny = 0; const y0 = d.y; for (let i = 0; i < 400 && (i < 3 || d.glir); i++) V.fysikk(.05); L.push(d.y - y0); }
+            L.sort((a, b) => a - b); ut.enkle = { median: +((L[14] + L[15]) / 2).toFixed(1), maks: +L[29].toFixed(1), min: +L[0].toFixed(1), H, stanset: L.length === 30 };
+          } finally { Math.random = mr; }
+          // opplastingen: annethvert bilde når sporene bare blekner, hvert bilde når noe renner
+          V.tom(); await ramme(3); const t0 = V.tick; let n = 0; V.tick = function (dt) { n++; return t0.call(this, dt); };
+          try {
+            V.spor.push({ p: [50, 20, 3, V.klokke, 52, 60, 3, V.klokke], blod: true, id: 1 }); await ramme(2); n = 0; let v0 = V.tex.version; await ramme(24); ut.blekner = +((V.tex.version - v0) / Math.max(1, n)).toFixed(2);
+            const d = V.ny(V.W * .5, V.H * .1, 6 * V.kk(), true); d.ny = 0; await ramme(3); n = 0; v0 = V.tex.version; await ramme(12); ut.renner = +((V.tex.version - v0) / Math.max(1, n)).toFixed(2); ut.glir = d.glir;
+          } finally { V.tick = t0; }
+          V.tom(); return ut; }"""
+        UA47 = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        for navn, kw in (('PC', {'viewport': {'width': 1280, 'height': 720}}), ('stående telefon', {'viewport': {'width': 390, 'height': 844}, 'has_touch': True, 'is_mobile': True, 'device_scale_factor': 2, 'user_agent': UA47})):
+            pg = await ny_side(b, **kw)
+            await start_lop(pg)
+            ut = await pg.evaluate(RENN47)
+            t = ut['tungt']
+            sjekk(f'{navn}: tunge treff gir ingen lange, rette streker på glasset (lengste stripe under halve høyden)', t['stripe'] < .5 * t['H'] and t['spor'] > 0, t)
+            sjekk(f'{navn}: minst tre av fire spor smalner mot dråpen og slingrer, punktene har bredde og alder, og høyst seks bloddråper renner samtidig', t['lange'] >= 20 and t['smalner'] >= .75 and t['slingrer'] >= .75 and t['forhold'] <= .8 and t['punkter'] and 0 < t['maksGlir'] <= 6, t)
+            e = ut['enkle']
+            if navn == 'PC':
+                sjekk('en enkelt dråpe renner et stykke og stanser (median 25 til 60 punkter, ingen over 0,6 av høyden)', e['stanset'] and 25 <= e['median'] <= 60 and e['maks'] < .6 * e['H'], e)
+            else:
+                sjekk(f'{navn}: en enkelt dråpe renner et stykke og stanser (ingen over 0,6 av høyden)', e['stanset'] and e['min'] > 0 and e['maks'] < .6 * e['H'], e)
+            sjekk(f'{navn}: lerretet lastes opp annethvert bilde når sporene bare blekner, og hvert bilde når noe renner', .3 <= ut['blekner'] <= .7 and ut['renner'] >= .9 and ut['glir'], [ut['blekner'], ut['renner'], ut['glir']])
+            sjekk(f'ingen konsollfeil (blod som renner, {navn})', not pg.errs, pg.errs[:6])
+            await pg.close()
+        # og en gang i 3D: et tungt treff og 3 sekunder spilltid
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        ut = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t));
+          rolig(); P.hp = P.maxHp = 100; P.invuln = 999; Sound.vaerType = null; Vaatt.tom(); await vent(200); Blod.treff(P, { x: P.x + 2, z: P.z }, 80);
+          const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 3 && performance.now() - t0 < 60000) await vent(50);
+          return { u: R.post.uniforms.uVaatt.value, spor: Vaatt.spor.length, draper: Vaatt.draper.length, tid: +(G.time - g0).toFixed(2) }; }""")
+        await pg.screenshot(path='/tmp/e_47_blod.png')
+        sjekk('3D: blodet ligger på glasset etter et tungt treff og 3 sekunder', ut['u'] == 1 and ut['draper'] > 0, ut)
+        sjekk('ingen konsollfeil (blod som renner i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 48) Blekkpartikler
+        #     Partiklene er flater i blekk og papir som vender mot kameraet, med fire tegninger fra ett ark (gnist, dråpe, papirbit og støv),
+        #     ikke klosser: 900 partikler koster ett tegnekall, fargene kommer fram (før var alle svarte, fordi fargelista ble laget tom),
+        #     gnistene strekkes ut langs farten, formen gjettes fra fargen, enkel grafikk gir klossene tilbake uten å legge igjen geometri,
+        #     og alt er borte etterpå.
+        import io as _io48
+        from PIL import Image as _Img48
+        PT_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
+            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            tomt = async () => { const t0 = performance.now(); while (Particles.n && performance.now() - t0 < 60000) await vent(50); },
+            kall = () => { const i = R.renderer.info; i.autoReset = false; i.reset(); R.render(0); const n = i.render.calls; i.autoReset = true; return n; },
+            lenket = () => { const q = R.renderer.properties.get(Particles.mesh.material), pr = q.currentProgram || q.program; return !!pr && !(pr.diagnostics && !pr.diagnostics.runnable) && !Particles.brutt; },
+            M = () => Particles.mesh, ut = {};"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        pt = await pg.evaluate("""async () => { """ + PT_HJELP + """
+          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); Particles.clear(); await spill(.05);
+          const g = M().geometry, info = R.renderer.info.memory;
+          ut.form = { geo: g.type, aForm: !!g.attributes.aForm, mat: M().material.type, farger: M().instanceColor ? M().instanceColor.array.length : 0 };
+          // 900 samtidig (og 100 til, som ikke får plass) koster ett tegnekall
+          Particles.spawn(P.x, 1, P.z, 1000, 0xb3261e, { speed: 5, up: 4, life: 20, g: 0 }); await spill(.05);
+          const k1 = kall(); M().visible = false; const k0 = kall(); M().visible = true;
+          ut.kall = { n: Particles.n, k: k1 - k0, lenket: lenket() };
+          const c = M().instanceColor.array; ut.farge = [c[0], c[1], c[2], c[899 * 3]].map(v => +(v ?? -1).toFixed(3));
+          Particles.clear(); await spill(.05); ut.kall.tom = M().count;
+          // formen gjettes fra fargen: blod og vann er dråper, hvitt og gult er gnister, o.flat er papir, grått og brunt er støv, o.form vinner
+          const f = (col, o = {}) => { Particles.spawn(P.x, 1, P.z, 1, col, Object.assign({ life: 5 }, o)); return Particles.d[Particles.n - 1].f; };
+          ut.gjett = [f(0xb3261e, { speed: 8 }), f(0x9fd8f0, { speed: 2 }), f(0xfff6a0, { speed: 5 }), f(0xffa040, { speed: 6 }), f(0xefe4c4, { flat: true }), f(0xb8a888, { speed: 3 }), f(0x2a1a1a), f(0xb3261e, { form: 'papir' }), f(0xfff6a0, { form: 'stov' })];
+          Particles.clear();
+          // en gnist som flyr mot høyre på skjermen: strukket langs farten, flaten vender mot kameraet
+          Particles.spawn(P.x, 1, P.z, 1, 0xfff6a0, { speed: .001, up: .001, vx: 9, g: 0, life: 5 }); await spill(.05);
+          const A = M().instanceMatrix.array, len = o => Math.hypot(A[o], A[o + 1], A[o + 2]);
+          ut.gnist = { x: +len(0).toFixed(3), y: +len(4).toFixed(3), retning: +(A[0] / len(0)).toFixed(3), mot: [A[8], A[9], A[10]].map(v => +v.toFixed(3)), sp: +Math.sin(52 * Math.PI / 180).toFixed(3), cp: +Math.cos(52 * Math.PI / 180).toFixed(3) };
+          Particles.clear();
+          // de lever ut livet sitt og blir borte
+          Particles.spawn(P.x, 1, P.z, 900, 0xfff6a0, { speed: 6, up: 5, life: .4 }); ut.liv = { n0: Particles.n }; await tomt(); await spill(.1); ut.liv.n = Particles.n; ut.liv.count = M().count;
+          // enkel grafikk: klossene tilbake på neste bilde, og tilbake til blekk igjen, uten at geometri blir liggende
+          const g0 = info.geometries, t0 = info.textures;
+          // hver meshen som byttes ut, må kastes (geometri og materiale); det globale tallet tåler én geometri fra noe annet som lages første gang i samme stund
+          const kast = [], folg = m => { const k = { g: false, m: false }; m.geometry.addEventListener('dispose', () => k.g = true); m.material.addEventListener('dispose', () => k.m = true); kast.push(k); };
+          for (let i = 0; i < 3; i++) { folg(M()); R.safe = true; await spill(.05); if (!i) ut.safe = { geo: M().geometry.type, mat: M().material.type }; Particles.spawn(P.x, 1, P.z, 20, 0xb3261e, { life: 5 }); folg(M()); R.safe = false; await spill(.05); }
+          ut.safe.tilbake = M().geometry.type; ut.safe.n = Particles.n; ut.safe.dg = info.geometries - g0; ut.safe.dt = info.textures - t0; ut.safe.kastet = kast.filter(k => k.g && k.m).length + '/' + kast.length;
+          const cc = M().instanceColor.array; ut.safe.farge = [cc[0], cc[1], cc[2]].map(v => +v.toFixed(3));
+          // enkel grafikk før init (som ved oppstart med innstillingen på) gir klosser fra første bilde, og blekket etterpå
+          Particles.clear(); const gm = M(); R.scene.remove(gm); gm.geometry.dispose(); gm.material.dispose(); Particles.mesh = null; Particles.d.length = 0;
+          R.safe = true; Particles.init(); ut.safe.init = M().geometry.type; R.safe = false; await spill(.05); ut.safe.initEtter = M().geometry.type; ut.safe.d = Particles.d.length;
+          Particles.clear(); rolig();
+          return ut; }""")
+        fo = pt['form']
+        sjekk('partiklene er flater med formattributt og egen shader, ikke klosser, og fargelista har plass til alle 900', fo == {'geo': 'PlaneGeometry', 'aForm': True, 'mat': 'ShaderMaterial', 'farger': 2700}, fo)
+        k = pt['kall']
+        sjekk('900 partikler koster ett tegnekall, shaderen lenker, og count går til 0 etter clear', k['n'] == 900 and k['k'] == 1 and k['lenket'] and k['tom'] == 0, k)
+        sjekk('fargen kommer fram (blodrødt, ikke svart)', pt['farge'] == [0.702, 0.149, 0.118, 0.702], pt['farge'])
+        sjekk('formen gjettes fra fargen (dråpe, dråpe, gnist, gnist, papir, støv, dråpe) og o.form vinner', pt['gjett'] == [1, 1, 0, 0, 2, 3, 1, 2, 3], pt['gjett'])
+        gn = pt['gnist']
+        sjekk('gnisten strekkes ut langs farten og flaten vender mot kameraet', gn['x'] > gn['y'] * 1.8 and gn['retning'] > .99 and abs(gn['mot'][1] - gn['sp']) < .002 and abs(gn['mot'][2] - gn['cp']) < .002 and abs(gn['mot'][0]) < .002, gn)
+        sjekk('900 partikler lever ut og er borte', pt['liv'] == {'n0': 900, 'n': 0, 'count': 0}, pt['liv'])
+        sa = pt['safe']
+        sjekk('enkel grafikk gir klosser, blekket kommer tilbake, fargene og partiklene følger med, og ingen geometri eller tekstur blir liggende', sa['geo'] == 'BoxGeometry' and sa['mat'] == 'MeshBasicMaterial' and sa['tilbake'] == 'PlaneGeometry' and sa['n'] == 60 and sa['kastet'] == '6/6' and sa['dg'] <= 1 and sa['dt'] <= 0 and sa['farge'] == [0.702, 0.149, 0.118], sa)
+        sjekk('enkel grafikk satt før init gir klosser, og blekket kommer når den slås av', sa['init'] == 'BoxGeometry' and sa['initEtter'] == 'PlaneGeometry' and sa['d'] == 900, sa)
+        # pikslene: en klump blodpartikler som står stille, blir rød på skjermen (snitt over 9 x 9 punkter, før og etter)
+        xy = await pg.evaluate("""async () => { """ + PT_HJELP + """
+          R.shakeOn = false; P.vx = P.vz = 0; R.snapCamera(P.x, P.z); await spill(.3);
+          const s = R.project(P.x + 2.5, 1, P.z + .5); return [Math.round(s.x), Math.round(s.y)]; }""")
+        def flekk48(png, xy):
+            im = _Img48.open(_io48.BytesIO(png)).convert('RGB'); x0, y0 = xy
+            px = [im.getpixel((x0 + i, y0 + j)) for i in range(-4, 5) for j in range(-4, 5)]
+            return [sum(q[k] for q in px) / len(px) for k in range(3)]
+        for48 = await pg.screenshot()
+        await pg.evaluate("""async () => { """ + PT_HJELP + """
+          Particles.spawn(P.x + 2.5, 1, P.z + .5, 40, 0xb3261e, { speed: .001, up: .001, g: 0, life: 30, size: 1.3 }); await spill(.15); }""")
+        etter48 = await pg.screenshot()
+        a_, e_ = flekk48(for48, xy), flekk48(etter48, xy)
+        sjekk('pikslene: blodpartiklene er røde på skjermen (rødt over grønt med minst 50, og endret)', e_[0] - e_[1] > 50 and abs(e_[0] - a_[0]) + abs(e_[1] - a_[1]) > 40, {'for': [round(v) for v in a_], 'etter': [round(v) for v in e_]})
+        # fem drap i et rolig rom, til gjennomsyn
+        await pg.evaluate("""async () => { """ + PT_HJELP + """
+          Particles.clear(); const E = [], typer = ['pleier', 'oppasser', 'kultist', 'yngel', 'pleier'];
+          for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + .3, f = freeSpot(P.x + Math.sin(a) * 2.6, P.z + Math.cos(a) * 2.2, 2); E.push(spawnEnemy(typer[i], f.x, f.z, false, 2)); }
+          await spill(.7); for (const e of E) if (e && e.alive) { e.stun = 5; hurt(e, 1e6, { from: 'player', x: P.x, z: P.z }); } await spill(.12); }""")
+        await pg.screenshot(path='/tmp/e_48_partikler.png')
+        sjekk('ingen konsollfeil (blekkpartikler i 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # én runde i 3D: flatene, shaderen lenker og ett tegnekall
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        p3 = await pg.evaluate("""async () => { """ + PT_HJELP + """
+          rolig(); await spill(.3); Particles.clear(); ut.d3 = D3.on;
+          Particles.spawn(P.x, 1, P.z, 900, 0xfff6a0, { speed: 6, up: 5, life: 20, g: 0 }); Particles.spawn(P.x, 1, P.z, 5, 0xb3261e, {}); await spill(.1);
+          const k1 = kall(); M().visible = false; const k0 = kall(); M().visible = true;
+          Object.assign(ut, { geo: M().geometry.type, n: Particles.n, k: k1 - k0, lenket: lenket() }); Particles.clear(); return ut; }""")
+        sjekk('3D: flater, shaderen lenker og 900 partikler koster ett tegnekall', p3 == {'d3': True, 'geo': 'PlaneGeometry', 'n': 900, 'k': 1, 'lenket': True}, p3)
+        sjekk('ingen konsollfeil (blekkpartikler i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 49) Nedslag
+        #     Angrepene lander med tyngde (Nedslag i 46_blekk.js): partikler langs omrisset når et varsel går av (ikke når det avbrytes
+        #     eller har o.stille), korte lyn på kanten for strøm, merker i gulvet på store angrep (høyst 12, de som har bleknet brukes
+        #     om igjen), skrensemerker når en fiende stormer, bare et blaff for prosjektilbaner, partiklene er borte innen 5 s,
+        #     ingen ny geometri per nedslag, ingenting med enkel grafikk, tunge treff på spilleren fryser bildet, lynet i regnværet
+        #     beholder sitt eget nedslag, og prosjektilene har en skygge på gulvet.
+        import io as _io49
+        from PIL import Image as _Img49
+        NS_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
+            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            tomt = async () => { const t0 = performance.now(); while (G.tele.length && performance.now() - t0 < 120000) await vent(50); await spill(.1); },
+            rydd = () => { for (const t of G.tele) R.kastTele(t.mesh, 'rydd', t); G.tele = []; Blekk.tom(); },
+            kall = () => { const i = R.renderer.info; i.autoReset = false; i.reset(); R.render(0); const n = i.render.calls; i.autoReset = true; return n; },
+            eier = (o = {}) => Object.assign({ alive: true, stun: 0, sleep: 0 }, o), T = () => Object.assign({}, Nedslag.tall), ut = {};"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ns = await pg.evaluate("""async () => { """ + NS_HJELP + """
+          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); rydd(); Particles.clear(); Nedslag.tom();
+          // går av: partikler langs omrisset. Avbrutt eller o.stille: ingenting
+          let t0 = T(), n0 = Particles.n; const E = eier();
+          addTele('circle', { x: P.x + 2, z: P.z, r: 1.4 }, .1, null, null); addTele('circle', { x: P.x - 2, z: P.z, r: 1.4 }, 5, null, E); addTele('circle', { x: P.x, z: P.z + 2, r: 1.4, stille: true }, .1, null, null);
+          await spill(.02); cancelTeles(E); await tomt(); let t1 = T();
+          ut.land = { d: t1.land - t0.land, part: t1.partikler - t0.partikler, kvote: Glod.kvote(), merker: t1.merker - t0.merker };
+          // strøm: gnister og to eller tre lyn på kanten
+          t0 = T(); addTele('circle', { x: P.x + 2, z: P.z, r: 1.8, color: 0xffe25a }, .1, null, null); await tomt(); t1 = T(); ut.strom = { lyn: t1.lyn - t0.lyn, part: t1.partikler - t0.partikler };
+          // en prosjektilbane: bare et lite blaff og ingen merker. Et løp: skrensemerker
+          t0 = T(); addTele('rect', { x: P.x, z: P.z, a: 1, w: .35, len: 10 }, .1, null, eier()); await tomt(); t1 = T(); ut.bane = { baner: t1.baner - t0.baner, part: t1.partikler - t0.partikler, merker: t1.merker - t0.merker };
+          const L = eier({ state: 'wind' }); t0 = T(); addTele('rect', { x: P.x, z: P.z, a: 2, w: 1.3, len: 7 }, .1, () => { L.state = 'charge'; }, L); await tomt(); t1 = T();
+          const sk = Nedslag.M.filter(m => m.t < m.liv).map(m => Nedslag.aDek.array[m.i * 2]);
+          ut.lop = { lop: t1.lop - t0.lop, merker: t1.merker - t0.merker, skrens: sk.includes(3), part: t1.partikler - t0.partikler };
+          Nedslag.tom();
+          // korskriket (r 6,2) når forbi rommet: ingen partikler inne i veggen eller ute i mørket, og merket blir høyst 6,5 skritt
+          { const K = { x: P.x, z: P.z, r: 6.2 }; let vegg = 0; for (let i = 0; i < 64; i++) { const q = Nedslag.kant('circle', K, i / 64); if (solid(Math.floor(q.x), Math.floor(q.z))) vegg++; }
+            const sp0 = Particles.spawn; let iVegg = 0, nSp = 0; Particles.spawn = function (x, y, z) { nSp++; if (solid(Math.floor(x), Math.floor(z))) iVegg++; return sp0.apply(this, arguments); };
+            try { addTele('circle', K, .05, null, eier({ kind: 'boss' })); await tomt(); } finally { Particles.spawn = sp0; }
+            const m = Nedslag.M.filter(m => m.t < m.liv); ut.kor = { vegg, iVegg, nSp, merker: m.length, str: m.length ? Math.max(m[0].sx, m[0].sz) : 0 }; Nedslag.tom(); }
+          // 40 store angrep av alle typene: høyst 12 merker, de som har bleknet brukes om igjen, ingen geometri blir liggende, partiklene er borte innen 5 s
+          const info = R.renderer.info.memory, g0 = info.geometries, typer = Object.keys(TELE_TYPE); let maks = 0; t0 = T(); n0 = Particles.n;
+          for (let i = 0; i < 40; i++) { const a = i * .9; addTele('circle', { x: P.x + Math.sin(a) * 3, z: P.z + Math.cos(a) * 3, r: 2.2 + (i % 3) * .6, type: typer[i % typer.length] }, .05 + (i % 10) * .02, null, i % 4 ? null : eier({ kind: 'boss' })); if (i % 10 === 9) { await tomt(); maks = Math.max(maks, Nedslag.levende); } }
+          t1 = T(); const nTopp = Particles.n; await spill(5.3, 240000);
+          ut.stor = { merker: t1.merker - t0.merker, maks, sjokk: t1.sjokk - t0.sjokk, nTopp, n5: Particles.n, n0, levende: Nedslag.levende, dg: info.geometries - g0 };
+          t0 = T(); addTele('circle', { x: P.x + 3, z: P.z, r: 2.5 }, .05, null, null); await tomt(); t1 = T(); ut.stor.gjenbruk = t1.gjenbruk - t0.gjenbruk; ut.stor.dg2 = info.geometries - g0;
+          const k1 = kall(); Nedslag.mesh.visible = false; const k0 = kall(); Nedslag.mesh.visible = true; ut.stor.kall = k1 - k0; Nedslag.tom(); await spill(.1);
+          // enkel grafikk: ingen partikler og ingen merker, og meshen vises ikke
+          Particles.clear(); R.safe = true; await spill(.05); t0 = T(); n0 = Particles.n;
+          addTele('circle', { x: P.x + 2, z: P.z, r: 3, color: 0xffe25a }, .05, null, eier({ kind: 'boss' })); addTele('rect', { x: P.x, z: P.z, a: 2, w: .35, len: 6 }, .05, null, null); await tomt(); t1 = T();
+          ut.safe = { land: t1.land - t0.land, part: t1.partikler - t0.partikler, merker: t1.merker - t0.merker, lyn: t1.lyn - t0.lyn, synlig: Nedslag.mesh.visible, sjokk: t1.sjokk - t0.sjokk };
+          R.safe = false; await spill(.1);
+          // tunge treff: over 15 % av livet fryser bildet og viser treffstjerna, et lite treff gjør det ikke
+          P.hp = P.maxHp = 100; P.invuln = 0; P.iframe = 0; G.hitstop = 0; const s0 = VFX.stars.length; t0 = T(); const d1 = hurt(P, 20, { type: 'test' }); const hs1 = G.hitstop, st1 = VFX.stars.length - s0;
+          P.invuln = 0; P.iframe = 0; G.hitstop = 0; const d2_ = hurt(P, 5, { type: 'test' }); const hs2 = G.hitstop;
+          ut.tungt = { d1, hs1, st1, d2: d2_, hs2, tunge: T().tunge - t0.tunge }; P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.1);
+          // lynet i regnværet har sitt eget nedslag
+          const nT = G.tele.length; Uvaer.varsel(P.x + 4, P.z); ut.lyn = { stille: G.tele.length > nT && !!G.tele[G.tele.length - 1].o.stille }; rydd();
+          // skygge under prosjektilene, også en som går i bue
+          const pr = addProj({ type: 'glob', from: 'enemy', x: P.x + 3, z: P.z, arc: true, tx: P.x + 6, tz: P.z, dur: 20, h: 3, dmg: 0 }); await spill(.1);
+          ut.skygge = { n: Nedslag.skygger ? Nedslag.skygger.count : -1 }; pr.alive = false; await spill(.1); ut.skygge.etter = Nedslag.skygger.count;
+          return ut; }""")
+        la = ns['land']
+        sjekk('et varsel som går av, gir et nedslag med partikler langs omrisset, men ikke et som avbrytes eller har o.stille', la['d'] == 1 and la['part'] >= 8 and la['kvote'] > 0 and la['merker'] == 0, la)
+        sjekk('strøm gir gnister og to eller tre korte lyn på kanten', 2 <= ns['strom']['lyn'] <= 3 and ns['strom']['part'] >= 8, ns['strom'])
+        sjekk('en prosjektilbane gir bare et lite blaff, et løp gir skrensemerker', ns['bane']['baner'] == 1 and 1 <= ns['bane']['part'] <= 8 and ns['bane']['merker'] == 0 and ns['lop']['lop'] == 1 and ns['lop']['merker'] == 1 and ns['lop']['skrens'] and ns['lop']['part'] >= 4, [ns['bane'], ns['lop']])
+        sjekk('et stort angrep som når inn i veggen (korskriket, r 6,2): ingen partikler i veggen, og merket blir høyst 6,5 skritt', ns['kor']['vegg'] > 0 and ns['kor']['iVegg'] == 0 and ns['kor']['nSp'] >= 8 and ns['kor']['merker'] == 1 and 0 < ns['kor']['str'] <= 6.5, ns['kor'])
+        st = ns['stor']
+        sjekk('40 store angrep: høyst 12 merker (ett tegnekall), sjokkbølger, merker som har bleknet brukes om igjen, partiklene er borte innen 5 s og geometrien vokser høyst 2',
+              st['merker'] == 40 and st['maks'] == 12 and st['sjokk'] >= 40 and st['nTopp'] > 100 and st['n5'] <= st['n0'] and st['levende'] == 0 and st['gjenbruk'] == 1 and st['dg'] <= 2 and st['dg2'] <= 2 and st['kall'] == 1, st)
+        sa = ns['safe']
+        sjekk('enkel grafikk: nedslaget telles, men ingen partikler, lyn, merker eller sjokkbølger', sa['land'] == 2 and sa['part'] == 0 and sa['merker'] == 0 and sa['lyn'] == 0 and not sa['synlig'] and sa['sjokk'] == 0, sa)
+        tu = ns['tungt']
+        sjekk('et tungt treff (over 15 % av livet) fryser bildet minst 0,04 s og viser treffstjerna, et lite gjør det ikke', tu['d1'] > 15 and tu['hs1'] >= .04 and tu['st1'] == 1 and tu['tunge'] == 1 and tu['d2'] > 0 and tu['hs2'] == 0, tu)
+        sjekk('lynet i regnværet beholder sitt eget nedslag (o.stille)', ns['lyn']['stille'], ns['lyn'])
+        sjekk('prosjektilene har en skygge på gulvet, også i bue, og den er borte med prosjektilet', ns['skygge'] == {'n': 1, 'etter': 0}, ns['skygge'])
+        # pikslene: blekksølet etter et stort angrep synes i gulvet midt i sirkelen og ikke utenfor (snitt over 9 x 9 punkter, før og etter)
+        pos = await pg.evaluate("""async () => { """ + NS_HJELP + """
+          G.run.seed = 11; startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200);
+          const inne = r => !Vaer.ute(r.x + r.w / 2, r.z + r.h / 2), rr = G.F.rooms.filter(inne);
+          rolig(); R.shakeOn = false; rydd(); P.hp = P.maxHp = 1e6; P.invuln = 999; const r = (rr.length ? rr : G.F.rooms).slice().sort((a, b) => b.w * b.h - a.w * a.h)[0], c = freeSpot(r.x + r.w / 2 - .4, r.z + r.h / 2, 3);
+          P.x = c.x; P.z = c.z; P.vx = P.vz = 0; R.snapCamera(P.x, P.z); await spill(.6); Particles.clear();
+          const q = (x, z) => { const s = R.project(x, 0, z); return [Math.round(s.x), Math.round(s.y)]; };
+          return { midt: q(P.x + 3.2, P.z), ute: q(P.x + 3.2 + 4.3, P.z) }; }""")
+        def flekk49(png, xy):
+            im = _Img49.open(_io49.BytesIO(png)).convert('RGB'); x0, y0 = xy
+            px = [im.getpixel((x0 + i, y0 + j)) for i in range(-4, 5) for j in range(-4, 5)]
+            return [sum(q[k] for q in px) / len(px) for k in range(3)]
+        for49 = await pg.screenshot()
+        await pg.evaluate("""async () => { """ + NS_HJELP + """
+          addTele('circle', { x: P.x + 3.2, z: P.z, r: 2.4, color: 0xb36be0 }, .05, null, null); await tomt(); await spill(1.4); }""")
+        etter49 = await pg.screenshot()
+        await pg.screenshot(path='/tmp/e_49_merke.png')
+        dl49 = lambda xy: round(sum(abs(a - b) for a, b in zip(flekk49(for49, xy), flekk49(etter49, xy))) / 3, 1)
+        px49 = {k: dl49(v) for k, v in pos.items()}
+        sjekk('pikslene: merket synes midt i sirkelen (endring over 25) og ikke utenfor (under 8)', px49['midt'] > 25 and px49['ute'] < 8, px49)
+        sjekk('ingen konsollfeil (nedslag i 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # én runde i 3D: merkene lenker, ett tegnekall for 12 merker, og ingenting blir liggende
+        pg = await ny_side(b, viewport={'width': 960, 'height': 540})
+        await start_lop(pg, url=URL3D)
+        n3 = await pg.evaluate("""async () => { """ + NS_HJELP + """
+          rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; await spill(.3); rydd(); ut.d3 = D3.on;
+          addTele('circle', { x: P.x + 2, z: P.z, r: 2.4 }, .05, null, null); await tomt(); await spill(.5); Nedslag.tom(); const g0 = R.renderer.info.memory.geometries, t0 = T(); // første gang lages varslene og merkene
+          for (let i = 0; i < 14; i++) { const a = i * .45; addTele(i % 5 ? 'circle' : 'cone', { x: P.x + Math.sin(a) * 3, z: P.z + Math.cos(a) * 3, r: 2.4, a, arc: 1.6, type: Object.keys(TELE_TYPE)[i % 11] }, .1 + (i % 7) * .03, null, null); }
+          await tomt(); const q = R.renderer.properties.get(Nedslag.mesh.material), pr = q.currentProgram || q.program;
+          const k1 = kall(); Nedslag.mesh.visible = false; const k0 = kall(); Nedslag.mesh.visible = true;
+          Object.assign(ut, { merker: T().merker - t0.merker, levende: Nedslag.levende, kall: k1 - k0, lenket: !!pr && !(pr.diagnostics && !pr.diagnostics.runnable) });
+          await spill(5.3, 240000); ut.dg = R.renderer.info.memory.geometries - g0; ut.etter = Nedslag.levende; return ut; }""")
+        await pg.screenshot(path='/tmp/e_49_3d.png')
+        sjekk('3D: merkene lenker, 12 merker koster ett tegnekall, de blekner, og geometrien vokser høyst 2', n3['d3'] and n3['lenket'] and n3['merker'] == 14 and n3['levende'] == 12 and n3['kall'] == 1 and n3['etter'] == 0 and n3['dg'] <= 2, n3)
+        sjekk('ingen konsollfeil (nedslag i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 55) Tomrom og ganger
+        #     Inne er en veggfront som vender mot tomrom (ikke gulv og ingen vegg), mur i toppfargen og ikke puss med brystpanel, så tomrommet
+        #     ikke ser ut som et mørkt rom (9.webp) og det skjulte ikke skiller seg ut. Ute beholder hekkene frontene sine. I 3D har gangene
+        #     inne små taklamper, faste fra gang til gang, ikke i døråpningene og ikke i det skjulte, og de får punktlys når man står der
+        FRONT55 = """() => { const G = MORBIDIUM, F = G.F, W = F.W, PM = Paint.mesh, tom = (x, z) => { if (x < 0 || z < 0 || x >= W || z >= F.H) return true; const i = z * W + x; return !gulvSynlig(i) && !(Paint.wallH[i] > 0); };
+          let puss = 0, mot = 0, mur = 0, murSkjult = 0, murFeil = 0;
+          for (const m of PM.vegger) { if (!m.visible) continue; const p = m.geometry.attributes.position.array; for (let k = 0; k < p.length; k += 18) { if (tom(Math.floor(Math.min(p[k], p[k + 3]) + .01), Math.round(p[k + 2]))) puss++; else mot++; } }
+          for (const m of [PM.topp, ...(PM.toppEkstra || [])]) { if (!m || !m.visible) continue; const p = m.geometry.attributes.position.array;
+            for (let k = 0; k < p.length; k += 18) if (p[k + 1] === 0 && p[k + 4] === 0 && p[k + 7] > 0 && p[k + 2] === p[k + 8]) { mur++; const x = Math.floor(p[k] + .01), z = Math.round(p[k + 2]); if (!tom(x, z)) murFeil++; if (G.skjult && G.skjult[z * W + x]) murSkjult++; } }
+          return { puss, mot, mur, murSkjult, murFeil, ute: !!F.ute, skjult: !!G.skjult }; }"""
+        ETG55 = """async (o) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)); G.run.seed = o.s; G.run.dromVent = 0; startFloor(o.d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(200); rolig(); }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        await pg.evaluate(ETG55, {'s': 180 * 7919, 'd': 2})
+        inne = await pg.evaluate(FRONT55)
+        sjekk('tomrom inne: ingen puss eller brystpanel mot tomrom, frontene der er mur i toppmeshen, og frontene mot gulvet har puss', inne['puss'] == 0 and inne['mur'] > 10 and inne['murFeil'] == 0 and inne['mot'] > 40 and not inne['ute'], inne)
+        # det skjulte (lukket) ser ut som annet tomrom: en sprekk i sørveggen har murfront mot gangen bak, som resten av sørveggen, og ingen puss
+        sk = await pg.evaluate("""async (o) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)); for (let s = 1; s < 400; s++) { const F = generateFloor(s * 7919 + 2 * 7919, 2, {}), h = F.rooms.find(r => r.role === 'secret'); if (!F.skjult || !h) continue; const p = F.rooms[h.parent];
+            if (p.ute || !F.crack.every(i => ((i / F.W) | 0) === p.z + p.h)) continue; G.run.seed = s * 7919; G.run.dromVent = 0; startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } return s; } return null; }""")
+        skj = await pg.evaluate(FRONT55)
+        sjekk('tomrom inne: det skjulte bak sprekken har murfronter som annet tomrom, og ingen puss', sk is not None and skj['skjult'] and skj['puss'] == 0 and skj['murSkjult'] > 0 and skj['murFeil'] == 0, (sk, skj))
+        await pg.evaluate(ETG55, {'s': 180 * 7919, 'd': 1})
+        ute = await pg.evaluate(FRONT55)
+        sjekk('tomrom ute: hekkene og trærne beholder frontene sine (landskapet fortsetter), ingen murfronter', ute['ute'] and ute['puss'] > 0 and ute['mur'] == 0, ute)
+        sjekk('ingen konsollfeil (tomrom, 2D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: taklampene i gangene
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        GANG55 = """() => { const G = MORBIDIUM, F = G.F, W = F.W, L = D3.kilder().filter(m => m.userData.gang), rom = i => F.roomId[i] >= 0;
+          let feil = 0, naerRom = 0, tett = 0; const pos = L.map(m => [Math.floor(m.position.x), Math.floor(m.position.z - .3)]);
+          for (const [x, z] of pos) { const i = z * W + x; if (F.tiles[i] !== 2 || rom(i) || !gulvSynlig(i)) feil++; for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (rom((z + dz) * W + x + dx)) naerRom++; }
+          for (let a = 0; a < pos.length; a++) for (let c = a + 1; c < pos.length; c++) if (Math.hypot(pos[a][0] - pos[c][0], pos[a][1] - pos[c][1]) < 5) tett++;
+          const topp = Paint.mesh.topp, p = topp.geometry.attributes.position.array, n = topp.geometry.attributes.normal ? topp.geometry.attributes.normal.array : null; let murN = 0, murNok = 0;
+          if (n) for (let k = 0; k < p.length; k += 18) if (p[k + 1] === 0 && p[k + 4] === 0 && p[k + 7] > 0) { murN++; if (n[k + 2] > .9) murNok++; }
+          return { on: D3.on && D3.bygd, n: L.length, gangLys: D3.gangLys, feil, naerRom, tett, pos: pos.slice(0, 4), toon: topp.material.type, murN, murNok, kilder: D3.kilder().length }; }"""
+        await pg.evaluate(ETG55, {'s': 180 * 7919, 'd': 2})
+        g1 = await pg.evaluate(GANG55)
+        sjekk('ganger i 3D: taklamper i gangene inne, på gangruter, ikke i døråpningene og minst fem ruter fra hverandre', g1['on'] and g1['n'] >= 3 and g1['n'] == g1['gangLys'] and g1['feil'] == 0 and g1['naerRom'] == 0 and g1['tett'] == 0, g1)
+        sjekk('tomrom i 3D: murfrontene er tegneserielyst som toppene og vender mot kameraet', g1['toon'] == 'MeshToonMaterial' and g1['murN'] > 10 and g1['murNok'] == g1['murN'], g1)
+        # står man under en lampe, får den et punktlys (D3.tick i faste steg, så maskinens fart ikke betyr noe)
+        pl = await pg.evaluate("""() => { const G = MORBIDIUM, P = G.player, m = D3.kilder().find(k => k.userData.gang); if (!m) return { lys: false, styrke: 0, y: 0 }; const x = m.position.x, z = m.position.z;
+          P.x = x; P.z = z - .3; if (P.lantern) { P.lantern.position.x = P.x; P.lantern.position.z = P.z; } R.camT.x = x; R.camT.z = z; for (let k = 0; k < 120; k++) D3.tick(1 / 60);
+          const l = D3.pool.find((l, i) => i > 0 && l.intensity > 0 && Math.abs(l.position.x - x) < 1e-6 && Math.abs(l.position.z - (z - .3)) < 1e-6); return { lys: !!l, styrke: l ? +l.intensity.toFixed(3) : 0, y: l ? l.position.y : 0 }; }""")
+        sjekk('ganger i 3D: under en taklampe får den et punktlys oppe under taket', pl['lys'] and pl['styrke'] > .2 and pl['y'] > 1.8, pl)
+        await pg.wait_for_timeout(400); await pg.screenshot(path='/tmp/e_55_gang_3d.png')
+        # ute har gangene ingen taklamper, og en ny etasje rydder de gamle; tilbake i samme etasje står lampene på de samme stedene
+        await pg.evaluate(ETG55, {'s': 180 * 7919, 'd': 1})
+        g2 = await pg.evaluate(GANG55)
+        await pg.evaluate(ETG55, {'s': 180 * 7919, 'd': 2})
+        g3 = await pg.evaluate(GANG55)
+        sjekk('ganger i 3D: ingen taklamper ute, de gamle ryddes med etasjen, og de står likt neste gang', g2['n'] == 0 and g2['gangLys'] == 0 and g3['n'] == g1['n'] and g3['pos'] == g1['pos'], (g1, g2, g3))
+        sjekk('ingen konsollfeil (tomrom og ganger, 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 56) Hår og pynt på hodet
+        #     Papiljottene og den andre pynten sitter på hodet og svever ikke over det (8.png): minst 15 prosent av pynten ligger over hodet
+        #     for begge kjønn i alle tre retninger, hornene og svulsten minst 10 prosent. Issen måles på hodebildet (hodeTopp), pynten dreies
+        #     med et hode som vipper, og HUD-portrettet krymper ikke hodet for pynt som ikke stikker over kanten. Også kontrollene i GRAFIKKLEVERANSE.md:
+        #     hjortens kropp står over beina, frisyrene fra ChatGPT på personalet dekker hodet, og ansiktstilbehøret sitter på ansiktet.
+        PYNT56 = """() => { const ut = { lav: [], min: {}, topp: [], kode: 0 };
+          const dekning = (H, Q, ox, oy) => { const S = 128, W = 420, cx = 210, cy = 330, c = document.createElement('canvas'); c.width = c.height = W; const g = c.getContext('2d'),
+              img = (P, x, y) => g.drawImage(P.canvas, cx + (x - P.ax) * S, cy - (y + P.h - P.ay) * S, P.w * S, P.h * S);
+            img(H, 0, 0); const h = g.getImageData(0, 0, W, W).data; g.clearRect(0, 0, W, W); img(Q, ox, oy); const q = g.getImageData(0, 0, W, W).data;
+            let n = 0, over = 0; for (let i = 3; i < q.length; i += 4) if (q[i] > 128) { n++; if (h[i] > 128) over++; } return n ? over / n : 0; };
+          for (const kjonn of ['m', 'k']) {
+            for (const id in PAS_PYNT) { if (PAS_PYNT[id].face) continue; const D = Pasient.deler({ v: 1, kjonn, pynt: [id] }), p = D.pynt[0];
+              for (const v of ['f', 's', 'b']) { const a = dekning(D.hode[v], p.P, p.L.off[v][0], p.L.off[v][1]); ut.min[id] = Math.min(ut.min[id] ?? 1, +a.toFixed(3)); if (a < .15) ut.lav.push([id, kjonn, v, +a.toFixed(3)]); } }
+            const D = Pasient.deler({ v: 1, kjonn });
+            for (const k of ['horn', 'svulst']) for (const v of ['f', 's', 'b']) { const H = D.hode[v], o = LOOKS[k].off[v] || LOOKS[k].off.f, a = dekning(H, addonPart(k), o[0], o[1] + hodeTopp(H) - .78); ut.min[k] = Math.min(ut.min[k] ?? 1, +a.toFixed(3)); if (a < .1) ut.lav.push([k, kjonn, v, +a.toFixed(3)]); }
+            for (const v of ['f', 's', 'b']) ut.topp.push(+hodeTopp(D.hode[v]).toFixed(3));
+          }
+          ut.kode = +hodeTopp(Art.part('test56_kodehode', 1.2, 1.1, .6, .1, drawPasientHead('f', {}))).toFixed(3);
+          // HUD-portrettet: med papiljotter står hodet like stort som uten pynt (nederste del av bildet er lik), med nattlue krymper det
+          const rader = look => { const c = portraitCanvas('pasient', look); return c.getContext('2d').getImageData(0, 72, 128, 56).data; }, ulik = (a, b) => { let n = 0; for (let i = 3; i < a.length; i += 4) if (Math.abs(a[i] - b[i]) > 40) n++; return n; };
+          const u = rader({ v: 1, kjonn: 'm' }); ut.hud = { papiljotter: ulik(u, rader({ v: 1, kjonn: 'm', pynt: ['papiljotter'] })), nattlue: ulik(u, rader({ v: 1, kjonn: 'm', pynt: ['nattlue:#b3261e'] })) };
+          return ut; }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ut = await pg.evaluate(PYNT56)
+        sjekk('papiljotter og annen pynt ligger minst 15 prosent over hodet for begge kjønn forfra, fra siden og bakfra (horn og svulst minst 10)', not ut['lav'], ut)
+        sjekk('issen på hodene fra ChatGPT måles til .78, det tegnede reservehodet høyere (.84 til .96)', all(abs(t - .78) <= .02 for t in ut['topp']) and .84 <= ut['kode'] <= .96, [ut['topp'], ut['kode']])
+        sjekk('HUD-portrettet krymper hodet for nattlua, men ikke for papiljottene', ut['hud']['papiljotter'] == 0 and ut['hud']['nattlue'] > 50, ut['hud'])
+        rot = await pg.evaluate("""() => { const G = MORBIDIUM, ut = {}, r = .3, c = Math.cos(r), s = Math.sin(r), fasit = (base, o) => [base.position.x + o[0] * c - o[1] * s, base.position.y + o[0] * s + o[1] * c];
+          const d = Pasient.dukke({ v: 1, kjonn: 'k', pynt: ['papiljotter', 'plaster'] }); d.update(.016, {});
+          ut.dukke = ['f', 's', 'b'].map(v => { d.head.rotation.z = r; d.placeAddons(v); const a = d.addons[0], f = fasit(d.head, a.L.off[v]); return +Math.max(Math.abs(a.m.position.x - f[0]), Math.abs(a.m.position.y - f[1]), Math.abs(a.m.rotation.z - r)).toFixed(4); });
+          d.dispose();
+          // pasientens tillegg fra gjenstandene (placeLook) følger også hodet
+          const P = G.player, pd = P.doll; Items.clearLook(); const m = partMesh(addonPart('horn'), pd.U); pd.plane.add(m); Items.addons.horn = m;
+          pd.head.rotation.z = r; Items.placeLook(); const v = pd.view || 'f', o = LOOKS.horn.off[v] || LOOKS.horn.off.f, f = fasit(pd.head, [o[0], o[1] + hodeTopp(pd.head.userData.P) - .78]);
+          ut.look = +Math.max(Math.abs(m.position.x - f[0]), Math.abs(m.position.y - f[1])).toFixed(4); Items.clearLook(); return ut; }""")
+        sjekk('pynten og tilleggene dreies med hodet når det vipper (0,3 radianer)', all(x <= .001 for x in rot['dukke']) and rot['look'] <= .001, rot)
+        # Den hvite hjorten (GRAFIKKLEVERANSE.md): kroppen fra ChatGPT har bunnen på festepunktet, så den må løftes over beina (de starter på .95),
+        # og toppen må nå opp til halsen (hodet henger på 1.55), ellers ligger kroppen på bakken under et hode som svever
+        hj = await pg.evaluate("""() => { const d = LAGDUKKE.hjort.deler[0], P = d.P(), W = P.canvas.width, H = P.canvas.height, a = P.canvas.getContext('2d').getImageData(0, 0, W, H).data; let lo = -1, hi = -1;
+          for (let y = 0; y < H; y++) { let n = 0; for (let x = 0; x < W; x++) if (a[(y * W + x) * 4 + 3] > 128) n++; if (n > W * .05) { if (hi < 0) hi = y; lo = y; } }
+          const opp = y => +(d.y + P.h - P.ay - y / 128).toFixed(2); return { bilde: SPRITES.hjort_kropp ? spriteReady('hjort_kropp') : 'mangler', bunn: opp(lo + 1), topp: opp(hi), hals: LAGDUKKE.hjort.deler[1].y }; }""")
+        sjekk('hjortens kropp står over beina og når opp til halsen', hj['bilde'] is True and .6 <= hj['bunn'] <= .95 and hj['topp'] >= hj['hals'], hj)
+        # frisyrene og ansiktstilbehøret fra ChatGPT på personalet (Oppskrift.kleDeler): håret er en parykk som skal dekke hodet, ikke sveve over det
+        # (før lå 1 til 7 prosent av håret over hodet), munnbindet under øynene og gassmasken over ansiktet (før dekket begge øynene og pannen)
+        op = await pg.evaluate("""() => { const D = Oppskrift.deler(), ut = { har: {}, lav: [], bind: [], maske: [] }, alle = [];
+          for (const hs in D.hode || {}) for (const hn in D.hode[hs]) alle.push(D.hode[hs][hn]);
+          const dekning = (H, Q, ox, oy) => { const S = 100, W = 360, cx = 180, cy = 300, c = document.createElement('canvas'); c.width = c.height = W; const g = c.getContext('2d'),
+              img = (P, x, y) => g.drawImage(P.canvas, cx + (x - P.ax) * S, cy - (y + P.h - P.ay) * S, P.w * S, P.h * S);
+            img(H, 0, 0); const h = g.getImageData(0, 0, W, W).data; g.clearRect(0, 0, W, W); img(Q, ox, oy); const q = g.getImageData(0, 0, W, W).data;
+            let n = 0, over = 0; for (let i = 3; i < q.length; i += 4) if (q[i] > 128) { n++; if (h[i] > 128) over++; } return n ? over / n : 0; };
+          const kle = (hode, kind, set) => { const f = [], d = { setParts() { }, addAddon(P, L) { f.push(L); } }; Oppskrift.kleDeler(d, hode, null, kind === 'tilbehor' ? null : set, kind, kind === 'tilbehor' ? set : null); return f[0]; };
+          for (const s in D.har || {}) for (const n in D.har[s]) for (const hode of alle) for (const v of ['f', 's', 'b']) { const L = kle(hode, 'har', D.har[s][n]); if (!hode[v] || !L || !L.views[v]) continue;
+            const o = L.off[v], a = dekning(Oppskrift.delPart(hode[v], 'hode'), L.views[v], o[0], o[1]); ut.har[s + n] = Math.min(ut.har[s + n] ?? 1, +a.toFixed(2)); if (a < .15) ut.lav.push([s + n, v, +a.toFixed(2)]); }
+          const T = (D.tilbehor || {}).ansikt || {};
+          for (const hode of alle) for (const v of ['f', 's']) { const hh = Oppskrift.delPart(hode[v], 'hode').dh;
+            if (T[2]) { const L = kle(hode, 'tilbehor', T[2]); ut.bind.push(+((L.off[v][1] + L.views[v].dh) / hh).toFixed(2)); }
+            if (T[3]) { const L = kle(hode, 'tilbehor', T[3]); ut.maske.push(+((L.off[v][1] + L.views[v].dh / 2) / hh).toFixed(2)); } }
+          ut.lav = ut.lav.slice(0, 8); return ut; }""")
+        sjekk('frisyrene fra ChatGPT dekker hodet (minst 15 prosent av håret over hodet på alle hodene og i alle retningene)', len(op['har']) >= 6 and not op['lav'], op)
+        sjekk('munnbindet har overkanten under øynene og gassmasken står midt på ansiktet', op['bind'] and op['maske'] and all(.38 <= x <= .5 for x in op['bind']) and all(.3 <= x <= .5 for x in op['maske']), [op['bind'], op['maske']])
+        # dødskortet med papiljotter
+        await pg.evaluate("() => { const G = MORBIDIUM; G.run.look = { v: 1, kjonn: 'm', har: 'brun', hud: 0, klaer: 'kape', farge: 'sennep', sko: 'tofler', pynt: ['papiljotter'] }; G.player.invuln = 0; playerDie(); }")
+        el = await pg.wait_for_selector('#deadc', timeout=60000); await pg.wait_for_timeout(300)
+        await el.screenshot(path='/tmp/e_56_papiljotter.png')
+        sjekk('ingen konsollfeil (hår og pynt)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 57) Snøfall
+        #     Snøen faller i tre lag på skjermkortet i stedet for 220 harde firkanter i en fast boks (6.png): midtlaget er Vaer.obj med vindsus,
+        #     to lag på lav kvalitet, boksen dekker det som synes på PC, stående og liggende telefon og med kameraavstand 1,25, tiden følger
+        #     spilltiden, alt ryddes når været stopper, enkel grafikk gir runde prikker i stedet for firkanter, gasslyktene får snø i lyset i stedet
+        #     for møll, sirissene tier og vindsuset øker i kastene, og snøen koster høyst tre tegnekall.
+        HJELP57 = """const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ramme = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }),
+            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(40); }, ut = {};
+          // det synlige rektangelet i høyden h, fra hjørnene av bildet langs kameraets retning (uavhengig av hvordan snøen regner boksen)
+          const synlig = h => { const c = R.camera, f = new THREE.Vector3(); c.getWorldDirection(f); const r = { x0: 1e9, x1: -1e9, z0: 1e9, z1: -1e9 };
+            for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const p = new THREE.Vector3(a, b, -1).unproject(c); p.addScaledVector(f, (h - p.y) / f.y); r.x0 = Math.min(r.x0, p.x); r.x1 = Math.max(r.x1, p.x); r.z0 = Math.min(r.z0, p.z); r.z1 = Math.max(r.z1, p.z); } return r; };
+          const dekker = () => { const B = window.Sno && Sno.boks(); if (!B) return { ok: false, B }; const a = synlig(0), b = synlig(B.ytop * .98), inn = r => r.x0 >= B.x0 && r.x1 <= B.x1 && r.z0 >= B.z0 && r.z1 <= B.z1;
+            return { ok: inn(a) && inn(b), rimelig: B.x1 - B.x0 <= a.x1 - a.x0 + 4 && B.z1 - B.z0 <= b.z1 - a.z0 + 4, B: [B.x0, B.x1, B.z0, B.z1].map(v => +v.toFixed(1)), bunn: [a.x0, a.x1, a.z0, a.z1].map(v => +v.toFixed(1)), topp: [b.z0, b.z1].map(v => +v.toFixed(1)) }; };
+          const snoEtasje = async () => { let s = 1; for (; s < 600; s++) { const F = generateFloor(s + 7919, 1, {}); if (F.vaer === 'sno' && F.rooms.some(r => r.ute && r.template === 'hage')) break; }
+            G.run.seed = s; startFloor(1, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); R.shakeOn = false; const P = G.player; P.hp = P.maxHp = 1e6; P.invuln = 999;
+            const L = G.props.find(o => o.kind === 'lyktestolpe'), c = L ? freeSpot(L.x + 2, L.z + 1, 3) : P; P.x = c.x; P.z = c.z; P.vx = P.vz = 0; R.snapCamera(P.x, P.z); await spill(.4); return s; };
+          const kall = () => { const info = R.renderer.info; info.autoReset = false; info.reset(); R.render(0); const n = info.render.calls; info.autoReset = true; return n; };"""
+        LOGIKK57 = """async () => { """ + HJELP57 + """
+          ut.frø = await snoEtasje(); const F = G.F, har = !!window.Sno;
+          ut.lag = { vaer: F.vaer, n: har ? Sno.lag.length : -1, midt: har && Sno.lag.length > 1 && Vaer.obj === Sno.lag[1].pts, points: !!(Vaer.obj && Vaer.obj.isPoints), shader: !!(Vaer.obj && Vaer.obj.material.isShaderMaterial), lyd: Sound.vaerType };
+          // tiden i shaderen følger spilltiden og står i pausen
+          if (har) { const t0 = Sno.U.uTid.value, g0 = G.time; await spill(.5); ut.tid = { spill: +(G.time - g0).toFixed(3), sno: +(Sno.U.uTid.value - t0).toFixed(3) }; G.state = 'panel'; const t1 = Sno.U.uTid.value; await vent(400); ut.tid.pause = Sno.U.uTid.value - t1; G.state = 'play'; }
+          // gasslyktene har snø i lyset og ingen møll
+          const E = Glod.liste.filter(E => E.eier && E.eier.kind === 'lyktestolpe'); ut.lykt = { lykter: G.props.filter(o => o.kind === 'lyktestolpe').length, sno: E.filter(E => E.type === 'lyssno').length, moll: E.filter(E => E.type === 'moll').length };
+          // ingen sirisser, og vindsuset øker i et kast
+          Stemning.etasje = G.depth; if (har) Sno.kast = 0; const M0 = Stemning.maal(); if (har) Sno.kast = 1; const M1 = Stemning.maal(); if (har) Sno.kast = 0;
+          ut.lyd = { natt: 'amb_natt' in M0, vind0: M0.amb_vind ? +M0.amb_vind[0].toFixed(3) : 0, vind1: M1.amb_vind ? +M1.amb_vind[0].toFixed(3) : 0 };
+          // tegnekall: snøen mot ingen snø
+          await ramme(2); const k1 = kall(); const lag = har ? Sno.lag.map(L => L.pts) : []; const info = R.renderer.info; await ramme(2); const g1 = info.memory.geometries, t1 = info.memory.textures;
+          Vaer.stopp(); await ramme(3); const k0 = kall(), g0 = info.memory.geometries, t0 = info.memory.textures;
+          ut.kall = { med: k1, uten: k0 }; ut.rydd = { g1, g0, t1, t0, iScenen: lag.filter(o => o.parent).length + R.scene.children.filter(o => o.userData && o.userData.sno).length, obj: Vaer.obj, type: Vaer.type, lyd: Sound.vaerType || null };
+          // en runde til: tilbake til det samme
+          Vaer.start(F); await ramme(3); const g2 = info.memory.geometries; Vaer.stopp(); await ramme(3); ut.rydd.igjen = [g2, info.memory.geometries];
+          // enkel grafikk: ingen lag på skjermkortet, de gamle prikkene er runde og holder seg i en boks som følger kameraet
+          R.safe = true; Vaer.start(F); const V = Vaer, m = V.obj && V.obj.material; await spill(.6);
+          let paa = 0, levende = 0; if (V.obj) for (let i = 0; i < V.n; i++) { const y = V.p[i * 3 + 1]; if (y < -40) continue; levende++; const q = R.project(V.p[i * 3], y, V.p[i * 3 + 2]); if (q.x >= 0 && q.x <= innerWidth && q.y >= 0 && q.y <= innerHeight) paa++; }
+          ut.enkel = { lag: har ? Sno.lag.length : -1, points: !!(V.obj && V.obj.isPoints), kart: !!(m && m.map), str: m ? m.size : 0, andel: +(paa / Math.max(1, levende)).toFixed(2), type: V.type };
+          R.safe = false; Vaer.start(F); await spill(.3);
+          return ut; }"""
+        DEKNING57 = """async (kamera) => { """ + HJELP57 + """
+          R.view = 11.5 * kamera; R.resize(); await spill(.3); await ramme(2); return dekker(); }"""
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ut = await pg.evaluate(LOGIKK57)
+        la = ut['lag']
+        sjekk('snøen faller i tre lag på skjermkortet, og midtlaget er Vaer.obj med vindsus (del 37)', la['vaer'] == 'sno' and la['n'] == 3 and la['midt'] and la['points'] and la['shader'] and la['lyd'] == 'vind', la)
+        ti = ut.get('tid', {})
+        sjekk('fnuggene faller med spilltiden og står stille i pausen', ti and abs(ti['sno'] - ti['spill']) < 1e-3 and ti['spill'] > .4 and ti['pause'] == 0, ti)
+        sjekk('gasslyktene har snø i lyset og ingen møll når det snør', ut['lykt']['lykter'] > 0 and ut['lykt']['sno'] >= ut['lykt']['lykter'] and ut['lykt']['moll'] == 0, ut['lykt'])
+        sjekk('ingen sirisser mens det snør, og vindsuset øker i kastene', not ut['lyd']['natt'] and ut['lyd']['vind0'] > 0 and ut['lyd']['vind1'] >= 1.7 * ut['lyd']['vind0'], ut['lyd'])
+        sjekk('snøen koster høyst tre tegnekall (2D)', 2 <= ut['kall']['med'] - ut['kall']['uten'] <= 3, ut['kall'])
+        rd = ut['rydd']
+        sjekk('Vaer.stopp rydder snøen: geometriene tilbake, ingen lag i scenen, ingen lyd', rd['g0'] <= rd['g1'] - 3 and rd['igjen'][1] == rd['g0'] and rd['igjen'][0] == rd['g1'] and rd['t0'] < rd['t1'] and rd['iScenen'] == 0 and rd['obj'] is None and rd['type'] is None and rd['lyd'] is None, rd)
+        en = ut['enkel']
+        sjekk('enkel grafikk: ingen snø på skjermkortet, de gamle prikkene er runde, og de fleste synes', en['lag'] == 0 and en['points'] and en['kart'] and en['str'] >= 4 and en['andel'] >= .6 and en['type'] == 'sno', en)
+        for navn, vp, kam in (('PC 1280x720', (1280, 720), 1), ('stående telefon 390x844', (390, 844), 1), ('liggende telefon 844x390', (844, 390), 1), ('PC med kameraavstand 1,25', (1280, 720), 1.25), ('stående telefon med kameraavstand 1,25', (390, 844), 1.25)):
+            await pg.set_viewport_size({'width': vp[0], 'height': vp[1]}); await pg.wait_for_timeout(500)
+            d = await pg.evaluate(DEKNING57, kam)
+            sjekk(f'boksen snøen faller i dekker det som synes fra bakken til toppen ({navn}), og er ikke mye større', d['ok'] and d['rimelig'], d)
+        sjekk('ingen konsollfeil (snøfall)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        UA57 = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+        # og i 3D: tre lag på høy, to på lav, lyset fra lampene og tegnekallene, med skjermbilder på PC og stående telefon
+        for navn, kw in (('1280', {'viewport': {'width': 1280, 'height': 720}}), ('390', {'viewport': {'width': 390, 'height': 844}, 'has_touch': True, 'is_mobile': True, 'device_scale_factor': 2, 'user_agent': UA57})):
+            pg = await ny_side(b, **kw)
+            await start_lop(pg, url=URL3D)
+            ut = await pg.evaluate("""async () => { """ + HJELP57 + """
+              ut.frø = await snoEtasje(); await spill(1.5); const har = !!window.Sno;
+              ut.d3 = D3.on && D3.bygd; ut.kval = D3.kval(); ut.lag = har ? Sno.lag.length : -1; ut.lys = har ? Sno.U.uLysF.value.filter(v => v.x + v.y + v.z > .05).length : 0; ut.dekker = dekker().ok;
+              const k1 = kall(); Vaer.stopp(); const k0 = kall(); ut.kall = k1 - k0;
+              G.meta.settings.kvalitet = 1; ut.lavKval = D3.kval(); Vaer.start(G.F); ut.lav = har ? Sno.lag.length : -1; G.meta.settings.kvalitet = 0; Vaer.start(G.F); await spill(1.5);
+              return ut; }""")
+            await pg.screenshot(path=f'/tmp/e_57_sno_{navn}.png')
+            sjekk(f'3D ({navn}): tre lag på {ut["kval"]}, to på lav, lyset fra lampene når fnuggene, boksen dekker bildet og høyst tre tegnekall', ut['d3'] and ut['lag'] == 3 and ut['lavKval'] == 'lav' and ut['lav'] == 2 and ut['lys'] >= 1 and ut['dekker'] and 2 <= ut['kall'] <= 3, ut)
+            sjekk(f'ingen konsollfeil (snøfall i 3D, {navn})', not pg.errs, pg.errs[:6])
+            await pg.close()
+
+        # 58) Grunnarbeid for nye fiender: den som ligger under vann (e.dukket), kan ikke treffes eller siktes på, Journalen låner ikke
+        #     trekk som bare virker hos sjefen selv, strekbåndene sender bare det som er tegnet, og statusordene legger seg ikke oppå hverandre
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        gr = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
+            til = async (f, t = 4, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
+            spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }),
+            iKastere = e => Dybde.kastere().some(k => k.k === e);
+          startFloor(5, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 7 && r.h >= 7) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.face = 0;
+          // Nøkken under vannet: ingen lykteskygge, ikke nærmest, og nærkampslaget går rett gjennom (spion på Items.onHit, som kalles for hver fiende slaget treffer)
+          const s = freeSpot(P.x + 2.5, P.z, 3), n = spawnEnemy('nokken', s.x, s.z, false, 5); n.cd = 99; n.stille = 99; n.hp = n.max = 1e6;
+          ut.nede = await til(() => n.dukket === true && !n.doll.root.visible);
+          const slag = () => { n.x = P.x + Math.sin(P.face) * .9; n.z = P.z + Math.cos(P.face) * .9; const oh = Items.onHit, rammet = []; Items.onHit = function (e) { rammet.push(e); return oh.apply(Items, arguments); }; const h0 = n.hp; try { meleeHit({ combo: 0, heavy: false, charge: 0 }); } finally { Items.onHit = oh; } return { rammet: rammet.includes(n), skade: n.hp < h0 }; };
+          ut.under = { skygge: iKastere(n), naermest: nearestEnemy(n.x, n.z, 99) === n, medFilter: nearestEnemy(n.x, n.z, 99, e => e.type === 'nokken') === n, slag: slag() };
+          // kontroll: oppe av vannet er han med overalt igjen
+          n.dukket = false; n.opp = 99; ut.oppe = await til(() => n.doll.root.visible);
+          ut.over = { skygge: iKastere(n), naermest: nearestEnemy(n.x, n.z, 99) === n, slag: slag() };
+          killEntity(n, {});
+          // hvilken som helst fiende, ikke bare Nøkken: hurt gir 0, uten treffkjede eller blod, og strøm i pytten og snubletråd biter ikke
+          const s2 = freeSpot(P.x - 2.5, P.z, 3), p = spawnEnemy('pleier', s2.x, s2.z, false, 5); p.stun = 99; p.hp = p.max = 1e6; await til(() => p.state !== 'spawn');
+          const bt = Blod.treff, blod = []; Blod.treff = function (e) { blod.push(e); return bt.apply(Blod, arguments); };
+          p.dukket = true; let k0 = Kombo.n; const h0 = p.hp; ut.pleierUnder = { skade: hurt(p, 30, { from: 'player' }), hp: p.hp === h0, kjede: Kombo.n === k0, blod: blod.includes(p), naermest: nearestEnemy(p.x, p.z, 99) === p };
+          const pud = addPuddle(p.x, p.z, 'wet', 1.6, 30), trad = { kind: 'trip', x0: p.x - 1.5, z0: p.z, x1: p.x + 1.5, z1: p.z, t: 30 }; if (pud) pud.elec = 30; G.zones.push(trad); p.zapT = undefined; p.slip = 0;
+          let rort = false; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.2 && performance.now() - t0 < 20000) { if (p.zapT !== undefined || p.slip > 0) rort = true; await vent(50); } }
+          Object.assign(ut.pleierUnder, { rort, hp2: p.hp === h0, pytt: !!pud });
+          // skudd og kast går over vannet: de stopper ikke der han ligger (før forsvant de i tomt vann), men oppe treffer de
+          const skudd = () => { const sh = Items.fire(p.x, p.z - .05, 0, 1), pr = addProj({ type: 'pill', from: 'player', x: p.x, z: p.z - .05, vx: 0, vz: .1, life: 1, dmg: 1 }); const hs = p.hp; Items.updateShots(1 / 60); updateProjectiles(1 / 60);
+            const r = { skudd: !Items.shots.includes(sh) || sh.hit.has(p), kast: !pr.alive, skade: p.hp < hs }; if (Items.shots.includes(sh)) Items.popShot(sh, Items.shots.indexOf(sh)); pr.alive = false; return r; };
+          ut.pleierUnder.skudd = skudd();
+          p.dukket = false; k0 = Kombo.n; ut.pleierOppe = { skade: hurt(p, 30, { from: 'player' }) > 0, kjede: Kombo.n > k0, blod: blod.includes(p) }; ut.pleierOppe.skudd = skudd(); ut.pleierOppe.zapp = await til(() => p.zapT !== undefined, 1.5); ut.pleierOppe.skli = await til(() => p.slip > 0, 1.5);
+          Blod.treff = bt; if (pud) pud.elec = 0; G.zones.splice(G.zones.indexOf(trad), 1); killEntity(p, {});
+          // Journalen låner ikke rull, storm eller dypdykk: alle sjefene i puljen er møtt, pluss en prøvesjef med et eget trekk som Krakens dypdykk
+          const BM = BOSS_MOVES, orig = {}, valgt = {}, tell = k => () => { valgt[k] = (valgt[k] || 0) + 1; };
+          for (const k of Object.keys(BM)) if (k !== 'rewrite') { orig[k] = BM[k]; BM[k] = tell(k); }
+          BM.dypdykk = tell('dypdykk'); BM.favn = tell('favn'); SJEF_DATA.provesjef = { attacks: ['dypdykk', 'favn', 'favn', 'favn'], egne: ['dypdykk'] };
+          const s0 = G.run.sjefer; G.run.sjefer = { 1: 'krok', 2: 'rust', 3: 'arkivar', 4: 'klumpen', 5: 'hjort', 6: 'journalen', 7: 'hekk', 8: 'provesjef' };
+          const liste = typeof laanbareTrekk === 'function' ? laanbareTrekk() : null, J = { x: P.x, z: P.z, alive: true, bubbleH: 3 };
+          try { for (let i = 0; i < 200; i++) BM.rewrite(J, 3, 0, 10); } finally { for (const k in orig) BM[k] = orig[k]; delete BM.dypdykk; delete BM.favn; delete SJEF_DATA.provesjef; G.run.sjefer = s0; J.alive = false; }
+          ut.laan = { valgt, liste: liste && !liste.some(k => ['rull', 'storm', 'dypdykk'].includes(k)) && ['favn', 'gevir', 'klem', 'hookpull', 'saks', 'isolate', 'jet'].every(k => liste.includes(k)) };
+          // strekbåndene: bare det som er tegnet, sendes, og et tomt bånd sendes ikke
+          const d = new Doll('pleier', {}); d.update(1 / 60, { speed: 2 }); const Af = d.front.geo.attributes, Ab = d.back.geo.attributes;
+          ut.baand = { n: d.front.n, omraade: d.front.n > 0 && Af.position.updateRange.count === d.front.n * 3 && Af.color.updateRange.count === d.front.n * 3 && Ab.position.updateRange.count === d.back.n * 3 && Ab.color.updateRange.count === d.back.n * 3 };
+          const v0 = Af.position.version; d.update(1 / 60, { speed: 2 }); ut.baand.sendes = Af.position.version === v0 + 1; d.dispose();
+          const bl = new Doll('yngel', {}); bl.update(1 / 60, {}); const bf = bl.front.geo.attributes, bv = [bf.position.version, bf.color.version], bb = bl.back.geo.attributes.position.version;
+          for (let i = 0; i < 10; i++) bl.update(1 / 60, {}); ut.baand.tomt = bl.front.n === 0 && bf.position.version === bv[0] && bf.color.version === bv[1]; ut.baand.bakSendes = bl.back.n > 0 && bl.back.geo.attributes.position.version === bb + 10; bl.dispose();
+          // det samme i spillet, over ti bilder: yngelen (en blob) sender ikke det tomme båndet, pleieren sender sine
+          const s3 = freeSpot(P.x, P.z + 2.5, 3), y = spawnEnemy('yngel', s3.x, s3.z, false, 5), pl = spawnEnemy('pleier', s3.x + 1, s3.z, false, 5); for (const e of [y, pl]) { e.stun = 99; e.hp = e.max = 1e6; }
+          await til(() => y.state !== 'spawn' && pl.state !== 'spawn'); await bilder(2); const yv = y.doll.front.geo.attributes.position.version, pv = pl.doll.front.geo.attributes.position.version, gt = G.time;
+          await bilder(10); ut.baand.spill = { tomt: y.doll.front.geo.attributes.position.version === yv, pleier: pl.doll.front.geo.attributes.position.version > pv, tid: G.time > gt };
+          killEntity(y, {}); killEntity(pl, {}); await spill(.8);
+          // statusord: samme ord over samme figur høyst én gang per cd sekunder, et annet ord løftes over det første, og etter cd kommer ordet igjen
+          const ord = t => [...document.querySelectorAll('#fx .dmg')].filter(el => el.textContent.startsWith(t));
+          if (typeof statusOrd === 'function') {
+            const a = statusOrd(P, 'GREPET'), a2 = statusOrd(P, 'GREPET'), c = statusOrd(P, 'DØPT'); await bilder(2);
+            const rg = ord('GREPET')[0], rd = ord('DØPT')[0], mid = el => { const q = el.getBoundingClientRect(); return (q.top + q.bottom) / 2; };
+            ut.ord = { a, a2, c, grepet: ord('GREPET').length, dopt: ord('DØPT').length, crit: !!rg && rg.classList.contains('crit'), over: rg && rd ? Math.round(mid(rg) - mid(rd)) : null };
+            await spill(1.3); ut.ord.igjen = statusOrd(P, 'GREPET');
+          }
+          // en sjef som dykker (som Kraken skal): heller ingen skade, skygge eller sikte
+          const B = spawnBoss(5, P.x + 3, P.z - 2); await til(() => !!B.doll); B.dukket = true; const bh = B.hp;
+          ut.sjef = { skade: hurt(B, 50, { from: 'player' }), hp: B.hp === bh, skygge: iKastere(B), naermest: nearestEnemy(B.x, B.z, 99) === B };
+          B.dukket = false; ut.sjefOppe = { skygge: iKastere(B), naermest: nearestEnemy(B.x, B.z, 99) === B }; killEntity(B, {});
+          return ut; }""")
+        u, o = gr['under'], gr['over']
+        sjekk('Nøkken under vannet kaster ingen lykteskygge, er ikke nærmeste fiende (heller ikke med filter), og nærkampslaget går gjennom ham', gr['nede'] and not u['skygge'] and not u['naermest'] and not u['medFilter'] and not u['slag']['rammet'] and not u['slag']['skade'], [gr['nede'], u])
+        sjekk('oppe av vannet kaster han skygge, er nærmest og blir truffet (kontroll)', gr['oppe'] and o['skygge'] and o['naermest'] and o['slag']['rammet'] and o['slag']['skade'], o)
+        pu, po = gr['pleierUnder'], gr['pleierOppe']
+        sjekk('en hvilken som helst fiende under vann tar ingen skade, gir ingen treffkjede eller blod, siktes ikke på, verken strøm i pytten eller snubletråd biter, og skudd og kast går over ham', pu['skade'] == 0 and pu['hp'] and pu['kjede'] and not pu['blod'] and not pu['naermest'] and pu['pytt'] and not pu['rort'] and pu['hp2'] and not any(pu['skudd'].values()), pu)
+        sjekk('oppe av vannet gir slaget skade, treffkjede og blod, strømmen og snubletråden biter, og skudd og kast treffer (kontroll)', po['skade'] and po['kjede'] and po['blod'] and po['zapp'] and po['skli'] and all(po['skudd'].values()), po)
+        sjekk('en sjef under vann tar ingen skade, kaster ingen skygge og siktes ikke på, men oppe gjør han det', gr['sjef']['skade'] == 0 and gr['sjef']['hp'] and not gr['sjef']['skygge'] and not gr['sjef']['naermest'] and gr['sjefOppe']['skygge'] and gr['sjefOppe']['naermest'], [gr['sjef'], gr['sjefOppe']])
+        v = gr['laan']['valgt']
+        sjekk('Journalen låner aldri rull, storm eller dypdykk på 200 forsøk, men de andre trekkene til de samme sjefene', not any(k in v for k in ['rull', 'storm', 'dypdykk']) and all(v.get(k, 0) > 0 for k in ['favn', 'gevir', 'klem']) and sum(v.values()) == 200 and gr['laan']['liste'], gr['laan'])
+        ba = gr['baand']
+        sjekk('strekbåndene sender bare den tegnede delen (updateRange er n * 3), og et tomt bånd sendes ikke, heller ikke i spillet over ti bilder', ba['omraade'] and ba['sendes'] and ba['tomt'] and ba['bakSendes'] and ba['spill']['tomt'] and ba['spill']['pleier'] and ba['spill']['tid'], ba)
+        od = gr.get('ord') or {}
+        sjekk('statusord: samme ord vises én gang innen cd, et nytt ord løftes over det forrige, og etter cd kommer ordet igjen', od.get('a') is True and od.get('a2') is False and od.get('c') is True and od.get('grepet') == 1 and od.get('dopt') == 1 and od.get('crit') and (od.get('over') or 0) >= 15 and od.get('igjen') is True, od)
+        await pg.screenshot(path='/tmp/e_58_grunnarbeid.png')
+        sjekk('ingen konsollfeil (grunnarbeid for nye fiender)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: Nøkken under vannet mister lykteskyggen også der, og strekbåndene tegnes som før (én runde, 3D er tungt i programvaregrafikk)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
+            til = async (f, t = 4, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(100); return !!f(); };
+          startFloor(5, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; ut.d3 = D3.on;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 7 && r.h >= 7) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
+          const s = freeSpot(P.x + 1.8, P.z + .6, 3), n = spawnEnemy('nokken', s.x, s.z, false, 5); n.cd = 99; n.stille = 99;
+          const s2 = freeSpot(P.x - 1.8, P.z + .4, 3), p = spawnEnemy('pleier', s2.x, s2.z, false, 5); p.stun = 99; p.hp = p.max = 1e6;
+          ut.nede = await til(() => n.dukket === true && !n.doll.root.visible && p.state !== 'spawn'); await til(() => false, .6);
+          ut.skyggeNede = Dybde.skygger.has(n); ut.skyggePleier = Dybde.skygger.has(p); ut.baand = p.doll.front.n > 0;
+          return ut; }""")
+        sjekk('i 3D kaster Nøkken under vannet ingen lykteskygge, mens pleieren ved siden av gjør det', d3['d3'] and d3['nede'] and not d3['skyggeNede'] and d3['skyggePleier'] and d3['baand'], d3)
+        await pg.screenshot(path='/tmp/e_58_grunnarbeid_3d.png')
+        sjekk('ingen konsollfeil (grunnarbeid i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 59) Skinnlauget: Lærlingen og Klokkeren går til angrep på tre etasjer, laugets stans deler én nedkjøling, bjella treffer i sølvringen
+        #     og ikke utenfor, høyst ti kjettinger samtidig, én klokker per rom, fiendeindeksen og Enkel grafikk
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        la = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} },
+            til = async (f, t = 4, maks = 40000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
+            spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); };
+          if (typeof Laug !== 'object') return { mangler: true };
+          // alle treff fra lauget går gjennom Laug.treff, som gir true når pasienten tok skade
+          const skade = {}, _lt = Laug.treff; Laug.treff = function (shape, o, dmg, src) { const r = _lt.apply(Laug, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
+          const rom = () => { const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 8 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; return r; };
+          const ved = (dx, dz) => freeSpot(P.x + dx, P.z + dz, 3), mot = e => [Math.hypot(P.x - e.x, P.z - e.z), Math.atan2(P.x - e.x, P.z - e.z)];
+          try {
+            // hver type, på etasje 3, 4 og 6: legger an innen 6 sekunder spilltid og skader en pasient med 400 i helse innen 20
+            for (const d of [3, 4, 6]) {
+              startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); rom(); P.hp = P.maxHp = 400; P.invuln = 0; for (const k in skade) delete skade[k];
+              const s1 = ved(2.4, 0), l = spawnEnemy('laerling', s1.x, s1.z, false, d), s2 = ved(-4.5, 1), k = spawnEnemy('klokker', s2.x, s2.z, false, d); k.kallT = 1e9;
+              const g0 = G.time, t0 = performance.now(), E = { l: {}, k: {} };
+              while (G.time - g0 < 20 && performance.now() - t0 < 120000) { await vent(60); const t = G.time - g0; if (P.hp < 150) P.hp = 400;
+                if (l.state === 'wind' && E.l.wind === undefined) E.l.wind = t; if (k.state === 'wind' && E.k.wind === undefined) E.k.wind = t;
+                if (skade.laerling && E.l.skade === undefined) E.l.skade = t; if (skade.klokker && E.k.skade === undefined) E.k.skade = t;
+                if (E.l.skade !== undefined && E.k.skade !== undefined) break; }
+              ut.etasjer[d] = E; for (const e of [l, k]) if (e.alive) killEntity(e, {}); await spill(.3);
+            }
+            rolig(); rom(); P.hp = P.maxHp = 9999; P.invuln = 0;
+            // laugets stans: av tre på under to sekunder får pasienten bare den første, og etter nedkjølingen kommer den igjen
+            const o = { x: P.x, z: P.z, r: 1 }, stans = []; G.laugStunT = 0; // en stans fra kampene over kan ligge under to sekunder bak
+            for (let i = 0; i < 3; i++) { P.invuln = 0; P.iframe = 0; P.stunT = 0; Laug.treff('circle', o, 1, { type: 'laerling', x: P.x, z: P.z }, .6, 'SPENT FAST'); stans.push(P.stunT > 0); await spill(.3); }
+            await spill(2.2); P.invuln = 0; P.stunT = 0; Laug.treff('circle', o, 1, { type: 'klokker', x: P.x, z: P.z }, .35, 'HEKTET'); stans.push(P.stunT > 0); ut.stans = stans;
+            // bjella: lyden kommer først, sølvringen treffer den som står i den, og ikke den som har gått to ruter ut av den
+            const s3 = ved(-5, 0), k = spawnEnemy('klokker', s3.x, s3.z, false, 4); k.kallT = 1e9; await til(() => k.state !== 'spawn');
+            const sp = Sound.play, lyder = []; Sound.play = function (n) { lyder.push(n); return sp.apply(Sound, arguments); };
+            const ring = async utenfor => {
+              await spill(.8); k.state = 'chase'; k.ringT = 0; k.stun = 0; P.invuln = 0; P.iframe = 0; skade.klokker = 0; lyder.length = 0; const [dist, a] = mot(k);
+              Grotesk.ai.klokker(k, P, dist, a); k.cd = 99; const t = k.teles[k.teles.length - 1]; if (!t) return { varsel: false };
+              const r = { varsel: true, lenke: t.o.type === 'lenke', r: t.o.r, forst: lyder[0] === 'bjelle' };
+              if (utenfor) { for (let i = 0; i < 16; i++) { const v = i / 16 * Math.PI * 2, x = t.o.x + Math.sin(v) * (t.o.r + 2), z = t.o.z + Math.cos(v) * (t.o.r + 2); if (!solid(Math.floor(x), Math.floor(z))) { P.x = x; P.z = z; break; } } r.avstand = Math.hypot(P.x - t.o.x, P.z - t.o.z); }
+              await til(() => !G.tele.includes(t), 3); await spill(.1); r.skade = skade.klokker; r.kjeder = Kjeder.liste.length; return r; };
+            ut.inne = await ring(false); rom(); ut.ute = await ring(true); rom(); Sound.play = sp;
+            killEntity(k, {}); await spill(.8);
+            // høyst én klokker i rommet: en til blir en lærling
+            const a1 = spawnEnemy('klokker', ved(4, 3).x, ved(4, 3).z, false, 4), a2 = spawnEnemy('klokker', ved(-4, 3).x, ved(-4, 3).z, false, 4); ut.enKlokker = [a1.type, a2.type]; killEntity(a1, {}); killEntity(a2, {});
+            // fem klokkere som ringer stort samtidig vil ha 25 kjettinger, men det blir aldri flere enn ti
+            Laug.flereKlokkere = true; const kl = [];
+            for (let i = 0; i < 5; i++) { const v = i / 5 * Math.PI * 2, s = ved(Math.sin(v) * 5, Math.cos(v) * 5), e = spawnEnemy('klokker', s.x, s.z, false, 4); e.kallT = 1e9; kl.push(e); }
+            Laug.flereKlokkere = false; await til(() => kl.every(e => e.state !== 'spawn'));
+            for (const e of kl) { e.ringN = 2; e.ringT = 0; e.state = 'chase'; const [dist, a] = mot(e); Grotesk.ai.klokker(e, P, dist, a); e.cd = 99; }
+            let maks = 0; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 2.2 && performance.now() - t0 < 40000) { maks = Math.max(maks, Kjeder.liste.length); await vent(30); } }
+            ut.kjeder = maks; for (const e of kl) killEntity(e, {}); await spill(1);
+            // Enkel grafikk: ingen kjettinger tegnes, men treffet og skaden kommer som før
+            R.safe = true; const s4 = ved(-5, 0), ks = spawnEnemy('klokker', s4.x, s4.z, false, 4); ks.kallT = 1e9; await til(() => ks.state !== 'spawn'); rom();
+            Laug.sistTreff = -1; ks.ringN = 2; ks.ringT = 0; ks.state = 'chase'; P.invuln = 0; skade.klokker = 0; { const [dist, a] = mot(ks); Grotesk.ai.klokker(ks, P, dist, a); } ks.cd = 99;
+            let kjS = 0; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 1.6 && performance.now() - t0 < 30000) { kjS = Math.max(kjS, Kjeder.liste.length); await vent(40); } }
+            ut.safe = { kjeder: kjS, treff: Laug.sistTreff > 0, skade: skade.klokker > 0 }; R.safe = false; killEntity(ks, {});
+          } finally { Laug.treff = _lt; R.safe = false; Laug.flereKlokkere = false; }
+          ut.info = ['laerling', 'klokker'].every(t => (FIENDE_INFO[t] || [])[0] && FIENDE_INFO[t][1] && FIENDE_REKKE.includes(t) && MESTER_TITTEL[t] && FIENDESTEMME[t] && LINES[t] && DEATH_CAUSES[t]) && !ROLLER.laerling && !ROLLER.klokker;
+          ut.bilde = ['laerling', 'klokker'].map(t => { const c = fiendeBilde(t, 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); });
+          ut.pulje = { 3: DEPTH_ENEMIES[3].filter(t => t === 'laerling').length, 4: [DEPTH_ENEMIES[4].filter(t => t === 'laerling').length, DEPTH_ENEMIES[4].filter(t => t === 'klokker').length], 6: [DEPTH_ENEMIES[6].filter(t => t === 'laerling').length, DEPTH_ENEMIES[6].filter(t => t === 'klokker').length] };
+          return ut; }""")
+        sjekk('Skinnlauget finnes (Laug i 50_skinnlauget.js)', not la.get('mangler'), la.get('mangler', ''))
+        if not la.get('mangler'):
+            E = la['etasjer']
+            sjekk('Lærlingen og Klokkeren legger an innen 6 sekunder spilltid på etasje 3, 4 og 6', all(E[d][t].get('wind') is not None and E[d][t]['wind'] <= 6 for d in ['3', '4', '6'] for t in ['l', 'k']), E)
+            sjekk('begge skader en pasient med 400 i helse innen 20 sekunder spilltid på etasje 3, 4 og 6', all(E[d][t].get('skade') is not None and E[d][t]['skade'] <= 20 for d in ['3', '4', '6'] for t in ['l', 'k']), E)
+            sjekk('laugets stans deler én nedkjøling: av tre på under to sekunder slår bare den første inn, og etterpå kommer den igjen', la['stans'] == [True, False, False, True], la['stans'])
+            sjekk('bjella ringer før sølvringen (lenke), og ringen treffer den som står i den', la['inne'].get('varsel') and la['inne']['lenke'] and la['inne']['forst'] and la['inne']['skade'] > 0, la['inne'])
+            sjekk('bjella treffer ikke den som står to ruter utenfor ringen', la['ute'].get('varsel') and la['ute'].get('avstand', 0) > la['ute']['r'] + 1.9 and la['ute']['skade'] == 0, la['ute'])
+            sjekk('høyst én klokker i rommet, en til blir lærling', la['enKlokker'] == ['klokker', 'laerling'], la['enKlokker'])
+            sjekk('fem store ringer samtidig gir høyst ti kjettinger, men kjettinger kommer', 6 <= la['kjeder'] <= 10, la['kjeder'])
+            sjekk('i Enkel grafikk tegnes ingen kjettinger, men treffet og skaden kommer', la['safe'] == {'kjeder': 0, 'treff': True, 'skade': True}, la['safe'])
+            sjekk('fiendeindeksen, replikker, stemmer, dødsårsaker og mestertitler for begge, og ingen av dem i ROLLER', la['info'], la)
+            sjekk('fiendeBilde tegner begge', all(x > .08 for x in la['bilde']), la['bilde'])
+            sjekk('Lærlingen i Underetasjen, Kjelleren (to) og Dypet (to), Klokkeren i Kjelleren og Dypet', la['pulje'] == {'3': 1, '4': [2, 1], '6': [2, 1]}, la['pulje'])
+        await pg.screenshot(path='/tmp/e_59_laug.png')
+        sjekk('ingen konsollfeil (Skinnlauget)', not pg.errs, pg.errs[:6])
+        # håndbokssiden med begge: får plass, og kortene har bilde
+        # tittelen kommer når bildene er lastet og ville lukket håndboka (og bildet viste tittelen), så vent på den først
+        await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+        hb = await pg.evaluate("""() => { if (!FIENDE_REKKE.includes('laerling')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'fiender'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(FIENDE_REKKE.indexOf('laerling') / per));
+          return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
+        await pg.wait_for_timeout(300)
+        hb['plass'] = await pg.evaluate(HB_PLASS) if not hb.get('mangler') else False
+        sjekk('håndboka har en side med Lærlingen og Klokkeren, og den får plass', 'Lærlingen' in hb.get('navn', []) and 'Klokkeren' in hb.get('navn', []) and hb['plass'], hb)
+        await pg.screenshot(path='/tmp/e_59_handbok.png')
+        sjekk('ingen konsollfeil (Skinnlauget i håndboka)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: begge i kamp, med kjettinger fra mørket (én runde, 3D er tungt i programvaregrafikk)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          if (typeof Laug !== 'object') return { mangler: true };
+          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; ut.d3 = D3.on;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 8 && r.h >= 8) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
+          const s1 = freeSpot(P.x + 2.2, P.z + .3, 3), l = spawnEnemy('laerling', s1.x, s1.z, false, 4), s2 = freeSpot(P.x - 3.8, P.z - 1.2, 3), k = spawnEnemy('klokker', s2.x, s2.z, false, 4); k.kallT = 1e9;
+          const S = { l: {}, k: {} }, g0 = G.time, t0 = performance.now(); let kj = 0;
+          while (G.time - g0 < 14 && performance.now() - t0 < 150000) { await vent(80); P.hp = 9999; S.l[l.state] = 1; S.k[k.state] = 1; kj = Math.max(kj, Kjeder.liste.length); if (S.l.wind && S.k.wind && kj && k.state === 'wind' && Kjeder.liste.length) break; }
+          ut.S = S; ut.kjeder = kj; return ut; }""")
+        sjekk('i 3D legger begge an, og krokene kommer fra mørket', not d3.get('mangler') and d3.get('d3') and d3['S']['l'].get('wind') and d3['S']['k'].get('wind') and d3['kjeder'] > 0, d3)
+        await pg.screenshot(path='/tmp/e_59_laug_3d.png')
+        sjekk('ingen konsollfeil (Skinnlauget i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 60) Havet under huset: Avløpsarmen ligger under risten og kan ikke treffes der, er aldri lenge under når pasienten står nær,
+        #     det er aldri mer enn tre av dem, grepet drar pasienten til risten, og Kapellanens preken, avbrutte preken, kall og død
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        hv = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} },
+            til = async (f, t = 4, maks = 120000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
+            spill = async (t, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            iKastere = e => Dybde.kastere().some(k => k.k === e), sluk = r => G.props.filter(p => p.kind === 'drain' && p.room === r.id);
+          if (typeof Havet !== 'object') return { mangler: true };
+          const skade = {}, _ht = Havet.treff; Havet.treff = function (shape, o, dmg, src) { const r = _ht.apply(Havet, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
+          // et kamprom med rist, og et fritt sted et stykke unna risten (med sikt)
+          const rom = () => { const rs = G.F.rooms.filter(r => r.role === 'combat' && r.w >= 7 && r.h >= 7 && sluk(r).length).sort((a, b) => b.w * b.h - a.w * a.h); return rs[0] || G.F.rooms.find(r => sluk(r).length) || G.F.rooms[0]; };
+          const ved = (s, d) => { for (let i = 0; i < 24; i++) { const v = i / 24 * Math.PI * 2, x = s.x + Math.sin(v) * d, z = s.z + Math.cos(v) * d; if (!solid(Math.floor(x), Math.floor(z)) && !solid(Math.floor(x + .3), Math.floor(z)) && !solid(Math.floor(x - .3), Math.floor(z)) && los(s.x, s.z, x, z)) return { x, z }; } return freeSpot(s.x + d, s.z, 3); };
+          const mot = e => [Math.hypot(P.x - e.x, P.z - e.z), Math.atan2(P.x - e.x, P.z - e.z)];
+          try {
+            // hver type der den hører hjemme: legger an innen 6 sekunder spilltid og skader en pasient med 400 i helse innen 20
+            for (const d of [3, 4, 6]) {
+              startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); const r = rom(), s = sluk(r)[0]; if (!s) { ut.etasjer[d] = { utenSluk: true }; continue; }
+              P.hp = P.maxHp = 400; P.invuln = 0; for (const k in skade) delete skade[k];
+              const a = spawnEnemy('avlopsarm', s.x, s.z, false, d), p0 = ved(s, 2.4); P.x = p0.x; P.z = p0.z;
+              let k = null; if (d >= 4) { const ks = ved(s, 5); k = spawnEnemy('kapellan', ks.x, ks.z, false, d); k.kallT = 1e9; }
+              const g0 = G.time, t0 = performance.now(), E = { a: {}, k: {} };
+              while (G.time - g0 < 20 && performance.now() - t0 < 150000) { await vent(60); const t = G.time - g0; if (P.hp < 150) P.hp = 400; P.x = p0.x; P.z = p0.z;
+                if (a.state === 'wind' && E.a.wind === undefined) E.a.wind = t; if (skade.avlopsarm && E.a.skade === undefined) E.a.skade = t;
+                if (k) { if (k.state === 'wind' && E.k.wind === undefined) E.k.wind = t; if (skade.kapellan && E.k.skade === undefined) E.k.skade = t; }
+                if (E.a.skade !== undefined && (!k || E.k.skade !== undefined)) break; }
+              if (!k) delete E.k; ut.etasjer[d] = E; for (const e of [a, k]) if (e && e.alive) killEntity(e, {}); await spill(.3);
+            }
+            startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6;
+            const r = rom(), s = sluk(r)[0];
+            // under risten: ingen skade, ingen lykteskygge, ikke nærmest. Pasienten langt unna, så den blir liggende
+            P.x = s.x + 30; P.z = s.z + 30; const a = spawnEnemy('avlopsarm', s.x, s.z, false, 4); a.hp = a.max = 1e6; await til(() => a.state !== 'spawn');
+            const hu = a.hp; ut.under = { dukket: a.dukket === true, skjult: !a.doll.root.visible, skade: hurt(a, 30, { from: 'player' }), hp: a.hp === hu, skygge: iKastere(a), naermest: nearestEnemy(a.x, a.z, 99) === a, iSluk: Math.hypot(a.x - s.x, a.z - s.z) < .05 };
+            // pasienten kommer nær: opp innen litt over et halvt sekund, og da biter slagene
+            const p1 = ved(s, 2.5); P.x = p1.x; P.z = p1.z; P.invuln = 999; const tOpp = G.time; ut.oppe = { kom: await til(() => !a.dukket, 3) }; ut.oppe.tid = G.time - tOpp;
+            await til(() => false, .2); Object.assign(ut.oppe, { skade: hurt(a, 30, { from: 'player' }) > 0, skygge: iKastere(a), naermest: nearestEnemy(a.x, a.z, 99) === a, synlig: a.doll.root.visible, baand: [a.doll.back.n, a.doll.front.n] });
+            // armen lever: tuppen flytter seg selv når armen står stille
+            a.cd = 99; await til(() => !a.anim && a.state === 'chase', 3); const tp = a.doll.deler[0].m.position, t1 = [tp.x, tp.y]; await spill(.4); ut.oppe.lever = Math.hypot(tp.x - t1[0], tp.y - t1[1]);
+            // med pasienten innen fem ruter er den aldri under lenger enn 2,6 sekunder spilltid, og den dykker og kommer opp igjen
+            a.cd = 0; let under = 0, maksUnder = 0, dykk = 0, sist = a.dukket; { const g0 = G.time, t0 = performance.now(); let gt = G.time;
+              while (G.time - g0 < 14 && performance.now() - t0 < 120000) { await vent(40); const dt = G.time - gt; gt = G.time; P.x = p1.x; P.z = p1.z; P.hp = 1e6;
+                if (a.dukket) { under += dt; maksUnder = Math.max(maksUnder, under); } else under = 0; if (a.dukket && !sist) dykk++; sist = a.dukket; } }
+            ut.rettferdig = { maksUnder, dykk, avstand: Math.hypot(p1.x - s.x, p1.z - s.z) };
+            // grepet: armen oppe, pasienten fem ruter unna med sikt, og etter treffet er pasienten nærmere risten
+            await til(() => !a.dukket && a.fase === 'opp' && a.state !== 'wind', 4); a.faseT = .5; a.cd = 99; const hj = a.hjem, p2 = ved(hj, 5); P.x = p2.x; P.z = p2.z; P.invuln = 0; P.iframe = 0; P.hp = 1e6; skade.avlopsarm = 0;
+            const [dist, vinkel] = mot(a); Havet.grip(a, vinkel); const t = a.teles[a.teles.length - 1], d0 = Math.hypot(P.x - hj.x, P.z - hj.z);
+            await til(() => !G.tele.includes(t), 3); await spill(.6); ut.grep = { varsel: !!t, rect: t && t.shape === 'rect', traff: skade.avlopsarm > 0, d0, d1: Math.hypot(P.x - hj.x, P.z - hj.z), ord: !!(P.statusT && P.statusT.GREPET !== undefined) };
+            killEntity(a, {}); await spill(.8);
+            // høyst tre armer: seks forsøk gir tre armer (hver på sitt sted) og yngel for resten
+            P.x = s.x + 30; P.z = s.z + 30; const seks = []; for (let i = 0; i < 6; i++) seks.push(spawnEnemy('avlopsarm', s.x + (i % 2) * .5, s.z, false, 4));
+            const armer = seks.filter(e => e.type === 'avlopsarm'); ut.maks = { armer: armer.length, levende: G.enemies.filter(e => e.alive && e.type === 'avlopsarm').length, yngel: seks.filter(e => e.type === 'yngel').length,
+              steder: new Set(armer.map(e => e.hjem.x.toFixed(2) + ',' + e.hjem.z.toFixed(2))).size };
+            for (const e of seks) killEntity(e, {}); await spill(.8);
+            // uten ledig rist: armen tar en vegg (med sprekk) eller slår hull i gulvet, og hullet eller sprekken er borte når den dør
+            //  (en rist halvannen rute unna i et annet rom teller ikke: dørene er stengt, og armen der kunne ikke nås)
+            const props = G.props; G.props = props.filter(p => p.kind !== 'drain').concat([{ kind: 'drain', x: s.x + 1.5, z: s.z, room: -99 }]); let ah; try { ah = spawnEnemy('avlopsarm', s.x, s.z, false, 4); } finally { G.props = props; }
+            const hull = ah.hull, sprekk = ah.mesh; ut.uten = { sted: ah.sted, hull: !!hull && G.puddles.includes(hull), sprekk: !!sprekk && !!sprekk.parent, fremmed: Math.hypot(ah.x - s.x - 1.5, ah.z - s.z) < .05 };
+            killEntity(ah, {}); ut.uten.ryddet = (!hull || !G.puddles.includes(hull)) && (!sprekk || !sprekk.parent); await spill(.8);
+            // Kapellanen preker for en pleier: farten ganges med 1,2 og kommer nøyaktig tilbake etter seks sekunder, og en ny velsignelse ganger ikke to ganger
+            const s1 = ved(s, 3), k = spawnEnemy('kapellan', s1.x, s1.z, false, 4), s2 = freeSpot(s1.x + 1.5, s1.z, 2), pl = spawnEnemy('pleier', s2.x, s2.z, false, 4);
+            P.x = s.x + 30; P.z = s.z + 30; k.kallT = 1e9; k.hp = k.max = 100; pl.stun = 99; pl.hp = pl.max = 1e6; await til(() => k.state !== 'spawn' && pl.state !== 'spawn');
+            const sp0 = pl.sp; k.state = 'chase'; Havet.preken(k); k.prekenT = 1e9; ut.preken = { kanal: k.state === 'wind' && !!k.preken };
+            ut.preken.underveis = pl.velsignet ? 'for tidlig' : 'ok'; await til(() => !!pl.velsignet, 3); await spill(.1);
+            ut.preken.fart = pl.sp / sp0; Havet.velsign(k); ut.preken.toGanger = pl.sp / sp0; k.cd = 99;
+            await til(() => !pl.velsignet, 7.5); ut.preken.tilbake = pl.sp - sp0; ut.preken.flagg = !pl.velsignet;
+            // treghet (frost, surkål) og velsignelse om hverandre: begge virker samtidig, og farten er tilbake når begge har gått ut
+            const frost = async forst => { k.x = pl.x + 1; k.z = pl.z; if (forst) { pl.slowT = 3; await spill(.2); Havet.velsign(k); } else { Havet.velsign(k); await spill(.2); pl.slowT = 3; }
+              await spill(.3); const midt = pl.sp / sp0; await til(() => !pl.velsignet && !(pl.slowT > 0) && !pl.baseSp, 9); await spill(.2); const slutt = pl.sp - sp0; pl.sp = sp0; return { midt, slutt }; };
+            ut.frost = { velsignetForst: await frost(false), tregForst: await frost(true) };
+            // avbrutt preken: 20 prosent av helsa midt i gir «Amen?!» og ingen velsignelse
+            k.state = 'chase'; k.stun = 0; Havet.preken(k); k.prekenT = 1e9; await spill(.5); hurt(k, 20, { from: 'player' }); await spill(.25);
+            const amen = [...document.querySelectorAll('#fx .bubble')].some(b => b.textContent === 'Amen?!') && k.preken === null;
+            await spill(2); ut.avbrutt = { fart: pl.sp - sp0, flagg: !!pl.velsignet, amen };
+            killEntity(pl, {});
+            // kall fra dypet: ringen på risten, og så kommer en arm opp der
+            // (han har gått mot pasienten langt unna, så han settes tilbake ved risten)
+            const kultS = freeSpot(k.x + 1.2, k.z + 1, 2), kult = spawnEnemy('kultist', kultS.x, kultS.z, false, 4); kult.cd = 99; kult.speechT = 1e9;
+            await til(() => kult.state !== 'spawn'); P.x = s.x + 30; P.z = s.z + 30; k.state = 'chase'; k.stun = 0; k.cd = 99; k.kallT = 0; k.prekenT = 1e9; k.x = s1.x; k.z = s1.z;
+            const fri = Havet.slukNaer(k.x, k.z, 8, null, G.F.roomId[Math.floor(k.z) * G.F.W + Math.floor(k.x)]); { const [dist, v] = mot(k); Grotesk.ai.kapellan(k, P, dist, v); } const kt = k.teles[k.teles.length - 1];
+            ut.kall = { fri: !!fri, varsel: !!kt && kt.shape === 'circle' && fri && Math.hypot(kt.o.x - fri.x, kt.o.z - fri.z) < .05 };
+            await til(() => G.enemies.some(e => e.alive && e.type === 'avlopsarm'), 3); const ny = G.enemies.find(e => e.alive && e.type === 'avlopsarm');
+            ut.kall.arm = !!ny && !!fri && Math.hypot(ny.x - fri.x, ny.z - fri.z) < .05; ut.kall.oppe = !!ny && ny.fase === 'opp' && !ny.dukket;
+            if (ny) killEntity(ny, {});
+            // døden: kultisten ved siden av står og ser etter ham (pose tar dobbel skade)
+            const kd = freeSpot(k.x + 1, k.z, 2); kult.x = kd.x; kult.z = kd.z; kult.state = 'chase'; await spill(.1); killEntity(k, {}); ut.dod = { pose: kult.state === 'pose' && kult.pose > 0 }; killEntity(kult, {}); await spill(.8);
+            // Enkel grafikk: arm og kapellan i kamp uten feil
+            R.safe = true; const sa = spawnEnemy('avlopsarm', s.x, s.z, false, 4), sk = spawnEnemy('kapellan', ved(s, 4).x, ved(s, 4).z, false, 4); const p3 = ved(s, 2.4); P.x = p3.x; P.z = p3.z; P.hp = 1e6; P.invuln = 999;
+            const S = {}; { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 5 && performance.now() - t0 < 40000) { await vent(60); S[sa.state] = 1; S['k' + sk.state] = 1; } } ut.safe = S; R.safe = false;
+            for (const e of [sa, sk]) if (e.alive) killEntity(e, {});
+          } finally { Havet.treff = _ht; R.safe = false; }
+          ut.info = ['avlopsarm', 'kapellan'].every(t => (FIENDE_INFO[t] || [])[0] && FIENDE_INFO[t][1] && FIENDE_REKKE.includes(t) && MESTER_TITTEL[t] && FIENDESTEMME[t] && LINES[t] && DEATH_CAUSES[t]) && !ROLLER.avlopsarm && !ROLLER.kapellan;
+          ut.bilde = ['avlopsarm', 'kapellan'].map(t => { const c = fiendeBilde(t, 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); });
+          const tell = (d, t) => DEPTH_ENEMIES[d].filter(x => x === t).length;
+          ut.pulje = { 3: [tell(3, 'avlopsarm'), tell(3, 'kapellan')], 4: [tell(4, 'avlopsarm'), tell(4, 'kapellan')], 6: [tell(6, 'avlopsarm'), tell(6, 'kapellan')] };
+          return ut; }""")
+        sjekk('Havet under huset finnes (Havet i 49_havet.js)', not hv.get('mangler'), hv.get('mangler', ''))
+        if not hv.get('mangler'):
+            E = hv['etasjer']
+            sjekk('Avløpsarmen legger an innen 6 og skader innen 20 sekunder spilltid på etasje 3, 4 og 6, Kapellanen på 4 og 6', all(not E[d].get('utenSluk') and all(E[d][t].get('wind') is not None and E[d][t]['wind'] <= 6 and E[d][t].get('skade') is not None and E[d][t]['skade'] <= 20 for t in E[d]) for d in ['3', '4', '6']) and 'k' in E['4'] and 'k' in E['6'], E)
+            u, o = hv['under'], hv['oppe']
+            sjekk('under risten er armen skjult, tar ingen skade, kaster ingen lykteskygge og er ikke nærmest', u['dukket'] and u['skjult'] and u['skade'] == 0 and u['hp'] and not u['skygge'] and not u['naermest'] and u['iSluk'], u)
+            sjekk('når pasienten kommer nær, er armen oppe innen et sekund, og da tar den skade, kaster skygge og er nærmest', o['kom'] and o['tid'] <= 1.0 and o['skade'] and o['skygge'] and o['naermest'] and o['synlig'], o)
+            sjekk('tentakkelen tegnes i begge strekbåndene innenfor plassen, og tuppen beveger seg selv når armen står stille', 0 < o['baand'][0] < 3200 and 0 < o['baand'][1] < 3200 and o['lever'] > .01, o)
+            rf = hv['rettferdig']
+            sjekk('med pasienten innen fem ruter er armen aldri under lenger enn 2,6 sekunder spilltid, og den dykker og kommer opp igjen', rf['avstand'] <= 5 and rf['dykk'] >= 1 and rf['maksUnder'] <= 2.6, rf)
+            g = hv['grep']
+            sjekk('grepet (en smal stripe) treffer og drar pasienten minst en rute nærmere risten, med GREPET', g['varsel'] and g['rect'] and g['traff'] and g['d1'] < g['d0'] - 1 and g['ord'], g)
+            m = hv['maks']
+            sjekk('seks forsøk gir høyst tre armer, hver på sitt sted, og resten blir yngel', m['armer'] == 3 and m['levende'] == 3 and m['yngel'] == 3 and m['steder'] == 3, m)
+            ue = hv['uten']
+            sjekk('uten ledig rist tar armen en vegg med sprekk eller slår hull i gulvet, og det er ryddet bort når den dør', (ue['sted'] == 'vegg' and ue['sprekk']) or (ue['sted'] == 'gulv' and ue['hull']), ue)
+            sjekk('sprekken eller hullet etter armen er borte når den dør', ue['ryddet'], ue)
+            sjekk('armen tar aldri en rist i et annet rom', not ue['fremmed'], ue)
+            pk = hv['preken']
+            sjekk('en fullført preken gir pleieren 1,2 ganger farten, en ny velsignelse ganger ikke to ganger, og etter seks sekunder er farten nøyaktig tilbake', pk['kanal'] and pk['underveis'] == 'ok' and abs(pk['fart'] - 1.2) < 1e-6 and abs(pk['toGanger'] - 1.2) < 1e-6 and abs(pk['tilbake']) < 1e-6 and pk['flagg'], pk)
+            sjekk('treghet og velsignelse om hverandre: 0,55 ganger 1,2 mens begge virker, og farten nøyaktig tilbake etterpå (uansett hvem som kom først)', all(abs(x['midt'] - .66) < 1e-6 and abs(x['slutt']) < 1e-6 for x in hv['frost'].values()), hv['frost'])
+            sjekk('en preken som blir avbrutt av 20 prosent skade, gir ingen velsignelse', hv['avbrutt']['fart'] == 0 and not hv['avbrutt']['flagg'] and hv['avbrutt']['amen'], hv['avbrutt'])
+            sjekk('kall fra dypet: ringen på en ledig rist, og så kommer en arm opp akkurat der', hv['kall']['fri'] and hv['kall']['varsel'] and hv['kall']['arm'] and hv['kall']['oppe'], hv['kall'])
+            sjekk('når Kapellanen dør, står kultisten ved siden av og ser etter ham', hv['dod']['pose'], hv['dod'])
+            sjekk('i Enkel grafikk kjemper begge uten feil (armen legger an)', hv['safe'].get('wind') == 1, hv['safe'])
+            sjekk('fiendeindeksen, replikker, stemmer, dødsårsaker og mestertitler for begge, og ingen av dem i ROLLER', hv['info'], hv)
+            sjekk('fiendeBilde tegner begge', all(x > .06 for x in hv['bilde']), hv['bilde'])
+            sjekk('Avløpsarmen i Underetasjen (to), Kjelleren og Dypet (to), Kapellanen i Kjelleren og Dypet', hv['pulje'] == {'3': [2, 0], '4': [1, 1], '6': [2, 1]}, hv['pulje'])
+        await pg.screenshot(path='/tmp/e_60_havet.png')
+        sjekk('ingen konsollfeil (Havet under huset)', not pg.errs, pg.errs[:6])
+        # håndbokssiden med begge: får plass, og kortene har bilde (vent på tittelen, ellers lukker den håndboka)
+        await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+        hb = await pg.evaluate("""() => { if (!FIENDE_REKKE.includes('avlopsarm')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'fiender'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(FIENDE_REKKE.indexOf('avlopsarm') / per));
+          return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
+        await pg.wait_for_timeout(300)
+        hb['plass'] = await pg.evaluate(HB_PLASS) if not hb.get('mangler') else False
+        sjekk('håndboka har en side med Avløpsarmen og Kapellanen, og den får plass', 'Avløpsarmen' in hb.get('navn', []) and 'Kapellanen' in hb.get('navn', []) and hb['plass'], hb)
+        await pg.screenshot(path='/tmp/e_60_handbok.png')
+        sjekk('ingen konsollfeil (Havet i håndboka)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: armen kommer opp av risten og legger an, og Kapellanen preker (én runde, 3D er tungt i programvaregrafikk)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          if (typeof Havet !== 'object') return { mangler: true };
+          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; ut.d3 = D3.on;
+          const r = G.F.rooms.filter(r => r.role === 'combat' && G.props.some(p => p.kind === 'drain' && p.room === r.id)).sort((a, b) => b.w * b.h - a.w * a.h)[0] || G.F.rooms[0], s = G.props.find(p => p.kind === 'drain' && p.room === r.id) || { x: r.x + r.w / 2, z: r.z + r.h / 2 };
+          const p0 = freeSpot(s.x - 2.2, s.z + .3, 2); P.x = p0.x; P.z = p0.z; R.snapCamera(P.x, P.z);
+          const a = spawnEnemy('avlopsarm', s.x, s.z, false, 4), ks = freeSpot(s.x - 3, s.z - 2.5, 3), k = spawnEnemy('kapellan', ks.x, ks.z, false, 4); k.kallT = 1e9;
+          const S = { a: {}, k: {} }, g0 = G.time, t0 = performance.now(); let baand = 0;
+          while (G.time - g0 < 14 && performance.now() - t0 < 150000) { await vent(80); P.hp = 1e6; P.invuln = 999; S.a[a.fase + ':' + a.state] = 1; if (k.preken) S.k.preken = 1; baand = Math.max(baand, a.doll.back.n); if (S.a['opp:wind'] && S.k.preken) break; }
+          ut.S = S; ut.baand = baand; return ut; }""")
+        sjekk('i 3D kommer armen opp av risten og legger an, og Kapellanen preker', not d3.get('mangler') and d3.get('d3') and d3['S']['a'].get('opp:wind') and d3['S']['k'].get('preken') and 0 < d3['baand'] < 3200, d3)
+        await pg.screenshot(path='/tmp/e_60_havet_3d.png')
+        sjekk('ingen konsollfeil (Havet under huset i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 61) Draugen og Holdningssøsteren: begge går til angrep der de hører hjemme, draugen blir friskere bare i vann (høyst halve helsa,
+        #     ikke i strøm), froskehoppet lander på et fritt sted, bekkenet gjør deg VÅT, snøringen varer til du ruller deg løs,
+        #     lauget slår hardere mens du er snørt (og nøyaktig tilbake etterpå), og hun snører aldri en pasient som er slått ut
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        ds = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} },
+            til = async (f, t = 4, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(40); return !!f(); },
+            spill = async (t, maks = 40000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(40); };
+          if (typeof Havet !== 'object' || typeof Laug !== 'object' || !ENEMIES.draug || !ENEMIES.holdning) return { mangler: true };
+          const skade = {}, _ht = Havet.treff, _lt = Laug.treff;
+          Havet.treff = function (shape, o, dmg, src) { const r = _ht.apply(Havet, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
+          Laug.treff = function (shape, o, dmg, src) { const r = _lt.apply(Laug, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
+          const rom = () => { const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 9 && r.h >= 9) || G.F.rooms.find(r => r.role === 'combat' && r.w >= 7 && r.h >= 7) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; return r; };
+          // et fritt sted d ruter fra pasienten, med fri sikt
+          const ved = d => { for (let i = 0; i < 32; i++) { const v = i / 32 * Math.PI * 2, x = P.x + Math.sin(v) * d, z = P.z + Math.cos(v) * d; if (!solid(Math.floor(x), Math.floor(z)) && !solid(Math.floor(x + .45), Math.floor(z)) && !solid(Math.floor(x - .45), Math.floor(z)) && !solid(Math.floor(x), Math.floor(z + .45)) && !solid(Math.floor(x), Math.floor(z - .45)) && los(P.x, P.z, x, z)) return { x, z }; } return freeSpot(P.x + d, P.z, 3); };
+          const mot = e => [Math.hypot(P.x - e.x, P.z - e.z), Math.atan2(P.x - e.x, P.z - e.z)], nullstill = () => { P.invuln = 0; P.iframe = 0; P.stunT = 0; P.snortT = 0; P.mokkT = 0; P.roll = 0; P.statusT = {}; };
+          try {
+            // hver type der den hører hjemme: legger an innen 6 sekunder spilltid og skader en pasient med 400 i helse innen 20
+            for (const [d, typer] of [[3, ['draug']], [4, ['holdning']], [5, ['draug']], [6, ['draug', 'holdning']]]) {
+              startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); rom(); P.hp = P.maxHp = 400; nullstill(); for (const k in skade) delete skade[k];
+              const fi = typer.map((t, i) => { const s = ved(i ? 5 : 3.5); return spawnEnemy(t, s.x, s.z, false, d); }), E = {}; typer.forEach(t => E[t] = {});
+              const g0 = G.time, t0 = performance.now();
+              while (G.time - g0 < 20 && performance.now() - t0 < 120000) { await vent(60); const t = G.time - g0; if (P.hp < 150) P.hp = 400;
+                fi.forEach((e, i) => { const T = typer[i]; if (e.state === 'wind' && E[T].wind === undefined) E[T].wind = t; if (skade[T] && E[T].skade === undefined) E[T].skade = t; });
+                if (typer.every(T => E[T].skade !== undefined)) break; }
+              ut.etasjer[d] = E; for (const e of fi) if (e.alive) killEntity(e, {}); await spill(.3);
+            }
+            rolig(); rom(); P.hp = P.maxHp = 1e6; nullstill();
+            // draugen i vann: ingenting på tørt gulv, to i sekundet i en pytt, ingenting når det går strøm i den, og aldri mer enn halve helsa per liv
+            const sd = ved(4.5), dr = spawnEnemy('draug', sd.x, sd.z, false, 6); await til(() => dr.state !== 'spawn'); dr.stun = 1e9; dr.cd = 1e9; dr.max = 1e4; // mye helse, så strømmen ikke tar livet av den
+            for (const p of G.puddles.slice()) if (Math.hypot(p.x - dr.x, p.z - dr.z) < p.r + 1.5) { R.remove(p.mesh); G.puddles.splice(G.puddles.indexOf(p), 1); }
+            dr.hp = 3000; let h0 = dr.hp; await spill(2); const torr = dr.hp - h0;
+            const pytt = addPuddle(dr.x, dr.z, 'wet', 1.3, 60); h0 = dr.hp; let g0 = G.time; await spill(2); const vaat = (dr.hp - h0) / (G.time - g0);
+            pytt.elec = 6; const helt0 = dr.helt; await spill(1.5); const strom = { helt: dr.helt - helt0, zapp: dr.hp < h0 + vaat * 2 }; pytt.elec = 0;
+            await spill(.3); dr.helt = dr.max * .5 - 1; dr.hp = 10; await spill(2.5); const tak = { etter: dr.hp - 10, helt: dr.helt / dr.max };
+            ut.lege = { torr, vaat, strom, tak, max: dr.max }; killEntity(dr, {}); await spill(.8);
+            // froskehoppet: ring på 1,3 ved pasienten, dukken letter, kroppen står stille i sammenkrøkingen og lander der ringen var, i et nytt tjern
+            rolig(); rom(); nullstill(); const sh = ved(5.5), dh = spawnEnemy('draug', sh.x, sh.z, false, 6); await til(() => dh.state !== 'spawn'); dh.cd = 1e9;
+            { dh.state = 'chase'; const [dist, a] = mot(dh); const x0 = dh.x, z0 = dh.z; skade.draug = 0; const p0 = { x: P.x, z: P.z }; Havet.hopp(dh, P, a); const t = dh.teles[dh.teles.length - 1], mal = { x: t.o.x, z: t.o.z };
+              let maksY = 0, stilleVed = null; const g1 = G.time, t1 = performance.now();
+              while (G.tele.includes(t) && performance.now() - t1 < 60000) { await vent(25); maksY = Math.max(maksY, dh.doll.plane.position.y); if (G.time - g1 > .6 && stilleVed === null) stilleVed = Math.hypot(dh.x - x0, dh.z - z0); }
+              await spill(.1); const tj = G.puddles.find(p => p.kind === 'tjern' && Math.hypot(p.x - mal.x, p.z - mal.z) < .3);
+              ut.hopp = { sirkel: t.shape === 'circle' && t.o.r === 1.3, naerPas: Math.hypot(mal.x - p0.x, mal.z - p0.z) < 1.2, positur: true, maksY, stilleVed, fra: Math.hypot(dh.x - mal.x, dh.z - mal.z), start: Math.hypot(x0 - mal.x, z0 - mal.z), fritt: !solid(Math.floor(dh.x), Math.floor(dh.z)), tjern: !!tj && tj.r >= 1.2, traff: skade.draug > 0 }; }
+            // hoppet mot en vegg: draugen stopper ved veggen og står aldri inne i den
+            { await spill(.8); dh.state = 'chase'; dh.cd = 1e9; const r = rom(), vx = r.x + r.w; let zc = Math.floor(r.z + r.h / 2); for (let z = r.z + 1; z < r.z + r.h - 1; z++) if (solid(vx, z) && solid(vx, z - 1) && solid(vx, z + 1) && !solid(vx - 1, z) && !solid(vx - 3, z)) { zc = z; break; }
+              const T = { x: vx + 3, z: zc + .5 }; dh.x = vx - 2.5; dh.z = zc + .5; P.x = r.x + 1.5; P.z = zc + .5; P.invuln = 999;
+              Havet.hopp(dh, T, Math.atan2(T.x - dh.x, T.z - dh.z)); const t = dh.teles[dh.teles.length - 1]; await til(() => !G.tele.includes(t), 3); await spill(.1);
+              ut.vegg = { fritt: !solid(Math.floor(dh.x), Math.floor(dh.z)) && !solid(Math.floor(dh.x + dh.r * .9), Math.floor(dh.z)), x: dh.x - vx, mal: t.o.x - vx, veggFunnet: solid(vx, zc) }; }
+            // bekkenet: en kjegle som gjør pasienten VÅT (treg en stund) og legger en pytt der han står
+            { rom(); nullstill(); await spill(.8); const s = ved(3); dh.x = s.x; dh.z = s.z; dh.state = 'chase'; dh.stun = 0; await spill(.1); dh.x = s.x; dh.z = s.z; P.invuln = 0; skade.draug = 0;
+              const [dist, a] = mot(dh); Havet.skvett(dh, P, a); const t = dh.teles[dh.teles.length - 1]; await til(() => !G.tele.includes(t), 3);
+              ut.skvett = { kjegle: t.shape === 'cone' && t.o.r === 3.2, traff: skade.draug > 0, vaat: P.vaatT, ord: !!(P.statusT && P.statusT['VÅT'] !== undefined), pytt: G.puddles.some(p => p.kind === 'wet' && Math.hypot(p.x - P.x, p.z - P.z) < 1.5) };
+              await spill(.7); ut.skvett.varer = { vaat: P.vaatT, mokk: P.mokkT }; }
+            killEntity(dh, {}); await spill(.8);
+            // Holdningssøsteren snører: SNØRT varer (selv om myra bare gir et øyeblikk), lauget slår 25 prosent hardere i fire sekunder og nøyaktig tilbake etterpå
+            // pyttene fra draugen tas bort først, ellers kan søsteren skli i dem og miste snøringen (enemySlip avbryter varselet)
+            rolig(); rom(); nullstill(); for (const p of G.puddles.splice(0)) R.remove(p.mesh); const s1 = ved(4.5), hs = spawnEnemy('holdning', s1.x, s1.z, false, 4), s2 = freeSpot(s1.x + 1.2, s1.z + .8, 2), la = spawnEnemy('laerling', s2.x, s2.z, false, 4), s3 = ved(-1), pl = spawnEnemy('pleier', P.x + 30, P.z + 30, false, 4);
+            await til(() => hs.state !== 'spawn' && la.state !== 'spawn'); la.stun = 1e9; pl.stun = 1e9; hs.cd = 1e9;
+            const d0 = { hs: hs.dmg, la: la.dmg, pl: pl.dmg }, sp = Sound.play; let reimer = 0; const _rm = Laug.reimer; Laug.reimer = function () { const n = _rm.apply(Laug, arguments); reimer += n; return n; };
+            { hs.state = 'chase'; const [dist, a] = mot(hs); Laug.snor(hs, P, a); const t = hs.teles[hs.teles.length - 1]; await til(() => !G.tele.includes(t), 3); await spill(.05);
+              ut.snor = { sirkel: t.shape === 'circle' && t.o.r === 1.25, snort: P.snortT, ord: !!(P.statusT && P.statusT['SNØRT'] !== undefined), la: la.dmg / d0.la, hs: hs.dmg / d0.hs, pl: pl.dmg / d0.pl, reimer, reimTegnet: Kjeder.liste.filter(K => K.reim).length, tilstand: [hs.state, +(hs.slip > 0), +(hs.stun > 0), +(hs.sleep > 0)], pytter: G.puddles.length };
+              const stramme = () => Kjeder.liste.filter(K => K.reim && K.t >= K.inn && K.t < K.inn + K.hold).length;
+              await spill(1.2); ut.snor.varer = { snort: P.snortT, mokk: P.mokkT, stramme: stramme() };
+              // en rulle løser snøret med en gang
+              P.roll = .34; P.rollA = 0; await spill(.05); ut.snor.rulle = { snort: P.snortT, mokk: P.mokkT, ord: !!P.statusT['LØS'], stramme: stramme() };
+              await spill(.5); ut.snor.rulle.reimIgjen = Kjeder.liste.filter(K => K.reim).length;
+              await til(() => !la.rettet && !hs.rettet, 5); await spill(.1); ut.snor.tilbake = { la: la.dmg - d0.la, hs: hs.dmg - d0.hs, flagg: !la.rettet && !hs.rettet }; }
+            // aldri på en pasient som er slått ut: ingen snøring når han er slått ut, og en som blir slått ut før ringen går av, blir ikke snørt
+            { nullstill(); P.stunT = 3; let brune = 0; for (let i = 0; i < 12; i++) { hs.state = 'chase'; hs.stun = 0; const n0 = hs.teles.length, [dist, a] = mot(hs); Grotesk.ai.holdning(hs, P, dist, a); brune += hs.teles.slice(n0).filter(t => t.shape === 'circle').length; hs.state = 'chase'; }
+              ut.slaatt = { brune, snort: P.snortT }; nullstill(); await spill(.3); hs.state = 'chase'; hs.stun = 0; const [dist, a] = mot(hs); Laug.snor(hs, P, a); const t = hs.teles[hs.teles.length - 1];
+              await spill(.6); P.stunT = 1; await til(() => !G.tele.includes(t), 3); await spill(.05); ut.slaatt.underveis = P.snortT; }
+            // tommestokken på kloss hold: en kjegle på 2,2 som treffer
+            { nullstill(); await spill(.8); const s = ved(1.5); hs.x = s.x; hs.z = s.z; hs.state = 'chase'; hs.stun = 0; skade.holdning = 0; const n0 = hs.teles.length, [dist, a] = mot(hs); Grotesk.ai.holdning(hs, P, dist, a);
+              const t = hs.teles[n0]; if (t) await til(() => !G.tele.includes(t), 3); await spill(.05); ut.linjal = { kjegle: !!t && t.shape === 'cone' && t.o.r === 2.2, traff: skade.holdning > 0 }; }
+            // Enkel grafikk: ingen reimer tegnes, men snøringen virker
+            { nullstill(); await spill(.8); R.safe = true; const s = ved(4.5); hs.x = s.x; hs.z = s.z; hs.state = 'chase'; hs.stun = 0; reimer = 0; const k0 = Kjeder.liste.length, [dist, a] = mot(hs); Laug.snor(hs, P, a); const t = hs.teles[hs.teles.length - 1];
+              let kj = 0; { const g2 = G.time, t2 = performance.now(); while (G.tele.includes(t) && performance.now() - t2 < 30000) { kj = Math.max(kj, Kjeder.liste.length - k0); await vent(30); } } await spill(.05);
+              ut.safe = { reimer, kjeder: kj, snort: P.snortT > 2 }; R.safe = false; }
+            Laug.reimer = _rm; for (const e of [hs, la, pl]) if (e.alive) killEntity(e, {});
+          } finally { Havet.treff = _ht; Laug.treff = _lt; R.safe = false; }
+          ut.info = ['draug', 'holdning'].every(t => (FIENDE_INFO[t] || [])[0] && FIENDE_INFO[t][1] && FIENDE_REKKE.includes(t) && MESTER_TITTEL[t] && FIENDESTEMME[t] && LINES[t] && DEATH_CAUSES[t]) && !ROLLER.draug && !ROLLER.holdning;
+          ut.bilde = ['draug', 'holdning'].map(t => { const c = fiendeBilde(t, 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); });
+          const tell = (d, t) => DEPTH_ENEMIES[d].filter(x => x === t).length;
+          ut.pulje = { draug: [3, 4, 5, 6].map(d => tell(d, 'draug')), holdning: [3, 4, 5, 6].map(d => tell(d, 'holdning')) };
+          return ut; }""")
+        sjekk('Draugpleieren og Holdningssøsteren finnes (ENEMIES, Havet og Laug)', not ds.get('mangler'), ds.get('mangler', ''))
+        if not ds.get('mangler'):
+            E = ds['etasjer']
+            sjekk('begge legger an innen 6 og skader innen 20 sekunder spilltid der de hører hjemme (draugen på 3, 5 og 6, søsteren på 4 og 6)', all(E[d][t].get('wind') is not None and E[d][t]['wind'] <= 6 and E[d][t].get('skade') is not None and E[d][t]['skade'] <= 20 for d in E for t in E[d]), E)
+            lg = ds['lege']
+            sjekk('draugen blir ikke friskere på tørt gulv, men omtrent to i sekundet i en pytt', abs(lg['torr']) < 1e-9 and 1.6 < lg['vaat'] < 2.4, lg)
+            sjekk('draugen blir ikke friskere når det går strøm i vannet', lg['strom']['helt'] == 0 and lg['strom']['zapp'], lg)
+            sjekk('draugen blir aldri friskere enn halve helsa per liv', 0 < lg['tak']['etter'] <= 1.0001 and abs(lg['tak']['helt'] - .5) < 1e-6, lg)
+            h = ds['hopp']
+            sjekk('froskehoppet: ring på 1,3 ved pasienten, dukken letter over en halv rute, og kroppen står stille mens den krøker seg sammen', h['sirkel'] and h['naerPas'] and h['maksY'] > .5 and h['stilleVed'] is not None and h['stilleVed'] < .5 and h['start'] > 3, h)
+            sjekk('froskehoppet lander der ringen var, på fritt gulv, i et nytt tjern, og treffer pasienten', h['fra'] < .6 and h['fritt'] and h['tjern'] and h['traff'], h)
+            sjekk('hopper draugen mot en vegg, stopper den ved veggen og står aldri inne i den', ds['vegg']['veggFunnet'] and ds['vegg']['fritt'] and ds['vegg']['x'] < .2 and ds['vegg']['mal'] > 1, ds['vegg'])
+            sk = ds['skvett']
+            sjekk('bekkenet (en kjegle på 3,2) gjør pasienten VÅT: treg en stund, med en pytt der han står', sk['kjegle'] and sk['traff'] and 1 < sk['vaat'] <= 1.2 and sk['varer']['vaat'] > .2 and sk['varer']['mokk'] > 0 and sk['ord'] and sk['pytt'], sk)
+            sn = ds['snor']
+            sjekk('snøringen (ring på 1,25) gir SNØRT i 2,5 sekunder, og to lærreimer fra hendene hennes', sn['sirkel'] and 2.2 < sn['snort'] <= 2.5 and sn['ord'] and sn['reimer'] == 2 and sn['reimTegnet'] == 2, sn)
+            sjekk('mens pasienten er snørt, slår lauget innen åtte ruter 25 prosent hardere, men ikke pleieren utenfor lauget', abs(sn['la'] - 1.25) < 1e-9 and abs(sn['hs'] - 1.25) < 1e-9 and sn['pl'] == 1, sn)
+            sjekk('snøret varer: over et sekund senere er pasienten fortsatt treg, og de to reimene holder ham fortsatt', sn['varer']['snort'] > .8 and sn['varer']['mokk'] > 0 and sn['varer']['stramme'] == 2, sn['varer'])
+            sjekk('en rulle løser snøret med en gang (LØS), og reimene slipper og er borte et halvt sekund etter', sn['rulle']['snort'] == 0 and sn['rulle']['mokk'] <= 0 and sn['rulle']['ord'] and sn['rulle']['stramme'] == 0 and sn['rulle']['reimIgjen'] == 0, sn['rulle'])
+            sjekk('etter fire sekunder er laugets skade nøyaktig tilbake', abs(sn['tilbake']['la']) < 1e-9 and abs(sn['tilbake']['hs']) < 1e-9 and sn['tilbake']['flagg'], sn['tilbake'])
+            sjekk('hun snører aldri en pasient som er slått ut, heller ikke når han blir slått ut før ringen går av', ds['slaatt']['brune'] == 0 and not ds['slaatt']['snort'] and not ds['slaatt']['underveis'], ds['slaatt'])
+            sjekk('tommestokken på kloss hold: en kjegle på 2,2 som treffer', ds['linjal']['kjegle'] and ds['linjal']['traff'], ds['linjal'])
+            sjekk('i Enkel grafikk tegnes ingen reimer, men snøringen virker', ds['safe'] == {'reimer': 0, 'kjeder': 0, 'snort': True}, ds['safe'])
+            sjekk('fiendeindeksen, replikker, stemmer, dødsårsaker og mestertitler for begge, og ingen av dem i ROLLER', ds['info'], ds)
+            sjekk('fiendeBilde tegner begge', all(x > .06 for x in ds['bilde']), ds['bilde'])
+            sjekk('draugen i Underetasjen, Nattskogen og Dypet (to), søsteren i Kjelleren og Dypet', ds['pulje'] == {'draug': [1, 0, 1, 2], 'holdning': [0, 1, 0, 1]}, ds['pulje'])
+        await pg.screenshot(path='/tmp/e_61_draug_soster.png')
+        sjekk('ingen konsollfeil (Draugen og Holdningssøsteren)', not pg.errs, pg.errs[:6])
+        # håndbokssidene med begge: får plass, og kortene har bilde (vent på tittelen, ellers lukker den håndboka)
+        await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+        hbs = []
+        for t in ['draug', 'holdning']:
+            hb = await pg.evaluate("""t => { if (!FIENDE_REKKE.includes(t)) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'fiender'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(FIENDE_REKKE.indexOf(t) / per));
+              return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""", t)
+            await pg.wait_for_timeout(300)
+            hb['plass'] = await pg.evaluate(HB_PLASS) if not hb.get('mangler') else False
+            hbs.append(hb)
+            await pg.screenshot(path=f'/tmp/e_61_handbok_{t}.png')
+        sjekk('håndboka har Draugpleieren og Holdningssøsteren, og sidene får plass', 'Draugpleieren' in hbs[0].get('navn', []) and 'Holdningssøsteren' in hbs[1].get('navn', []) and hbs[0]['plass'] and hbs[1]['plass'], hbs)
+        sjekk('ingen konsollfeil (Draugen og Holdningssøsteren i håndboka)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: draugen hopper og søsteren snører med reimene, i samme øyeblikk (bildet til Tom)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          if (!ENEMIES.draug || !ENEMIES.holdning) return { mangler: true };
+          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999; ut.d3 = D3.on;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 10 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2 + .5; P.z = r.z + r.h / 2 + .5; R.snapCamera(P.x, P.z);
+          const s1 = freeSpot(P.x + 4.2, P.z - 1.2, 2), dr = spawnEnemy('draug', s1.x, s1.z, false, 4), s2 = freeSpot(P.x - 3.8, P.z + .4, 2), hs = spawnEnemy('holdning', s2.x, s2.z, false, 4);
+          const s3 = freeSpot(P.x - 2.2, P.z - 1.8, 2), la = spawnEnemy('laerling', s3.x, s3.z, false, 4); dr.cd = hs.cd = la.cd = 1e9;
+          { const g0 = G.time, t0 = performance.now(); while ((dr.state === 'spawn' || hs.state === 'spawn' || la.state === 'spawn') && performance.now() - t0 < 60000) await vent(50); }
+          await vent(300); dr.state = hs.state = 'chase';
+          Havet.hopp(dr, P, Math.atan2(P.x - dr.x, P.z - dr.z)); Laug.snor(hs, P, Math.atan2(P.x - hs.x, P.z - hs.z));
+          const g0 = G.time, t0 = performance.now(); let maksY = 0, reimer = 0;
+          while (G.time - g0 < .98 && performance.now() - t0 < 60000) { await vent(15); maksY = Math.max(maksY, dr.doll.plane.position.y); reimer = Math.max(reimer, Kjeder.liste.filter(K => K.reim).length); }
+          G.hitstop = 30; // nesten stillstand mens bildet tas
+          ut.maksY = maksY; ut.reimer = Kjeder.liste.filter(K => K.reim && K.m.visible).length; ut.y = dr.doll.plane.position.y; return ut; }""")
+        await pg.wait_for_timeout(200)
+        await pg.screenshot(path='/tmp/e_61_draug_soster_3d.png')
+        sjekk('i 3D letter draugen i hoppet og søsterens to reimer er i lufta samtidig', not d3.get('mangler') and d3.get('d3') and d3['y'] > .5 and d3['reimer'] == 2, d3)
+        await pg.evaluate("() => { MORBIDIUM.hitstop = 0; }")
+        sjekk('ingen konsollfeil (Draugen og Holdningssøsteren i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 62) Oldermann Nålepute: minisjefen leser opp dagsorden i boblen og gjør sakene i den rekkefølgen han sa, med klubbeslag mellom,
+        #     hver sak for seg (nåler, kjettinger som drar, klubba, votering med tak på lærlinger, eventuelt), årsmøtet ved halv helse,
+        #     aldri i parken, fiendeindeksen, Enkel grafikk og én runde i 3D
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        om = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
+            til = async (f, t = 4, maks = 40000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
+            spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); };
+          if (typeof Oldermann !== 'object' || !ENEMIES.oldermann) return { mangler: true };
+          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; P.invuln = 0;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 10 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0];
+          const midt = () => { P.x = r.x + r.w / 2 + .5; P.z = r.z + r.h / 2 + .5; }; midt();
+          // det som blir sagt: boblene hans (teksten slik den står), tall og ord over hodene (#fx .dmg), lydene, og varslene han legger
+          const bobler = [], tall = [], lyder = [], teleSett = new Set(); let samle = true;
+          const _b = Oldermann.boble; Oldermann.boble = function (e) { const el = _b.apply(Oldermann, arguments); bobler.push({ t: G.time, tekst: el ? [...el.children].map(d => d.textContent) : [], ref: e.referat.length }); return el; };
+          const mo = new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) if (n.classList && n.classList.contains('dmg')) tall.push(n.textContent); }); mo.observe(document.getElementById('fx'), { childList: true });
+          const _sp = Sound.play; Sound.play = function (n) { lyder.push(n); return _sp.apply(Sound, arguments); };
+          (async () => { while (samle) { for (const t of G.tele) if (t.owner && t.owner.type === 'oldermann') teleSett.add(t); await vent(15); } })();
+          const varsler = () => [...teleSett].map(t => ({ shape: t.shape, r: t.o.r, w: t.o.w, len: t.o.len, type: t.o.type }));
+          // det han faktisk gjør (angrepet som kjøres), ikke bare det referatet sier
+          const gjort = [], FN = { naaler: 'naal', kjeder: 'kjede', klubba: 'klubbe', votering: 'votering' }, _fn = {};
+          for (const f in FN) { _fn[f] = Oldermann[f]; Oldermann[f] = function (e) { if (e && e.referat) gjort.push({ ref: e.referat.length, e, k: FN[f] }); return _fn[f].apply(Oldermann, arguments); }; }
+          try {
+            // tre dagsordener i vanlig kamp: det han gjør, er det han sa, i samme rekkefølge
+            const s0 = freeSpot(P.x + 3, P.z, 3), o = spawnEnemy('oldermann', s0.x, s0.z, false, 4);
+            { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 70 && performance.now() - t0 < 240000) { await vent(80); P.hp = 1e6; o.hp = o.max; if ((o.referat || []).filter(a => a.ferdig).length >= 3) break; } }
+            ut.referat = (o.referat || []).filter(a => a.ferdig).slice(0, 3).map(a => ({ saker: a.saker, utfort: a.utfort }));
+            // den første boblen i hver dagsorden er hele dagsorden, i den rekkefølgen sakene ble gjort
+            ut.bobler = [1, 2, 3].map(n => { const b = bobler.find(x => x.ref === n); return b ? b.tekst : null; });
+            // angrepene i hver dagsorden: Eventuelt er den saken boblen sa, og votering blir klubba når det er fullt
+            ut.gjort = (o.referat || []).filter(a => a.ferdig).slice(0, 3).map(a => { const n = o.referat.indexOf(a) + 1; return { saker: a.saker, ev: a.ev, gjort: gjort.filter(g => g.e === o && g.ref === n).map(g => g.k) }; });
+            ut.gjortRiktig = ut.gjort.length === 3 && ut.gjort.every(a => a.gjort.length === a.saker.length && a.saker.every((k, j) => a.gjort[j] === (k === 'eventuelt' ? a.ev : k) || (k === 'votering' && a.gjort[j] === 'klubbe')));
+            ut.bobleRekke = ut.referat.map((a, i) => { const b = ut.bobler[i] || [], navn = a.saker.map(k => Oldermann.NAVN[k]); return b[0] === 'Dagsorden:' && navn.every((nv, j) => (b[j + 1] || '').startsWith((j + 1) + '. ' + nv)); });
+            ut.tall = tall.filter(s => /Dagsorden|Sak |Knappenål|Kjetting|Klubba|Votering|Eventuelt/.test(s));
+            ut.klubbe = lyder.filter(n => n === 'klubbe').length; ut.bokslag = lyder.filter(n => n === 'bokslag').length;
+            ut.saker = ut.referat.reduce((s, a) => s + a.utfort.length, 0);
+            // hver sak for seg, satt opp for hånd
+            rolig(); midt(); await spill(.3);
+            const o2 = spawnEnemy('oldermann', freeSpot(P.x, P.z, 3).x, freeSpot(P.x, P.z, 3).z, false, 4); await til(() => o2.state !== 'spawn'); o2.cd = 1e9;
+            // pasienten settes der han ser Oldermannen (ellers venter saken, og testen har stoppet ham med cd), med litt plass rundt
+            const fri = (x, z) => [[0, 0], [.45, 0], [-.45, 0], [0, .45], [0, -.45]].every(([a, c]) => !solid(Math.floor(x + a), Math.floor(z + c)));
+            const plasser = d => { let s = null; for (let i = 0; i < 32 && !s; i++) { const v = i / 32 * Math.PI * 2, x = o2.x + Math.sin(v) * d, z = o2.z + Math.cos(v) * d; if (fri(x, z) && los(o2.x, o2.z, x, z)) s = { x, z }; } s = s || freeSpot(o2.x + d, o2.z, 3); P.x = s.x; P.z = s.z; P.kvx = P.kvz = 0; P.stunT = 0; P.invuln = 0; P.iframe = 0; P.deny = null; G.laugStunT = 0; };
+            const sak = async (saker, d, t = 1.8) => {
+              await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; o2.stun = 0; plasser(d); teleSett.clear();
+              // hjerter fra fiender testen har drept, trekkes inn når pasienten mister helse og ville skjult skaden
+              for (const k of G.pickups.filter(k => k.kind === 'heart')) { R.remove(k.mesh); G.pickups.splice(G.pickups.indexOf(k), 1); }
+              o2.dagsorden = { saker, i: 0, cd: .35, ev: null, vent: null }; (o2.referat || (o2.referat = [])).push({ saker, utfort: [] });
+              const hp0 = P.hp, d0 = Math.hypot(P.x - o2.x, P.z - o2.z), n0 = Oldermann.skutt || 0, t0n = tall.length; Oldermann.sak(o2, P, d0, Math.atan2(P.x - o2.x, P.z - o2.z)); o2.cd = 1e9;
+              await spill(t); const r = { tele: varsler(), skade: hp0 - P.hp, d0, d1: Math.hypot(P.x - o2.x, P.z - o2.z), proj: (Oldermann.skutt || 0) - n0, ord: tall.slice(t0n, t0n + 8), ev: o2.referat[o2.referat.length - 1].ev };
+              o2.dagsorden = null; P.hp = 1e6; return r; };
+            ut.naal = await sak(['naal'], 4);
+            // står pasienten feil for saken, venter han (høyst 2,5 s), og dagsorden blir stående i boblen så lenge
+            { await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; o2.stun = 0; plasser(4);
+              o2.dagsorden = { saker: ['naal'], i: 0, cd: 1e9, ev: null, vent: null }; o2.cd = 1e9; o2.referat.push({ saker: ['naal'], utfort: [] }); const bel = Oldermann.boble(o2, -1); await spill(1.5);
+              const langt = { x: o2.x + 20, z: o2.z }, g0 = G.time, t0 = performance.now(); let borte = 0, n = 0, fyrt = null;
+              while (G.time - g0 < 3.2 && performance.now() - t0 < 30000) { if (fyrt === null) { Oldermann.sak(o2, langt, 20, 0); o2.cd = 1e9; if (o2.dagsorden.i === 1) fyrt = +(G.time - g0).toFixed(2); else { n++; if (!bel.isConnected) borte++; } } await vent(60); }
+              ut.vent = { fyrt, borte, n }; await til(() => o2.state !== 'wind', 3); o2.dagsorden = null; P.hp = 1e6; }
+            ut.kjede = await sak(['kjede'], 5.5); ut.kjede.hektet = !!(P.statusT && P.statusT.HEKTET !== undefined);
+            ut.klubbe1 = await sak(['klubbe'], 1.6);
+            for (const e of G.enemies) if (e.alive && e.type === 'laerling') killEntity(e, {});
+            ut.vote = await sak(['votering'], 3, 2.2); ut.vote.lar = G.enemies.filter(e => e.alive && e.type === 'laerling').length;
+            { const s = freeSpot(o2.x - 3, o2.z + 2, 3); spawnEnemy('laerling', s.x, s.z, false, 4); } for (const e of G.enemies) if (e.alive && e.type === 'laerling') e.cd = 1e9;
+            ut.vote2 = await sak(['votering'], 1.6, 2.2); ut.vote2.lar = G.enemies.filter(e => e.alive && e.type === 'laerling').length;
+            for (const e of G.enemies) if (e.alive && e.type === 'laerling') killEntity(e, {});
+            ut.ev = await sak(['eventuelt'], 2);
+            // halv helse: ekstraordinært årsmøte, fire sølvringer rundt pasienten og klokkeren kommer. Etterpå er det tre saker og Eventuelt
+            await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; plasser(3); teleSett.clear(); for (const e of G.enemies) if (e.alive && e.type === 'klokker') killEntity(e, {});
+            o2.hp = o2.max * .45; Grotesk.ai.oldermann(o2, P, 3, 0); o2.cd = 1e9;
+            await vent(50); ut.aarsBoble = [...document.querySelectorAll('#fx .bubble')].map(e => e.textContent).join(' | ');
+            await spill(2.4); ut.aars = { ringer: varsler().filter(t => t.shape === 'circle' && t.type === 'lenke' && t.r === 1.3).length, klokker: G.enemies.filter(e => e.alive && e.type === 'klokker').length };
+            await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; Oldermann.les(o2, P, 0); ut.aars.saker = o2.dagsorden.saker.length; ut.aars.sist = o2.dagsorden.saker[3];
+            // Enkel grafikk: varslene og nålene kommer, men ingen kjettinger tegnes
+            o2.dagsorden = null; o2.cd = 1e9; for (const e of G.enemies) if (e.alive && e !== o2) killEntity(e, {});
+            await til(() => !Kjeder.liste.length, 4); R.safe = true; let kjS = 0; const kt = setInterval(() => { kjS = Math.max(kjS, Kjeder.liste.length); }, 20);
+            ut.safe = { kjede: await sak(['kjede'], 5), naal: await sak(['naal'], 4) }; clearInterval(kt); ut.safe.kjeder = kjS; ut.safe.for = Kjeder.liste.length; R.safe = false;
+            // boblen med dagsorden er varselet: den holdes inne på skjermen når han står langt utenfor, og synes selv om snakkeboblene er slått av
+            { document.body.classList.add('uten-bobler'); const falsk = { x: P.x - 40, z: P.z + 1, alive: true, bubbleH: 4.3, referat: [], dagsorden: { saker: ['naal', 'kjede', 'eventuelt'], i: 0 } };
+              const el = Oldermann.boble(falsk, 0, 'Møtet er satt.'); await spill(.2); const rb = el.getBoundingClientRect(), W = document.getElementById('fx').getBoundingClientRect();
+              ut.klem = { synlig: el.isConnected && getComputedStyle(el).display !== 'none' && rb.width > 0, inne: rb.left >= W.left - 1 && rb.right <= W.right + 1 && rb.top >= W.top - 1, l: Math.round(rb.left), r: Math.round(rb.right), t: Math.round(rb.top) };
+              // står han langt nord og til venstre, havner boblen i hjørnet under panelet: den skyves ned så ingenting i toppen dekker den
+              falsk.z = P.z - 30; await spill(.2); const rb2 = el.getBoundingClientRect(), over = ['badge', 'miniBar', 'bossBar', 'tools', 'mapring'].filter(id => { const r = document.getElementById(id).getBoundingClientRect(); return r.width && r.height && rb2.left < r.right && rb2.right > r.left && rb2.top < r.bottom && rb2.bottom > r.top; });
+              ut.klem.hjorne = { over, t: Math.round(rb2.top), b: Math.round(rb2.bottom), panel: Math.round(document.getElementById('badge').getBoundingClientRect().bottom), mini: !document.getElementById('miniBar').classList.contains('hidden') };
+              falsk.alive = false; document.body.classList.remove('uten-bobler'); await spill(.1); }
+            killEntity(o2, {}); await spill(.8);
+            // aldri i parken: 60 etasjefrø i Parken gir aldri Oldermannen, i Kjelleren kommer han
+            const F = G.F, frø = F.seed, d0 = G.depth, risk = F.rooms.find(r => r.role === 'risk') || F.rooms[0], rolle = risk.role; risk.role = 'risk';
+            const telle = d => { G.depth = d; let n = 0; for (let s = 1; s <= 60; s++) { F.seed = s * 7919; Mini.onFloor(); if (Object.values(Mini.rom).includes('oldermann')) n++; } return n; };
+            ut.park = telle(1); ut.kjeller = telle(4); F.seed = frø; G.depth = d0; risk.role = rolle; Mini.onFloor();
+          } finally { Oldermann.boble = _b; Sound.play = _sp; Object.assign(Oldermann, _fn); mo.disconnect(); samle = false; R.safe = false; document.body.classList.remove('uten-bobler'); }
+          ut.info = !!((FIENDE_INFO.oldermann || [])[0] && FIENDE_INFO.oldermann[1] && SJEF_REKKE.includes('oldermann') && MINISJEFER.includes('oldermann') && FIENDESTEMME.oldermann && LINES.oldermann && DEATH_CAUSES.oldermann) && !ROLLER.oldermann;
+          ut.bilde = (() => { const c = fiendeBilde('oldermann', 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); })();
+          return ut; }""")
+        sjekk('Oldermann Nålepute finnes (Oldermann i 50_skinnlauget.js)', not om.get('mangler'), om.get('mangler', ''))
+        if not om.get('mangler'):
+            R = om['referat']
+            sjekk('tre dagsordener er ferdige, og hver ender med Eventuelt etter to saker', len(R) == 3 and all(len(a['saker']) == 3 and a['saker'][-1] == 'eventuelt' for a in R), R)
+            sjekk('over tre dagsordener gjør han sakene i nøyaktig den rekkefølgen han sa', len(R) == 3 and all(a['utfort'] == a['saker'] for a in R), R)
+            sjekk('angrepene han faktisk gjør, følger dagsorden (Eventuelt som boblen sa, votering eller klubba)', om['gjortRiktig'], om['gjort'])
+            sjekk('dagsorden står i boblen, med sakene i samme rekkefølge', len(om['bobleRekke']) == 3 and all(om['bobleRekke']), om['bobler'])
+            sjekk('dagsorden og sakene kommer aldri som tall eller ord over hodet', om['tall'] == [], om['tall'])
+            sjekk('bokslag for hver dagsorden og et klubbeslag for hver sak', om['bokslag'] >= 3 and om['klubbe'] >= om['saker'], {k: om[k] for k in ['bokslag', 'klubbe', 'saker']})
+            n = om['naal']
+            sjekk('knappenåler: et rektangel 2,2 bredt og 8 langt, så tre salver med fem nåler som treffer', any(t['shape'] == 'rect' and t['w'] == 2.2 and t['len'] == 8 for t in n['tele']) and n['proj'] == 15 and n['skade'] > 0, n)
+            v = om['vent']
+            sjekk('står pasienten feil, venter han høyst 2,5 s, og dagsorden blir stående i boblen mens han venter', v['fyrt'] is not None and 2.3 <= v['fyrt'] <= 2.9 and v['n'] > 5 and v['borte'] == 0, v)
+            k = om['kjede']
+            sjekk('kjettinger: en sølvring på 1,6 der pasienten står, som treffer, hekter og drar ham inn', any(t['shape'] == 'circle' and t['r'] == 1.6 and t['type'] == 'lenke' for t in k['tele']) and k['skade'] > 0 and k['hektet'] and k['d1'] < k['d0'] - 1, k)
+            kl = om['klubbe1']
+            sjekk('klubba: en ring på 2,6 rundt ham, som treffer og slår pasienten bakover', any(t['shape'] == 'circle' and t['r'] == 2.6 for t in kl['tele']) and kl['skade'] > 0 and kl['d1'] > kl['d0'] + 1, kl)
+            sjekk('votering: to lærlinger kommer', om['vote']['lar'] == 2, om['vote'])
+            sjekk('votering med tre lærlinger i live: ingen flere, og klubba i stedet', om['vote2']['lar'] == 3 and any(t['shape'] == 'circle' and t['r'] == 2.6 for t in om['vote2']['tele']), om['vote2'])
+            ev = om['ev']; forv = {'naal': ('rect', None), 'kjede': ('circle', 1.6), 'klubbe': ('circle', 2.6)}.get(ev['ev'])
+            sjekk('eventuelt: en av de tre første, og varselet passer til den', forv is not None and any(t['shape'] == forv[0] and (forv[1] is None or t['r'] == forv[1]) for t in ev['tele']), ev)
+            a = om['aars']
+            sjekk('halv helse: «Ekstraordinært årsmøte!», fire sølvringer, klokkeren kommer, og så tre saker og Eventuelt', 'Ekstraordinært årsmøte' in om['aarsBoble'] and a['ringer'] == 4 and a['klokker'] == 1 and a['saker'] == 4 and a['sist'] == 'eventuelt', [om['aarsBoble'], a])
+            s = om['safe']
+            sjekk('Enkel grafikk: sølvringen og nålene kommer og treffer, men ingen kjettinger tegnes', s['kjeder'] == 0 and s['kjede']['skade'] > 0 and s['naal']['proj'] == 15, s)
+            sjekk('dagsorden holdes inne på skjermen når han står utenfor, og synes selv om snakkeboblene er av', om['klem']['synlig'] and om['klem']['inne'], om['klem'])
+            sjekk('dagsorden havner aldri bak panelet, minisjeflinja, knappene eller kompasset', om['klem']['hjorne']['over'] == [] and om['klem']['hjorne']['t'] >= om['klem']['hjorne']['panel'], om['klem'])
+            sjekk('aldri i parken, men han kommer i Kjelleren', om['park'] == 0 and om['kjeller'] > 0, [om['park'], om['kjeller']])
+            sjekk('fiendeindeksen (blant minisjefene), replikker, stemme og dødsårsaker, og ikke i ROLLER', om['info'], om['info'])
+            sjekk('fiendeBilde tegner ham', om['bilde'] > .08, om['bilde'])
+        await pg.screenshot(path='/tmp/e_62_oldermann.png')
+        sjekk('ingen konsollfeil (Oldermann Nålepute)', not pg.errs, pg.errs[:6])
+        # håndbokssiden med minisjefene: får plass på PC og telefon
+        hbs = []
+        for vp in [{'width': 1280, 'height': 720}, {'width': 390, 'height': 844}]:
+            await pg.set_viewport_size(vp)
+            await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+            hb = await pg.evaluate("""() => { if (!SJEF_REKKE.includes('oldermann')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'sjefer'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(SJEF_REKKE.indexOf('oldermann') / per));
+              return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
+            await pg.wait_for_timeout(300)
+            hb['plass'] = await pg.evaluate(HB_PLASS) if not hb.get('mangler') else False
+            hbs.append(hb)
+            await pg.screenshot(path=f"/tmp/e_62_handbok_{vp['width']}.png")
+        sjekk('håndboka har Oldermann Nålepute blant minisjefene, og siden får plass på PC og telefon', all('Oldermann Nålepute' in h.get('navn', []) and h['plass'] for h in hbs), hbs)
+        sjekk('ingen konsollfeil (Oldermann i håndboka)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # 3D: han leser dagsorden og gjør den første saken (én runde, 3D er tungt i programvaregrafikk)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
+          if (typeof Oldermann !== 'object') return { mangler: true };
+          startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; ut.d3 = D3.on;
+          const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 10 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2 + .5; P.z = r.z + r.h / 2 + .5; R.snapCamera(P.x, P.z);
+          const s = freeSpot(P.x + 3.5, P.z - 1, 3), o = spawnEnemy('oldermann', s.x, s.z, false, 4);
+          const g0 = G.time, t0 = performance.now(); let sett = {};
+          while (G.time - g0 < 16 && performance.now() - t0 < 150000) { await vent(60); P.hp = 1e6; sett[o.state] = 1; if (o.dagsorden && o.dagsorden.i >= 1 && o.state === 'wind' && o.teles.length) break; }
+          G.hitstop = 30; // nesten stillstand mens bildet tas
+          ut.sett = sett; ut.boble = [...document.querySelectorAll('#fx .bubble')].map(e => e.textContent).join(' | '); ut.varsel = o.teles.length; return ut; }""")
+        await pg.wait_for_timeout(250)
+        await pg.screenshot(path='/tmp/e_62_oldermann_3d.png')
+        sjekk('i 3D leser han dagsorden og legger an til den første saken', not d3.get('mangler') and d3.get('d3') and 'Dagsorden' in d3.get('boble', '') and d3.get('varsel', 0) > 0, d3)
+        await pg.evaluate("() => { MORBIDIUM.hitstop = 0; }")
+        sjekk('ingen konsollfeil (Oldermann i 3D)', not pg.errs, pg.errs[:6])
+        await pg.close()
+
+        # 63) Kraken: sjefen i puljen sitter i hullet sitt og flytter seg ikke, armene stiger opp rundt pasienten og klemmer (den som går ut
+        #     mellom dem, slipper), blekket gir skyer, malstrømmen drar inn og biter i midten (også når Journalen låner den), dykket kan ikke
+        #     treffes og kommer opp der pasienten sto, Journalen låner aldri dykket, høyst fire armer, og armene er ute av minnet etter etasjen
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg)
+        kr = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
+            til = async (f, t = 4, maks = 120000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(40); return !!f(); },
+            spill = async (t, maks = 90000, hver) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) { await vent(40); if (hver) hver(); } };
+          if (typeof Kraken !== 'object' || !SJEF_DATA.kraken) return { mangler: true };
+          ut.data = { pulje: SJEF_PULJE.includes('kraken'), rekke: SJEF_REKKE.includes('kraken'), info: !!(FIENDE_INFO.kraken && FIENDE_INFO.kraken[0] && FIENDE_INFO.kraken[1]),
+            replikker: ['bossIntro', 'monolog', 'monolog2', 'boss'].every(k => (LINES[k].kraken || []).length >= 3) && !!LINES.bossDod.kraken, epitaf: !!SJEF_EPITAF.kraken, dod: (DEATH_CAUSES.boss_kraken || []).length >= 3,
+            egne: SJEF_DATA.kraken.egne, fart: SJEF_DATA.kraken.fart, oye: !!OYE_SER.kraken, merknad: !!MERKNADER.kraken };
+          { let n = 0; for (let s = 1; s < 200; s++) if (Object.values(trekkSjefer(s)).includes('kraken')) n++; ut.data.trukket = n; }
+          // Journalen låner aldri dykket (bare Krakens egen tick flytter den), men gjerne de andre
+          G.run.sjefer = { 1: 'krok', 2: 'kraken', 3: 'hjort', 4: 'klumpen', 5: 'rust', 6: 'journalen' };
+          ut.laan = [...new Set(laanbareTrekk())].sort();
+          G.run.sjefer[3] = 'kraken'; startFloor(3, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
+          P.hp = P.maxHp = 1e6; { const r = G.F.rooms[G.F.bossId]; P.x = r.x + r.w / 2; P.z = r.z + r.h - 2; }
+          await til(() => G.boss && G.boss.alive, 30); const B = G.boss; if (!B || B.type !== 'kraken') return Object.assign(ut, { ingenSjef: B && B.type });
+          await til(() => B.state !== 'intro', 6); B.B0.attacks = ['ingen']; B.cd = 1e9; // ingen egne angrep under testen: de settes i gang ett og ett
+          // treffene på pasienten telles der helsa settes tilbake: hurt kan ikke pakkes inn utenfra (spillet ligger i en funksjon), men P.lastCause sier hvem
+          const treff = [], tell = () => { if (P.hp < 1e6 - .01) treff.push({ t: G.time, type: P.lastCause }); P.hp = 1e6; P.iframe = 0; P.invuln = 0; };
+          const rom = G.F.bossId, fri = (x, z) => roomAt(x, z) === rom && [[0, 0], [.4, 0], [-.4, 0], [0, .4], [0, -.4]].every(([a, c]) => !solid(Math.floor(x + a), Math.floor(z + c)));
+          const ved = (d, a0 = 0) => { for (let i = 0; i < 24; i++) { const v = a0 + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * .26, x = B.x + Math.sin(v) * d, z = B.z + Math.cos(v) * d; if (fri(x, z) && los(B.x, B.z, x, z)) return { x, z }; } return { x: B.x, z: B.z + d }; };
+          const hold = p => () => { tell(); P.x = p.x; P.z = p.z; P.kvx = P.kvz = 0; P.stunT = 0; };
+          const mot = () => [Math.hypot(P.x - B.x, P.z - B.z), Math.atan2(P.x - B.x, P.z - B.z)];
+          const angrip = k => { const [d, a] = mot(); bossAttackTest(B, k); };
+          try {
+            // i hullet: et tjern som varer, stor nok til kroppen, og Kraken står stille når pasienten er fem ruter unna
+            const x0 = B.x, z0 = B.z, p0 = ved(5); await spill(2, 60000, hold(p0));
+            ut.start = { hull: !!B.hull && G.puddles.includes(B.hull) && B.hull.kind === 'tjern' && B.hull.r >= 2.3 && B.hull.life > 1e6, r: B.r, flytt: Math.hypot(B.x - x0, B.z - z0),
+              baand: [B.doll.back.n, B.doll.back.cap, B.doll.front.n, B.doll.front.cap], boble: B.bubbleH };
+            // hullet graves på nytt når taket på 46 pytter har skjøvet det ut
+            { const rr = G.F.rooms[rom]; let n = 0; for (let z = rr.z + .5; z < rr.z + rr.h && n < 50; z += .7) for (let x = rr.x + .5; x < rr.x + rr.w && n < 50; x += .7) if (!solid(Math.floor(x), Math.floor(z)) && Math.hypot(x - B.x, z - B.z) > 3) { addPuddle(x, z, 'wet', .3, 60); n++; } }
+            { const h0 = B.hull; await spill(.3, 30000, hold(p0)); ut.start.gravd = !G.puddles.includes(h0) && !!B.hull && G.puddles.includes(B.hull) && B.hull.r >= 2.3; }
+            // favn: armene stiger opp i en ring rundt pasienten, og klemmene går inn mot der hen står
+            treff.length = 0; angrip('favn'); let armer = 0, retning = [];
+            await spill(4.2, 120000, () => { hold(p0)(); armer = Math.max(armer, Kraken.armer.filter(a => a.aktiv).length);
+              for (const t of G.tele) if (t.owner === B && t.shape === 'rect' && !retning.includes(t)) retning.push(t); });
+            const avvik = retning.map(t => { const o = t.o, dx = p0.x - o.x, dz = p0.z - o.z; return Math.abs(dx * Math.cos(o.a) - dz * Math.sin(o.a)); });
+            ut.favn = { armer, klemmer: retning.length, avvik: Math.max(0, ...avvik), treff: treff.filter(t => t.type === 'boss').length, igjen: Kraken.armer.filter(a => a.aktiv).length, lagd: Kraken.armer.length };
+            // den som går ut mellom armene med en gang de er oppe, slipper klemmen
+            treff.length = 0; angrip('favn'); await spill(.95, 60000, hold(p0));
+            const ringen = Kraken.armer.filter(a => a.aktiv).map(a => Math.atan2(a.x - p0.x, a.z - p0.z)).sort((a, b) => a - b); let ut2 = null;
+            if (ringen.length >= 3) { const gap = ringen.map((a, i) => { const nx = i + 1 < ringen.length ? ringen[i + 1] : ringen[0] + Math.PI * 2; return [nx - a, a + (nx - a) / 2]; }).sort((a, b) => b[0] - a[0]);
+              ut: for (const [, mid] of gap) for (const rr of [5.2, 4.8, 5.8, 4.4]) { const x = p0.x + Math.sin(mid) * rr, z = p0.z + Math.cos(mid) * rr; if (fri(x, z)) { ut2 = { x, z }; break ut; } } }
+            if (ut2) { const t1 = G.time; await spill(2.6, 90000, hold(ut2)); ut.unna = { flyttet: true, treff: treff.filter(t => t.t >= t1 && t.type === 'boss').length }; } else ut.unna = { flyttet: false, ringen: ringen.length };
+            await spill(1.5, 30000, hold(p0));
+            // blekk: kjeglen treffer, og det blir skyer der blekket landet
+            const royk0 = G.zones.filter(z => z.kind === 'royk').length, p1 = ved(3.5); treff.length = 0; hold(p1)(); angrip('blekk'); await spill(1.4, 60000, hold(p1));
+            ut.blekk = { skyer: G.zones.filter(z => z.kind === 'royk').length - royk0, treff: treff.filter(t => t.type === 'boss').length };
+            await spill(1, 30000, hold(p0));
+            // malstrømmen drar pasienten inn (omtrent tre ruter i sekundet) og biter i midten
+            const p2 = ved(5.2); hold(p2)(); treff.length = 0; angrip('malstrom'); const zn = G.zones.find(z => z.kind === 'malstrom');
+            const dm = () => zn ? Math.hypot(P.x - zn.x, P.z - zn.z) : 0, d0 = dm(), g0 = G.time; let indre = false;
+            await spill(1.0, 60000, tell);
+            const d1 = dm(), dt1 = G.time - g0;
+            await spill(1.9, 60000, () => { tell(); indre = indre || G.tele.some(t => t.owner === zn && t.o.r > 2 && t.o.r < 2.5); });
+            await spill(.5, 30000, tell);
+            ut.malstrom = { sone: !!zn, d0, d1, fart: (d0 - d1) / dt1, indre, bitt: treff.filter(t => t.type === 'boss').length, borte: !G.zones.includes(zn), mesh: !!zn && !zn.mesh.parent };
+            // Journalen låner malstrømmen: sonen trenger ikke eieren, den drar og biter uten at eieren gjør noe, og stilner når eieren er borte
+            const J = { alive: true, x: B.x, z: B.z, type: 'journalen', q: [], teles: [], bubbleH: 4 }; hold(p2)(); treff.length = 0; BOSS_MOVES.malstrom(J, 5, 0, 20); const zj = G.zones.find(z => z.kind === 'malstrom' && z.B === J);
+            await spill(1.2, 60000, tell); const dj = zj ? Math.hypot(P.x - zj.x, P.z - zj.z) : 99;
+            await spill(1.8, 60000, tell);
+            ut.laant = { sone: !!zj, dratt: dj < 5.2 - 1, bitt: treff.filter(t => t.type === 'boss').length };
+            const zj2 = Kraken.virvel(B.x, B.z, J, 20); await spill(.3, 30000); J.alive = false; await spill(.3, 30000); ut.laant.stilner = !G.zones.includes(zj2) && !zj2.mesh.parent;
+            // grepet til armene står over mens malstrømmen går (to drag samtidig kan ikke løpes fra)
+            { const _gr = Havet.grip; let grep = 0; Havet.grip = function () { grep++; }; const a0 = spawnEnemy('avlopsarm', B.x + 3, B.z, false, 3);
+              try { let pa = null; for (let i = 0; i < 48 && !pa; i++) { const v = i / 48 * Math.PI * 2, x = a0.x + Math.sin(v) * 4.5, z = a0.z + Math.cos(v) * 4.5; if (fri(x, z) && los(a0.x, a0.z, x, z)) pa = { x, z }; }
+                const prov = n => { for (let i = 0; i < n; i++) { hold(pa)(); a0.fase = 'opp'; a0.faseT = 1; a0.dukket = false; a0.state = 'chase'; Grotesk.ai.avlopsarm(a0, P, Math.hypot(P.x - a0.x, P.z - a0.z), Math.atan2(P.x - a0.x, P.z - a0.z)); cancelTeles(a0); } };
+                if (pa) { const zv = Kraken.virvel(B.x, B.z, B, 1); prov(40); const under = grep; zv.t = 0; await spill(.2, 20000); grep = 0; prov(40); ut.grep = { underVirvel: under, uten: grep }; } else ut.grep = { ingenPlass: true }; }
+              finally { Havet.grip = _gr; killEntity(a0, {}); } }
+            await spill(.8, 30000, hold(p0));
+            // dykket: under vann tar den ingen skade, har ingen skygge og siktes ikke på; den kommer opp der pasienten sto, treffer og graver nytt hull
+            const p3 = ved(5); hold(p3)(); treff.length = 0; const hull0 = B.hull, hp0 = B.hp; angrip('dypdykk');
+            ut.dykk = { under: await til(() => B.dukket && !B.doll.root.visible, 3) };
+            Object.assign(ut.dykk, { skade: hurt(B, 50, { from: 'player' }), hp: B.hp === hp0, skygge: Dybde.kastere().some(k => k.k === B), naermest: nearestEnemy(B.x, B.z, 99) === B, gammelt: !G.puddles.includes(hull0) || hull0.life < 10 });
+            const tU = G.time; await til(() => { hold(p3)(); return !B.dukket; }, 4); ut.dykk.tidUnder = G.time - tU;
+            await spill(.6, 30000, hold(p3));
+            Object.assign(ut.dykk, { oppe: !B.dukket && B.doll.root.visible, avstand: Math.hypot(B.x - p3.x, B.z - p3.z), treff: treff.filter(t => t.type === 'boss').length, hop: B.hop || 0, r: B.r,
+              hull: !!B.hull && G.puddles.includes(B.hull) && Math.hypot(B.hull.x - B.x, B.hull.z - B.z) < .1 && B.hull.life > 1e6, armer: Havet.armer() });
+            // høyst fire armer, uansett hvor mange som kalles
+            Kraken.kallArmer(B, 6); Kraken.kallArmer(B, 6); await spill(2.2, 60000, hold(p0)); ut.dykk.maks = Havet.armer();
+            // rasende og to favn på rad (6 og 6 armer, den andre før de første har sunket): alle klemmene har en arm å vise. Armer som ville kommet opp i en vegg, hoppes over, så tallet på kall følger rommet
+            { const _a = Kraken.arm; let kall = 0, uten = 0; Kraken.arm = function (...a) { kall++; const d = _a.apply(this, a); if (!d) uten++; return d; };
+              try { B.enraged = true; angrip('favn'); await spill(3.09, 60000, hold(p0)); angrip('favn'); await spill(3.6, 60000, hold(p0)); } finally { Kraken.arm = _a; B.enraged = false; }
+              ut.rasende = { kall, uten }; }
+            // Enkel grafikk: favn og malstrøm uten feil
+            R.safe = true; try { angrip('favn'); await spill(1.5, 60000, hold(p0)); angrip('malstrom'); await spill(3, 60000, tell); } finally { R.safe = false; }
+            // talen ved to tredjedeler helse, og døden: hullet renner ut, armene dør og luken åpner seg
+            await til(() => B.state !== 'act', 4); B.state = 'chase'; for (let i = 0; i < 40 && B.phase !== 'monolog' && B.hp > B.max * .34; i++) hurt(B, B.max * .04, { from: 'player' }); ut.tale = { fase: B.phase, tale: B.mono === LINES.monolog.kraken };
+            const hull1 = B.hull; hurt(B, 1e9, { from: 'player' }); await spill(3, 60000, hold(p0));
+            ut.dod = { hull: !hull1 || !G.puddles.includes(hull1) || hull1.life < 5, armer: Havet.armer(), luke: !!G.trapdoor };
+          } finally { R.safe = false; }
+          // ny etasje: armene er kastet ut av grafikkminnet, og ingen virvel henger igjen
+          const lagd = Kraken.armer.length; startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); }
+          ut.rydd = { lagd, igjen: Kraken.armer.length, soner: G.zones.filter(z => z.kind === 'malstrom').length };
+          ut.bilde = (() => { const c = fiendeBilde('kraken', 160, 190), d = c.getContext('2d').getImageData(0, 0, 160, 190).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n / (160 * 190); })();
+          return ut; }""")
+        sjekk('Kraken finnes (Kraken i 49_havet.js)', not kr.get('mangler') and not kr.get('ingenSjef'), {k: kr.get(k) for k in ['mangler', 'ingenSjef']})
+        if not kr.get('mangler') and not kr.get('ingenSjef'):
+            d = kr['data']
+            sjekk('Kraken står i sjefpuljen og fiendeindeksen, med replikker, tale, siste ord, epitaf, dødsårsaker, øyet i sprekken og en merknad, og trekkes i en del løp', d['pulje'] and d['rekke'] and d['info'] and d['replikker'] and d['epitaf'] and d['dod'] and d['oye'] and d['merknad'] and 40 < d['trukket'] < 199, d)
+            sjekk('Journalen låner favn, blekk, malstrøm og dypkall, men aldri dykket', 'dypdykk' not in kr['laan'] and all(k in kr['laan'] for k in ['favn', 'blekk', 'malstrom', 'dypkall']) and d['egne'] == ['dypdykk'], kr['laan'])
+            s = kr['start']
+            sjekk('Kraken sitter i et tjern som varer, flytter seg ikke, og hullet graves på nytt når pyttetaket skyver det ut', s['hull'] and s['flytt'] < .05 and s['r'] >= 1.5 and s['gravd'], s)
+            sjekk('de seks armene får plass i strekbåndene (ingenting kuttes)', 2000 < s['baand'][0] < s['baand'][1] and 2000 < s['baand'][2] < s['baand'][3], s['baand'])
+            f = kr['favn']
+            sjekk('favn: armene stiger opp rundt pasienten, klemmer inn mot der hen står, treffer den som blir stående, og synker igjen', f['armer'] >= 3 and f['klemmer'] >= 3 and f['avvik'] < .3 and f['treff'] >= 1 and f['igjen'] == 0, f)
+            sjekk('favn: den som går ut mellom armene med en gang de er oppe, slipper klemmen', kr['unna']['flyttet'] and kr['unna']['treff'] == 0, kr['unna'])
+            sjekk('blekk: kjeglen treffer, og blekket blir til skyer', kr['blekk']['skyer'] >= 2 and kr['blekk']['treff'] >= 1, kr['blekk'])
+            m = kr['malstrom']
+            sjekk('malstrømmen drar pasienten inn med omtrent tre ruter i sekundet, nebbet biter i midten, og virvelen er borte etterpå', m['sone'] and 1.5 < m['fart'] < 5.5 and m['indre'] and m['bitt'] >= 1 and m['borte'] and m['mesh'], m)
+            sjekk('malstrømmen virker også når Journalen låner den, og stilner når eieren er borte', kr['laant']['sone'] and kr['laant']['dratt'] and kr['laant']['bitt'] >= 1 and kr['laant']['stilner'], kr['laant'])
+            sjekk('armene griper ikke mens malstrømmen går (men gjør det ellers)', kr['grep']['underVirvel'] == 0 and kr['grep']['uten'] >= 5, kr['grep'])
+            dk = kr['dykk']
+            sjekk('under vann tar Kraken ingen skade, kaster ingen skygge og siktes ikke på, og det gamle hullet renner ut', dk['under'] and dk['skade'] == 0 and dk['hp'] and not dk['skygge'] and not dk['naermest'] and dk['gammelt'], dk)
+            sjekk('dykket: opp igjen innen 2,6 sekunder der pasienten sto, treffer, står i et nytt hull og har kroppen sin igjen', dk['oppe'] and dk['tidUnder'] <= 2.6 and dk['avstand'] < 1.8 and dk['treff'] >= 1 and dk['hull'] and abs(dk['hop']) < .01 and dk['r'] >= 1.5, dk)
+            sjekk('armer stiger opp mens Kraken er under, og det blir aldri mer enn fire', 1 <= dk['armer'] <= 4 and dk['maks'] <= 4, dk)
+            sjekk('to favn på rad når Kraken er rasende: hver klemme har en arm (ingen treff uten arm)', kr['rasende']['kall'] >= 6 and kr['rasende']['uten'] == 0, kr['rasende'])
+            sjekk('talen ved to tredjedeler helse er Krakens egen', kr['tale']['fase'] == 'monolog' and kr['tale']['tale'], kr['tale'])
+            sjekk('når Kraken dør, renner hullet ut, armene dør og luken åpner seg', kr['dod']['hull'] and kr['dod']['armer'] == 0 and kr['dod']['luke'], kr['dod'])
+            sjekk('armene i favn er kastet ut av grafikkminnet etter etasjen, og ingen virvel henger igjen', kr['rydd']['lagd'] >= 3 and kr['rydd']['igjen'] == 0 and kr['rydd']['soner'] == 0, kr['rydd'])
+            sjekk('fiendeBilde tegner Kraken', kr['bilde'] > .06, kr['bilde'])
+        await pg.screenshot(path='/tmp/e_63_kraken.png')
+        sjekk('ingen konsollfeil (Kraken)', not pg.errs, pg.errs[:6])
+        # håndbokssiden med Kraken får plass, og kortet har bilde
+        await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+        hb = await pg.evaluate("""() => { if (!SJEF_REKKE.includes('kraken')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'sjefer'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(SJEF_REKKE.indexOf('kraken') / per));
+          return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
+        await pg.wait_for_timeout(300)
+        hb['plass'] = await pg.evaluate(HB_PLASS) if not hb.get('mangler') else False
+        sjekk('håndboka har en side med Kraken, og den får plass', 'Kraken' in hb.get('navn', []) and hb['plass'], hb)
+        await pg.screenshot(path='/tmp/e_63_handbok.png')
+        sjekk('ingen konsollfeil (Kraken i håndboka)', not pg.errs, pg.errs[:6])
+        await pg.close()
+        # og på stående og liggende telefon, der det er to kort på hver side
+        for vw, vh in [(390, 844), (844, 390)]:
+            pg = await ny_side(b, viewport={'width': vw, 'height': vh}, is_mobile=True, has_touch=True, device_scale_factor=2)
+            await pg.goto(URL); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000); await pg.wait_for_timeout(500)
+            hb = await pg.evaluate("""() => { if (!SJEF_REKKE.includes('kraken')) return { mangler: true }; const kap = HANDBOK.findIndex(h => h.id === 'sjefer'), per = document.body.clientWidth <= 700 ? 2 : 4; openHandbook({}, kap, Math.floor(SJEF_REKKE.indexOf('kraken') / per));
+              return { navn: [...document.querySelectorAll('.fkort .fnavn')].map(e => e.textContent) }; }""")
+            await pg.wait_for_timeout(400)
+            # liggende telefon: håndboka rekker under skjermkanten på alle sider også før Kraken (panelet ruller), så der sjekkes bare kortene
+            hb['plass'] = (await pg.evaluate(HB_PLASS) if vw < vh else await pg.evaluate("() => [...document.querySelectorAll('.fkort')].every(k => k.scrollHeight <= k.clientHeight + 2 && !!k.querySelector('canvas'))")) if not hb.get('mangler') else False
+            sjekk(f'håndbokssiden med Kraken får plass på telefon ({vw}x{vh})', 'Kraken' in hb.get('navn', []) and hb['plass'], hb)
+            await pg.screenshot(path=f'/tmp/e_63_handbok_{vw}.png')
+            await pg.close()
+        # 3D: Kraken med favn, malstrøm og dykk (én runde, 3D er tungt i programvaregrafikk)
+        pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        await start_lop(pg, url=URL3D)
+        d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
+            til = async (f, t = 4, maks = 150000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(60); return !!f(); };
+          if (typeof Kraken !== 'object') return { mangler: true };
+          G.run.sjefer[3] = 'kraken'; startFloor(3, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } ut.d3 = D3.on;
+          P.hp = P.maxHp = 1e6; { const r = G.F.rooms[G.F.bossId]; P.x = r.x + r.w / 2; P.z = r.z + r.h - 2; }
+          await til(() => G.boss && G.boss.alive, 40); const B = G.boss; if (!B || B.type !== 'kraken') return Object.assign(ut, { ingenSjef: true });
+          await til(() => B.state !== 'intro', 8); B.B0.attacks = ['ingen']; P.x = B.x + 1; P.z = B.z + 4.5;
+          const S = {}; let armer = 0, baand = 0;
+          for (const k of ['favn', 'malstrom', 'dypdykk']) { bossAttackTest(B, k); await til(() => { P.hp = 1e6; armer = Math.max(armer, Kraken.armer.filter(a => a.aktiv).length); baand = Math.max(baand, B.doll.front.n); if (B.dukket) S.dukket = 1; if (G.zones.some(z => z.kind === 'malstrom')) S.virvel = 1; return false; }, 3.5); }
+          await til(() => !B.dukket, 4); ut.S = S; ut.armer = armer; ut.baand = baand; ut.oppe = !B.dukket && B.doll.root.visible; ut.ekstra = (G.ekstraDukker || []).filter(d => d.type === 'krakenarm').length;
+          bossAttackTest(B, 'favn'); await til(() => false, 1.7); G.hitstop = 30; return ut; }""")
+        sjekk('i 3D stiger armene opp, malstrømmen går rundt og Kraken dykker og kommer opp igjen', not d3.get('mangler') and not d3.get('ingenSjef') and d3.get('d3') and d3['S'].get('dukket') and d3['S'].get('virvel') and d3['armer'] >= 3 and d3['oppe'] and 0 < d3['baand'] < 6000 and d3['ekstra'] >= 3, d3)
+        await pg.screenshot(path='/tmp/e_63_kraken_3d.png')
+        sjekk('ingen konsollfeil (Kraken i 3D)', not pg.errs, pg.errs[:6])
         await pg.close()
 
         await b.close()

@@ -21,7 +21,8 @@ KONTROLL = """() => {
   for (const k of keys) if (!SPRITES[k] || !Art.img[k]?.naturalWidth) feil.push('Bildet mangler: ' + k);
   // Bevis at forbrukerne bruker PNG-en, og at reservetegningen fremdeles virker.
   const tegn = (k, bilde) => {
-    const im = Art.img[k]; if (!bilde) delete Art.img[k];
+    // Paint.bilde lager bildet på nytt fra SPRITES når Art.img mangler, så reserven tegnes uten begge
+    const im = Art.img[k], sp = SPRITES[k]; if (!bilde) { delete Art.img[k]; delete SPRITES[k]; }
     try {
       if (k.startsWith('vegg_')) {
         const tex = Paint.wallTex(THEMES[1], k.slice(5));
@@ -32,7 +33,7 @@ KONTROLL = """() => {
       GULV[k.slice(5)](g, 0, 0, 128, { x: 1, z: 1, th: THEMES[1], ute: true, kant: {} });
       if (!g.getImageData(0, 0, 128, 128).data.some(v => v)) feil.push('Tom flate: ' + k);
       return c.toDataURL();
-    } finally { Art.img[k] = im; }
+    } finally { Art.img[k] = im; SPRITES[k] = sp; }
   };
   for (const k of Object.keys(UTE_FLATER).filter(k => k !== 'gulv_sno'))
     if (tegn(k, true) === tegn(k, false)) feil.push('PNG blir ikke brukt: ' + k);
