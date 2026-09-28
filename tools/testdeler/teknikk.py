@@ -284,7 +284,9 @@ async def del_68(b):
     web = ROT / 'dist' / 'web'
     if not (web / 'index.html').exists():
         sjekk('nettutgaven finnes (python3 build.py lager dist/web)', False, str(web)); return
-    h = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(web)); h.log_message = lambda *a: None
+    class Stille(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a): pass
+    h = functools.partial(Stille, directory=str(web))
     srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), h); threading.Thread(target=srv.serve_forever, daemon=True).start()
     url = f'http://127.0.0.1:{srv.server_address[1]}/index.html?2d'
     try:
@@ -301,7 +303,7 @@ async def del_68(b):
         await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=60000)
         sp = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)); rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999;
               // en fiende utenfor startsettet: dukken tegnes av koden først, og bildet kommer
-              const k = Object.keys(SPRITES).find(x => /^hode_kapellan/.test(x)) || Object.keys(SPRITES).find(x => /^hode_/.test(x) && !Art.iStart(x));
+              const k = Object.keys(SPRITES).find(x => x === 'hode_kapellan_f') || Object.keys(SPRITES).find(x => /^hode_.*_f$/.test(x) && !Art.iStart(x)); // forsiden, som tegnes når han ser mot pasienten
               const t = k.split('_')[1], e = spawnEnemy(t, P.x + 2, P.z, false, 2); e.stun = 99;
               for (let i = 0; i < 100 && !Art.klar(k); i++) await vent(100);
               const ut = { nokkel: k, klar: Art.klar(k) };

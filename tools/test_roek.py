@@ -27,8 +27,9 @@ def sjekk(navn, ok, info=''):
 
 def server(mappe):
     """serverer mappa på en ledig port i en egen tråd, så fetch og lasting ved behov virker som på Pages"""
-    h = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(pathlib.Path(mappe).resolve()))
-    h.log_message = lambda *a: None
+    class Stille(http.server.SimpleHTTPRequestHandler):
+        def log_message(self, *a): pass
+    h = functools.partial(Stille, directory=str(pathlib.Path(mappe).resolve()))
     s = http.server.ThreadingHTTPServer(('127.0.0.1', 0), h)
     threading.Thread(target=s.serve_forever, daemon=True).start()
     return s, f'http://127.0.0.1:{s.server_address[1]}/index.html'

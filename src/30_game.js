@@ -862,6 +862,7 @@ function boot() {
   Object.assign(window, { KAM, KAMERA_VALG, LYS_NY }); // kameraprøven og den nye etterbehandlingen (testdel 64)
   Object.assign(window, { Kroker, VAAPEN_TEGNING, drawWeapon }); // krokene og våpentegningene (testdel 66)
   Object.assign(window, { Klokke, steg, SpillMath: Math }); // testklokka og spillets egen Math (testdel 67)
+  Object.assign(window, { BYGG, LYDFILER, DELER_META }); // nettutgaven (testdel 68)
   // til testene
   // rydder all kamp, så en test kan starte fra et rolig rom
   const rolig = () => { Bygg.alt(); for (const e of G.enemies) if (e.alive) killEntity(e, {}); G.combat = null; G.lock = null; for (const b of G.barriers) b.up = false; G.rooms.forEach(s => s.cleared = true); };
