@@ -43,6 +43,9 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft- og H
 - Journalen er karakterarket etter skissen, med frenologihodet og fire områder: Frykt, Kontroll, Uvirkelighet, Mening. Kort i eget område gir gullprikk og kortere nedkjøling (mitt forslag, ikke bekreftet).
 - Fire nye evner fra skissen: Duesannsyn, Undersøkelseslys, Skyggehånd, Stempel.
 - Testing i Claude Code-skyen: Chromium når ikke nettet via proxyen. Hent three.min.js med curl og kjør testene med --three STI eller MORBIDIUM_THREE=STI. Python-pakkene playwright (1.56.0 passer med den ferdiginstallerte Chromium) og pillow må installeres.
+- Kommer endringer som zip og patch fra en økt uten GitHub-tilgang (Cowork), bruk patchen: git am på basen den ble laget mot, og cherry-pick oppå main. Zipen har hele filer fra den main-en økta startet fra, så en opplasting skriver over det som har kommet til siden (28.9. ville den slettet veggprøven i log.md, memory.md og todo.md).
+- Bildeløpet lokalt (skjaer_ark.py) klipper arkene i gpt-grafikk/ og flytter dem til gpt-grafikk/behandlet/. Pages-bygget gjør det selv, så sett gpt-grafikk/ tilbake før commit (git checkout og git clean på mappa) hvis klippingen ikke skal leveres.
+- test_ekstra.py har ikke valg for enkeltdeler. For å kjøre noen få deler kan main() klippes ved kommentarlinjene «# N)» (8 mellomrom inn), med oppstarten og avslutningen beholdt.
 
 ## Arbeidsdeling med ChatGPT
 - 2026-09-28: veggprøven med fem teksturer og hele tegneliste 13 er levert som 14 PNG-filer, 53 manifestbilder. Status er 611 av 636. Ni vegger venter på Claudes vurdering av prøven på PC og mobil; 16 gulv venter på egne gulvfliser i koden. Se dokumentasjon/grafikk-2026-09-28/LEVERANSE.md og prompter.json. Ingen spillkode er endret.
@@ -392,4 +395,5 @@ Toms liste med fem skjermbilder (angrepsvarsler, snø, hårruller, skjulte rom, 
 - Ny etterbehandling (standard i 3D, for alle kameravalg): dis (en bred, myk glød i en åttendedels oppløsning, lagt på som skjermblanding og som lys i mørket nær lyskilder) på høy og middels, omgivelsesskygge fra dybdeteksturen (bare høy, med symmetriske nabopar så flate gulv ikke blir mørke) og en mild tonekurve. NIVA i 15_rom3d.js har dis og ao per kvalitetsnivå. Enkel grafikk slår alt av. ?lys=gammel slår det nye av for sammenligning, og ?lys=ao viser bare omgivelsesskyggen.
 - Kjente mangler i prøven: vegglamper, vinduer, pilastre, blod på veggene og sprekken til det skjulte rommet ligger bare på sørveggene. Mellomrom mellom rom kan gi en høy vegg som dekker litt av gulvet sørøst for den (ingen gjennomsiktige vegger ennå). Snøens parallakse i shaderen regner fortsatt med 52 grader. Tegningene av ting er laget sett rett forfra.
 - tools/bilder_kamera.py tar sammenligningsbilder av samme sted med ulike valg (kamprom i etasje 2, kjelleren og parken). Testdel 64 i test_ekstra.py sjekker prøven og etterbehandlingen.
+- Alt dette kom på main 28.9. kveld fra patchen (Cowork-økta fikk ikke skrive til GitHub). Testdel 41 venter nå at håndkontrollen går fra Kameraavstand til Kameravinkel i fanen Bilde.
 
