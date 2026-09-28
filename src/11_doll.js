@@ -68,7 +68,10 @@ class Ribbon {
     this.c.set(INK);
     for (const s of this.strokes) { if (s.circle) this.disc(s.x, s.y, s.r + outline, s.z); else this.strip(s.pts, s.w + outline * 2, s.z); }
     for (const s of this.strokes) { this.c.set(s.color); if (s.circle) this.disc(s.x, s.y, s.r, s.z + .001); else this.strip(s.pts, s.w, s.z + .001); }
-    this.geo.setDrawRange(0, this.n); this.geo.attributes.position.needsUpdate = true; this.geo.attributes.color.needsUpdate = true;
+    this.geo.setDrawRange(0, this.n);
+    // bare den tegnede delen sendes til skjermkortet (en figur bruker rundt 1300 av 3200 punkter). Et tomt bånd (blobfiendene foran)
+    // sendes ikke i det hele tatt: ingenting tegnes, og 0 i updateRange betyr hele tabellen i WebGL2. three nullstiller området etter hver opplasting
+    if (this.n) { const A = this.geo.attributes, c = this.n * 3; A.position.updateRange.count = A.color.updateRange.count = c; A.position.needsUpdate = A.color.needsUpdate = true; }
   }
 }
 /* bøyd lem: kvadratisk kurve fra a til b med albue/kne forskjøvet sideveis */
@@ -141,7 +144,9 @@ class Doll {
       const base = a.L.at === 'body' || !this.head ? this.body : this.head, off = a.L.off[v] || a.L.off.f;
       if (a.L.views) { const P = a.L.views[v] || a.L.views.f; if (P) setPart(a.m, P); a.m.visible = !!(a.L.views[v] || (v !== 'b' && a.L.views.f)); } else a.m.visible = !(a.L.face && v === 'b');
       if (a.m.userData.skjult || (a.L.bare && !a.L.bare.includes(v))) a.m.visible = false; // skjult av spillet, eller bare synlig i noen visninger
-      a.m.position.set(base.position.x + off[0], base.position.y + off[1], base.position.z + (a.L.behind ? -.004 : .004)); a.m.rotation.z = base.rotation.z;
+      // forskyvningen dreies med hodet, så pynten følger et hode som vipper i stedet for å gli av det
+      const r = base.rotation.z, c = Math.cos(r), s = Math.sin(r);
+      a.m.position.set(base.position.x + off[0] * c - off[1] * s, base.position.y + off[0] * s + off[1] * c, base.position.z + (a.L.behind ? -.004 : .004)); a.m.rotation.z = r;
     }
   }
   flash(t = .09) { this.flashT = t; }

@@ -157,13 +157,13 @@ function shotPart(kind) {
 }
 const LOOKS = {
   glassoye: { at: 'head', w: .3, h: .3, off: { f: [.16, .46], s: [.26, .46] }, face: true, draw: g => { A.flat(g, A.ell(0, 0, .12, .12), '#f4f4ee', .03); A.dot(g, .02, 0, .06, '#3a7ad8'); A.dot(g, .02, 0, .025, '#101010'); } },
-  svulst: { at: 'head', w: .5, h: .4, off: { f: [-.26, .8], s: [-.18, .82], b: [.26, .8] }, draw: g => { A.cel(g, A.ell(0, 0, .18, .14), '#e8a0a0', { lw: .035 }); A.line(g, [[-.1, .02], [.04, -.04]], .02, '#a8404a'); } },
-  lys: { at: 'head', w: .3, h: .6, off: { f: [.02, 1.02], s: [0, 1.02], b: [0, 1.02] }, draw: g => { A.cel(g, A.rr(-.05, -.08, .1, .24, .02), '#f4ecd8', { lw: .03 }); A.flat(g, A.ell(0, -.16, .045, .08), '#ffc040', .02); A.flat(g, A.ell(0, -.15, .02, .04), '#fff4c0', 0); } },
-  bart: { at: 'head', w: .5, h: .2, off: { f: [0, .3], s: [.3, .3] }, face: true, draw: g => A.cel(g, A.blob([[0, -.02], [-.08, -.05], [-.2, 0], [-.22, .06], [-.1, .03], [0, .04], [.1, .03], [.22, .06], [.2, 0], [.08, -.05]]), '#3a2418', { lw: .025 }) },
+  svulst: { at: 'head', w: .5, h: .4, off: { f: [-.22, .72], s: [-.18, .74], b: [.22, .72] }, draw: g => { A.cel(g, A.ell(0, 0, .18, .14), '#e8a0a0', { lw: .035 }); A.line(g, [[-.1, .02], [.04, -.04]], .02, '#a8404a'); } },
+  lys: { at: 'head', w: .3, h: .6, off: { f: [.02, .95], s: [0, .95], b: [0, .95] }, draw: g => { A.cel(g, A.rr(-.05, -.08, .1, .24, .02), '#f4ecd8', { lw: .03 }); A.flat(g, A.ell(0, -.16, .045, .08), '#ffc040', .02); A.flat(g, A.ell(0, -.15, .02, .04), '#fff4c0', 0); } },
+  bart: { at: 'head', w: .5, h: .2, off: { f: [0, .3], s: [.2, .28] }, face: true, draw: g => A.cel(g, A.blob([[0, -.02], [-.08, -.05], [-.2, 0], [-.22, .06], [-.1, .03], [0, .04], [.1, .03], [.22, .06], [.2, 0], [.08, -.05]]), '#3a2418', { lw: .025 }) },
   tunge: { at: 'head', w: .2, h: .3, off: { f: [.02, .18], s: [.34, .18] }, face: true, draw: g => A.cel(g, A.blob([[-.06, -.06], [.06, -.06], [.07, .06], [0, .12], [-.07, .06]]), '#e87a8a', { lw: .025 }) },
   eyeliner: { at: 'head', w: .6, h: .25, off: { f: [0, .47], s: [.24, .47] }, face: true, draw: g => { for (const x of [-.16, .16]) { A.line(g, [[x - .12, .02], [x, -.04], [x + .12, .02]], .035); A.line(g, [[x + .06, .04], [x + .07, .12]], .025); } } },
   igler: { at: 'body', w: .7, h: .6, off: { f: [0, .3], s: [0, .3], b: [0, .3] }, draw: g => { for (const [x, y, r] of [[-.18, -.08, .4], [.14, .04, -.3], [.02, .16, .1]]) { g.save(); g.translate(x, y); g.rotate(r); A.cel(g, A.ell(0, 0, .09, .04), '#3a2a1a', { lw: .02 }); g.restore(); } } },
-  horn: { at: 'head', w: .9, h: .5, off: { f: [0, .9], s: [-.02, .9], b: [0, .9] }, draw: g => { for (const s of [-1, 1]) A.cel(g, A.poly([[s * .12, .08], [s * .3, .06], [s * .36, -.2]]), '#8a2a2a', { lw: .03 }); } },
+  horn: { at: 'head', w: .9, h: .5, off: { f: [0, .76], s: [-.02, .76], b: [0, .76] }, draw: g => { for (const s of [-1, 1]) A.cel(g, A.poly([[s * .12, .08], [s * .3, .06], [s * .36, -.2]]), '#8a2a2a', { lw: .03 }); } },
   bandasje: { at: 'head', w: .9, h: .3, off: { f: [0, .68], s: [0, .68], b: [0, .68] }, draw: g => { A.cel(g, A.rr(-.38, -.06, .76, .12, .05), '#f4f2ea', { lw: .03 }); A.dot(g, .2, 0, .03, '#c8322a'); } }
 };
 function addonPart(k) { const L = LOOKS[k]; return Art.part('tillegg_' + k, L.w, L.h, L.w / 2, L.h / 2, L.draw); }
@@ -266,7 +266,9 @@ const Items = {
     for (const k in this.addons) {
       const L = LOOKS[k], m = this.addons[k], base = L.at === 'head' ? d.head : d.body, off = L.off[v] || L.off.f;
       m.visible = !(L.face && v === 'b');
-      m.position.set(base.position.x + off[0], base.position.y + off[1], base.position.z + .004); m.rotation.z = base.rotation.z;
+      // som pynten: følger issen på pasientens hode (hodeTopp) og dreies med hodet
+      const r = base.rotation.z, c = Math.cos(r), s = Math.sin(r), oy = off[1] + (L.at === 'head' && !L.face && base.userData.P ? hodeTopp(base.userData.P) - .78 : 0);
+      m.position.set(base.position.x + off[0] * c - oy * s, base.position.y + off[0] * s + oy * c, base.position.z + .004); m.rotation.z = r;
     }
   },
   /* ---------- kroker fra kampen ---------- */
@@ -317,7 +319,7 @@ const Items = {
       s.g.position.set(s.x, .85 + Math.sin(G.time * 18 + i) * .04, s.z);
       let dead = false;
       for (const e of all) {
-        if (!e.alive || s.hit.has(e) || d2(s.x, s.z, e.x, e.z) > (s.r + e.r) * (s.r + e.r)) continue;
+        if (!e.alive || e.dukket || s.hit.has(e) || d2(s.x, s.z, e.x, e.z) > (s.r + e.r) * (s.r + e.r)) continue;
         s.hitAny = true; this.hitShot(s, e);
         if (s.pierce-- <= 0 && !s.boomer) { dead = true; break; }
       }
@@ -359,7 +361,7 @@ const Items = {
   onFloor() {
     for (const pd of this.pedestals) { R.remove(pd.g); } this.pedestals = []; this.clearSplats();
     G.run.buffs = {}; const P = G.player; if (P && P.doll && P.doll.sc0) { P.doll.sc = P.doll.sc0; P.r = .36; }
-    for (const r of G.F.rooms) if (r.role === 'treasure' || r.role === 'secret') { if (Math.random() < (r.role === 'secret' ? .5 : .25)) Aktiv.spawnJar(r.x + r.w / 2, r.z + r.h / 2, Aktiv.pick()); else this.spawnPedestal(r.x + r.w / 2, r.z + r.h / 2, this.pickFrom('kabinett')); }
+    for (const r of G.F.rooms) if (r.role === 'treasure' || r.role === 'secret') { const pd = Math.random() < (r.role === 'secret' ? .5 : .25) ? Aktiv.spawnJar(r.x + r.w / 2, r.z + r.h / 2, Aktiv.pick()) : this.spawnPedestal(r.x + r.w / 2, r.z + r.h / 2, this.pickFrom('kabinett')); if (r.role === 'secret' && G.skjult) Skjult.gjem(pd); } // står skjult til veggen er slått inn
     for (const r of G.F.rooms) if (r.role === 'cursed') { const pd = this.spawnPedestal(r.cx + .5, r.cz - .5, this.pickFrom('blod')); pd.cursed = true; pd.room = r.id; }
   },
   onRoomClear(r) {
@@ -383,7 +385,7 @@ const Items = {
     else if (eff === 'oppkast') { for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; addPuddle(P.x + Math.sin(a) * 1.6, P.z + Math.cos(a) * 1.6, 'vomit', .7, 16); } Sound.play('vomit'); for (const e of G.enemies) if (e.alive && d2(e.x, e.z, P.x, P.z) < 9) enemySlip(e); }
     else if (eff === 'morb') addMorb(30); else if (eff === 'rens') P.morb = Math.max(0, P.morb - 40);
     else if (eff === 'kjempe' || eff === 'krymp') { if (!P.doll.sc0) P.doll.sc0 = P.doll.sc; const k = eff === 'kjempe' ? 1.35 : .7; P.doll.sc = P.doll.sc0 * k; P.r = .36 * k; b.speed = (b.speed || 1) * (eff === 'kjempe' ? .9 : 1.15); if (eff === 'kjempe') b.dmg = (b.dmg || 1) * 1.25; }
-    else if (eff === 'kart') { if (G.seen) G.seen.fill(1); } else if (eff === 'glemsel') { if (G.seen) G.seen.fill(0); }
+    else if (eff === 'kart') visHeleKartet(); else if (eff === 'glemsel') { if (G.seen) G.seen.fill(0); }
     else if (eff === 'tenner') dropTeeth(P.x, P.z, 12);
     else FX.bubble(P, 'Jeg føler meg mye bedre.', 1.6);
   },

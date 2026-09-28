@@ -99,21 +99,23 @@ function beam(x0, z0, x1, z1, color, w = .12, life = .2, y = .8) {
 
 /* ---------- varsler (telegrafer) ---------- */
 function addTele(shape, o, dur, fire, owner) {
-  const mesh = R.telegraph(shape, o), t = { mesh, t: dur, max: dur, fire, owner, o, shape };
+  const mesh = R.telegraph(shape, o, dur, owner), t = { mesh, t: dur, max: dur, fire, owner, o, shape };
   G.tele.push(t); if (owner) (owner.teles || (owner.teles = [])).push(t);
   Sound.play('tele', .6); return t;
 }
-function cancelTeles(owner) { if (!owner || !owner.teles) return; for (const t of owner.teles) { t.dead = true; R.remove(t.mesh); } owner.teles = []; }
+function cancelTeles(owner) { if (!owner || !owner.teles) return; for (const t of owner.teles) { t.dead = true; R.kastTele(t.mesh, 'avbryt', t); } owner.teles = []; }
 function updateTele(dt) {
   for (let i = G.tele.length - 1; i >= 0; i--) {
     const t = G.tele[i];
     if (t.dead) { G.tele.splice(i, 1); continue; }
-    t.t -= dt; t.mesh.userData.update(1 - Math.max(0, t.t) / t.max);
+    t.t -= dt; if (t.o.folg) { t.o.x = t.o.folg.x; t.o.z = t.o.folg.z; } // o.folg: varselet følger eieren, som treffet gjør når det går av
+    t.mesh.userData.update(1 - Math.max(0, t.t) / t.max);
     if (t.t <= 0) {
-      R.remove(t.mesh); G.tele.splice(i, 1);
+      G.tele.splice(i, 1);
       if (t.owner && t.owner.teles) t.owner.teles = t.owner.teles.filter(x => x !== t);
-      if (t.owner && (!t.owner.alive || t.owner.stun > 0 || t.owner.sleep > 0)) continue;
-      t.fire && t.fire(t.o);
+      const fyrer = !(t.owner && (!t.owner.alive || t.owner.stun > 0 || t.owner.sleep > 0));
+      R.kastTele(t.mesh, fyrer ? 'fyr' : 'avbryt', t);
+      if (fyrer && t.fire) t.fire(t.o);
     }
   }
 }
@@ -214,7 +216,7 @@ function slowMo(t, s) {
 /* ---------- pytter og strøm ---------- */
 const CONDUCTIVE = { wet: 1, soup: 1, vomit: 1, blod: 1, mokk: 1, myr: 1, tjern: 1 };
 function addPuddle(x, z, kind, r = 1, life = 16) {
-  if (tIdx(x, z) < 0 || !G.F.tiles[tIdx(x, z)]) return null;
+  if (!gulvSynlig(tIdx(x, z))) return null;
   for (const p of G.puddles) if (p.kind === kind && d2(p.x, p.z, x, z) < (p.r * .7) * (p.r * .7)) { p.r = Math.min(2.6, Math.max(p.r, r) + .15); p.life = Math.max(p.life, life); p.mesh.scale.set(p.r * 2, p.r * 2, 1); return p; }
   if (G.puddles.length > 46) { const old = G.puddles.shift(); R.remove(old.mesh); }
   const p = { x, z, kind, r, life, max: life, elec: 0, mesh: R.puddleMesh(kind, r) };
@@ -321,7 +323,7 @@ function breakProp(o, src) {
 function hitProps(x, z, face, range, arc, dmg, kb) {
   let n = 0;
   for (const o of G.props) {
-    if (!o.alive) continue;
+    if (!o.alive || o.skjult) continue;
     const dx = o.x - x, dz = o.z - z, d = Math.hypot(dx, dz);
     if (d > range + .45) continue;
     if (d > .7 && Math.abs(angDiff(Math.atan2(dx, dz), face)) > arc / 2) continue;
@@ -339,7 +341,7 @@ function updateProps(dt) {
   const P = G.player;
   for (const o of G.props) {
     if (o.dying !== undefined) { o.dying -= dt; if (o.U) o.U.uDissolve.value = 1 - Math.max(0, o.dying) / .4; if (o.dying <= 0 && o.g.parent) R.remove(o.g); continue; }
-    if (!o.alive) continue;
+    if (!o.alive || o.skjult) continue; // det skjulte rommet: lysene står slukket til veggen er slått inn (48_skjult.js)
     if (o.flashT > 0) { o.flashT -= dt; o.U.uFlash.value = o.flashT > 0 ? 1 : 0; }
     if (o.kind === 'lamp') {
       const side = Math.sin(o.fallA || 0) >= 0 ? 1 : -1;
@@ -393,8 +395,8 @@ function updatePickups(dt) {
     if (k.y > .25 || k.vy > 0) { k.vy -= 16 * dt; k.y += k.vy * dt; k.x += k.vx * dt; k.z += k.vz * dt; if (solid(Math.floor(k.x), Math.floor(k.z))) { k.x -= k.vx * dt; k.z -= k.vz * dt; k.vx *= -.5; k.vz *= -.5; } if (k.y < .25) { k.y = .25; k.vy = Math.abs(k.vy) > 2 ? -k.vy * .35 : 0; k.vx *= .5; k.vz *= .5; } }
     const auto = k.kind === 'tooth' || k.kind === 'morb' || k.kind === 'heart';
     const d = Math.hypot(P.x - k.x, P.z - k.z);
-    const mag = Lomme.has('tannspeil') ? 5.2 : 2.6;
-    if (auto && P.alive && k.t > .35 && d < mag && (k.kind !== 'heart' || P.hp < P.maxHp)) { const s = (1 - d / mag) * 14 + 3; k.x += (P.x - k.x) / (d || 1) * s * dt; k.z += (P.z - k.z) / (d || 1) * s * dt; }
+    const mag = Lomme.has('tannspeil') ? 5.2 : 2.6; // trekkes ikke gjennom vegger: ruta midt mellom må være fri
+    if (auto && P.alive && k.t > .35 && d < mag && (k.kind !== 'heart' || P.hp < P.maxHp) && !solid(Math.floor((k.x + P.x) / 2), Math.floor((k.z + P.z) / 2))) { const s = (1 - d / mag) * 14 + 3; k.x += (P.x - k.x) / (d || 1) * s * dt; k.z += (P.z - k.z) / (d || 1) * s * dt; }
     k.mesh.position.set(k.x, k.y + Math.abs(Math.sin(k.t * 4)) * .08, k.z); k.mesh.userData.m.rotation.z = (k.kind === 'weapon' ? -1.1 : 0) + Math.sin(k.t * 3) * .12;
     if (auto && P.alive && k.t > .35 && d < .55 && (k.kind !== 'heart' || P.hp < P.maxHp)) {
       if (k.kind === 'tooth') { P.teeth += k.val || 1; Sound.play('tooth', .7, 1 + Math.random() * .2); }
@@ -466,7 +468,7 @@ function updateProjectiles(dt) {
       for (const t of targets) if (t.alive && !t.flying && d2(p.x, p.z, t.x, t.z) < (p.r + t.r) ** 2) { hurt(t, p.dmg, { type: p.cause || 'oppasser', x: ox, z: oz, kb: 3 }); p.alive = false; break; }
     } else {
       const all = G.boss && G.boss.alive ? G.enemies.concat([G.boss]) : G.enemies;
-      for (const e of all) if (e.alive && !(p.hitSet && p.hitSet.has(e)) && d2(p.x, p.z, e.x, e.z) < (p.r + e.r) ** 2) {
+      for (const e of all) if (e.alive && !e.dukket && !(p.hitSet && p.hitSet.has(e)) && d2(p.x, p.z, e.x, e.z) < (p.r + e.r) ** 2) {
         if (p.onHit) { p.onHit(p, e); if (!p.pierce) { p.alive = false; break; } (p.hitSet || (p.hitSet = new Set())).add(e); }
         else { hurt(e, p.dmg, { from: 'player', x: ox, z: oz, kb: 4 }); p.alive = false; break; }
       }

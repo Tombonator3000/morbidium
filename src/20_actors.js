@@ -43,18 +43,22 @@ function puff(x, z, n = 3, s = 1, col) {
 }
 function starBurst(x, y, z, s = 1) { const g = sprite(starPart(), x, z, { y }); g.scale.setScalar(.2); VFX.stars.push({ g, t: 0, s }); }
 function slashFx(x, z, a, r, arc, heavy, col = 0xfffbea) {
-  const st = -Math.PI / 2 - arc / 2;
-  const m = new THREE.Mesh(new THREE.RingGeometry(r * .68, r, 28, 1, st, arc), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .85, depthWrite: false, side: THREE.DoubleSide }));
-  m.rotation.x = -Math.PI / 2; const g = new THREE.Group(); g.add(m); g.position.set(x, .06, z); g.rotation.y = a; g.renderOrder = 4; R.dyn.add(g);
+  // ringen lages én gang per bue (rundet til 0,05; helt rundt blir som før) og skaleres med r. Materialet brukes om igjen fra hugg som er
+  // ferdige: ble det kastet etter hvert hugg, måtte skjermkortet bygge shaderen på nytt hver gang, fordi ingen andre bruker den
+  const b = arc > TAU - .05 ? TAU - .01 : Math.max(.05, Math.round(arc * 20) / 20), st = -Math.PI / 2 - b / 2;
+  const geo = R.geo('hugg' + b.toFixed(2), () => { const q = new THREE.RingGeometry(.68, 1, 28, 1, st, b); q.userData.delt = true; return q; });
+  const mat = (slashFx.fri || (slashFx.fri = [])).pop() || new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide }); mat.color.set(col); mat.opacity = .85;
+  const m = new THREE.Mesh(geo, mat);
+  m.rotation.x = -Math.PI / 2; m.scale.set(r, r, 1); const g = new THREE.Group(); g.add(m); g.position.set(x, .06, z); g.rotation.y = a; g.renderOrder = 4; R.dyn.add(g);
   VFX.slashes.push({ g, m, t: 0, life: heavy ? .26 : .18 });
 }
 function flashLight(x, z, r, col, t = .25, k = 1.2) { const l = R.light(x, z, r, col, k); l.userData.blink = true; addFx(l, t, (o, p) => R.setLight(o, k * (1 - p))); } // blink: i 3D får bare ett lysglimt om gangen et punktlys (D3.fordel)
 function updateVFX(dt) {
   for (let i = VFX.puffs.length - 1; i >= 0; i--) { const p = VFX.puffs[i]; p.t += dt; const k = p.t / p.life; p.g.scale.setScalar(p.s * (.6 + k * .7)); p.g.position.x += p.vx * dt; p.g.position.y += p.vy * dt * .5; p.g.userData.U.uAlpha.value = 1 - k * k; if (k >= 1) { R.remove(p.g); VFX.puffs.splice(i, 1); } }
   for (let i = VFX.stars.length - 1; i >= 0; i--) { const s = VFX.stars[i]; s.t += dt; const k = s.t / .14; s.g.scale.setScalar(s.s * (k < .5 ? k * 2 : 2 - k * 2) * .9); if (k >= 1) { R.remove(s.g); VFX.stars.splice(i, 1); } }
-  for (let i = VFX.slashes.length - 1; i >= 0; i--) { const s = VFX.slashes[i]; s.t += dt; const k = s.t / s.life; s.m.material.opacity = .85 * (1 - k); s.g.scale.setScalar(1 + k * .15); if (k >= 1) { R.remove(s.g); VFX.slashes.splice(i, 1); } }
+  for (let i = VFX.slashes.length - 1; i >= 0; i--) { const s = VFX.slashes[i]; s.t += dt; const k = s.t / s.life; s.m.material.opacity = .85 * (1 - k); s.g.scale.setScalar(1 + k * .15); if (k >= 1) { R.remove(s.g); slashFx.fri.push(s.m.material); VFX.slashes.splice(i, 1); } }
 }
-function clearVFX() { for (const k of ['puffs', 'stars', 'slashes']) { for (const v of VFX[k]) R.remove(v.g); VFX[k] = []; } }
+function clearVFX() { for (const k of ['puffs', 'stars', 'slashes']) { for (const v of VFX[k]) { R.remove(v.g); if (v.m) slashFx.fri.push(v.m.material); } VFX[k] = []; } } // ringene (R.geo) og materialene til huggene brukes om igjen
 
 /* ============================================================
    SPILLEREN
@@ -157,7 +161,7 @@ function meleeHit(k) {
   let hits = 0;
   const all = G.boss && G.boss.alive ? G.enemies.concat([G.boss]) : G.enemies;
   for (const e of all) {
-    if (!e.alive || e.state === 'spawn') continue;
+    if (!e.alive || e.state === 'spawn' || e.dukket) continue;
     const dx = e.x - P.x, dz = e.z - P.z, d = Math.hypot(dx, dz);
     if (d > range + e.r) continue;
     if (d > .8 && Math.abs(angDiff(Math.atan2(dx, dz), P.face)) > arc / 2) continue;

@@ -139,6 +139,8 @@ function buildFloor(seed, depth, opts) {
       const inX = x >= par.x && x < par.x + par.w, inZ = z >= par.z && z < par.z + par.h;
       if ((inX && (z === par.z - 1 || z === par.z + par.h)) || (inZ && (x === par.x - 1 || x === par.x + par.w))) { F.crack.push(i); F.block[i] = 1; }
     }
+    // det skjulte: gangen som ble hugget ut hit (med sprekken) og selve rommet. Tegnes ikke før veggen er slått inn (48_skjult.js). Ingen trekk fra rng
+    F.skjult = new Uint8Array(W * H); for (let i = 0; i < W * H; i++) if ((F.tiles[i] === T_COR && before[i] === T_VOID) || F.roomId[i] === secret.id) F.skjult[i] = 1;
   }
   // 7) dører: korridorruter som grenser til rommet
   for (const r of F.rooms) {
@@ -372,9 +374,10 @@ function planWaves(F, r, rng, depth, opts) {
   if (!['combat', 'risk', 'start', 'cursed'].includes(r.role)) return;
   if (r.role === 'start' && !opts.startCombat) return;
   const pool = DEPTH_ENEMIES[depth] || DEPTH_ENEMIES[4];
-  const bias = { kapell: 'kultist', bad: 'yngel', behandling: 'oppasser', sovesal: 'pleier', kjeller: 'yngel', isolat: 'tvang', kartotek: 'byrakrat',
-    spisesal: 'pleier', dagligstue: 'kasteren', elektro: 'oppasser', tannlege: 'oppasser', kjokken: 'svulst', fyrrom: 'yngel', likkapell: 'kultist', frisor: 'tvang',
-    liggehall: 'trille', kirkegard: 'kultist', hage: 'pleier', isdam: 'trille', myr: 'yngel', tjern: 'yngel', ruin: 'kultist' }[r.template];
+  // runde 5: Avløpsarmen i kjelleren (der er slukene), Kapellanen i likkapellet og Draugpleieren i tjernet. Samme trekk fra rng som før, så etasjene er like
+  const bias = { kapell: 'kultist', bad: 'yngel', behandling: 'oppasser', sovesal: 'pleier', kjeller: 'avlopsarm', isolat: 'tvang', kartotek: 'byrakrat',
+    spisesal: 'pleier', dagligstue: 'kasteren', elektro: 'oppasser', tannlege: 'oppasser', kjokken: 'svulst', fyrrom: 'yngel', likkapell: 'kapellan', frisor: 'tvang',
+    liggehall: 'trille', kirkegard: 'kultist', hage: 'pleier', isdam: 'trille', myr: 'yngel', tjern: 'draug', ruin: 'kultist' }[r.template];
   const d = F.dist ? F.dist[r.id] : 2, eff = Math.round(typeof dybdeStyrke === 'function' ? dybdeStyrke(depth) : depth);
   const nWaves = r.role === 'risk' ? 2 : r.role === 'start' || r.role === 'cursed' ? 1 : (d >= 3 && rng.chance(.55) ? 2 : 1) + (eff >= 3 && rng.chance(.3) ? 1 : 0);
   for (let w = 0; w < nWaves; w++) {

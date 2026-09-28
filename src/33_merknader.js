@@ -123,7 +123,8 @@ const TIPS = {
   morb: { alle: 'Morbidium stiger i blodet. Over 60 kommer hikken, over 75 ser du ting som ikke er der.' },
   luke: { alle: 'Luka ned er åpen. Gå ned når du er klar. Det er ingen vei tilbake.' },
   sjef: { alle: 'En overlege. Hold avstand og rull unna de store slagene. Et rødt felt på gulvet betyr at noe kommer.' },
-  tv: { alle: 'Spiller du på TV? Slå på TV-modus under Innstillinger, Spill. Da blir teksten større.' }
+  tv: { alle: 'Spiller du på TV? Slå på TV-modus under Innstillinger, Spill. Da blir teksten større.' },
+  sprekk: { kb: 'Noen vegger er murt igjen. Kjenner du trekk eller ser ny puss, hold høyre knapp for et tungt slag mot veggen.', pad: 'Noen vegger er murt igjen. Kjenner du trekk eller ser ny puss, hold X for et tungt slag mot veggen.', touch: 'Noen vegger er murt igjen. Kjenner du trekk eller ser ny puss, prøv Tungt mot veggen.' }
 };
 const Tips = {
   vis(id, forsink = 0) {
@@ -153,7 +154,7 @@ const Bygg = {
   tick(dt) {
     if (!this.ferdig) return; const P = G.player, F = G.F;
     if (P) for (const r of F.rooms) {
-      if (this.ferdig.has(r.id)) continue; const dx = Math.max(r.x - P.x, 0, P.x - (r.x + r.w)), dz = Math.max(r.z - P.z, 0, P.z - (r.z + r.h));
+      if (this.ferdig.has(r.id) || (G.skjult && r.role === 'secret')) continue; const dx = Math.max(r.x - P.x, 0, P.x - (r.x + r.w)), dz = Math.max(r.z - P.z, 0, P.z - (r.z + r.h));
       if (dx * dx + dz * dz > 36) continue; this.ferdig.add(r.id);
       for (const o of G.props) if (o.room === r.id && o.byggS) this.liste.push({ o, t: -Math.hypot(o.x - P.x, o.z - P.z) * .035 - Math.random() * .08 });
     }

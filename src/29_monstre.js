@@ -588,7 +588,7 @@ Object.assign(Grotesk.ai, {
     const r = Math.random(), P = G.player;
     if (dist < 3.2 || r < .16) {
       // korskrik: alle munnene åpner seg, og alt innenfor ringen får høre det. Rull gjennom.
-      e.state = 'wind'; e.t = 1.4; e.aapen = 1; const o = { x: e.x, z: e.z, r: 6.2, color: 0xc83a4a }; FX.bubble(e, 'AAAAAAA', 1.2);
+      e.state = 'wind'; e.t = 1.4; e.aapen = 1; const o = { x: e.x, z: e.z, r: 6.2, color: 0xc83a4a, folg: e }; FX.bubble(e, 'AAAAAAA', 1.2);
       addTele('circle', o, 1.05, () => { o.x = e.x; o.z = e.z; hitShape('circle', o, e.dmg * 1.3, { type: 'koret', x: e.x, z: e.z, kb: 9 }, 'enemy'); Sound.play('korskrik'); R.shake(.45); flashLight(e.x, e.z, 6, '#c83a4a', .3, 1); for (let k = 0; k < 16; k++) Particles.spawn(e.x, 1.4, e.z, 1, 0x2a1a30, { speed: 7, up: 1, g: 0, life: .5 }); bossLaterE(e, .4, () => { e.aapen = 0; }); }, e);
       e.cd = rnd(2.8, 3.6); return;
     }

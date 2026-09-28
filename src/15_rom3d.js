@@ -13,7 +13,7 @@
    ============================================================ */
 const D3 = {
   on: false, bygd: false, ting: [], byttet: [], egne: [], gjemt: [], pool: [], dukker: new Set(), t: 0,
-  BUMP: .7,
+  BUMP: .7, BUMP_SNO: .45, // snøen: fonnene får relieff uten at klattene blir bobleplast
   NIVA: {
     hoy: { navn: 'høy', skygge: 2048, lys: 8, glod: true, stov: 192, straaler: true, taake: true, tilt: .7, kant: true, dpr: 2 },
     middels: { navn: 'middels', skygge: 1024, lys: 6, glod: true, stov: 96, straaler: true, taake: true, tilt: .45, kant: true, dpr: 1.5 },
@@ -64,13 +64,13 @@ const D3 = {
     // himmel og måne
     const Q = this.Q(); this.q = Q;
     const amb = new THREE.AmbientLight(new THREE.Color(th.fog || '#1a1622').lerp(new THREE.Color('#3a3450'), .6), Q.flat ? .95 : .32);
-    const hemi = new THREE.HemisphereLight('#8a90c8', '#2a1a14', Q.flat ? .45 : .16);
+    const sno = F.vaer === 'sno', hemi = new THREE.HemisphereLight('#8a90c8', sno ? '#4a5470' : '#2a1a14', Q.flat ? .45 : .16); // snøen kaster blått lys opp
     const mane = new THREE.DirectionalLight('#9aaee8', .42); mane.castShadow = Q.skygge > 0;
     if (Q.skygge) mane.shadow.mapSize.set(Q.skygge, Q.skygge); const sc2 = mane.shadow.camera; sc2.left = -16; sc2.right = 16; sc2.top = 16; sc2.bottom = -16; sc2.near = 1; sc2.far = 60; mane.shadow.bias = -.0015; mane.shadow.normalBias = .02;
     // skyggekameraet følger kameraet, men bare i hele ruter av skyggekartet (se tick), ellers kryper kantene på alle faste skygger
     // når kameraet glir. Aksene er de samme som lookAt gir skyggekameraet: z mot månen, x vannrett, y oppover i kartet
     this.maneB = null; if (Q.skygge) { const off = new THREE.Vector3(-7, 16, 9), z = off.clone().normalize(), x = new THREE.Vector3(0, 1, 0).cross(z).normalize(); this.maneB = { off, x, y: z.clone().cross(x), z, texel: (sc2.right - sc2.left) / Q.skygge, t: new THREE.Vector3() }; }
-    if (F.ute) { mane.intensity = .78; mane.color.set('#a8bce8'); } // ute lyser månen sterkere
+    if (F.ute) { mane.intensity = sno ? .84 : .78; mane.color.set('#a8bce8'); } // ute lyser månen sterkere, og mest på snøen
     this.maneI = mane.intensity; // lynet (38_effekter.js) løfter månelyset et øyeblikk, så alt kaster skarp skygge
     sc.add(amb, hemi, mane, mane.target); this.mane = mane; this.ting.push(amb, hemi, mane, mane.target);
     this.pool = []; this.nyPool = true; for (let i = 0; i < Q.lys; i++) { const l = new THREE.PointLight('#ffd89a', 0, 6, 2); l.position.set(0, -50, 0); sc.add(l); this.pool.push(l); this.ting.push(l); } // i en ny etasje tennes lysene med en gang (fordel)
@@ -78,15 +78,17 @@ const D3 = {
     const bytt = (mesh, ny) => { this.byttet.push([mesh, mesh.material]); mesh.material = ny; };
     const PM = Paint.mesh || {};
     const vegger = PM.vegger && PM.vegger.length ? PM.vegger : PM.vegg ? [PM.vegg] : [];
-    for (const m of [PM.gulv, PM.topp, PM.bakke, ...vegger]) if (m && !m.geometry.attributes.normal) m.geometry.computeVertexNormals(); // den malte stilen trenger ikke normaler, lys gjør det
-    if (PM.gulv) { bytt(PM.gulv, this.toon({ map: PM.gulv.material.map, bumpMap: PM.gulv.material.map, bumpScale: this.BUMP, vertexColors: true })); PM.gulv.receiveShadow = true; }
-    if (PM.topp) { bytt(PM.topp, this.toon({ vertexColors: true, side: THREE.DoubleSide })); PM.topp.castShadow = true; }
+    const topper = [PM.topp, ...(PM.toppEkstra || [])].filter(Boolean); // toppEkstra: veggene rundt det skjulte rommet, lukket og åpen (12_paint.js)
+    for (const m of [PM.gulv, PM.gulvSkjult, PM.bakke, ...topper, ...vegger]) if (m && !m.geometry.attributes.normal) m.geometry.computeVertexNormals(); // den malte stilen trenger ikke normaler, lys gjør det
+    // snøen er så lys at lykta brente den helt hvit: gulvet dempes litt og blir kaldere, så klattene og skyggene synes også i lyset
+    for (const g of [PM.gulv, PM.gulvSkjult]) if (g) { bytt(g, this.toon({ map: g.material.map, bumpMap: g.material.map, bumpScale: sno ? this.BUMP_SNO : this.BUMP, vertexColors: true, color: sno ? 0xb8bfcc : 0xffffff })); g.receiveShadow = true; }
+    for (const t of topper) { bytt(t, this.toon({ vertexColors: true, side: THREE.DoubleSide })); t.castShadow = true; }
     // én mesh per veggstil (17_romtyper.js); gjerder og ruiner er utklipp og kaster ikke skygge som en mur
     for (const v of vegger) { const b = v.material; bytt(v, this.toon({ map: b.map, side: THREE.DoubleSide, transparent: b.transparent, alphaTest: b.alphaTest, depthWrite: b.depthWrite })); v.castShadow = !b.transparent; v.receiveShadow = true; }
     if (PM.bakke) { bytt(PM.bakke, this.toon({ map: PM.bakke.material.map, color: PM.bakke.material.color })); PM.bakke.receiveShadow = true; }
     this.lysLag();
     this.lamper = []; this.tidU = this.tidU || { value: 0 };
-    this.vegglamper(F, th); this.arkitektur(F, th); if (Q.stov) this.stov(Q.stov); if (Q.taake) this.taake(F, th);
+    this.vegglamper(F, th); this.ganglamper(F, th); this.arkitektur(F, th); if (Q.stov) this.stov(Q.stov); if (Q.taake) this.taake(F, th);
     for (const o of G.props) { o.d3 = true; this.moble(o); }
     R.post.uniforms.uLights.value = 0; R.renderer.shadowMap.needsUpdate = true;
     this.bygd = true; this.t = 0;
@@ -102,7 +104,7 @@ const D3 = {
     // skyggeflekkene får full styrke igjen i 2D, der de er den eneste skyggen figurene har
     for (const d of this.dukker) { if (d.U && d.U.tint0) d.U.uTint.value.copy(d.U.tint0); utenKant(d.U); if (d.shadow) { d.shadowA = 1; Doll.bakke(d); } } this.dukker.clear();
     if (G.props) for (const o of G.props) { o.d3 = false; if (o.U && o.U.tint0) o.U.uTint.value.copy(o.U.tint0); utenKant(o.U); }
-    this.lamper = []; this.morkeT = 0; this.mf = 1; this.taakeLys = null;
+    this.lamper = []; this.morkeT = 0; this.mf = 1; this.taakeLys = null; this.taakeMask = null; this.sprekkDeler = [];
     if (R.post) R.post.uniforms.uLights.value = R.lightsOn ? 1 : 0;
     if (R.renderer) R.renderer.shadowMap.autoUpdate = true;
     this.bygd = false;
@@ -168,6 +170,24 @@ const D3 = {
       }
     }
   },
+  /* små taklamper i gangene inne: et svakt, varmt lys omtrent hver femte rute, ikke i døråpningene (de har sitt eget) og ikke i det skjulte.
+     Gangene var bare opplyst av lykta og ble mørke hull mellom rommene. Ingen tilfeldighet, så de står likt hver gang */
+  ganglamper(F, th) {
+    this.gangLys = 0; if (F.ute || G.drom) return;
+    const W = F.W, H = F.H, rom = i => F.roomId && F.roomId[i] >= 0, gang = i => F.tiles[i] === T_COR && !rom(i) && gulvSynlig(i), kand = [], satt = [];
+    // kandidatene: gangruter uten rom i de åtte naborutene, de åpneste først (midt i en bred gang), så i fast rekkefølge
+    for (let z = 1; z < H - 1; z++) for (let x = 1; x < W - 1; x++) {
+      if (!gang(z * W + x)) continue; let fri = true, n = 0;
+      for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) { const j = (z + dz) * W + x + dx; if (rom(j)) fri = false; else if (gulvSynlig(j)) n++; }
+      if (fri) kand.push([n, x, z]);
+    }
+    kand.sort((a, b) => b[0] - a[0] || a[2] - b[2] || a[1] - b[1]);
+    for (const [, x, z] of kand) {
+      if (satt.some(([sx, sz]) => (sx - x) ** 2 + (sz - z) ** 2 < 25)) continue; satt.push([x, z]);
+      const lp = R.light(x + .5, z + .8, 2.8, th.pool || '#ffd89a', .42, R.levelL); lp.userData.y = 2.1; lp.userData.gang = true; this.ting.push(lp);
+    }
+    this.gangLys = satt.length;
+  },
   /* ---------- lys i lufta: stråler fra vinduene og kjegler under lampene ---------- */
   straaleGeo() {
     return R.geo('d3straale', () => {
@@ -209,8 +229,9 @@ const D3 = {
   taake(F, th) {
     const cfg = (F.taake || { 1: [.3, '#a8b8d0'], 2: [.1, '#e8dcc0'], 3: [.26, '#d4ece6'], 4: [.14, '#dccfb4'], 5: [.42, '#7a8ab8'], 6: [.34, '#9a7ab8'] }[G.depth] || [.12, '#dddddd']).slice(); // F.taake: drømmene har sin egen
     if (F.vaer === 'taake') cfg[0] += .22;
-    const data = new Uint8Array(F.W * F.H); for (let i = 0; i < data.length; i++) data[i] = F.tiles[i] > 0 ? 255 : 0;
-    const mask = new THREE.DataTexture(data, F.W, F.H, THREE.LuminanceFormat); mask.magFilter = mask.minFilter = THREE.LinearFilter; mask.generateMipmaps = false; mask.needsUpdate = true; this.egne.push(mask);
+    if (F.vaer === 'sno' && !F.taake) { cfg[0] = .3; cfg[1] = '#dde6f2'; } // snødrev: lys, kald tåke langs bakken
+    const data = new Uint8Array(F.W * F.H); for (let i = 0; i < data.length; i++) data[i] = gulvSynlig(i) ? 255 : 0; // ikke over det skjulte rommet før det er åpnet
+    const mask = new THREE.DataTexture(data, F.W, F.H, THREE.LuminanceFormat); mask.magFilter = mask.minFilter = THREE.LinearFilter; mask.generateMipmaps = false; mask.needsUpdate = true; this.egne.push(mask); this.taakeMask = mask;
     // punktlysene lyser opp tåka rundt seg (settes hvert bilde i tick): xz og radius i p, farge ganget med styrke i f
     const TL = this.taakeLys = { p: { value: [0, 1, 2, 3, 4, 5, 6, 7].map(() => new THREE.Vector4()) }, f: { value: [0, 1, 2, 3, 4, 5, 6, 7].map(() => new THREE.Vector3()) } };
     for (const [y, k, fart] of [[.16, 1, 1], [.48, .6, -.7]]) {
@@ -248,26 +269,32 @@ const D3 = {
   /* fotlist, brystlist og taklist langs de høye veggene, og pilastre mellom lampene og vinduene.
      Listene ligger der veggtegningen allerede har dem, så de bare løfter seg ut av veggen. */
   arkitektur(F, th) {
-    const W = F.W, wh = Paint.wallH || [], isF = (x, z) => x >= 0 && z >= 0 && x < W && z < F.H && F.tiles[z * W + x] > 0;
+    const W = F.W, wh = Paint.wallH || [], isF = (x, z) => x >= 0 && z >= 0 && x < W && z < F.H && gulvSynlig(z * W + x);
     const opp = (x, z) => (Paint.opptatt && Paint.opptatt.get(x + ',' + z)) || '';
-    const front = []; for (let z = 0; z < F.H; z++) for (let x = 0; x < W; x++) if (wh[z * W + x] > 2 && this.listeVegg(z * W + x) && isF(x, z + 1)) front.push([x, z + 1, opp(x, z + 1)]);
+    // en vegg på en skjult rute (sprekken, før den er slått inn) får listene sine i egne InstancedMesh (D3.sprekkDeler), som innbruddet tar bort
+    const skj = G.skjult, front = [], sprekkFront = []; for (let z = 0; z < F.H; z++) for (let x = 0; x < W; x++) if (wh[z * W + x] > 2 && this.listeVegg(z * W + x) && isF(x, z + 1)) (skj && skj[z * W + x] ? sprekkFront : front).push([x, z + 1, opp(x, z + 1)]);
     const piler = [];
     for (const r of F.rooms) {
       if (r.role === 'secret') continue;
-      for (let x = r.x + 3; x < r.x + r.w - 1; x += 3) if (wh[(r.z - 1) * W + x - 1] > 2 && wh[(r.z - 1) * W + x] > 2 && this.listeVegg((r.z - 1) * W + x) && isF(x - 1, r.z) && isF(x, r.z) && !opp(x - 1, r.z) && !opp(x, r.z)) piler.push([x, r.z]);
+      for (let x = r.x + 3; x < r.x + r.w - 1; x += 3) if (wh[(r.z - 1) * W + x - 1] > 2 && wh[(r.z - 1) * W + x] > 2 && !(skj && (skj[(r.z - 1) * W + x - 1] || skj[(r.z - 1) * W + x])) && this.listeVegg((r.z - 1) * W + x) && isF(x - 1, r.z) && isF(x, r.z) && !opp(x - 1, r.z) && !opp(x, r.z)) piler.push([x, r.z]);
     }
     // hver del er en kasse, og en litt større blekkasse rett bak den gir strek på sidene og under
     const mx = new THREE.Matrix4(), kasse = (w, h, d) => R.geo('d3k' + [w, h, d].join(','), () => new THREE.BoxGeometry(w, h, d));
     const rad = (w, h, d, mat, pos, k = .02) => {
       if (!pos.length) return;
-      const lag = (geo, m, dy, dz) => { const im = new THREE.InstancedMesh(geo, m, pos.length); pos.forEach((p, i) => im.setMatrixAt(i, mx.makeTranslation(p[0], p[1] + dy, p[2] + d / 2 + dz))); im.userData.d3 = true; R.level.add(im); this.ting.push(im); return im; };
+      const lag = (geo, m, dy, dz) => { const im = new THREE.InstancedMesh(geo, m, pos.length); pos.forEach((p, i) => im.setMatrixAt(i, mx.makeTranslation(p[0], p[1] + dy, p[2] + d / 2 + dz))); im.userData.d3 = true; R.level.add(im); this.ting.push(im); if (sprekk) this.sprekkDeler.push(im); return im; };
       const im = lag(kasse(w, h, d), mat, 0, 0); im.castShadow = im.receiveShadow = true; this.egne.push(mat);
       lag(kasse(w + 2 * k, h + k - .004, d - .004), this.blekk(), -k / 2 - .002, -.002);
     };
     const fot = this.toon({ color: Col.dark(th.base, .9) }), bryst = this.toon({ color: Col.dark(th.wains, .8) }), tak = this.toon({ color: Col.light(th.wall, .08) }), pil = this.toon({ color: Col.light(th.wall, .12) });
-    rad(1, .16, .07, fot, front.filter(f => f[2] !== 'dor').map(([x, z]) => [x + .5, .08, z]), .016);
-    rad(1, .08, .09, bryst, front.filter(f => !f[2]).map(([x, z]) => [x + .5, 1.02, z]), .016);
-    rad(1, .12, .16, tak, front.map(([x, z]) => [x + .5, 2.2, z]));
+    let sprekk = false; this.sprekkDeler = [];
+    for (const [liste, s] of [[front, false], [sprekkFront, true]]) {
+      sprekk = s;
+      rad(1, .16, .07, fot, liste.filter(f => f[2] !== 'dor').map(([x, z]) => [x + .5, .08, z]), .016);
+      rad(1, .08, .09, bryst, liste.filter(f => !f[2]).map(([x, z]) => [x + .5, 1.02, z]), .016);
+      rad(1, .12, .16, tak, liste.map(([x, z]) => [x + .5, 2.2, z]));
+    }
+    sprekk = false;
     rad(.3, 2.1, .13, pil, piler.map(([x, z]) => [x, 1.12, z]));
     rad(.42, .2, .19, fot, piler.map(([x, z]) => [x, .1, z]), .016);
     rad(.44, .12, .21, tak, piler.map(([x, z]) => [x, 2.12, z]));

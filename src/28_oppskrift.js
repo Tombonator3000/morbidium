@@ -33,6 +33,9 @@ const ROLLER = {
 };
 const HODEBYTTE = { pleier: 'pasient', oppasser: 'pleier', kultist: 'pasient' };
 const TILBEHOR_KODE = ['bart', 'eyeliner', 'glassoye', 'bandasje'];
+/* ansiktstilbehøret fra ChatGPT (tilbehor_ansikt_N): [linjen i ansiktet som andel av hodets høyde nedenfra, linjen i tilbehøret som andel av dets høyde nedenfra].
+   Brillene midt på øynene, munnbindet med overkanten rett under øynene, gassmasken med glassene på øynene */
+const TILBEHOR_FESTE = { 1: [.5, .5], 2: [.45, 1], 3: [.52, .7] };
 
 const Oppskrift = {
   rng: null, tall: { delt: 0, smell: 0 },
@@ -62,7 +65,9 @@ const Oppskrift = {
     const ref = H ? (H.f || H.s) : null;
     for (const [set, kind] of [[topp, topKind], [tb, 'tilbehor']]) {
       if (!set) continue; const views = {}, off = {};
-      for (const v of ['f', 'b', 's']) { if (!set[v]) continue; const hv = (H && (H[v] || H.f)) || ref; views[v] = this.delPart(set[v], kind, hv); const hh = hv ? hv.dh : .9; off[v] = [0, kind === 'tilbehor' ? hh * .38 : hh * (kind === 'har' ? .6 : .74)]; }
+      // håret er en parykk med hull til ansiktet: toppen legges litt over issen, så det dekker hodets eget hår i stedet for å sveve over det.
+      // tilbehøret legges etter øynene: en linje i ansiktet (andel av hodet) møter en linje i tilbehøret (andel ovenfra)
+      for (const v of ['f', 'b', 's']) { if (!set[v]) continue; const hv = (H && (H[v] || H.f)) || ref; views[v] = this.delPart(set[v], kind, hv); const hh = hv ? hv.dh : .9, q = views[v] && views[v].dh || hh * .5, m = DELER_META[set[v]] || {}, fe = (m.serie === 'ansikt' && TILBEHOR_FESTE[m.del]) || [.5, .5]; off[v] = [0, kind === 'tilbehor' ? hh * fe[0] - q * fe[1] : kind === 'har' ? Math.max(hh * .05, hh * 1.06 - q) : hh * .74]; }
       const first = views.f || views.s || views.b; if (first) d.addAddon(first, { at: 'head', off: Object.assign({ f: off.f || [0, .6] }, off), views });
     }
   },

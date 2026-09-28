@@ -424,11 +424,7 @@ const R = {
   /* ---------- varsler på gulvet ---------- */
   telegraph(shape, o) {
     const g = new THREE.Group(); g.position.set(o.x, .035 + Math.random() * .01, o.z); g.rotation.y = o.a || 0;
-    const col = o.color || 0xff4a22;
-    const edge = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .95, depthWrite: false });
-    const ink = new THREE.MeshBasicMaterial({ color: 0x2a1a14, transparent: true, opacity: .8, depthWrite: false });
-    const fillM = new THREE.MeshBasicMaterial({ color: col, map: this.tex.hatch, transparent: true, opacity: .55, depthWrite: false }); fillM.map.repeat.set(3, 3);
-    const back = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .16, depthWrite: false });
+    const { edge, ink, fillM, back } = this.teleMat(o.color || 0xff4a22);
     const flat = m => { m.rotation.x = -Math.PI / 2; g.add(m); return m; };
     let fill;
     if (shape === 'circle') {
@@ -448,6 +444,25 @@ const R = {
       g.userData.update = p => fill.scale.setScalar(Math.max(.01, p));
     }
     g.userData.update(0); g.renderOrder = 3; this.dyn.add(g); return g;
+  },
+  /* materialene til varslene deles per farge og blir liggende (userData.delt). Ble de kastet med varselet, måtte skjermkortet bygge
+     shaderen på nytt for hvert varsel, fordi ingen andre bruker den (målt: én ny lenking per varsel) */
+  teleMat(col) {
+    const M = this.teleMats || (this.teleMats = new Map()), k = (this.teleC || (this.teleC = new THREE.Color())).set(col).getHex(); let m = M.get(k);
+    if (!m) {
+      const lag = (c, opacity, map) => { const x = new THREE.MeshBasicMaterial(Object.assign({ color: c, transparent: true, opacity, depthWrite: false }, map ? { map } : {})); x.userData.delt = true; return x; };
+      this.tex.hatch.repeat.set(3, 3); if (!this.teleInk) this.teleInk = lag(0x2a1a14, .8);
+      M.set(k, m = { edge: lag(k, .95), ink: this.teleInk, fillM: lag(k, .55, this.tex.hatch), back: lag(k, .16) });
+    }
+    return m;
+  },
+  /* varselet er ferdig: how er 'fyr' (angrepet går av), 'avbryt' (eieren ble stanset eller døde) eller 'rydd' (etasjen rives).
+     Tar det ut og frigjør geometrien, ellers blir bufrene liggende på skjermkortet (r128 slipper dem bare ved dispose). Materialer frigjøres
+     også, men ikke det som er merket userData.delt, og aldri teksturene (R.tex.hatch). Trygt å kalle to ganger. */
+  kastTele(g, how, t) {
+    if (!g || g.userData.kastet) return; g.userData.kastet = true; this.remove(g);
+    const delt = x => x.userData && x.userData.delt;
+    g.traverse(o => { if (delt(o)) return; if (o.geometry && !delt(o.geometry)) o.geometry.dispose(); if (o.material && !delt(o.material)) o.material.dispose(); });
   },
   /* ---------- kamera ---------- */
   updateCamera(tx, tz, dt) {
@@ -484,31 +499,118 @@ const R = {
 /* ---------- partikler ----------
    Fast kapasitet i én InstancedMesh, med tett bytte ved fjerning: den siste levende
    partikkelen flyttes inn i hullet. Mønsteret er hentet fra
-   scottstts/Threejs-Awesome-Graphics-Agent-Skills (MIT), threejs-procedural-vfx. */
+   scottstts/Threejs-Awesome-Graphics-Agent-Skills (MIT), threejs-procedural-vfx.
+   Blekk og papir: hver partikkel er en flate som vender mot kameraet (fast vinkel, CAM_PITCH) og snurrer rundt seg selv,
+   med en av fire tegninger fra et lite ark på 128 x 128 som lages én gang: gnist (strekes ut langs farten), blekkdråpe
+   med omriss, papirbit som vender seg, og støvdott. Arket har fyll i rødt, blekk i grønt og høylys i blått, så fargen
+   til partikkelen legges på fyllet og blekket blir mørkt. Formen velges med o.form ('gnist', 'drape', 'papir', 'stov')
+   eller gjettes fra fargen og o.flat. Alle koster fortsatt ett tegnekall. Med enkel grafikk (R.safe), eller om shaderen
+   ikke lenker, blir det de gamle klossene. */
+const PART_FORM = { gnist: 0, drape: 1, papir: 2, stov: 3 }, PART_STR = [.34, .3, .24, .4];
+const PART_VS = `attribute vec2 aForm; varying vec2 vUv; varying vec3 vCol; varying float vA;
+void main() {
+  float f = aForm.x; vUv = vec2(mod(f, 2.0), 1.0 - floor(f / 2.0)) * 0.5 + uv * 0.5;
+  #ifdef USE_INSTANCING_COLOR
+  vCol = instanceColor;
+  #else
+  vCol = vec3(1.0);
+  #endif
+  vA = aForm.y; gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+}`;
+const PART_FS = `uniform sampler2D uArk; uniform vec3 uBlekk; varying vec2 vUv; varying vec3 vCol; varying float vA;
+void main() {
+  vec3 t = texture2D(uArk, vUv).rgb; float dekk = max(t.r, t.g), a = dekk * vA; if (a < 0.03) discard;
+  vec3 c = mix(vCol, vec3(1.0, 0.98, 0.9), t.b * 0.85); c = mix(c, uBlekk, t.g / max(dekk, 0.001));
+  gl_FragColor = vec4(c, a);
+}`;
 const Particles = {
-  max: 900, n: 0, d: [], mesh: null, dummy: null, col: null,
+  max: 900, n: 0, d: [], mesh: null, dummy: null, col: null, blekk: false, brutt: false, ark: null, aForm: null, hsl: {},
   init() {
     if (this.mesh) return;
-    this.mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(.12, .12, .12), new THREE.MeshBasicMaterial({ color: 0xffffff }), this.max);
-    this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.mesh.frustumCulled = false; this.mesh.count = 0;
-    this.col = new THREE.Color(); for (let i = 0; i < this.max; i++) { this.mesh.setColorAt(i, this.col.set(0xffffff)); this.d.push({}); }
-    this.dummy = new THREE.Object3D(); R.scene.add(this.mesh);
+    this.col = new THREE.Color(); for (let i = 0; i < this.max; i++) this.d.push({});
+    this.dummy = new THREE.Object3D(); this.bygg();
+  },
+  kanBlekk() { return !R.safe && !this.brutt; },
+  /* lager meshen på nytt når enkel grafikk slås av eller på (klosser eller blekk). Arket lages én gang og blir liggende */
+  bygg() {
+    const blekk = this.kanBlekk(), gml = this.mesh; let geo, mat;
+    if (gml) { R.scene.remove(gml); gml.geometry.dispose(); gml.material.dispose(); if (gml.dispose) gml.dispose(); }
+    if (blekk) {
+      geo = new THREE.PlaneGeometry(1, 1); this.aForm = new THREE.InstancedBufferAttribute(new Float32Array(this.max * 2), 2); this.aForm.setUsage(THREE.DynamicDrawUsage); geo.setAttribute('aForm', this.aForm);
+      mat = new THREE.ShaderMaterial({ name: 'Blekkpartikler', uniforms: { uArk: { value: this.lagArk() }, uBlekk: { value: new THREE.Color(0x1c1410) } }, vertexShader: PART_VS, fragmentShader: PART_FS, transparent: true, depthWrite: false });
+    } else { geo = new THREE.BoxGeometry(.12, .12, .12); mat = new THREE.MeshBasicMaterial({ color: 0xffffff }); this.aForm = null; }
+    // fargene lages for alle plassene: setColorAt lager dem ellers etter count, som er 0 her, og da ble alle partiklene svarte
+    const m = this.mesh = new THREE.InstancedMesh(geo, mat, this.max); this.blekk = blekk; m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(this.max * 3), 3); m.instanceColor.setUsage(THREE.DynamicDrawUsage);
+    m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.count = this.n; m.renderOrder = blekk ? 5 : 0;
+    for (let i = 0; i < this.max; i++) m.setColorAt(i, this.col.set(i < this.n ? this.d[i].c : 0xffffff));
+    if (blekk) { m.onAfterRender = () => this.sjekk(); this.sjekket = false; }
+    R.scene.add(m);
+  },
+  /* lenket shaderen? Ellers blir det klosser */
+  sjekk() {
+    if (this.sjekket) return; this.sjekket = true;
+    try { const q = R.renderer.properties.get(this.mesh.material), pr = q.currentProgram || q.program; if (pr && pr.diagnostics && !pr.diagnostics.runnable) this.brutt = true; } catch (e) { }
+  },
+  /* arket med de fire tegningene: rødt er fyll (får partikkelens farge), grønt er blekk og blått er høylys */
+  lagArk() {
+    if (this.ark) return this.ark;
+    const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+    x.fillStyle = '#000'; x.fillRect(0, 0, 128, 128); x.globalCompositeOperation = 'lighter'; x.lineJoin = x.lineCap = 'round';
+    const F = 'rgb(255,0,0)', B = 'rgb(0,255,0)', H = 'rgb(0,0,255)', celle = (i, f) => { x.save(); x.translate((i % 2) * 64 + 32, (i >> 1) * 64 + 32); f(); x.restore(); };
+    const linse = (l0, l1, h) => { x.beginPath(); x.moveTo(l0, 0); x.bezierCurveTo(l0 * .3, -h * .9, l1 * .55, -h * 1.1, l1, 0); x.bezierCurveTo(l1 * .55, h * 1.1, l0 * .3, h * .9, l0, 0); x.closePath(); };
+    // gnist: en spiss strek med tykkere hode, hvitglødende kjerne og tynt blekkomriss
+    celle(0, () => { linse(-29, 27, 8); x.fillStyle = F; x.fill(); x.strokeStyle = B; x.lineWidth = 2.5; x.stroke(); linse(-18, 22, 3.2); x.fillStyle = H; x.fill(); });
+    // blekkdråpe: rundt hode foran og spiss hale bak (farten peker mot +x), omriss og et lite høylys
+    celle(1, () => {
+      x.beginPath(); x.arc(9, 0, 14, -2.2, 2.2); x.quadraticCurveTo(-8, 7, -27, 0); x.quadraticCurveTo(-8, -7, 9 + Math.cos(-2.2) * 14, Math.sin(-2.2) * 14); x.closePath();
+      x.fillStyle = F; x.fill(); x.strokeStyle = B; x.lineWidth = 3.2; x.stroke();
+      x.beginPath(); x.ellipse(13, -5, 4, 2.4, -.5, 0, TAU); x.fillStyle = H; x.fill();
+      x.beginPath(); x.arc(-24, 9, 3, 0, TAU); x.fillStyle = F; x.fill(); x.strokeStyle = B; x.lineWidth = 2; x.stroke();
+    });
+    // papirbit: revet kant på den ene siden, blekkomriss og to linjer fra en journalside
+    celle(2, () => {
+      x.rotate(-.18); x.beginPath(); x.moveTo(-22, -16); x.lineTo(21, -18); x.lineTo(24, 15);
+      for (let k = 0; k <= 8; k++) x.lineTo(24 - k * 5.8, 15 + (k % 2 ? 5 : -1) + (k % 3) * 1.5);
+      x.closePath(); x.fillStyle = F; x.fill(); x.strokeStyle = B; x.lineWidth = 2.2; x.stroke();
+      x.strokeStyle = 'rgb(0,120,0)'; x.lineWidth = 1.6; for (const y of [-6, 3]) { x.beginPath(); x.moveTo(-16, y); x.lineTo(17, y - .8); x.stroke(); }
+      x.strokeStyle = 'rgb(0,70,0)'; x.beginPath(); x.moveTo(-12, -16); x.lineTo(-13, 16); x.stroke();
+    });
+    // støvdott: myke skyer med noen blekkprikker og korte skraveringer
+    celle(3, () => {
+      for (const [a, b, r] of [[0, 0, 19], [-10, 5, 13], [11, 4, 14], [3, -9, 12], [-6, -7, 10]]) { const g = x.createRadialGradient(a, b, 0, a, b, r); g.addColorStop(0, 'rgba(255,0,0,.8)'); g.addColorStop(.6, 'rgba(255,0,0,.45)'); g.addColorStop(1, 'rgba(255,0,0,0)'); x.fillStyle = g; x.beginPath(); x.arc(a, b, r, 0, TAU); x.fill(); }
+      x.strokeStyle = 'rgb(0,150,0)'; x.lineWidth = 1.8; for (const [a, b, r, v0, v1] of [[0, 0, 20, 3.4, 5.2], [-10, 5, 14, 1.7, 3.1], [11, 4, 15, .1, 1.3]]) { x.beginPath(); x.arc(a, b, r, v0, v1); x.stroke(); }
+      x.strokeStyle = 'rgb(0,130,0)'; x.lineWidth = 1.4; for (const [a, b] of [[-12, -2], [-5, 6], [4, -4], [10, 5]]) { x.beginPath(); x.moveTo(a, b); x.lineTo(a + 5, b - 5); x.stroke(); }
+      x.fillStyle = 'rgb(0,200,0)'; for (const [a, b, r] of [[-15, 8, 1.6], [14, -8, 1.3], [2, 12, 1.5], [-4, -13, 1.1], [17, 9, 1]]) { x.beginPath(); x.arc(a, b, r, 0, TAU); x.fill(); }
+    });
+    const t = this.ark = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearMipmapLinearFilter; return t;
+  },
+  /* formen: o.form, ellers papir for o.flat, støv for grått og brunt, dråper for blod, vann og mørke farger, gnister for hvitt, gult og oransje */
+  form(o) {
+    if (o.form !== undefined) return typeof o.form === 'number' ? o.form & 3 : PART_FORM[o.form] ?? 0;
+    if (o.flat) return 2;
+    const H = this.col.getHSL(this.hsl), h = H.h, s = H.s, l = H.l;
+    if (l > .25 && l < .8 && s < .4 && (h < .17 || h > .9 || s < .12)) return 3;
+    if (l <= .25 || (h > .45 && h < .62 && s > .4 && l < .85) || ((h < .04 || h > .9) && s > .35 && l < .7)) return 1;
+    if (l >= .7 || (h < .2 && s > .6 && l > .5)) return 0;
+    return (o.speed || 4) >= 6 ? 0 : 1;
   },
   spawn(x, y, z, n, color, o = {}) {
     if (!this.mesh) return;
+    this.col.set(color); const f = this.form(o);
     for (let k = 0; k < n; k++) {
       if (this.n >= this.max) break;
       const i = this.n++, p = this.d[i];
       const a = Math.random() * TAU, sp = (o.speed || 4) * (.4 + Math.random() * .8);
       p.x = x; p.y = y; p.z = z; p.vx = Math.cos(a) * sp + (o.vx || 0); p.vz = Math.sin(a) * sp + (o.vz || 0); p.vy = (o.up || 4) * (.5 + Math.random());
       p.life = p.max = (o.life || .6) * (.6 + Math.random() * .6); p.g = o.g === undefined ? 14 : o.g; p.s = (o.size || 1) * (.6 + Math.random() * .8);
-      p.flat = !!o.flat; p.rx = Math.random() * 3; p.ry = Math.random() * 3; p.spin = rnd(-12, 12); p.c = color;
+      p.flat = !!o.flat; p.rx = Math.random() * 3; p.ry = Math.random() * 3; p.spin = rnd(-12, 12); p.c = color; p.f = f; p.ang = a;
       this.mesh.setColorAt(i, this.col.set(color));
     }
     this.mesh.instanceColor.needsUpdate = true;
   },
   update(dt) {
     if (!this.mesh) return;
+    if (this.blekk !== this.kanBlekk()) this.bygg();
     let swapped = false;
     for (let i = this.n - 1; i >= 0; i--) {
       const p = this.d[i]; p.life -= dt;
@@ -517,39 +619,117 @@ const Particles = {
       if (p.y < .05) { p.y = .05; p.vy *= -.35; p.vx *= .6; p.vz *= .6; }
       p.rx += p.spin * dt; p.ry += p.spin * .7 * dt;
     }
-    const D = this.dummy;
-    for (let i = 0; i < this.n; i++) {
-      const p = this.d[i], sc = p.s * Math.min(1, p.life / p.max * 2);
-      D.position.set(p.x, p.y, p.z); D.rotation.set(p.rx, p.ry, 0);
-      if (p.flat) D.scale.set(sc * 1.4, sc * .15, sc); else D.scale.setScalar(sc);
-      D.updateMatrix(); this.mesh.setMatrixAt(i, D.matrix);
+    if (this.blekk) this.skrivBlekk(); else {
+      const D = this.dummy;
+      for (let i = 0; i < this.n; i++) {
+        const p = this.d[i], sc = p.s * Math.min(1, p.life / p.max * 2);
+        D.position.set(p.x, p.y, p.z); D.rotation.set(p.rx, p.ry, 0);
+        if (p.flat) D.scale.set(sc * 1.4, sc * .15, sc); else D.scale.setScalar(sc);
+        D.updateMatrix(); this.mesh.setMatrixAt(i, D.matrix);
+      }
     }
-    this.mesh.count = this.n; this.mesh.instanceMatrix.needsUpdate = true;
+    // bare de levende plassene sendes til skjermkortet
+    const IM = this.mesh.instanceMatrix; IM.updateRange.offset = 0; IM.updateRange.count = this.n * 16; this.mesh.count = this.n; IM.needsUpdate = true;
     if (swapped) this.mesh.instanceColor.needsUpdate = true;
+  },
+  /* flatene skrives rett inn i matrisene: x og y ligger i skjermplanet (høyre og opp for kameraet), z peker mot kameraet.
+     Flyttet 0,25 mot kameraet, så de ikke skjæres av gulvet når de ligger der */
+  skrivBlekk() {
+    const A = this.mesh.instanceMatrix.array, F = this.aForm.array, cp = Math.cos(CAM_PITCH), sp = Math.sin(CAM_PITCH), L = .25;
+    for (let i = 0; i < this.n; i++) {
+      const p = this.d[i], f = p.f, liv = p.life / p.max, fr = Math.min(1, liv * 2), sc = p.s * PART_STR[f];
+      let sx = sc, sy = sc, ang, al = 1;
+      if (f < 2) {
+        // gnister og dråper peker dit de flyr (farten sett fra kameraet) og strekkes ut med farten
+        const ux = p.vx, uy = p.vy * cp - p.vz * sp, v = Math.hypot(ux, uy); if (v > .4) p.ang = Math.atan2(uy, ux);
+        const k = f === 0 ? Math.min(2.6, 1 + v * .16) : Math.min(1.7, 1 + v * .07); ang = p.ang; sx *= k * fr; sy *= f === 0 ? fr : fr / Math.sqrt(k);
+      } else if (f === 2) { ang = p.rx * .5; sx *= fr; sy *= fr * (.18 + .82 * Math.abs(Math.cos(p.ry))); } // papiret vender seg i lufta
+      else { ang = p.rx * .15; const vokst = 1 + (1 - liv) * .8; sx *= vokst; sy *= vokst; al = Math.min(1, liv * 1.7) * .9; } // støvet vokser og blekner
+      const c = Math.cos(ang), s = Math.sin(ang), o = i * 16;
+      A[o] = c * sx; A[o + 1] = s * sx * cp; A[o + 2] = -s * sx * sp; A[o + 3] = 0;
+      A[o + 4] = -s * sy; A[o + 5] = c * sy * cp; A[o + 6] = -c * sy * sp; A[o + 7] = 0;
+      A[o + 8] = 0; A[o + 9] = sp; A[o + 10] = cp; A[o + 11] = 0;
+      A[o + 12] = p.x; A[o + 13] = p.y + sp * L; A[o + 14] = p.z + cp * L; A[o + 15] = 1;
+      F[i * 2] = f; F[i * 2 + 1] = al;
+    }
+    this.aForm.updateRange.offset = 0; this.aForm.updateRange.count = this.n * 2; this.aForm.needsUpdate = true;
   },
   clear() { this.n = 0; if (this.mesh) this.mesh.count = 0; }
 };
 
-/* ---------- flytende tekst og snakkebobler (HTML over lerretet) ---------- */
+/* ---------- flytende tekst og snakkebobler (HTML over lerretet) ----------
+   Tekstene legges ut på nytt hvert bilde, fra størrelser som måles én gang: de viktigste først (krit og stempel, så skade på
+   pasienten, tall og til sist info), og eldre før nyere. En tekst som ville dekket en annen tekst eller en snakkeboble, går dit
+   den må flyttes minst (helst opp) og glir dit. Samme ord på samme sted på et øyeblikk blir ett («BONK ×2»), og høyst tre store
+   ord lever samtidig. Alt flyttes med transform, så telefonen slipper å legge ut siden på nytt for hver tekst i hvert bilde. */
 const FX = {
-  items: [],
+  items: [], n: 0, M: 4, MAKS: 28,
   text(x, y, z, str, cls = '', life = .9) {
+    const now = G.time;
+    for (const it of this.items) if (it.kind === 'text' && it.str === str && it.cls === cls && now - it.tSist < .4 && Math.hypot(it.x - x, it.z - z) < 2) {
+      it.ant++; it.tSist = now; it.life = it.max = Math.max(it.max, life); it.pop = 1; it.ut = false; it.malt = false; it.el.textContent = str + ' ×' + it.ant; this.tak(); return it;
+    }
     const el = document.createElement('div'); el.className = 'dmg ' + cls; el.textContent = str; $('fx').appendChild(el);
-    this.items.push({ el, x, y, z, life, max: life, vy: 1.6, kind: 'text' });
+    const pri = /\b(crit|stamp)\b/.test(cls) ? 3 : /\bhurt\b/.test(cls) ? 2 : /\binfo\b/.test(cls) ? 0 : 1;
+    const it = { el, x, y, z, life, max: life, vy: 1.6, kind: 'text', str, cls, pri, tSist: now, n: ++this.n, ant: 1, rot: pri === 3 ? rnd(-6, 6) : 0, pop: 0, ox: 0, oy: 0, mx: 0, my: 0, ny: true, tall: !/\b(info|stamp)\b/.test(cls) };
+    this.items.push(it); this.proj(it); this.skriv(it); if (pri === 3) this.tak(); return it;
   },
+  /* høyst tre store ord (krit og stempel) samtidig: de eldste blekner fort */
+  tak() { const s = this.items.filter(it => it.pri === 3 && !it.ut).sort((a, b) => a.tSist - b.tSist || a.n - b.n); for (let i = 0; i < s.length - 3; i++) { s[i].life = Math.min(s[i].life, .2); s[i].ut = true; } },
+  fjern(f) { for (let i = this.items.length - 1; i >= 0; i--) { const it = this.items[i]; if (it.kind === 'text' && f(it)) { it.el.remove(); this.items.splice(i, 1); } } },
   bubble(target, str, life = 2.6, cls = '') {
     for (const it of this.items) if (it.target === target && it.kind === 'bubble') it.life = 0;
     const el = document.createElement('div'); el.className = 'bubble ' + cls; el.textContent = str; $('fx').appendChild(el);
-    this.items.push({ el, target, life, max: life, kind: 'bubble', h: target.bubbleH || 2.6 });
+    const it = { el, target, life, max: life, kind: 'bubble', h: target.bubbleH || 2.6 }; this.items.push(it); this.proj(it); this.skriv(it);
+  },
+  proj(it, W = innerWidth, H = innerHeight) {
+    const t = it.kind === 'text', v = (this._v || (this._v = new THREE.Vector3())).set(t ? it.x : it.target.x, t ? it.y : it.h, t ? it.z : it.target.z).project(R.camera);
+    it.px = (v.x + 1) / 2 * W; it.py = (1 - v.y) / 2 * H;
+  },
+  /* boksen rundt teksten slik den står på skjermen: skrå stempelord tar mer plass i høyden */
+  maal(it) { const w = it.el.offsetWidth, h = it.el.offsetHeight, r = (it.rot || 0) * Math.PI / 180, c = Math.abs(Math.cos(r)), s = Math.abs(Math.sin(r)); it.bw = w * c + h * s; it.bh = w * s + h * c; it.malt = true; },
+  /* boblene står der de står. Så legges tekstene ut én for én: treffer en tekst noe som alt ligger der, prøves plassene over, under
+     og ved siden av hver av dem, og den som flytter teksten minst, vinner (opp koster minst, ned mest). Litt bonus for å bli der den
+     var, så to like gode plasser ikke bytter hvert bilde. Tekster helt utenfor skjermen er ikke med. */
+  legg(W, H, uT, uB) {
+    const M = this.M, lagt = [];
+    for (const it of this.items) if (it.kind === 'bubble' && !uB && it.malt) lagt.push([it.px - it.bw / 2 - M / 2, it.py - it.bh - M / 2, it.px + it.bw / 2 + M / 2, it.py + 13 + M / 2]);
+    const T = this.items.filter(it => it.kind === 'text' && it.malt && !(uT && it.tall)).sort((a, b) => b.pri - a.pri || a.n - b.n);
+    for (const it of T) {
+      const hw = it.bw / 2 + M / 2, hh = it.bh / 2 + M / 2, x0 = it.px, y0 = it.py, fx = it.mx, fy = it.my; it.mx = it.my = 0;
+      if (x0 + hw < 0 || x0 - hw > W || y0 + hh < 0 || y0 - hh > H || lagt.length >= this.MAKS) continue; // i en stor slåsskamp står de minst viktige der de er, så telefonen holder farten
+      const inn = (x, y) => [clamp(x, hw, Math.max(hw, W - hw)), clamp(y, hh, Math.max(hh, H - hh))];
+      const fri = p => { for (const b of lagt) if (p[0] - hw < b[2] && p[0] + hw > b[0] && p[1] - hh < b[3] && p[1] + hh > b[1]) return false; return true; };
+      let p = inn(x0, y0);
+      if (!fri(p)) {
+        let bc = 1e9, best = null;
+        const prov = (x, y) => { const q = inn(x, y); if (!fri(q)) return; const dx = q[0] - x0, dy = q[1] - y0; let c = Math.abs(dx) * 1.5 + (dy < 0 ? -dy : dy * 2); if (Math.abs(dx - fx) + Math.abs(dy - fy) < 4) c -= 12; if (c < bc) { bc = c; best = q; } };
+        for (const b of lagt) { prov(x0, b[1] - hh); prov(x0, b[3] + hh); prov(b[0] - hw, y0); prov(b[2] + hw, y0); prov(b[0] - hw, b[1] - hh); prov(b[2] + hw, b[1] - hh); }
+        if (best) p = best;
+      }
+      lagt.push([p[0] - hw, p[1] - hh, p[0] + hw, p[1] + hh]); it.mx = p[0] - x0; it.my = p[1] - y0;
+    }
+  },
+  skriv(it) {
+    let t = 'translate3d(' + Math.round(it.px + (it.ox || 0)) + 'px,' + Math.round(it.py + (it.oy || 0)) + 'px,0) translate(-50%,' + (it.kind === 'text' ? '-50%)' : '-100%)');
+    if (it.rot) t += ' rotate(' + it.rot.toFixed(1) + 'deg)'; if (it.pop > 0) t += ' scale(' + (1 + it.pop * it.pop * .35).toFixed(3) + ')';
+    if (t !== it.tf) { it.tf = t; it.el.style.transform = t; }
+    if (it.kind === 'text') { const o = Math.min(1, it.life / it.max * 2.5).toFixed(2); if (o !== it.op) { it.op = o; it.el.style.opacity = o; } }
   },
   update(dt) {
+    const W = innerWidth, H = innerHeight, cl = document.body.classList, uT = cl.contains('uten-tall'), uB = cl.contains('uten-bobler'), k = Math.min(1, dt * 18);
     for (let i = this.items.length - 1; i >= 0; i--) {
       const it = this.items[i]; it.life -= dt;
       if (it.life <= 0 || (it.target && it.target.alive === false)) { it.el.remove(); this.items.splice(i, 1); continue; }
-      let p;
-      if (it.kind === 'text') { it.y += it.vy * dt; it.vy *= .96; p = R.project(it.x, it.y, it.z); it.el.style.opacity = Math.min(1, it.life / it.max * 2.5); }
-      else p = R.project(it.target.x, it.h, it.target.z);
-      it.el.style.left = p.x + 'px'; it.el.style.top = p.y + 'px';
+      if (it.kind === 'text') { it.y += it.vy * dt; it.vy *= .96; if (it.pop > 0) it.pop = Math.max(0, it.pop - dt * 6); }
+      this.proj(it, W, H);
+    }
+    // nye og endrede tekster måles samlet (én utlegging av siden), så regnes plassene ut uten å lese noe fra siden
+    for (const it of this.items) if (!it.malt && !(it.kind === 'text' ? uT && it.tall : uB)) this.maal(it);
+    this.legg(W, H, uT, uB);
+    for (const it of this.items) {
+      if (it.kind === 'text') { if (it.ny) { it.ox = it.mx; it.oy = it.my; it.ny = false; } else { it.ox += (it.mx - it.ox) * k; it.oy += (it.my - it.oy) * k; } }
+      this.skriv(it);
     }
   },
   clear() { for (const it of this.items) it.el.remove(); this.items = []; }
