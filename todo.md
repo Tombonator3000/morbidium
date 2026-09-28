@@ -8,8 +8,8 @@ Tom ønsket 3D-vegger og gulv mot 2D-figurer, en mer isometrisk vinkel og mer et
 - [x] Kameravinkel som valg under Innstillinger, Bilde (som før, lav, isometrisk), med «Last på nytt» når en annen vinkel er valgt. Adressen går foran.
 - [x] Lagt inn på main 28.9. kveld fra patchen, oppå veggprøven, og testdel 41 rettet for den nye spaken.
 - [x] Toms telefon (Adreno 750) mistet WebGL og ga hvitt bilde: telefoner kjennes nå igjen også når Chrome melder fin peker (Samsung med S Pen), telefoner får ikke omgivelsesskyggen, og mistet grafikk som ikke kommer tilbake gir en lettere start neste gang. Testdel 65.
-- [ ] Tom: lukk Chrome helt på telefonen (sveip den bort, eller Tving avslutning), åpne spillet og fortsett løpet. Krasjer det, trykk «Kopier feilrapport» i feilmeldingen og lim den inn til Claude. Åpne også chrome://gpu i en ny fane og ta skjermbilde av «Log Messages» nederst.
-- [ ] Claude: når feilrapporten kommer, last inn løpet her, spill av etasjen og finn det som velter Adreno 750 også i trygg modus. Chrome sperrer WebGL for siden etter hvert krasj, så hvert forsøk koster Tom en omstart av nettleseren.
+- [x] Tom: spillet virker på telefonen igjen (28.9. kveld), etter at Chrome ble startet på nytt med versjonen som har telefongjenkjenningen og feilrapporten.
+- [ ] Claude, hvis telefonen krasjer igjen: be om «Kopier feilrapport» og et skjermbilde av «Log Messages» i chrome://gpu, last inn løpet her og spill av etasjen. Hvorfor Adreno 750 også krasjet i trygg modus 28.9., er ikke funnet. Chrome sperrer WebGL for siden etter hvert krasj, så hvert forsøk koster Tom en omstart av nettleseren.
 - [ ] Tom: prøv isometrisk og lav (Innstillinger, Bilde, Kameravinkel) på PC og telefon, og si hvilken vinkel som skal bli standard (eller prøv egne tall i adressen med ?helning=40&dreining=30).
 - [ ] Tom: er disen og omgivelsesskyggen passe, for mye eller for lite? Styrken står i NIVA i 15_rom3d.js (dis, ao).
 - [ ] Claude, når vinkelen er valgt: vegglamper, vinduer, pilastre, blod og sprekken også på sideveggene, gjennomsiktige vegger der en høy vegg dekker pasienten, snøens parallakse etter vinkelen, og eventuelt tegninger av ting sett på skrå.
