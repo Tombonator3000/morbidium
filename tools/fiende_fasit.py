@@ -43,7 +43,13 @@ async def main():
         await klikk(pg, '#tNew'); await pg.wait_for_timeout(500); await klikk(pg, '[data-awk]')
         await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=60000)
         typer = args.typer.split(',') if args.typer else await pg.evaluate("() => Object.keys(ENEMIES).sort()")
-        ut = {}
+        # tabellene: puljene per etasje (rekkefølgen avgjør hvilke fiender bølgene får), indeksen og alt som står per type
+        tab = await pg.evaluate("""() => { const f = v => typeof v === 'function' ? 'fn:' + v.toString().length : v, per = {};
+              for (const t of Object.keys(ENEMIES).sort()) per[t] = JSON.stringify([Object.entries(ENEMIES[t]).filter(([k]) => k !== 'vedStart' && k !== 'grense').sort(), LINES[t], DEATH_CAUSES[t], MESTER_TITTEL[t], FIENDESTEMME[t], FIENDE_INFO[t],
+                ['keep', 'retreat', 'talk', 'hold', 'hop', 'styring'].map(k => (Grotesk[k] || {})[t]), !!Grotesk.ai[t], !!(Grotesk.tick || {})[t]], (k, v) => f(v)); // grense og vedStart er nye felt, ikke med her
+              return { puljer: JSON.stringify(DEPTH_ENEMIES), rekke: FIENDE_REKKE.join(' '), sjefer: SJEF_REKKE.join(' '), typer: Object.keys(ENEMIES).join(' '), per }; }""")
+        ut = {'_tabeller': {'avtrykk': hashlib.sha1(json.dumps(tab, sort_keys=True).encode()).hexdigest()[:16], 'spor': [f'puljer {tab["puljer"]}', f'rekke {tab["rekke"]}', f'sjefer {tab["sjefer"]}', f'typer {tab["typer"]}'] + [f'{t} {v}' for t, v in sorted(tab['per'].items())]}}
+        print(f'{"_tabeller":14} {ut["_tabeller"]["avtrykk"]}', flush=True)
         for t in typer:
             try:
                 r = await pg.evaluate(KAMP, [t, args.sek])
