@@ -29,7 +29,7 @@ async def del_29(b):
     # 29) Kombo: treffkjeden med nivåer, flerdrap, overkill, miljødrap, perfekt unnvikelse, tredje slag, kortkjede, sjefdrap og fanfarer
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg, url=URL + '?2d')
-    ko = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, T = Kombo.tall, ut = {};
+    ko = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async t => { Klokke.spol(t); }, T = Kombo.tall, ut = {};
           Sound.init(); rolig(); P.hp = P.maxHp = 9999; const r = G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; P.face = 0;
           const lag = (dx, dz, hp = 1e6) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy('pleier', s.x, s.z, false, 1); e.hp = e.max = hp; e.stun = 99; e.state = 'chase'; return e; };
           // treffkjeden: 22 treff gir tredje nivå, telleren og den brennende kanten
@@ -124,7 +124,7 @@ async def del_44(b):
     #     shaderne bygges ikke på nytt for hvert angrep, og R.kastTele får vite hvorfor varselet kastes.
     #     Før rettingen: +1500 geometrier for 300 varsler, +101 for 20 avbrutte og +60 for 60 hugg.
     VL_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
-            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            spill = async t => { Klokke.spol(t); },
             // til ingen varsler eller hugg er igjen: spillet må gå, men taket i sanntid er romslig, for mange varsler samtidig er tungt i programvaregrafikk
             tomt = async () => { const t0 = performance.now(); while ((G.tele.length || VFX.slashes.length) && performance.now() - t0 < 120000) await vent(50); await spill(.1); },
             ramme = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))),
@@ -214,7 +214,7 @@ async def del_46(b):
     # nye fiender i spor C (49 og 50) kan bruke gjettingen fra fargetonen, resten skal stå i TELE_FARGE
     maa_sta = [c for c, fs in farger.items() if any(not (f.startswith('49_') or f.startswith('50_')) for f in fs)]
     BK_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
-            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            spill = async t => { Klokke.spol(t); },
             tomt = async () => { const t0 = performance.now(); while (G.tele.length && performance.now() - t0 < 120000) await vent(50); await spill(.4); },
             rydd = () => { for (const t of G.tele) R.kastTele(t.mesh, 'rydd', t); G.tele = []; Blekk.tom(); },
             kall = () => { const i = R.renderer.info; i.autoReset = false; i.reset(); R.render(0); const n = i.render.calls; i.autoReset = true; return n; },
@@ -393,7 +393,7 @@ async def del_48(b):
     import io as _io48
     from PIL import Image as _Img48
     PT_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
-            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            spill = async t => { Klokke.spol(t); },
             tomt = async () => { const t0 = performance.now(); while (Particles.n && performance.now() - t0 < 60000) await vent(50); },
             kall = () => { const i = R.renderer.info; i.autoReset = false; i.reset(); R.render(0); const n = i.render.calls; i.autoReset = true; return n; },
             lenket = () => { const q = R.renderer.properties.get(Particles.mesh.material), pr = q.currentProgram || q.program; return !!pr && !(pr.diagnostics && !pr.diagnostics.runnable) && !Particles.brutt; },
@@ -490,7 +490,7 @@ async def del_49(b):
     import io as _io49
     from PIL import Image as _Img49
     NS_HJELP = """const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)),
-            spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            spill = async t => { Klokke.spol(t); },
             tomt = async () => { const t0 = performance.now(); while (G.tele.length && performance.now() - t0 < 120000) await vent(50); await spill(.1); },
             rydd = () => { for (const t of G.tele) R.kastTele(t.mesh, 'rydd', t); G.tele = []; Blekk.tom(); },
             kall = () => { const i = R.renderer.info; i.autoReset = false; i.reset(); R.render(0); const n = i.render.calls; i.autoReset = true; return n; },

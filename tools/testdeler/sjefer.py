@@ -62,8 +62,8 @@ async def del_62(b):
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg)
     om = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
-            til = async (f, t = 4, maks = 40000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
-            spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); };
+            til = async (f, t = 4) => { if (!f()) Klokke.til(f, t); return !!f(); },
+            spill = async t => { Klokke.spol(t); };
           if (typeof Oldermann !== 'object' || !ENEMIES.oldermann) return { mangler: true };
           startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; P.invuln = 0;
           const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 10 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0];
@@ -221,7 +221,7 @@ async def del_63(b):
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg)
     kr = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
-            til = async (f, t = 4, maks = 120000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(40); return !!f(); },
+            til = async (f, t = 4) => { if (!f()) Klokke.til(f, t); return !!f(); },
             spill = async (t, maks = 90000, hver) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) { await vent(40); if (hver) hver(); } };
           if (typeof Kraken !== 'object' || !SJEF_DATA.kraken) return { mangler: true };
           ut.data = { pulje: SJEF_PULJE.includes('kraken'), rekke: SJEF_REKKE.includes('kraken'), info: !!(FIENDE_INFO.kraken && FIENDE_INFO.kraken[0] && FIENDE_INFO.kraken[1]),
@@ -367,7 +367,7 @@ async def del_63(b):
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg, url=URL3D)
     d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
-            til = async (f, t = 4, maks = 150000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(60); return !!f(); };
+            til = async (f, t = 4) => { if (!f()) Klokke.til(f, t); return !!f(); };
           if (typeof Kraken !== 'object') return { mangler: true };
           G.run.sjefer[3] = 'kraken'; startFloor(3, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } ut.d3 = D3.on;
           P.hp = P.maxHp = 1e6; { const r = G.F.rooms[G.F.bossId]; P.x = r.x + r.w / 2; P.z = r.z + r.h - 2; }

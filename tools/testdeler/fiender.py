@@ -104,8 +104,8 @@ async def del_58(b):
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg)
     gr = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
-            til = async (f, t = 4, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(50); return !!f(); },
-            spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); },
+            til = async (f, t = 4) => { if (!f()) Klokke.til(f, t); return !!f(); },
+            spill = async t => { Klokke.spol(t); },
             bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }),
             iKastere = e => Dybde.kastere().some(k => k.k === e);
           startFloor(5, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999;
@@ -184,7 +184,7 @@ async def del_58(b):
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg, url=URL3D)
     d3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
-            til = async (f, t = 4, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(100); return !!f(); };
+            til = async (f, t = 4) => { if (!f()) Klokke.til(f, t); return !!f(); };
           startFloor(5, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; ut.d3 = D3.on;
           const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 7 && r.h >= 7) || G.F.rooms[0]; P.x = r.x + r.w / 2; P.z = r.z + r.h / 2; R.snapCamera(P.x, P.z);
           const s = freeSpot(P.x + 1.8, P.z + .6, 3), n = spawnEnemy('nokken', s.x, s.z, false, 5); n.cd = 99; n.stille = 99;
@@ -468,8 +468,8 @@ async def del_61(b):
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg)
     ds = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = { etasjer: {} },
-            til = async (f, t = 4, maks = 60000) => { const g0 = G.time, t0 = performance.now(); while (!f() && G.time - g0 < t && performance.now() - t0 < maks) await vent(40); return !!f(); },
-            spill = async (t, maks = 40000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(40); };
+            til = async (f, t = 4) => { if (!f()) Klokke.til(f, t); return !!f(); },
+            spill = async t => { Klokke.spol(t); };
           if (typeof Havet !== 'object' || typeof Laug !== 'object' || !ENEMIES.draug || !ENEMIES.holdning) return { mangler: true };
           const skade = {}, _ht = Havet.treff, _lt = Laug.treff;
           Havet.treff = function (shape, o, dmg, src) { const r = _ht.apply(Havet, arguments); if (r && src) skade[src.type] = (skade[src.type] || 0) + 1; return r; };
