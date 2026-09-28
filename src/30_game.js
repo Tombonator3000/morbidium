@@ -748,6 +748,8 @@ function boot() {
   step('Starter WebGL');
   R.init($('game'));
   try { const gl = R.renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); window.__gl = (R.renderer.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1') + ', ' + (ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)) + ', maks tekstur ' + gl.getParameter(gl.MAX_TEXTURE_SIZE) + ', dpr ' + (devicePixelRatio || 1); } catch (e) { window.__gl = 'ukjent GPU'; }
+  // feilmeldingen viser også hvordan spillet tegnet da det skjedde: telefon eller PC, 3D og kvalitet, og oppløsningen
+  window.__glInfo = () => window.__gl + ', ' + (R.coarse ? 'telefon' : 'PC') + ', ' + (R.safe || G.meta.settings.simple ? 'enkel grafikk' : D3.on ? '3D ' + D3.Q().navn : '2D') + ', oppløsning ' + R.dpr;
   step('Klargjør partikler og kontroller');
   Particles.init(); Input.init($('game'));
   G.meta = loadMeta();

@@ -1412,3 +1412,12 @@ Alle tidspunkt er UTC.
 
 ## 2026-09-28 17:50 Pages publisert med kameravinkelen
 - Pages-byggingen for 4e511f1 (kjøring 50) gikk grønt. Den publiserte siden har BYGG-merket 4e511f1, er like stor som det lokale bygget (12 757 035 byte) og har Kameravinkel under Innstillinger, Bilde, med «Last på nytt».
+
+## 2026-09-28 18:18 Mobil: Samsung-telefonen fikk PC-oppsettet og mistet WebGL
+- Tom fikk hvitt bilde og «Noe gikk galt: Grafikken gikk tom for minne eller krasjet (WebGL-konteksten ble mistet), og kom ikke tilbake» på telefonen. Skjermbildet viste WebGL2 på Adreno 750 (Snapdragon 8 Gen 3), dpr 3,75 og Chrome 154 på Android, trolig en Galaxy S24 Ultra. Det skjedde midt i et løp (nivå 3).
+- Målt grafikkminne i telefonprofil (384 x 832, berøring, grov peker, seks etasjer og to tilbake) for bygget før i dag (4355d3d), veggprøven (9b1e5af) og i dag: 33 til 47 MB i alle tre, uten tap og uten lekkasje av betydning. Minnet forklarer det ikke på en så sterk telefon.
+- Det jeg fant: spillet kjente igjen telefoner bare med matchMedia('(pointer: coarse)'). Chrome på Samsung med S Pen melder fin peker, fordi pennen teller først. Da fikk telefonen PC-oppsettet: oppløsning 2 i stedet for 1,5, høy kvalitet i stedet for middels, 2048 i skyggekartet, større teksturer og, fra i dag, omgivelsesskyggen med dybdetekstur. Samme telefonstørrelse med fin peker målt: 68 til 82 MB og dybdetekstur på. Dybdeteksturen er det eneste helt nye på skjermkortet i dag, og den var aldri prøvd på en ekte telefon. Jeg har ikke en Adreno å prøve på, så dette er den mest sannsynlige forklaringen, ikke en bevist en.
+- Rettet: R.coarse er nå også sann for berøringsskjerm i en mobil nettleser (Android, iPhone, iPad eller userAgentData.mobile). En PC med berøringsskjerm er fortsatt PC. Telefoner og TV får aldri omgivelsesskyggen (D3.Q setter ao til 0, slik taket på 1024 i skyggekartet gjør), heller ikke på høy.
+- Kommer grafikken ikke tilbake på åtte sekunder, lagres et trinn lettere til neste lasting (automatisk kvalitet: høy til middels til lav, og så uten 3D), og feilmeldingen sier det. Før startet «Last inn på nytt» med samme oppsett og kunne krasje likt. Feilmeldingen viser nå også telefon eller PC, 3D og kvalitet, og oppløsningen (window.__glInfo).
+- AGENTS.md: bruk R.coarse, ikke pointer: coarse alene. memory.md og todo.md oppdatert.
+- Ny testdel 65: 5 av 5 OK (telefon med fin peker får telefonoppsettet, høy på telefon uten dybdetekstur, mistet grafikk gir lettere start og riktig melding, PC med berøringsskjerm er PC). Del 64, 37 og 36 kjører.

@@ -4019,6 +4019,44 @@ async def main():
         sjekk('adressen (kamera=standard) går foran innstillingen', vi['adresse'] == {'navn': '', 'kilde': 'adresse', 'dreid': False}, vi['adresse'])
         sjekk('ingen konsollfeil (kameravinkel i innstillingene)', not vi['errs'], vi['errs'])
 
+        # 65) Telefoner som melder fin peker (Chrome på Samsung med S Pen) får telefonoppsettet, men ikke en PC med berøringsskjerm.
+        #     Telefoner får aldri omgivelsesskyggen (dybdeteksturen), heller ikke på høy. Mistet grafikk som ikke kommer tilbake, gir en
+        #     lettere start neste gang, og feilmeldingen forteller om telefon eller PC, kvaliteten og oppløsningen
+        FIN = """(() => { const o = window.matchMedia.bind(window); window.matchMedia = q => /pointer:\\s*coarse/.test(q) ? { matches: false, media: q, onchange: null,
+          addListener() { }, removeListener() { }, addEventListener() { }, removeEventListener() { }, dispatchEvent() { return false; } } : o(q); })()"""
+        UA_S = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36'
+        async def fin_side(**kw):
+            pg = await ny_side(b, has_touch=True, **kw)
+            await pg.add_init_script(FIN)
+            await pg.goto(URL3D + '?3d'); await pg.wait_for_timeout(1500); await pg.evaluate("() => localStorage.clear()")
+            return pg
+        pg = await fin_side(viewport={'width': 384, 'height': 832}, device_scale_factor=3.75, user_agent=UA_S)
+        await start_lop(pg, url=URL3D + '?3d')
+        tf = await pg.evaluate("""async () => { const vent = t => new Promise(r => setTimeout(r, t)), s = MORBIDIUM.meta.settings;
+          const ut = { fin: !matchMedia('(pointer: coarse)').matches, coarse: R.coarse, dprMax: R.dprMax, kval: D3.kval(), d3: D3.on };
+          s.kvalitet = 3; applySettings(); await vent(500);
+          ut.hoy = { kval: D3.kval(), ao: D3.Q().ao, skygge: D3.Q().skygge, dybde: !!R.rt.depthTexture, uAo: R.post.uniforms.uAo.value, dis: R.post.uniforms.uDis.value };
+          s.kvalitet = 0; delete s.kvAuto; applySettings(); await vent(500); ut.auto = D3.kval();
+          R.renderer.getContext().getExtension('WEBGL_lose_context').loseContext(); await vent(8800);
+          const e = document.getElementById('err'), p = e ? [...e.querySelectorAll('p')].map(x => x.textContent) : [];
+          ut.feil = !!e && !e.classList.contains('hidden'); ut.tekst = p[0] || ''; ut.info = p[1] || ''; ut.kvAuto = JSON.parse(localStorage.getItem('morbidium_meta_v2')).settings.kvAuto;
+          return ut; }""")
+        tf['errs'] = [e for e in pg.errs if 'context_lost' not in e.lower() and 'context lost' not in e.lower()][:6]
+        await pg.close()
+        h = tf['hoy']
+        sjekk('telefon som melder fin peker (Samsung med S Pen) får telefonoppsettet: oppløsning 1,5 og middels i 3D',
+              tf['fin'] and tf['coarse'] and tf['dprMax'] == 1.5 and tf['kval'] == 'middels' and tf['d3'], tf)
+        sjekk('telefon på høy: ingen omgivelsesskygge eller dybdetekstur, 1024 i skyggekartet, men dis',
+              h['kval'] == 'hoy' and h['ao'] == 0 and h['skygge'] == 1024 and not h['dybde'] and h['uAo'] == 0 and h['dis'] > 0, h)
+        sjekk('mistet grafikk som ikke kommer tilbake: feilmeldingen sier at neste start blir lettere og viser telefon, 3D middels og oppløsning, og lav er lagret',
+              tf['auto'] == 'middels' and tf['feil'] and 'lav kvalitet' in tf['tekst'] and 'telefon, 3D middels, oppløsning 1.5' in tf['info'] and tf['kvAuto'] == 'lav', tf)
+        sjekk('ingen konsollfeil (telefon med fin peker)', not tf['errs'], tf['errs'])
+        pc = await fin_side(viewport={'width': 1280, 'height': 720})
+        await pc.goto(URL3D + '?3d'); await pc.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=60000)
+        tp = await pc.evaluate("() => ({ coarse: R.coarse, touch: navigator.maxTouchPoints, kval: D3.kval() })")
+        await pc.close()
+        sjekk('PC med berøringsskjerm og fin peker er ikke telefon', not tp['coarse'] and tp['touch'] > 0 and tp['kval'] == 'hoy', tp)
+
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
     sys.exit(1 if feil else 0)
