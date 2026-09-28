@@ -30,7 +30,7 @@ KAMP = FAST + """(([type, sek]) => { const G = MORBIDIUM, P = G.player;
   Klokke.til(() => { n++; P.hp = Math.max(P.hp, 1e5);
     if (n % 10 === 0) spor.push([n, r6(e.x), r6(e.z), e.state, r6(e.hp), e.alive ? 1 : 0, r6(P.x), r6(P.z), r6(P.hp), G.tele.length, G.projectiles.length, G.enemies.filter(q => q.alive).length, e.type].join(' '));
     return false; }, sek);
-  Klokke.slipp(); return { type, etasje: d, frø: G.run.seed, spor }; })"""
+  return { type, etasje: d, frø: G.run.seed, spor }; })"""  # testklokka står mellom kampene, så ingenting går i vanlig tid mellom dem
 
 
 async def main():

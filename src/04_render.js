@@ -581,7 +581,9 @@ const R = {
   updateCamera(tx, tz, dt) {
     this.camT.x = lerp(this.camT.x, tx, 1 - Math.pow(.004, dt)); this.camT.z = lerp(this.camT.z, tz, 1 - Math.pow(.004, dt));
     this.trauma = Math.max(0, this.trauma - dt * 1.9); this.kamTick(dt);
-    const s = this.shakeOn ? this.trauma * this.trauma * .32 * (this.shakeK ?? 1) : 0, t = performance.now() * .05;
+    // ristingen går på spilltid (dt), ikke på klokka: kameraet avgjør hvor musa peker, og da må samme kamp gi samme bilde (testklokka)
+    this.ristT = (this.ristT || 0) + dt * 50;
+    const s = this.shakeOn ? this.trauma * this.trauma * .32 * (this.shakeK ?? 1) : 0, t = this.ristT;
     const ox = s * (Math.sin(t * 1.3) + Math.sin(t * 2.9) * .5), oz = s * (Math.cos(t * 1.7) + Math.sin(t * 3.3) * .5), D = 60;
     this.camera.position.set(this.camT.x + ox + KAM.sy * Math.cos(CAM_PITCH) * D, Math.sin(CAM_PITCH) * D, this.camT.z + oz + KAM.cy * Math.cos(CAM_PITCH) * D);
     this.camera.lookAt(this.camT.x + ox, 0, this.camT.z + oz);

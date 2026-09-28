@@ -499,7 +499,8 @@ const Vaer = {
   },
   tick(dt) {
     if (!this.obj) return;
-    const N = this.n, p = this.p, t = performance.now() / 1000;
+    this.tid = (this.tid || 0) + dt; // regnet og snøen går på spilltid, så de trekker tilfeldige tall likt fra gang til gang (testklokka)
+    const N = this.n, p = this.p, t = this.tid;
     for (let i = 0; i < N; i++) {
       const o = i * 3;
       if (p[o + 1] < -40) { if (Math.random() < dt * 2) this.plasser(i); continue; }
