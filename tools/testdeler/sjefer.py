@@ -19,17 +19,23 @@ async def del_4(b):
             await pg.evaluate("""() => { const G = MORBIDIUM, r = G.F.rooms.find(r => r.template === 'isolat'); if (r) { G.player.x = r.x + r.w / 2; G.player.z = r.z + r.h / 2; G.rooms[r.id].cleared = true; } }""")
             await pg.wait_for_timeout(1000); await pg.screenshot(path='/tmp/e_6isolat.png')
             await pg.evaluate("""() => { const G = MORBIDIUM, r = G.F.rooms[G.F.bossId]; G.player.x = r.x + r.w / 2; G.player.z = r.z + r.h - 2; }""")
-        await pg.wait_for_timeout(3500)
+        # sjefen kommer når pasienten er i rommet, og inngangen tar 2,6 sekunder spilltid: testklokka spoler fram til den er over
+        # (i vanlig tid går spillet saktere på en travel maskin)
+        await pg.evaluate("() => Klokke.til(() => MORBIDIUM.boss && MORBIDIUM.boss.state !== 'intro', 8)")
         bnavn = await pg.evaluate("() => MORBIDIUM.boss && MORBIDIUM.boss.type")
         sjekk(f'{sjef} er sjef i etasje {depth}', bnavn == sjef, bnavn)
         kinds = await pg.evaluate("() => MORBIDIUM.boss ? [...new Set(MORBIDIUM.boss.B0.attacks)] : []")
         for k in kinds:
             await pg.evaluate("(k) => { const B = MORBIDIUM.boss, P = MORBIDIUM.player; if (!B) return; B.state = 'chase'; B.cd = 99; P.hp = P.maxHp; bossAttackTest(B, k); }", k)
-            await pg.wait_for_timeout(1700)
+            await pg.evaluate("() => Klokke.spol(1.7)")
+            await pg.wait_for_timeout(150)
             if (depth, k) in [(4, 'isolate'), (6, 'pages'), (2, 'flood'), (1, 'hookpull'), (3, 'rull'), (1, 'hekkring'), (5, 'maane')]:
                 await pg.screenshot(path=f'/tmp/e_7sjef_{depth}_{k}.png')
-        await pg.evaluate("() => { const B = MORBIDIUM.boss; if (B) hurt(B, 99999, { from: 'player' }); }")
-        await pg.wait_for_timeout(2500)
+        # et angrep kan ha sjefen under vann eller midt i en tale (fasen «monolog»): spol til han er i kamp og kan treffes
+        await pg.evaluate("() => { const B = MORBIDIUM.boss; if (!B) return; Klokke.til(() => !B.alive || (B.phase === 'fight' && B.state !== 'intro' && !B.dukket), 8); hurt(B, 99999, { from: 'player' }); }")
+        # luken åpnes med en vanlig setTimeout 1,4 sekunder etter at sjefen døde, så her ventes det i vanlig tid, med tak
+        try: await pg.wait_for_function("() => !!MORBIDIUM.trapdoor", timeout=15000)
+        except Exception: pass
         sjekk(f'luken åpner seg etter {sjef} i etasje {depth}', await pg.evaluate("() => !!MORBIDIUM.trapdoor"))
     sjekk('ingen konsollfeil (sjefer)', not pg.errs, pg.errs[:6])
     await pg.close()

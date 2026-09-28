@@ -22,6 +22,8 @@ jobs:
       - run: python3 tools/skjaer_ark.py
       - run: python3 tools/behandle_bilder.py
       - run: python3 build.py
+      - name: Koden (rekkefølgen i build.py, ukjente navn og innpakninger)
+        run: node tools/sjekk_kode.js
       - name: Etasjegeneratoren
         run: node tools/test_gen.js > /tmp/test_gen.txt || (tail -5 /tmp/test_gen.txt; exit 1)
       - name: Chromium til røyktesten
