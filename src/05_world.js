@@ -468,7 +468,7 @@ function updateProjectiles(dt) {
       for (const t of targets) if (t.alive && !t.flying && d2(p.x, p.z, t.x, t.z) < (p.r + t.r) ** 2) { hurt(t, p.dmg, { type: p.cause || 'oppasser', x: ox, z: oz, kb: 3 }); p.alive = false; break; }
     } else {
       const all = G.boss && G.boss.alive ? G.enemies.concat([G.boss]) : G.enemies;
-      for (const e of all) if (e.alive && !(p.hitSet && p.hitSet.has(e)) && d2(p.x, p.z, e.x, e.z) < (p.r + e.r) ** 2) {
+      for (const e of all) if (e.alive && !e.dukket && !(p.hitSet && p.hitSet.has(e)) && d2(p.x, p.z, e.x, e.z) < (p.r + e.r) ** 2) {
         if (p.onHit) { p.onHit(p, e); if (!p.pierce) { p.alive = false; break; } (p.hitSet || (p.hitSet = new Set())).add(e); }
         else { hurt(e, p.dmg, { from: 'player', x: ox, z: oz, kb: 4 }); p.alive = false; break; }
       }

@@ -161,7 +161,7 @@ function meleeHit(k) {
   let hits = 0;
   const all = G.boss && G.boss.alive ? G.enemies.concat([G.boss]) : G.enemies;
   for (const e of all) {
-    if (!e.alive || e.state === 'spawn') continue;
+    if (!e.alive || e.state === 'spawn' || e.dukket) continue;
     const dx = e.x - P.x, dz = e.z - P.z, d = Math.hypot(dx, dz);
     if (d > range + e.r) continue;
     if (d > .8 && Math.abs(angDiff(Math.atan2(dx, dz), P.face)) > arc / 2) continue;
