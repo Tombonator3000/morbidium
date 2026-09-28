@@ -2568,9 +2568,9 @@ async def main():
                 for x in range(40, 90): px[x, y] = (0, 0, 0, 0)
             return im
         with tempfile.TemporaryDirectory() as tmp:
-            sti = pathlib.Path(tmp) / 'bakke_park.png'; rå = proveflate(1024, 1024, [(40, 70, 30), (60, 100, 40), (30, 60, 24)]); rå.save(sti)
-            ut = BB.behandle(sti, man['bakke_park']); for_ = BB.saum(rå.convert('RGB').resize((512, 512), Image.LANCZOS), 'x')[0]; etter = BB.saum(ut, 'x')[0]
-            sjekk('bildeløpet: en bakke med hard søm blir 512 x 512 uten gjennomsiktighet, og sømmen minst halvert', ut.size == (512, 512) and ut.mode == 'RGB' and etter <= for_ * .5, (ut.size, ut.mode, round(for_, 1), round(etter, 1)))
+            sti = pathlib.Path(tmp) / 'gulv_planker.png'; rå = proveflate(1024, 1024, [(40, 70, 30), (60, 100, 40), (30, 60, 24)]); rå.save(sti)
+            ut = BB.behandle(sti, man['gulv_planker']); for_ = BB.saum(rå.convert('RGB').resize((512, 512), Image.LANCZOS), 'x')[0]; etter = BB.saum(ut, 'x')[0]
+            sjekk('bildeløpet: et gulv med hard søm blir 512 x 512 uten gjennomsiktighet, og sømmen minst halvert', ut.size == (512, 512) and ut.mode == 'RGB' and etter <= for_ * .5, (ut.size, ut.mode, round(for_, 1), round(etter, 1)))
             sti = pathlib.Path(tmp) / 'vegg_panel.png'; proveflate(1536, 1024, [(220, 212, 173)] * 5 + [(111, 138, 85)] * 4 + [(59, 51, 34)], False).save(sti)
             vut = BB.behandle(sti, man['vegg_panel'])
             sjekk('bildeløpet: en vegg på 1536 x 1024 til en vegg på 2,3 meter blir 442 x 294', vut.size == (442, 294), vut.size)
@@ -2580,14 +2580,14 @@ async def main():
         # de genererte listene: alle teksturer som ikke er levert, står i liste 11 og 12, med filnavn, nøkkel, referanse og prompt
         tl = ROT50 / 'tegnelister'; teks = [k for k, m in man.items() if m.get('flis')]
         levert = {p.stem for p in (ROT50 / 'assets' / 'ferdig').glob('*.*')} if (ROT50 / 'assets' / 'ferdig').exists() else set()
-        tekst = ''.join((tl / f).read_text(encoding='utf-8') for f in ('11_vegger_og_bakken.md', '12_gulv.md') if (tl / f).exists())
+        tekst = ''.join((tl / f).read_text(encoding='utf-8') for f in ('11_vegger.md', '12_gulv.md') if (tl / f).exists())
         poster = re.findall(r'(?m)^## (1[12][a-z])\. .*\n\nFilnavn: `([a-z0-9_]+)\.png`\n\nGir: `([a-z0-9_]+)`\n\nBrukes i: .*\n\nReferanse \(last opp sammen med prompten\): `tegnelister/referanse/ref_\2\.png`\n\n!\[[^\]]*\]\(referanse/ref_\2\.png\)\n\n```text\n(?:FLOOR|WALL|GROUND) texture \2: ', tekst)
         mangler = sorted(set(teks) - levert)
-        sjekk('tegneliste 11 og 12 har hver tekstur som mangler, med filnavn, nøkkel, referansebilde og prompt', len(teks) == 44 and sorted(p[1] for p in poster) == mangler and all(p[1] == p[2] and (tl / 'referanse' / f'ref_{p[1]}.png').exists() for p in poster), (len(teks), len(poster), len(mangler)))
+        sjekk('tegneliste 11 og 12 har hver tekstur som mangler, med filnavn, nøkkel, referansebilde og prompt', len(teks) == 30 and sorted(p[1] for p in poster) == mangler and all(p[1] == p[2] and (tl / 'referanse' / f'ref_{p[1]}.png').exists() for p in poster), (len(teks), len(poster), len(mangler)))
         stil = re.search(r'## Stilblokk for teksturer.*?```text\n(.*?)\n```', tekst, re.S)
         sjekk('stilblokken for teksturer ber om et helt dekket bilde, ikke gjennomsiktig bakgrunn', bool(stil) and 'OPAQUE' in stil.group(1) and 'TRANSPARENT background' not in stil.group(1))
         les = (tl / 'LESMEG.md').read_text(encoding='utf-8'); csvn = [r for r in (tl / 'tegneliste.csv').read_text(encoding='utf-8').splitlines()[1:] if r.split(';')[2:3] == ['tekstur']]
-        sjekk('LESMEG og regnearket har liste 11 og 12', '11_vegger_og_bakken.md' in les and '12_gulv.md' in les and len(csvn) == len(mangler), len(csvn))
+        sjekk('LESMEG og regnearket har liste 11 og 12', '11_vegger.md' in les and '12_gulv.md' in les and len(csvn) == len(mangler), len(csvn))
 
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
         await pg.goto(URL); await pg.wait_for_timeout(2000); await pg.evaluate("() => localStorage.clear()")
@@ -2596,8 +2596,9 @@ async def main():
           const bygg = async d => { G.run.dromVent = 0; startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(150); };
           const vegg = st => { const m = Paint.mesh.vegger.find(v => v.userData.veggStil === st); return m && m.material.map; }, mål = t => t && [t.image.width, t.image.height, t.fraBilde || ''];
           const last = (k, src) => new Promise(r => { SPRITES[k] = src; const im = Art.img[k] = new Image(); im.onload = im.onerror = () => r(im.naturalWidth); im.src = src; });
+          delete Art.img.gulv_gress; // Toms gressbilde (levert 27.9.) tas ut, så bakken males av koden
           await bygg(2); ut.malt = mål(vegg('panel')); await bygg(1); ut.maltBakke = mål(Paint.mesh.bakke.material.map);
-          ut.lastet = [await last('vegg_panel', panel), await last('bakke_park', bakke)];
+          ut.lastet = [await last('vegg_panel', panel), await last('gulv_gress', bakke)];
           await bygg(2); const t = vegg('panel'); ut.panel = mål(t); ut.rep = t && +t.repeat.x.toFixed(4);
           await bygg(3); ut.panel3 = mål(vegg('panel')); // Underetasjen har egne farger (vegg_panel_3), og uten det bildet maler koden
           await bygg(1); const bk = Paint.mesh.bakke.material.map; ut.bakke = mål(bk); ut.bakkeRep = +(bk.repeat.x * 4 - G.F.W).toFixed(2);
@@ -2618,7 +2619,7 @@ async def main():
         sjekk('uten bilder er veggen og bakken malt som før (256 punkter bred)', tk['malt'][:2] == [256, 296] and tk['malt'][2] == '' and tk['maltBakke'] == [256, 256, ''], [tk['malt'], tk['maltBakke']])
         sjekk('panelveggen fra bildet er 442 x 294 og gjentas hver 3,45 rute (repeat .5797)', tk['lastet'][0] == 442 and tk['panel'] == [442, 294, 'vegg_panel'] and abs(tk['rep'] - .5797) < .001, [tk['panel'], tk['rep']])
         sjekk('i Underetasjen maler koden panelveggen når vegg_panel_3 mangler', tk['panel3'][0] == 256 and tk['panel3'][2] == '', tk['panel3'])
-        sjekk('bakken i Parken fra bildet er 512 punkter over 4 x 4 ruter, 256 på telefon', tk['bakke'] == [512, 512, 'bakke_park'] and tk['bakkeRep'] == 48 and tk['bakkeTlf'] == [256, 256, 'bakke_park'], [tk['bakke'], tk['bakkeRep'], tk['bakkeTlf']])
+        sjekk('bakken i Parken fra bildet er 512 punkter over 4 x 4 ruter, 256 på telefon', tk['bakke'] == [512, 512, 'gulv_gress'] and tk['bakkeRep'] == 48 and tk['bakkeTlf'] == [256, 256, 'gulv_gress'], [tk['bakke'], tk['bakkeRep'], tk['bakkeTlf']])
         sjekk('en drøm på telefon har et gulv på høyst 1200 punkter, kartet får det, og veggene tar ikke bildene', tk['drom'] and 0 < tk['dromGulv'] <= 1200 and tk['dromKart'] and tk['dromVegger'] == 0, [tk['dromGulv'], tk['dromKart'], tk['dromVegger']])
         sjekk('et bilde som pakkes ut, males først og byttes når det kommer; et ødelagt bilde males av koden', tk['sakte'] == [256, 442, 'vegg_mur'] and tk['odelagt'] == [256, False, 256, False], [tk['sakte'], tk['odelagt']])
         sjekk('lette teksturer maler veggen, og Enkel grafikk tar bildet', tk['lowTex'][0] == 256 and tk['lowTex'][2] == '' and tk['enkel'] == [442, 294, 'vegg_panel'], [tk['lowTex'], tk['enkel']])
@@ -2632,7 +2633,7 @@ async def main():
         t3 = await pg.evaluate("""async ([panel, bakke]) => { const G = MORBIDIUM, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
           const bygg = async d => { G.run.dromVent = 0; startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } await vent(300); };
           const last = (k, src) => new Promise(r => { SPRITES[k] = src; const im = Art.img[k] = new Image(); im.onload = im.onerror = () => r(im.naturalWidth); im.src = src; });
-          await last('vegg_panel', panel); await last('bakke_park', bakke); await bygg(2); await bygg(1);
+          await last('vegg_panel', panel); await last('gulv_gress', bakke); await bygg(2); await bygg(1);
           const mem = () => R.renderer.info.memory; await bygg(2); const m0 = [mem().textures, mem().geometries];
           const v = Paint.mesh.vegger.find(v => v.userData.veggStil === 'panel'); ut.d3 = D3.on; ut.map = v && v.material.map && v.material.map.fraBilde; ut.type = v && v.material.type;
           for (const d of [1, 2, 1, 2]) await bygg(d); const m1 = [mem().textures, mem().geometries]; ut.minne = [m1[0] - m0[0], m1[1] - m0[1]]; return ut; }""", [panel_url, bakke_url])

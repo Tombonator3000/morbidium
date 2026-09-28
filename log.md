@@ -1298,3 +1298,7 @@ Alle tidspunkt er UTC.
 - Rombias for de nye fiendene: Avløpsarmen i kjelleren, Kapellanen i likkapellet og Draugpleieren i tjernet. Samme trekk fra rng som før, og generatoren er deterministisk (node tools/test_gen.js).
 - Toms test tools/test_utegrafikk.py fjernet bildet fra Art.img for å tegne reserven. Paint.bilde lager bildet på nytt fra SPRITES, så testen trodde veggbildene ikke ble brukt. Testen tar nå også bildet ut av SPRITES mens reserven tegnes.
 - memory.md har fått «Det skjulte rommet», «Vinter i teksturene», «Teksturer fra ChatGPT» og «Nye fiender», og todo.md det som er gjort og spørsmålene til Tom for spor B og C.
+
+## 2026-09-28 09:38 Del 50 følger flettingen med Toms uteflater
+- Del 50 brukte manifestnøkkelen bakke_park, som er tatt bort fordi bakken ute nå bruker Toms gress- og mosebilder. Bildeløpet prøves med gulv_planker, lista heter 11_vegger.md og har 30 flater (ikke 44, fordi Tom har levert uteflatene), og bakken prøves med gulv_gress: Toms gressbilde tas ut mens den malte bakken prøves, og prøvebildet legges inn under samme nøkkel.
+- Del 24 og 36 er grønne på den flettede grenen (23 OK). Del 50 til 53 kjøres nå.
