@@ -383,7 +383,21 @@ function enemyTarget(e) {
 /* ============================================================
    FIENDER
    ============================================================ */
-function spawnEnemy(type, x, z, elite, depth) {
+/* spawnEnemy: typen kan byttes etter grensen i fiendedataene (ENEMIES[type].grense: høyst tre armer, én klokker), så lages fienden
+   (spawnEnemyGrunn: kjernen, fast i gulvet og flokken), og krokene etter kjører: oppskriften (28_oppskrift.js) og så oppstarten
+   per type (ENEMIES[type].vedStart). Se «Fiender som data» i dokumentasjon/systemer.md. Flaggene spawnEnemy.inPack, .kalt og .gulv
+   brukes av oppskriften og havet. */
+function spawnEnemy(type, x, z, elite, depth) { return Kroker.kall('spawnEnemy', spawnEnemyGrunn, this, [Fiende.byttType(type), x, z, elite, depth]); }
+/* fast i gulvet (rooted: øyeblomsten) og flokken (pack: rottene). Flokken lages med kjernen, uten oppskrift og oppstart */
+function spawnEnemyGrunn(type, x, z, elite, depth) {
+  const e = spawnEnemyKjerne(type, x, z, elite, depth), D = ENEMIES[type];
+  if (D.rooted) { e.anchored = true; e.kbMult = 0; }
+  if (D.pack && !spawnEnemy.inPack) { spawnEnemy.inPack = true; for (let i = 0; i < D.pack; i++) { const s = freeSpot(x + rnd(-.9, .9), z + rnd(-.9, .9), 1.5); spawnEnemyKjerne(type, s.x, s.z, false, depth); } spawnEnemy.inPack = false; }
+  return e;
+}
+// oppstarten per type kommer etter oppskriften (prio 1), som da innpakningene i 29, 49 og 50 lå utenpå den i 28
+Kroker.etter('spawnEnemy', e => { const D = e && ENEMIES[e.type]; if (D && D.vedStart) D.vedStart(e); }, 1);
+function spawnEnemyKjerne(type, x, z, elite, depth) {
   const D = ENEMIES[type], gj = G.run && G.run.gjen, sk = typeof dybdeStyrke === 'function' ? dybdeStyrke(depth) : depth, hpK = (1 + (sk - 1) * .3) * (gj ? 1.3 : 1);
   // lagdelte skapninger (29_monstre.js) har egne deler i stedet for hode og kropp
   const dopt = { elite, weapon: type === 'oppasser' ? 'sproyte' : D.weapon || null, shadow: D.skygge || (type === 'pleier' ? .55 : D.r > .45 ? .5 : .42), scale: elite ? 1.2 : 1 };

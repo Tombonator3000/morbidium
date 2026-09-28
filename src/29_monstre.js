@@ -674,13 +674,9 @@ Kroker.etter('enemyDie', (_, e, src) => {
   if (e.type === 'koret' && e.lys) { R.remove(e.lys); e.lys = null; }
 });
 { const _s = Items.stat.bind(Items); Items.stat = function (n) { let v = _s(n); if (n === 'luck' && G.run && G.run.buffs && G.run.buffs.ulykke) v -= 6 * G.run.buffs.ulykke; return v; }; }
-/* Speilpasienten viser ansiktet ditt i speilet */
-{ const _se = spawnEnemy; spawnEnemy = function (type, x, z, elite, depth) {
-  const e = _se(type, x, z, elite, depth);
-  if (e && type === 'speil' && e.doll.addAddon) { try { e.doll.addAddon(speilbilde(G.run && G.run.look), { at: 'head', off: { f: [0, .58] }, bare: ['f'] }); } catch (err) { } }
-  if (e && type === 'kasteren' && e.doll.wp) e.doll.wp.visible = false;
-  return e;
-}; }
+/* Speilpasienten viser ansiktet ditt i speilet, og Kasteren kaster med hendene (våpenet skjules) */
+ENEMIES.speil.vedStart = e => { if (e.doll.addAddon) { try { e.doll.addAddon(speilbilde(G.run && G.run.look), { at: 'head', off: { f: [0, .58] }, bare: ['f'] }); } catch (err) { } } };
+ENEMIES.kasteren.vedStart = e => { if (e.doll.wp) e.doll.wp.visible = false; };
 
 /* ============================================================
    PORTRETT av en fiendetype, forfra, til fiendeindeksen i Pasienthåndboka.

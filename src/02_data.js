@@ -64,6 +64,19 @@ const ENEMIES = {
   oppasser: { name: 'Oppasser', hp: 24, speed: 2.5, r: .4, dmg: 8, xp: 10, teeth: [1, 3], look: 'oppasser' },
   yngel: { name: 'Avløpsyngel', hp: 16, speed: 4.3, r: .36, dmg: 6, xp: 6, teeth: [0, 1], look: 'yngel', morb: 3 }
 };
+/* fiender som data (se «Fiender som data» i dokumentasjon/systemer.md). En type kan ha, i tillegg til tallene:
+   grense: { maks, ellers, tell, unntak }: høyst maks av typen samtidig (tell() teller, ellers de levende i etasjen); flere blir typen
+     ellers. unntak() slår grensen av. maks kan være et tall eller en funksjon.
+   vedStart(e): kjøres når fienden er laget, etter oppskriften (tidtakere, tillegg på dukken, plassen i sluket).
+   rooted: står fast og kan ikke slås bakover. pack: så mange til kommer i flokk. */
+const Fiende = {
+  byttType(type) {
+    const D = ENEMIES[type], g = D && D.grense; if (!g || (g.unntak && g.unntak())) return type;
+    const n = g.tell ? g.tell() : G.enemies.filter(e => e.alive && e.type === type).length, maks = typeof g.maks === 'function' ? g.maks() : g.maks;
+    return n >= maks ? g.ellers : type;
+  }
+};
+
 const DEPTH_ENEMIES = { 1: ['pleier', 'pleier', 'kultist', 'oppasser'], 2: ['pleier', 'kultist', 'oppasser', 'pleier', 'kultist'], 3: ['pleier', 'oppasser', 'yngel', 'kultist', 'oppasser', 'yngel'], 4: ['pleier', 'kultist', 'oppasser', 'kultist', 'pleier'], 5: ['yngel', 'kultist', 'yngel', 'oppasser', 'kultist'], 6: ['yngel', 'kultist', 'pleier', 'yngel', 'oppasser', 'kultist'] };
 /* Seks etasjer, men fiendene skal ikke bli dobbelt så sterke: styrken følger en egen skala.
    Parken er som gamle 1. etasje, Dypet som gamle Dypet. */

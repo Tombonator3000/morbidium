@@ -136,6 +136,6 @@ FX.label = function (target, str, cls = '') {
   const el = document.createElement('div'); el.className = 'mester ' + cls; el.textContent = str; $('fx').appendChild(el);
   this.items.push({ el, target, life: 1e9, max: 1e9, kind: 'label', h: (target.bubbleH || 2.6) * (target.doll ? target.doll.sc / (target.doll.rig.scale || 1) : 1) * .92 });
 };
-/* alle fiender går gjennom oppskriften; spawnEnemyBare lager en uten */
-const spawnEnemyBare = spawnEnemy;
-{ const _se = spawnEnemy; spawnEnemy = function (type, x, z, elite, depth) { const e = _se(type, x, z, elite, depth); try { Oppskrift.apply(e); } catch (err) { } return e; }; }
+/* alle fiender går gjennom oppskriften (en krok etter spawnEnemy); spawnEnemyBare lager en uten (kjernen, fast i gulvet og flokken) */
+const spawnEnemyBare = spawnEnemyGrunn;
+Kroker.etter('spawnEnemy', e => { try { Oppskrift.apply(e); } catch (err) { } });

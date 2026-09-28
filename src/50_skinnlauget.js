@@ -336,12 +336,8 @@ Object.assign(Grotesk.ai, {
   }
 });
 /* høyst én klokker i rommet: flere blir lærlinger. Klokkeren venter litt før han roper på hjelp første gang */
-{ const _se = spawnEnemy; spawnEnemy = function (type, x, z, elite, depth) {
-  if (type === 'klokker' && !Laug.flereKlokkere && G.enemies.some(e => e.alive && e.type === 'klokker')) type = 'laerling';
-  const e = _se(type, x, z, elite, depth);
-  if (e && e.type === 'klokker') { e.kallT = G.time + rnd(4, 7); e.ringT = G.time + rnd(.6, 1.4); }
-  return e;
-}; }
+ENEMIES.klokker.grense = { maks: 1, ellers: 'laerling', unntak: () => Laug.flereKlokkere };
+ENEMIES.klokker.vedStart = e => { e.kallT = G.time + rnd(4, 7); e.ringT = G.time + rnd(.6, 1.4); };
 
 /* ============================================================
    HOLDNINGSSØSTEREN

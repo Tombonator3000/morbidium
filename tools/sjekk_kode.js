@@ -13,7 +13,7 @@
 const fs = require('fs'), path = require('path');
 const acorn = require('./vendor/acorn.js');
 const ROT = process.argv.includes('--rot') ? path.resolve(process.argv[process.argv.indexOf('--rot') + 1]) : path.resolve(__dirname, '..'), SRC = path.join(ROT, 'src');
-const TAK = 92; // innpakninger som er igjen (28.9.2026)
+const TAK = 87; // innpakninger som er igjen (28.9.2026)
 
 // nettleseren og språket: navn spillet bruker uten å deklarere dem
 const KJENT = new Set(`window document navigator location history screen console performance localStorage sessionStorage globalThis self

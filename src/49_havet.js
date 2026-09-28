@@ -495,13 +495,9 @@ Object.assign(Grotesk.tick, {
   }
 });
 /* høyst tre armer (flere blir yngel), og de nye finner sitt sted. Kapellanen venter litt før han kaller første gang */
-{ const _se = spawnEnemy; spawnEnemy = function (type, x, z, elite, depth) {
-  if (type === 'avlopsarm' && !Havet.flereArmer && Havet.armer() >= Havet.MAKS_ARMER) type = 'yngel';
-  const e = _se(type, x, z, elite, depth);
-  if (e && e.type === 'avlopsarm') { e.kalt = !!spawnEnemy.kalt; Havet.start(e); }
-  if (e && e.type === 'kapellan') { e.kallT = G.time + rnd(3, 5); e.prekenT = G.time + rnd(1.5, 3); }
-  return e;
-}; }
+ENEMIES.avlopsarm.grense = { maks: () => Havet.MAKS_ARMER, tell: () => Havet.armer(), ellers: 'yngel', unntak: () => Havet.flereArmer };
+ENEMIES.avlopsarm.vedStart = e => { e.kalt = !!spawnEnemy.kalt; Havet.start(e); };
+ENEMIES.kapellan.vedStart = e => { e.kallT = G.time + rnd(3, 5); e.prekenT = G.time + rnd(1.5, 3); };
 /* velsignelsen går ut (farten tilbake nøyaktig) og gjør nedkjølingen halvannen gang så rask. Armen står fast i risten sin */
 { const _ue = updateEnemy; updateEnemy = function (e, dt) {
   if (e.velsignet) {

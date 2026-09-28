@@ -219,10 +219,4 @@ function updateZonesKjerne(dt) {
   if (P) P.gasT = (P.gasT || 0) - dt;
 }
 
-/* ---------- rotter kommer i flokk, øyeblomsten står fast ---------- */
-{ const _se = spawnEnemy; spawnEnemy = function (type, x, z, elite, depth) {
-  const e = _se(type, x, z, elite, depth), D = ENEMIES[type];
-  if (D.rooted) { e.anchored = true; e.kbMult = 0; }
-  if (D.pack && !spawnEnemy.inPack) { spawnEnemy.inPack = true; for (let i = 0; i < D.pack; i++) { const s = freeSpot(x + rnd(-.9, .9), z + rnd(-.9, .9), 1.5); _se(type, s.x, s.z, false, depth); } spawnEnemy.inPack = false; }
-  return e;
-}; }
+/* ---------- rotter kommer i flokk (pack), øyeblomsten står fast (rooted): dataene leses i spawnEnemyGrunn (20_actors.js) ---------- */

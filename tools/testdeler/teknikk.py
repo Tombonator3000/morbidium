@@ -185,7 +185,7 @@ async def del_66(b):
     #     slås opp i VAAPEN_TEGNING og tegnes
     import re as _re
     kilde = {f.name: f.read_text(encoding='utf-8') for f in (ROT / 'src').glob('*.js')}
-    KROK = ['startFloor', 'clearFloor', 'spawnBoss', 'bossDie', 'enemyDie', 'drawWeapon', 'spawnProps', 'decorateLevel', 'updateTele', 'updateZones', 'updateProjectiles', 'playerDie']
+    KROK = ['startFloor', 'clearFloor', 'spawnBoss', 'bossDie', 'enemyDie', 'drawWeapon', 'spawnProps', 'decorateLevel', 'updateTele', 'updateZones', 'updateProjectiles', 'playerDie', 'spawnEnemy']
     pakket = [f'{f}: {n}' for f, t in sorted(kilde.items()) for n in KROK if _re.search(r'(?<![\w.])' + n + r'\s*=(?![=>])', t)]
     sjekk('ingen fil pakker inn funksjonene som har fått kroker', not pakket, pakket)
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
