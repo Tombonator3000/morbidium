@@ -61,4 +61,5 @@ async def main():
         print('state:', await pg.evaluate("() => MORBIDIUM.state"))
         print('\n'.join(errs[:25]) or 'ingen feil')
         await b.close()
-asyncio.run(main())
+        return 1 if errs else 0
+sys.exit(asyncio.run(main()))

@@ -43,5 +43,8 @@ console.log('rom med L-form eller rotunde per etasje:',JSON.stringify(former));
 for(const d in typer) console.log('romtyper i etasje',d+':',[...typer[d]].sort().join(', '));
 // determinisme
 const A=ctx.generateFloor(424242,2,{}),B=ctx.generateFloor(424242,2,{});
-console.log('deterministisk:', Buffer.from(A.tiles).equals(Buffer.from(B.tiles)) && JSON.stringify(A.rooms.map(r=>r.props))===JSON.stringify(B.rooms.map(r=>r.props)) && (!A.skjult||Buffer.from(A.skjult).equals(Buffer.from(B.skjult))));
+const deterministisk = Buffer.from(A.tiles).equals(Buffer.from(B.tiles)) && JSON.stringify(A.rooms.map(r=>r.props))===JSON.stringify(B.rooms.map(r=>r.props)) && (!A.skjult||Buffer.from(A.skjult).equals(Buffer.from(B.skjult)));
+console.log('deterministisk:', deterministisk);
 console.log('etasjer med skjult rom:', skjulte);
+// feilkode til CI: ugyldige etasjer eller ulikt resultat med samme frø
+if (fails || !deterministisk) { console.log('FEILET'); process.exitCode = 1; }

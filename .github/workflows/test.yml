@@ -1,17 +1,17 @@
-name: Bygg og publiser på GitHub Pages
+name: Test
+# de samme testene som før publisering, på alle andre grener og i pull requests, så feil synes før noe kommer på main
 on:
   push:
-    branches: [main]
+    branches-ignore: [main]
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
 concurrency:
-  group: pages
+  group: test-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  bygg:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,23 +22,11 @@ jobs:
       - run: python3 tools/skjaer_ark.py
       - run: python3 tools/behandle_bilder.py
       - run: python3 build.py
-      # testene må være grønne før siden publiseres, så en ødelagt versjon aldri kommer ut
       - name: Etasjegeneratoren
         run: node tools/test_gen.js > /tmp/test_gen.txt || (tail -5 /tmp/test_gen.txt; exit 1)
       - name: Chromium til røyktesten
         run: python -m playwright install --with-deps chromium
       - name: Røyktest
         run: python3 tools/test_roek.py
-      - run: mkdir -p _site && cp dist/morbidium.html _site/index.html
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-  publiser:
-    needs: bygg
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.pages.outputs.page_url }}
-    steps:
-      - id: pages
-        uses: actions/deploy-pages@v4
+      - name: Dokumentene er korte nok (bare varsel)
+        run: python3 tools/rydd_dokumenter.py --sjekk || echo "::warning::Kjør python3 tools/rydd_dokumenter.py (log.md, todo.md eller memory.md er for lange)"
