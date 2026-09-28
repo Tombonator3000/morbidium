@@ -1340,3 +1340,8 @@ Alle tidspunkt er UTC.
 - Testdel 63 sjekker nå også to favn på rad når Kraken er rasende: ingen klemme uten arm. Armer som ville kommet opp i en vegg, hoppes over, så sjekken krever minst seks kall og ingen uten arm. Del 4, 21, 36 og 63 er grønne (61 av 61) på koden fra før rettingen av terskelen (9 kall i det rommet); terskelen er senket fra 9 til 6 etterpå, uten ny kjøring.
 - Resten holdt: dykket (ingen skade, skygge eller sikte under vann), favn, blekk, malstrømmen (også lånt av Journalen), taket på fire armer, døden og ryddingen. Sett på stående og liggende telefon (2D og 3D), med Enkel grafikk og med lav tekstur, uten feil i konsollen. Ingen andre spors filer er rørt.
 - Åpent, ikke C8: på stående telefon ligger navnet og tittelen til sjefen oppå panelet med hjertene (gjelder alle sjefer, 00_head.html, spor D). Sjeflinja på PC ligger over toppen av kappen når pasienten står nær Kraken, men øyet synes.
+
+## 2026-09-28 10:51 Kraken flettet, samlet integrasjonsløp startet, og bilder til Tom
+- B6 (tomrom og ganger) og C8 (Kraken) er ferdige, sjekket og flettet. Del 55, 51 og 38 er grønne etter B6. Kraken ga seks nye bildenøkler (kappe, øye, pupill, nebb, skum og bandasje), som står i ART_BRIEF runde 17 og tegneliste 13.
+- Det samlede integrasjonsløpet går nå på det endelige bygget (8c6c468): generatoren, gjennomspillingen og alle delene i test_ekstra.
+- Før- og etterbilder til Tom ligger i dokumentasjon/runde5/, ett ark per punkt på lista hans: angrepsvarslene og nedslagene, snøen, hårrullene med hjorten, det skjulte rommet og tomrommene, stemplene og blodet, og de nye fiendene.
