@@ -131,7 +131,7 @@ async def del_37(b):
     # lykteskygger: i samme bilde som figurene, ikke gjennom vegger, kortere mot en vegg bak og myke nær lykta (at de er borte like etter et drap, sjekker del 30)
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg)
-    ly = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async t => { Klokke.spol(t); }, ut = {};
+    ly = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, ut = {};
           // vegg mellom to punkter, målt for seg: tette prøver langs linja, og bare veggruter teller (ikke møbler)
           const vegg = (ax, az, bx, bz) => { const F = G.F; for (let i = 0; i <= 120; i++) { const t = i / 120, x = Math.floor(ax + (bx - ax) * t), z = Math.floor(az + (bz - az) * t); if (x < 0 || z < 0 || x >= F.W || z >= F.H || !F.tiles[z * F.W + x]) return true; } return false; };
           const fri = (x, z) => [[0, 0], [.45, 0], [-.45, 0], [0, .45], [0, -.45]].every(([a, c]) => !solid(Math.floor(x + a), Math.floor(z + c)));
@@ -189,7 +189,7 @@ async def del_37(b):
     # 3D: månens skygger står stille når kameraet glir, lykta lyser fra der pasienten er i samme bilde, og telefoner får 1024 i skyggekartet
     pg = await ny_side(b, viewport={'width': 960, 'height': 540})
     await start_lop(pg, url=URL3D)
-    m3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async t => { Klokke.spol(t); }, bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
+    m3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
           const bygg = async d => { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; await spill(.3); };
           await bygg(2); ut.d3 = D3.on && D3.bygd;
           // seks tilfeldige små flytt av kameraet: midtpunktet ligger alltid på hele ruter i skyggekartet, med samme retning og lengde, på gulvet og nær kameraet.
@@ -228,7 +228,7 @@ async def del_37(b):
     # Fiendene settes på plass etter update (roten til y 0), så det sjekkes når bildet tegnes. Full styrke i 2D, og den blekner med figuren
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg)
-    fl = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async t => { Klokke.spol(t); }, ut = {};
+    fl = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 20000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, ut = {};
           startFloor(2, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999;
           const fiende = (t, dx, dz) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy(t, s.x, s.z, false, 2); e.stun = 99; e.hp = e.max = 1e6; return e; };
           const v = new THREE.Vector3(), y = o => o.getWorldPosition(v).y, r0 = R.render;
@@ -257,7 +257,7 @@ async def del_37(b):
     # også gjennom et drap og når hjorten skjuler seg. Halvt oppløste og gjennomsiktige kaster ikke. Den åpne kista, dekalene, lys av og 3D av
     pg = await ny_side(b, viewport={'width': 960, 'height': 540})
     await start_lop(pg, url=URL3D)
-    s3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async t => { Klokke.spol(t); }, bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
+    s3 = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); }, bilder = n => new Promise(r => { const f = () => --n <= 0 ? r() : requestAnimationFrame(f); requestAnimationFrame(f); }), ut = {};
           const bygg = async d => { startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 9999; P.invuln = 999; await spill(.3); };
           const fiende = (t, dx, dz) => { const s = freeSpot(P.x + dx, P.z + dz, 2), e = spawnEnemy(t, s.x, s.z, false, 2); e.stun = 99; e.hp = e.max = 1e6; return e; };
           const plate = d => d.meshes.length > 0 && d.meshes.every(m => !!m.customDepthMaterial && m.castShadow), K = d => d.d3k || [], v = new THREE.Vector3(), y = o => o.getWorldPosition(v).y, r0 = R.render;

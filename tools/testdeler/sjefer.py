@@ -62,8 +62,8 @@ async def del_62(b):
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg)
     om = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {},
-            til = async (f, t = 4) => { if (!f()) Klokke.til(f, t); return !!f(); },
-            spill = async t => { Klokke.spol(t); };
+            til = async (f, t = 4) => { if (!f()) Klokke.til(() => { prov(); return f(); }, t); return !!f(); },
+            spill = async t => { Klokke.spol(t, { til: prov }); };
           if (typeof Oldermann !== 'object' || !ENEMIES.oldermann) return { mangler: true };
           startFloor(4, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); P.hp = P.maxHp = 1e6; P.invuln = 0;
           const r = G.F.rooms.find(r => r.role === 'combat' && r.w >= 10 && r.h >= 8) || G.F.rooms.find(r => r.role === 'combat') || G.F.rooms[0];
@@ -74,6 +74,8 @@ async def del_62(b):
           const mo = new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) if (n.classList && n.classList.contains('dmg')) tall.push(n.textContent); }); mo.observe(document.getElementById('fx'), { childList: true });
           const _sp = Sound.play; Sound.play = function (n) { lyder.push(n); return _sp.apply(Sound, arguments); };
           (async () => { while (samle) { for (const t of G.tele) if (t.owner && t.owner.type === 'oldermann') teleSett.add(t); await vent(15); } })();
+          // testklokka spoler uten å slippe til løkka over, så varslene (og kjettingene) samles også i hvert steg den tar
+          const prover = [() => { for (const t of G.tele) if (t.owner && t.owner.type === 'oldermann') teleSett.add(t); }], prov = () => { for (const f of prover) f(); return false; };
           const varsler = () => [...teleSett].map(t => ({ shape: t.shape, r: t.o.r, w: t.o.w, len: t.o.len, type: t.o.type }));
           // det han faktisk gjør (angrepet som kjøres), ikke bare det referatet sier
           const gjort = [], FN = { naaler: 'naal', kjeder: 'kjede', klubba: 'klubbe', votering: 'votering' }, _fn = {};
@@ -129,7 +131,7 @@ async def del_62(b):
             await til(() => o2.state !== 'wind', 3); o2.state = 'chase'; Oldermann.les(o2, P, 0); ut.aars.saker = o2.dagsorden.saker.length; ut.aars.sist = o2.dagsorden.saker[3];
             // Enkel grafikk: varslene og nålene kommer, men ingen kjettinger tegnes
             o2.dagsorden = null; o2.cd = 1e9; for (const e of G.enemies) if (e.alive && e !== o2) killEntity(e, {});
-            await til(() => !Kjeder.liste.length, 4); R.safe = true; let kjS = 0; const kt = setInterval(() => { kjS = Math.max(kjS, Kjeder.liste.length); }, 20);
+            await til(() => !Kjeder.liste.length, 4); R.safe = true; let kjS = 0; const kt = setInterval(() => { kjS = Math.max(kjS, Kjeder.liste.length); }, 20); prover.push(() => { kjS = Math.max(kjS, Kjeder.liste.length); });
             ut.safe = { kjede: await sak(['kjede'], 5), naal: await sak(['naal'], 4) }; clearInterval(kt); ut.safe.kjeder = kjS; ut.safe.for = Kjeder.liste.length; R.safe = false;
             // boblen med dagsorden er varselet: den holdes inne på skjermen når han står langt utenfor, og synes selv om snakkeboblene er slått av
             { document.body.classList.add('uten-bobler'); const falsk = { x: P.x - 40, z: P.z + 1, alive: true, bubbleH: 4.3, referat: [], dagsorden: { saker: ['naal', 'kjede', 'eventuelt'], i: 0 } };

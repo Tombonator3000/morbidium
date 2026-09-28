@@ -170,7 +170,7 @@ async def del_31(b):
     pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
     await start_lop(pg, 'eget')
     ny = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)), ut = {};
-          const spill = async t => { Klokke.spol(t); };
+          const spill = async (t, maks = 30000) => { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < t && performance.now() - t0 < maks) await vent(50); };
           const tekst = () => (document.querySelector('#panel:not(.hidden) .samtale .stekst') || {}).innerText || '';
           let h = null; for (const d of [4, 3, 2, 6, 4, 3]) { startFloor(d, false); rolig(); Hendelse.fjern(); h = Hendelse.tving('venterom'); if (h) break; }
           ut.venterom = !!h;
