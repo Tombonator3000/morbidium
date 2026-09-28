@@ -2,7 +2,7 @@
 
 Laget av `tools/lag_tegnelister.py`. Ikke rediger for hånd; kjør skriptet på nytt når bilder er levert, så forsvinner det som er ferdig.
 
-De nye fiendene fra runde 5. De er tegnet av koden nå og kan spilles uten bildene, så lista kan tas når det passer. Havet under huset (Avløpsarmen, Kapellanen og Draugpleieren) er Lovecraft i 1923: tentakler, blekk og sjøvann. Skinnlauget av 1887 (Lærlingen, Klokkeren, Holdningssøsteren og Oldermann Nålepute) er et høflig lærlaug av håndverkere med reimer, spenner og dagsorden. Parodien ligger i tonen: ikke noe seksuelt, ikke fetisjutstyr og ingenting hentet fra filmene. Referansebildet viser dagens tegning.
+De nye fiendene fra runde 5, og Kraken, den nye sjefen. De er tegnet av koden nå og kan spilles uten bildene, så lista kan tas når det passer. Havet under huset (Avløpsarmen, Kapellanen og Draugpleieren) er Lovecraft i 1923: tentakler, blekk og sjøvann. Skinnlauget av 1887 (Lærlingen, Klokkeren, Holdningssøsteren og Oldermann Nålepute) er et høflig lærlaug av håndverkere med reimer, spenner og dagsorden. Parodien ligger i tonen: ikke noe seksuelt, ikke fetisjutstyr og ingenting hentet fra filmene. Referansebildet viser dagens tegning.
 
 ## Slik gjør du det
 
@@ -167,7 +167,33 @@ Exactly one object, centered and fully visible, not cropped. Transparent backgro
 The attached image shows the placeholder the game uses today. Use it only to see what it is; redraw it properly in our style.
 ```
 
-## 13h. Våpnene til Skinnlauget og Kapellanen («ni ting»-ark)
+## 13h. Kraken («ni ting»-ark)
+
+Filnavn: `ark__kraken_kappe__kraken_oye__kraken_pupill__kraken_nebb__kraken_skum__kraken_bandasje.png`
+
+Mal: `maler/mal_ni_ting.png`
+
+Gir: 1 `kraken_kappe`, 2 `kraken_oye`, 3 `kraken_pupill`, 4 `kraken_nebb`, 5 `kraken_skum`, 6 `kraken_bandasje`
+
+Referanse (last opp sammen med malen): `tegnelister/referanse/ref_kraken.png`
+
+![Dagens tegning](referanse/ref_kraken.png)
+
+```text
+Using the attached template (mal_ni_ting.png), draw six separate items, one per cell, read left to right, top to bottom. Use only the first six cells and leave the rest empty.
+Each item sits on the short line with its bottom touching the + mark. Icons, cards and loose body parts are centered in the cell instead. Things that lie flat on the ground are drawn seen from straight above. Keep every drawing inside its own cell. Do not draw the magenta guides.
+These are the separate parts of one giant sea monster boss; the game puts the eye, pupil and beak on the mantle.
+The second attached image shows the placeholder drawings the game uses today, in the same cells. Use it only to see what goes where and roughly how it is posed; redraw everything properly in our style.
+Items:
+1) the Kraken (Pontoppidan 1752): a huge, tall, bulging octopus mantle rising out of dark water, mauve-pink skin with dark patches and pale spots, two fins at the top like ears, barnacles and seaweed; front view, no eye and no beak (they are separate parts).
+2) one huge pale yellow eye of the Kraken, round, wet and bulging, with a dark lid rim, WITHOUT the pupil.
+3) the horizontal goat-like pupil of the Kraken, black with a thin amber rim, alone.
+4) the Kraken beak: a big dark brown parrot-like beak, slightly open with a dark red mouth inside.
+5) a ring of white sea foam and splashes around something rising out of dark water, seen from the front and a little above.
+6) a dirty hospital bandage wrapped around a tentacle, with a safety pin, loose ends hanging.
+```
+
+## 13i. Våpnene til Skinnlauget og Kapellanen («ni ting»-ark)
 
 Filnavn: `ark__vaapen_reim__vaapen_bjelle__vaapen_tommestokk__vaapen_klubbe__vaapen_avgud.png`
 

@@ -327,6 +327,12 @@ MISC.update({
   'vaapen_tommestokk': 'a yellow wooden folding ruler, half unfolded',
   'vaapen_klubbe': 'a heavy dark wooden gavel with a brass band',
   'vaapen_avgud': 'a small grey-green soapstone idol of a squatting squid-headed figure with folded wings',
+  'kraken_kappe': 'the Kraken (Pontoppidan 1752): a huge, tall, bulging octopus mantle rising out of dark water, mauve-pink skin with dark patches and pale spots, two fins at the top like ears, barnacles and seaweed; front view, no eye and no beak (they are separate parts)',
+  'kraken_oye': 'one huge pale yellow eye of the Kraken, round, wet and bulging, with a dark lid rim, WITHOUT the pupil',
+  'kraken_pupill': 'the horizontal goat-like pupil of the Kraken, black with a thin amber rim, alone',
+  'kraken_nebb': 'the Kraken beak: a big dark brown parrot-like beak, slightly open with a dark red mouth inside',
+  'kraken_skum': 'a ring of white sea foam and splashes around something rising out of dark water, seen from the front and a little above',
+  'kraken_bandasje': 'a dirty hospital bandage wrapped around a tentacle, with a safety pin, loose ends hanging',
 })
 NY_FIG = {'laerling', 'klokker', 'holdning', 'oldermann', 'kapellan', 'draug', 'kraken'}
 UTV_FIG = {'gartner', 'huldra', 'vedkubbe', 'nokken', 'baklengs', 'blank_m', 'blank_k', 'ansikt_m', 'ansikt_k', 'hekk', 'kaalhode'}

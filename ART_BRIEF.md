@@ -10,7 +10,7 @@ Denne fila er laget av `tools/lag_brief.py` fra `assets/manifest.json`. Ikke red
 4. Last det opp til `gpt-grafikk/` i repoet (Add file, Upload files).
 5. Resten gjør Claude: `python3 tools/behandle_bilder.py` fjerner eventuell bakgrunn, beskjærer, skalerer og setter festepunktet, og `python3 build.py` bygger bildet inn i spillet. Alt som ikke har bilde ennå, tegnes av koden som før.
 
-Status: 558 av 630 bilder er levert. Kolonnen «Levert» viser hvilke.
+Status: 558 av 636 bilder er levert. Kolonnen «Levert» viser hvilke.
 
 ## Stilblokk (lim inn i ChatGPT)
 
@@ -25,7 +25,7 @@ Technical: PNG with a TRANSPARENT background. Exactly one object, centered, full
 - Gjennomsiktig bakgrunn er best. Hvit eller ensfarget bakgrunn går også, verktøyet fjerner den fra kantene og innover.
 - Ikke tegn skygge på bakken. Spillet legger på skygge og lys selv.
 
-## Runde 17: havet under huset og Skinnlauget (42 bilder, 0 levert)
+## Runde 17: havet under huset og Skinnlauget (48 bilder, 0 levert)
 
 De nye fiendene fra runde 5, tegnet i kode til nå. Havet under huset (Avløpsarmen, Kapellanen og Draugpleieren) er Lovecraft i 1923: tentakler, blekk og sjøvann. Skinnlauget av 1887 (Lærlingen, Klokkeren, Holdningssøsteren og Oldermann Nålepute) er Avdeling Nulls høflige lærlaug: håndverkere med reimer, spenner, kroker og dagsorden, som tar smerte som et håndverk med skjemaer og etikette. Det er en parodi, men ikke noe seksuelt, ingen fetisjutstyr og ingenting hentet fra filmene. Samme mal og tre retninger som de andre figurene.
 
@@ -50,6 +50,12 @@ De nye fiendene fra runde 5, tegnet i kode til nå. Havet under huset (Avløpsar
 | `hode_oldermann_b.png` | HEAD ONLY (no neck, no body) of Alderman Pincushion, master of the Leather Guild: a stout old gentleman in a long black leather frock coat with a sash of guild medals, big mutton chops, a walrus moustache and a lorgnette; on his bald crown sits a red velvet pincushion full of pins, held on by a strap under the chin (the pins are only in the cushion, never in him). back view, facing away | kvadrat |  |
 | `hode_oldermann_f.png` | HEAD ONLY (no neck, no body) of Alderman Pincushion, master of the Leather Guild: a stout old gentleman in a long black leather frock coat with a sash of guild medals, big mutton chops, a walrus moustache and a lorgnette; on his bald crown sits a red velvet pincushion full of pins, held on by a strap under the chin (the pins are only in the cushion, never in him). front view, facing the viewer | kvadrat |  |
 | `hode_oldermann_s.png` | HEAD ONLY (no neck, no body) of Alderman Pincushion, master of the Leather Guild: a stout old gentleman in a long black leather frock coat with a sash of guild medals, big mutton chops, a walrus moustache and a lorgnette; on his bald crown sits a red velvet pincushion full of pins, held on by a strap under the chin (the pins are only in the cushion, never in him). side view, facing right | kvadrat |  |
+| `kraken_bandasje.png` | a dirty hospital bandage wrapped around a tentacle, with a safety pin, loose ends hanging | kvadrat |  |
+| `kraken_kappe.png` | the Kraken (Pontoppidan 1752): a huge, tall, bulging octopus mantle rising out of dark water, mauve-pink skin with dark patches and pale spots, two fins at the top like ears, barnacles and seaweed; front view, no eye and no beak (they are separate parts) | kvadrat |  |
+| `kraken_nebb.png` | the Kraken beak: a big dark brown parrot-like beak, slightly open with a dark red mouth inside | kvadrat |  |
+| `kraken_oye.png` | one huge pale yellow eye of the Kraken, round, wet and bulging, with a dark lid rim, WITHOUT the pupil | kvadrat |  |
+| `kraken_pupill.png` | the horizontal goat-like pupil of the Kraken, black with a thin amber rim, alone | kvadrat |  |
+| `kraken_skum.png` | a ring of white sea foam and splashes around something rising out of dark water, seen from the front and a little above | liggende |  |
 | `kropp_draug_b.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Drowned Orderly of 1887: a pale blue-green hospital orderly in a soaked white uniform with seaweed and barnacles, hollow sad eyes, water dripping, carrying an old enamel bedpan. back view, facing away | kvadrat |  |
 | `kropp_draug_f.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Drowned Orderly of 1887: a pale blue-green hospital orderly in a soaked white uniform with seaweed and barnacles, hollow sad eyes, water dripping, carrying an old enamel bedpan. front view, facing the viewer | kvadrat |  |
 | `kropp_draug_s.png` | TORSO AND HIPS ONLY (no head, no arms, no legs) of the Drowned Orderly of 1887: a pale blue-green hospital orderly in a soaked white uniform with seaweed and barnacles, hollow sad eyes, water dripping, carrying an old enamel bedpan. side view, facing right | kvadrat |  |
