@@ -1386,3 +1386,9 @@ Alle tidspunkt er UTC.
 - Bilder til Tom i dokumentasjon/kamera/.
 - Kjente mangler står i memory.md og todo.md (lamper, vinduer, pilastre, blod og sprekken bare på sørvegger, ingen gjennomsiktige vegger ennå, snøens parallakse).
 - Denne økta fikk ikke skrive til GitHub (repoet er ikke koblet til økta), så endringene ble levert som en patch til Tom.
+
+## 2026-09-28 17:45 Kameravinkel som valg i innstillingene
+- Tom ba om isometrisk som valg i innstillingene. Innstillinger, Bilde har nå Kameravinkel (som før, lav, isometrisk), lagret som settings.vinkel.
+- Vinkelen settes når spillet lastes (tegningene måles etter den), så KAMERA_VALG leser innstillingen rett fra lagringen. Velges en annen vinkel enn den som brukes, kommer en rad med «Last på nytt». Et løp som er i gang, fortsetter fra starten av etasjen. Adressen går foran innstillingen, og ?kamera=standard er lagt til.
+- Testdel 64 har tre nye sjekker (innstillingen brukes ved lasting, raden kommer og panelet får plass, adressen går foran). Kjørt sammen med del 11 (innstillingene får plass) og del 48: 29 av 29 OK.
+- Utvalgte deler etter kameraprøven (16, 28, 36, 39, 40, 48, 51, 55, 57 og 64) er kjørt: alt grønt bortsett fra én sjekk i del 48 (900 partikler lever ut, 3 igjen), som var grønn ved neste kjøring. Den avhenger av tid i programvaregrafikken. Hele test_ekstra er ikke kjørt, fordi den går flere timer i denne skyen.

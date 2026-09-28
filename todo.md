@@ -5,7 +5,8 @@ Tom ønsket 3D-vegger og gulv mot 2D-figurer, en mer isometrisk vinkel og mer et
 - [x] ?kamera=iso (dreid 45 grader) og ?kamera=lav (helning 42), med styring, dukker, ting, partikler, sidevegger, lave vegger mot kameraet, minikart og N som følger dreiningen.
 - [x] Ny etterbehandling i 3D: dis, omgivelsesskygge (høy) og tonekurve. ?lys=gammel for sammenligning.
 - [x] Testdel 64 og tools/bilder_kamera.py. Bilder i dokumentasjon/kamera/.
-- [ ] Tom: prøv ?kamera=iso og ?kamera=lav på PC og telefon, og si hvilken vinkel som skal bli standard (eller prøv egne tall med &helning=40&dreining=30).
+- [x] Kameravinkel som valg under Innstillinger, Bilde (som før, lav, isometrisk), med «Last på nytt» når en annen vinkel er valgt. Adressen går foran.
+- [ ] Tom: prøv isometrisk og lav (Innstillinger, Bilde, Kameravinkel) på PC og telefon, og si hvilken vinkel som skal bli standard (eller prøv egne tall i adressen med ?helning=40&dreining=30).
 - [ ] Tom: er disen og omgivelsesskyggen passe, for mye eller for lite? Styrken står i NIVA i 15_rom3d.js (dis, ao).
 - [ ] Claude, når vinkelen er valgt: vegglamper, vinduer, pilastre, blod og sprekken også på sideveggene, gjennomsiktige vegger der en høy vegg dekker pasienten, snøens parallakse etter vinkelen, og eventuelt tegninger av ting sett på skrå.
 

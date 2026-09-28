@@ -4,13 +4,13 @@
    hefte med kapittelfaner, arkivet et arkivskap med skuffer og mapper.
    Ingenting ruller: alt skaleres til skjermen, og det som ikke får plass, blas i.
    ============================================================ */
-const SET_DEF = { vol: .7, sfx: 1, amb: 1, mus: .8, kamera: 1, shake: 1, flash: true, distort: true, lights: true, simple: false, tall: true, bobler: true, skilt: true, ui: 1, tips: true, d3: true, kvalitet: 0, blod: true, lemmer: 'tynne', kombo: true, opptak: true, vaatt: true, tv: 0, sv: 2 };
+const SET_DEF = { vol: .7, sfx: 1, amb: 1, mus: .8, kamera: 1, shake: 1, flash: true, distort: true, lights: true, simple: false, tall: true, bobler: true, skilt: true, ui: 1, tips: true, d3: true, kvalitet: 0, vinkel: 0, blod: true, lemmer: 'tynne', kombo: true, opptak: true, vaatt: true, tv: 0, sv: 2 };
 function normSettings(s) {
   const o = Object.assign({}, SET_DEF, s || {});
   if (typeof o.shake === 'boolean') o.shake = o.shake ? 1 : 0; // eldre lagring hadde av/på
   // versjon 2 (25.9.): rom i 3D er standard. Eldre lagring hadde det av, så det slås på én gang
   if (s && !(s.sv >= 2)) o.d3 = true;
-  o.sv = 2; o.kvalitet = clamp(Math.round(+o.kvalitet || 0), 0, 3); o.tv = clamp(Math.round(+o.tv || 0), 0, 2);
+  o.sv = 2; o.kvalitet = clamp(Math.round(+o.kvalitet || 0), 0, 3); o.tv = clamp(Math.round(+o.tv || 0), 0, 2); o.vinkel = clamp(Math.round(+o.vinkel || 0), 0, 2);
   return o;
 }
 /* TV-modus (Innstillinger, Spill): 0 automatisk, 1 på, 2 av. Automatisk kjenner igjen nettleseren i TV-en (Samsung, LG, Android TV,
@@ -131,12 +131,19 @@ const KONTROLLER = [
   ['Pause', 'Esc eller P', 'Start', 'Pause oppe til høyre']
 ];
 const SET_FMT = {};
+/* kameravinkelen (04_render.js) settes når spillet lastes. Er en annen vinkel valgt enn den som brukes, kommer en rad med
+   «Last på nytt». Et løp som er i gang, er lagret ved starten av etasjen og fortsetter derfra. Styrer adressen vinkelen
+   (?kamera=iso og de andre), står det i raden, for da går adressen foran innstillingen */
+const vinkelVenter = s => VINKLER[s.vinkel] !== KAMERA_VALG.navn;
+function vinkelTekst() { return (KAMERA_VALG.kilde === 'adresse' ? 'Adressen bestemmer vinkelen nå (kamera=' + (KAMERA_VALG.navn || 'standard') + '). Innstillingen brukes når spillet åpnes uten den.' : 'Brukes når spillet lastes på nytt. Et løp som er i gang, fortsetter fra starten av etasjen.') + ' Som før er 52 grader rett nedover gangene, lav er 42 grader, og isometrisk er dreid 45 grader på skrå.'; }
+function vinkelRad(s) { return `<div class="datarad" id="vinkelRad"${vinkelVenter(s) ? '' : ' style="display:none"'}><div><b>Ny kameravinkel</b><small>${esc(vinkelTekst())}</small></div>${KAMERA_VALG.kilde === 'adresse' ? '' : '<button class="btn" id="bVinkel">Last på nytt</button>'}</div>`; }
 function settingsBody(tab) {
   const s = G.meta.settings, sl = (id, lab, min, max, st, v, fmt) => { SET_FMT[id] = fmt; return `<label class="srow"><span>${lab}</span><input type="range" min="${min}" max="${max}" step="${st}" value="${v}" data-s="${id}"><em>${fmt(v)}</em></label>`; };
   const cb = (id, lab, hint) => `<label class="srow cb"><input type="checkbox" data-s="${id}" ${s[id] ? 'checked' : ''}><span>${lab}${hint ? `<small>${hint}</small>` : ''}</span></label>`;
   const pct = v => Math.round(v * 100) + ' %';
   if (tab === 'lyd') return sl('vol', 'Hovedvolum', 0, 1, .05, s.vol, pct) + sl('sfx', 'Effekter', 0, 1, .05, s.sfx, pct) + sl('mus', 'Musikk', 0, 1, .05, s.mus, pct) + sl('amb', 'Stemning', 0, 1, .05, s.amb, pct) + cb('kombo', 'Kunngjører og fanfarer', 'Orgel, kor, gong og en dyp stemme når du slår mange på rad, og applaus når det går vilt for seg') + cb('opptak', 'Innspilte lyder', 'Ekte opptak av slag, dører, fottrinn, regn og instrumenter. Slå av for bare synth, som bruker mindre minne') + '<p class="shint">Musikken spilles av orgel, piano, harpe, klokker og synth, og glir over i neste stykke på slaget når du går fra rom til rom. Lydene er innspilte og fri til bruk (CC0), med synthlyder som reserve. Stemning er suset i veggene, regnet og det som knirker og drypper.</p>';
-  if (tab === 'bilde') return sl('kamera', 'Kameraavstand', .8, 1.25, .05, s.kamera, v => v < .95 ? 'nær' : v > 1.05 ? 'langt unna' : 'vanlig') + sl('shake', 'Skjermristing', 0, 1, .1, s.shake, v => v ? pct(v) : 'av')
+  if (tab === 'bilde') return sl('kamera', 'Kameraavstand', .8, 1.25, .05, s.kamera, v => v < .95 ? 'nær' : v > 1.05 ? 'langt unna' : 'vanlig')
+    + sl('vinkel', 'Kameravinkel', 0, 2, 1, s.vinkel, v => ['som før', 'lav', 'isometrisk'][v]) + vinkelRad(s) + sl('shake', 'Skjermristing', 0, 1, .1, s.shake, v => v ? pct(v) : 'av')
     + cb('flash', 'Hvite glimt ved store treff') + cb('distort', 'Forvrengning', 'Blekkboiling, Morbidium-bølger og hallusinasjoner') + cb('lights', 'Lys og skygge') + `<label class="srow cb"><input type="checkbox" data-s="lemmer" ${s.lemmer !== 'tykke' ? 'checked' : ''}><span>Strekarmer og strekbein<small>Tynne blekkstreker i stedet for tykke armer og bein i klesfargen</small></span></label>` + cb('d3', 'Rom i 3D', 'Ekte lys fra lampene, måneskinn gjennom vinduene, skygger, tåke og glød. Figurene og tingene er de samme tegningene.') + sl('kvalitet', 'Grafikkvalitet', 0, 3, 1, s.kvalitet, v => v ? ['', 'lav', 'middels', 'høy'][v] : 'automatisk (' + D3.Q().navn + ')') + cb('blod', 'Blod og skrekkeffekter', 'Blodsprut på gulv og vegger, kjøttbiter, blod på skjermen og ting som ser på deg fra veggene') + cb('vaatt', 'Blod og vann på skjermen', 'Dråper som treffer glasset, klistrer seg fast og renner nedover: blod når du blir truffet eller noe dør tett ved, regn ute og plask fra pytter. Blodet følger også innstillingen over') + cb('simple', 'Enkel grafikk', 'Uten etterbehandling og uten 3D. For svake eller rare skjermkort.') + '<p class="shint">Automatisk kvalitet går ned et trinn av seg selv hvis bildet hakker, og slår til slutt av 3D.</p>';
   if (tab === 'spill') return sl('ui', 'Størrelse på skjermtekst', .8, 1.3, .05, s.ui, pct) + sl('tv', 'TV-modus', 0, 2, 1, s.tv, v => ['automatisk (' + (tvAuto() ? 'på' : 'av') + ')', 'på', 'av'][v]) + cb('tall', 'Skadetall') + cb('bobler', 'Snakkebobler', 'Det fiendene og personalet sier') + cb('skilt', 'Navneskilt over mestere og personale') + cb('tips', 'Tips for nye pasienter', 'Små lapper som forklarer det viktigste første gang det skjer') + '<p class="shint">TV-modus gir større tekst og menyer, marger mot kanten av TV-en og ingen berøringsknapper. Den slås på av seg selv i nettleseren på TV-en. Spiller du fra en PC eller mobil koblet til TV-en, slår du den på her.</p>';
   if (tab === 'styring') return `<p class="shint kstatus" id="kStatus">${esc(kontrollTekst())}</p><table class="ktabell"><tr><th></th><th>Tastatur og mus</th><th>Håndkontroll</th><th>Berøring</th></tr>${KONTROLLER.map(r => `<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('')}</table><p class="shint">Menyene med håndkontroll: pil eller venstre spak flytter, A velger, B går tilbake, LB og RB bytter fane. Tilbake på fjernkontrollen til TV-en er som Esc.</p>`;
@@ -156,10 +163,11 @@ function openSettings(fromTitle, back, tab = 'lyd') {
   document.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { Sound.play('paper'); openSettings(false, onBack, b.dataset.tab); });
   document.querySelectorAll('#settings [data-s]').forEach(inp => {
     const k = inp.dataset.s;
-    if (inp.type === 'range') inp.oninput = () => { s[k] = +inp.value; inp.parentNode.querySelector('em').textContent = SET_FMT[k](s[k]); up(); if (k === 'tv') fitPanel(); };
+    if (inp.type === 'range') inp.oninput = () => { s[k] = +inp.value; inp.parentNode.querySelector('em').textContent = SET_FMT[k](s[k]); up(); if (k === 'tv') fitPanel(); if (k === 'vinkel') { const r = $('vinkelRad'); if (r) { r.style.display = vinkelVenter(s) ? '' : 'none'; fitPanel(); } } };
     else inp.onchange = () => { s[k] = k === 'lemmer' ? (inp.checked ? 'tynne' : 'tykke') : inp.checked; up(); };
   });
   const dr = $('dRun'); if (dr) dr.onclick = () => { if (dr.dataset.ok) { clearRun(); Sound.play('slam'); openSettings(false, onBack, 'data'); } else { dr.dataset.ok = 1; dr.textContent = 'Sikker? Trykk igjen'; } };
+  const bv = $('bVinkel'); if (bv) bv.onclick = () => { saveMeta(); Sound.play('paper'); setTimeout(() => location.reload(), 120); };
   const dtp = $('dTips'); if (dtp) dtp.onclick = () => { G.meta.tips = {}; saveMeta(); Sound.play('paper'); openSettings(false, onBack, 'data'); };
   const dm = $('dMeta'); if (dm) dm.onclick = () => { if (dm.dataset.ok) { const keep = G.meta.settings; G.meta = blankMeta(); G.meta.settings = keep; saveMeta(); Sound.play('slam'); openSettings(false, onBack, 'data'); } else { dm.dataset.ok = 1; dm.textContent = 'Alt blir borte. Trykk igjen'; } };
   G.panelO.refit = () => openSettings(false, onBack, tab); fitPanel();

@@ -11,15 +11,20 @@
       Forvrengning følger «Forvrengning», blink følger «Blink» i innstillingene.
    ============================================================ */
 /* kameraet: helning (hvor bratt det ser ned) og dreining rundt loddlinja. Standard er 52 grader rett nedover gangene.
-   Prøven med mer isometrisk vinkel velges i adressen: ?kamera=iso (dreid 45 grader, helning 45) eller ?kamera=lav (samme retning,
-   helning 42). ?helning=40 og ?dreining=30 overstyrer tallene. Valget gjelder hele økta, fordi tegningene måles etter vinkelen.
+   Vinkelen velges under Innstillinger, Bilde (Kameravinkel: som før, lav eller isometrisk), og brukes når spillet lastes, fordi
+   tegningene måles etter vinkelen. Adressen går foran innstillingen: ?kamera=iso (dreid 45 grader, helning 45), ?kamera=lav
+   (samme retning, helning 42) eller ?kamera=standard, og ?helning=40 og ?dreining=30 overstyrer tallene.
    Alt som peker mot kameraet (dukker, ting, partikler) bruker KAM, så dreiningen følger med overalt. */
+const VINKLER = ['', 'lav', 'iso']; // innstillingen vinkel: 0 som før, 1 lav, 2 isometrisk
 const KAMERA_VALG = (() => {
   const s = (typeof location === 'object' ? location.search + location.hash : ''), tall = n => { const m = new RegExp('[?&#]' + n + '=(-?[0-9.]+)').exec(s); return m ? +m[1] : null; };
-  const navn = (/[?&#]kamera=(iso|lav)\b/.exec(s) || [])[1] || '';
+  const url = (/[?&#]kamera=(iso|lav|standard)\b/.exec(s) || [])[1];
+  // innstillingen leses rett fra lagringen, for meta (30_game.js) er ikke lastet ennå når kameraet settes opp
+  let lagret = 0; try { const m = Store.get('morbidium_meta_v2', null); lagret = m && m.settings ? Math.round(+m.settings.vinkel || 0) : 0; } catch (e) { }
+  const navn = url ? (url === 'standard' ? '' : url) : VINKLER[lagret] || '';
   const std = { '': [52, 0], iso: [45, 45], lav: [42, 0] }[navn];
   const h = tall('helning'), d = tall('dreining');
-  return { navn: navn || (h !== null || d !== null ? 'egen' : ''), helning: Math.min(80, Math.max(25, h ?? std[0])), dreining: Math.min(80, Math.max(-80, d ?? std[1])) };
+  return { navn: navn || (h !== null || d !== null ? 'egen' : ''), kilde: url || h !== null || d !== null ? 'adresse' : 'innstilling', helning: Math.min(80, Math.max(25, h ?? std[0])), dreining: Math.min(80, Math.max(-80, d ?? std[1])) };
 })();
 /* ?lys=gammel slår av den nye etterbehandlingen (dis, omgivelsesskygge og tonekurve), så den kan sammenlignes med den gamle */
 const LYS_NY = !(typeof location === 'object' && /[?&#]lys=gammel\b/.test(location.search + location.hash));
