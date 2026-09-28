@@ -85,7 +85,7 @@ const R = {
       // (feilmeldingen vises først, så den forteller hvilken kvalitet spillet hadde da det skjedde)
       let lettere = '', neste = null, ned = false;
       try { if (D3.on && !(G.meta.settings.kvalitet | 0)) { ned = true; neste = { hoy: 'middels', middels: 'lav' }[D3.kval()] || null; lettere = ' Neste gang starter spillet ' + (neste ? 'med ' + D3.NIVA[neste].navn + ' kvalitet.' : 'uten 3D.'); } } catch (e) { }
-      showErr('Grafikken gikk tom for minne eller krasjet (WebGL-konteksten ble mistet), og kom ikke tilbake.' + lettere);
+      showErr('Grafikken gikk tom for minne eller krasjet (WebGL-konteksten ble mistet), og kom ikke tilbake.' + lettere + ' Står det etterpå at spillet ikke får grafikk, må nettleseren lukkes helt og åpnes igjen.');
       try { if (ned) { const s = G.meta.settings; if (neste) s.kvAuto = neste; else s.d3 = false; saveMeta(); } } catch (e) { }
     }, 8000);
   },

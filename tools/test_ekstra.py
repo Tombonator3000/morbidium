@@ -4056,6 +4056,13 @@ async def main():
         tp = await pc.evaluate("() => ({ coarse: R.coarse, touch: navigator.maxTouchPoints, kval: D3.kval() })")
         await pc.close()
         sjekk('PC med berøringsskjerm og fin peker er ikke telefon', not tp['coarse'] and tp['touch'] > 0 and tp['kval'] == 'hoy', tp)
+        # uten WebGL i det hele tatt (Chrome stenger WebGL for siden etter et krasj): forklaring på norsk, ikke bare feilen fra three
+        pg = await ny_side(b, viewport={'width': 390, 'height': 844})
+        await pg.add_init_script("(() => { const o = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function (t, ...a) { return /webgl/i.test(t) ? null : o.call(this, t, ...a); }; })()")
+        await pg.goto(URL3D); await pg.wait_for_selector('#err:not(.hidden)', timeout=30000)
+        ng = await pg.evaluate("() => ({ tekst: (document.querySelector('#err p') || {}).textContent || '', sider: [...document.querySelectorAll('#err p')].length })")
+        await pg.close()
+        sjekk('uten WebGL: feilmeldingen sier at nettleseren må lukkes helt, og har med feilen fra three', 'Lukk nettleseren helt' in ng['tekst'] and 'Error creating WebGL context' in ng['tekst'], ng)
 
         await b.close()
     print('\n' + ('Alt gikk bra.' if not feil else 'Feilet: ' + ', '.join(feil)))
