@@ -99,3 +99,8 @@ Alle tidspunkt er UTC.
 - Sjekket før push: det nyeste treet er bit for bit likt (samme tre-hash), alle 247 commits er med, meldinger, forfattere og datoer er like, og hver commit er lik den gamle bortsett fra originalene (221 hadde originaler i treet). Tomme commits (leveranser som bare hadde originaler) er beholdt, og commit-numrene i meldingene er ikke endret. arkiv/historikk-2026-09-29.txt har kartet fra gamle til nye numre.
 - Dokumentene som pekte på 578f6f2, peker på arkiv/originaler, og nye originaler skal ikke inn på main (AGENTS.md, gpt-grafikk/LESMEG.md, ta_imot_grafikk.py).
 - En vanlig klone henter alle grenene, så den blir liten først når arkiv/originaler og claude/practical-babbage-nc80bu er slettet. Den siste har ikke noe som mangler på main. arkiv/originaler bør først lastes ned (zip fra GitHub) eller flyttes til et eget repo som Tom lager.
+
+## 2026-09-29 05:46 Den nye historikken er på GitHub og publisert
+- main og claude/dazzling-newton-2iix7q er force-pushet til den nye historikken (93729c8) med sikring mot at noe hadde endret seg (begge sto på eef0001). CI er grønn (kjøring 20), og Pages publiserte (kjøring 61): forsiden (1 827 590 byte) og morbidium.html (12 789 029 byte) er like store som bygget her og har kortrettingen.
+- En klone av main (`git clone --single-branch --branch main`) tar nå to sekunder og er 33 MB, mot rundt 450 MB før.
+- Kortrettingen var lagt på main (eef0001, Pages kjøring 60) før omskrivingen.
