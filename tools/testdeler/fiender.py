@@ -483,10 +483,11 @@ async def del_61(b):
             for (const [d, typer] of [[3, ['draug']], [4, ['holdning']], [5, ['draug']], [6, ['draug', 'holdning']]]) {
               startFloor(d, false); for (let i = 0; i < 40 && G.drom; i++) { Drom.hopp(); await vent(100); } rolig(); rom(); P.hp = P.maxHp = 400; nullstill(); for (const k in skade) delete skade[k];
               const fi = typer.map((t, i) => { const s = ved(i ? 5 : 3.5); return spawnEnemy(t, s.x, s.z, false, d); }), E = {}; typer.forEach(t => E[t] = {});
-              const g0 = G.time, t0 = performance.now();
-              while (G.time - g0 < 20 && performance.now() - t0 < 120000) { await vent(60); const t = G.time - g0; if (P.hp < 150) P.hp = 400;
+              // 20 sekunder spilltid med testklokka, sett i hvert steg (før var det en løkke i vanlig tid med tak på to minutter, og på en travel maskin rakk den ikke 20 sekunder)
+              const g0 = G.time;
+              Klokke.til(() => { const t = G.time - g0; if (P.hp < 150) P.hp = 400;
                 fi.forEach((e, i) => { const T = typer[i]; if (e.state === 'wind' && E[T].wind === undefined) E[T].wind = t; if (skade[T] && E[T].skade === undefined) E[T].skade = t; });
-                if (typer.every(T => E[T].skade !== undefined)) break; }
+                return typer.every(T => E[T].skade !== undefined); }, 20);
               ut.etasjer[d] = E; for (const e of fi) if (e.alive) killEntity(e, {}); await spill(.3);
             }
             rolig(); rom(); P.hp = P.maxHp = 1e6; nullstill();

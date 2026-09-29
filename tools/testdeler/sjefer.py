@@ -83,7 +83,8 @@ async def del_62(b):
           try {
             // tre dagsordener i vanlig kamp: det han gjør, er det han sa, i samme rekkefølge
             const s0 = freeSpot(P.x + 3, P.z, 3), o = spawnEnemy('oldermann', s0.x, s0.z, false, 4);
-            { const g0 = G.time, t0 = performance.now(); while (G.time - g0 < 70 && performance.now() - t0 < 240000) { await vent(80); P.hp = 1e6; o.hp = o.max; if ((o.referat || []).filter(a => a.ferdig).length >= 3) break; } }
+            // 70 sekunder spilltid med testklokka (før i vanlig tid med tak på fire minutter, og på en travel maskin rakk han bare to dagsordener)
+            Klokke.til(() => { P.hp = 1e6; o.hp = o.max; prov(); return (o.referat || []).filter(a => a.ferdig).length >= 3; }, 70);
             ut.referat = (o.referat || []).filter(a => a.ferdig).slice(0, 3).map(a => ({ saker: a.saker, utfort: a.utfort }));
             // den første boblen i hver dagsorden er hele dagsorden, i den rekkefølgen sakene ble gjort
             ut.bobler = [1, 2, 3].map(n => { const b = bobler.find(x => x.ref === n); return b ? b.tekst : null; });
