@@ -95,3 +95,6 @@ Alle tidspunkt er UTC.
 ## 2026-09-29 00:59 Testene: flere deler venter på spillet i stedet for faste pauser
 - Del 61 og 62 spoler kampene med testklokka i stedet for løkker i vanlig tid med tak i sekunder (med tre nettlesere rakk de ikke 20 og 70 sekunder spilltid). Del 62 tar 86 sekunder alene, før åtte minutter i pakka.
 - Del 9 venter på dødsskjermen i stedet for 2,6 sekunder, del 11 venter til spillet går før Escape, del 25 spoler til øyet har lukket seg, og del 33 gir musikkbyttet 25 sekunder. Alle er grønne alene.
+
+## 2026-09-29 01:05 Krokrunden er på main og publisert
+- main er flyttet fra 211e5d5 til fa5e7c9 (fast-forward). CI er grønn, og Pages publiserte: forsiden (nettutgaven, 1 825 859 byte) og morbidium.html (12 787 298 byte) er like store som bygget her og har merket fa5e7c9 og de nye krokene.
