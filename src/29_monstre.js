@@ -679,38 +679,41 @@ ENEMIES.kasteren.vedStart = e => { if (e.doll.wp) e.doll.wp.visible = false; };
    PORTRETT av en fiendetype, forfra, til fiendeindeksen i Pasienthåndboka.
    Samme tegninger (eller bilder fra ChatGPT) som i spillet, satt sammen på et lerret.
    ============================================================ */
-function fiendeBilde(type, W = 160, H = 190) {
-  const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
-  const img = (P, x, y, S, cx, cy, rot = 0) => { if (!P) return; g.save(); g.translate(cx + x * S, cy - y * S); if (rot) g.rotate(rot); g.drawImage(P.canvas, -P.ax * S, -(P.h - P.ay) * S, P.w * S, P.h * S); g.restore(); };
-  try {
-    const L = LAGDUKKE[type], R0 = RIG[type] || {};
-    if (L) {
-      const deler = L.deler.map(d => ({ d, P: d.P() })).sort((a, b) => (a.d.z || 0) - (b.d.z || 0));
-      let top = 0, bred = 1; for (const { d, P } of deler) { top = Math.max(top, (d.y || 0) + P.h - P.ay); bred = Math.max(bred, Math.abs(d.x || 0) * 2 + P.w); }
-      const S = Math.min((H - 12) / (top + .1), (W - 6) / bred), cx = W / 2, cy = H - 6;
-      if (L.portrett) L.portrett(g, S, cx, cy, 'bak');
-      for (const { d, P } of deler) img(P, d.x || 0, d.y || 0, S, cx, cy);
-      if (L.portrett) L.portrett(g, S, cx, cy, 'foran');
-      return c;
-    }
-    if (R0.blob) { const P = charPart(type, 'blob', 'f'), S = Math.min((H - 10) / P.h, (W - 10) / P.w) * .95; img(P, 0, 0, S, W / 2, H - 6); return c; }
-    const R1 = STREK.tynn ? Object.assign({}, R0, { legW: STREK.ben, armW: STREK.arm, leg: STREK.farge, arm: STREK.farge, handR: STREK.hand }) : R0;
-    const hode = charPart(type, 'hode', 'f'), kropp = charPart(type, 'kropp', 'f');
-    const hip = R0.hip, neck = hip + R0.neck, sh = hip + R0.shY, hw = R0.hipW, topp = neck - .02 + hode.h - hode.ay + .04;
-    const S = Math.min((H - 10) / topp, (W - 8) / Math.max(kropp.w, hode.w, 1.1)), cx = W / 2, cy = H - 5;
-    const lem = (a, b, w, col) => { for (const [ww, cc] of [[w + (STREK.tynn ? .04 : .09), INK], [w, col]]) { g.beginPath(); g.moveTo(cx + a[0] * S, cy - a[1] * S); g.quadraticCurveTo(cx + (a[0] + b[0]) / 2 * S + 3, cy - (a[1] + b[1]) / 2 * S, cx + b[0] * S, cy - b[1] * S); g.lineWidth = ww * S; g.strokeStyle = cc; g.lineCap = 'round'; g.stroke(); } };
-    const haand = (x, y) => { g.beginPath(); g.arc(cx + x * S, cy - y * S, (R1.handR + .045) * S, 0, TAU); g.fillStyle = INK; g.fill(); g.beginPath(); g.arc(cx + x * S, cy - y * S, R1.handR * S, 0, TAU); g.fillStyle = R0.hand; g.fill(); };
-    if (!R0.sete) { lem([-hw, hip + .04], [-hw - .04, .08], R1.legW, R1.leg); lem([hw, hip + .04], [hw + .04, .08], R1.legW, R1.leg); const sko = shoePart(R0.shoe || 'klogg'); img(sko, -hw - .05, 0, S, cx, cy); img(sko, hw + .05, 0, S, cx, cy); }
-    img(kropp, 0, hip, S, cx, cy);
-    const hL = R0.sete ? [-R0.shW - .08, hip + .06] : [-R0.shW - .08, sh - .4], hR = R0.sete ? [R0.shW + .08, hip + .06] : [R0.shW + .1, sh - .38];
-    lem([-R0.shW, sh], hL, R1.armW, R1.arm); haand(hL[0], hL[1]);
-    const vp = ENEMIES[type] && ENEMIES[type].weapon, wa = { oppasser: 'sproyte' }[type] || (vp && vp !== 'klump' ? vp : null) || (BOSSES[1] && Object.values(BOSSES).find(b => b.type === type) || {}).weapon;
-    if (wa && WEAPON_ART[wa]) img(weaponPart(wa), hR[0], hR[1], S, cx, cy, .3);
-    lem([R0.shW, sh], hR, R1.armW, R1.arm); haand(hR[0], hR[1]);
-    img(hode, 0, neck - .02, S, cx, cy);
-    if (type === 'speil') img(speilbilde(G.run && G.run.look), 0, neck - .02 + .58, S, cx, cy);
-    if (type === 'portier') img(portierHode(), -.36, hip + .3, S, cx, cy);
-    if (R0.cape) img(charPart(type, 'kappe', 'f'), 0, sh - .88, S, cx, cy);
-  } catch (e) { }
+/* hele figuren til fiendeindeksen og hendelsene. I nettutgaven tegnes den på nytt når bildene til delene er hentet; etter(g) kjører etter
+   hver tegning (bakgrunnen i hendFigur) */
+function fiendeBilde(type, W = 160, H = 190, etter = null) {
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), brukt = [];
+  const img = (P, x, y, S, cx, cy, rot = 0) => { if (!P) return; brukt.push(P); g.save(); g.translate(cx + x * S, cy - y * S); if (rot) g.rotate(rot); g.drawImage(P.canvas, -P.ax * S, -(P.h - P.ay) * S, P.w * S, P.h * S); g.restore(); };
+  const tegn = () => { g.clearRect(0, 0, W, H); brukt.length = 0; try {
+      const L = LAGDUKKE[type], R0 = RIG[type] || {};
+      if (L) {
+        const deler = L.deler.map(d => ({ d, P: d.P() })).sort((a, b) => (a.d.z || 0) - (b.d.z || 0));
+        let top = 0, bred = 1; for (const { d, P } of deler) { top = Math.max(top, (d.y || 0) + P.h - P.ay); bred = Math.max(bred, Math.abs(d.x || 0) * 2 + P.w); }
+        const S = Math.min((H - 12) / (top + .1), (W - 6) / bred), cx = W / 2, cy = H - 6;
+        if (L.portrett) L.portrett(g, S, cx, cy, 'bak');
+        for (const { d, P } of deler) img(P, d.x || 0, d.y || 0, S, cx, cy);
+        if (L.portrett) L.portrett(g, S, cx, cy, 'foran');
+        return;
+      }
+      if (R0.blob) { const P = charPart(type, 'blob', 'f'), S = Math.min((H - 10) / P.h, (W - 10) / P.w) * .95; img(P, 0, 0, S, W / 2, H - 6); return; }
+      const R1 = STREK.tynn ? Object.assign({}, R0, { legW: STREK.ben, armW: STREK.arm, leg: STREK.farge, arm: STREK.farge, handR: STREK.hand }) : R0;
+      const hode = charPart(type, 'hode', 'f'), kropp = charPart(type, 'kropp', 'f');
+      const hip = R0.hip, neck = hip + R0.neck, sh = hip + R0.shY, hw = R0.hipW, topp = neck - .02 + hode.h - hode.ay + .04;
+      const S = Math.min((H - 10) / topp, (W - 8) / Math.max(kropp.w, hode.w, 1.1)), cx = W / 2, cy = H - 5;
+      const lem = (a, b, w, col) => { for (const [ww, cc] of [[w + (STREK.tynn ? .04 : .09), INK], [w, col]]) { g.beginPath(); g.moveTo(cx + a[0] * S, cy - a[1] * S); g.quadraticCurveTo(cx + (a[0] + b[0]) / 2 * S + 3, cy - (a[1] + b[1]) / 2 * S, cx + b[0] * S, cy - b[1] * S); g.lineWidth = ww * S; g.strokeStyle = cc; g.lineCap = 'round'; g.stroke(); } };
+      const haand = (x, y) => { g.beginPath(); g.arc(cx + x * S, cy - y * S, (R1.handR + .045) * S, 0, TAU); g.fillStyle = INK; g.fill(); g.beginPath(); g.arc(cx + x * S, cy - y * S, R1.handR * S, 0, TAU); g.fillStyle = R0.hand; g.fill(); };
+      if (!R0.sete) { lem([-hw, hip + .04], [-hw - .04, .08], R1.legW, R1.leg); lem([hw, hip + .04], [hw + .04, .08], R1.legW, R1.leg); const sko = shoePart(R0.shoe || 'klogg'); img(sko, -hw - .05, 0, S, cx, cy); img(sko, hw + .05, 0, S, cx, cy); }
+      img(kropp, 0, hip, S, cx, cy);
+      const hL = R0.sete ? [-R0.shW - .08, hip + .06] : [-R0.shW - .08, sh - .4], hR = R0.sete ? [R0.shW + .08, hip + .06] : [R0.shW + .1, sh - .38];
+      lem([-R0.shW, sh], hL, R1.armW, R1.arm); haand(hL[0], hL[1]);
+      const vp = ENEMIES[type] && ENEMIES[type].weapon, wa = { oppasser: 'sproyte' }[type] || (vp && vp !== 'klump' ? vp : null) || (BOSSES[1] && Object.values(BOSSES).find(b => b.type === type) || {}).weapon;
+      if (wa && WEAPON_ART[wa]) img(weaponPart(wa), hR[0], hR[1], S, cx, cy, .3);
+      lem([R0.shW, sh], hR, R1.armW, R1.arm); haand(hR[0], hR[1]);
+      img(hode, 0, neck - .02, S, cx, cy);
+      if (type === 'speil') img(speilbilde(G.run && G.run.look), 0, neck - .02 + .58, S, cx, cy);
+      if (type === 'portier') img(portierHode(), -.36, hip + .3, S, cx, cy);
+      if (R0.cape) img(charPart(type, 'kappe', 'f'), 0, sh - .88, S, cx, cy);
+  } catch (e) { } finally { if (etter) etter(g); } }; // finally: også når dukken med lag eller klumpen er ferdig tidlig
+  tegn(); Art.omTegn(brukt, tegn);
   return c;
 }

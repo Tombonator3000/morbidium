@@ -52,7 +52,8 @@ addEventListener('resize', () => { if (G.state === 'panel' && G.panelO && G.pane
 function canvasOf(P, w, h, pad = .06) {
   const c = document.createElement('canvas'); c.width = w; c.height = h; if (!P) return c;
   const g = c.getContext('2d'), s = Math.min(w * (1 - pad * 2) / P.canvas.width, h * (1 - pad * 2) / P.canvas.height);
-  g.drawImage(P.canvas, (w - P.canvas.width * s) / 2, (h - P.canvas.height * s) / 2, P.canvas.width * s, P.canvas.height * s); return c;
+  const tegn = () => { g.clearRect(0, 0, w, h); g.drawImage(P.canvas, (w - P.canvas.width * s) / 2, (h - P.canvas.height * s) / 2, P.canvas.width * s, P.canvas.height * s); };
+  tegn(); Art.omTegn([P], tegn); return c;
 }
 function portraitOf(look, w = 110, h = 140) { const c = document.createElement('canvas'); c.width = w; c.height = h; try { drawDollPortrait(c.getContext('2d'), 'pasient', w / 2, h - 6, h * .47, look); } catch (e) { } return c; }
 function place(sel, node) { const el = document.querySelector(sel); if (el && node) el.replaceWith(node); }

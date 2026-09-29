@@ -29,8 +29,18 @@ const Art = {
     return Promise.race([Promise.all(start.map(k => this.hent(k))), new Promise(res => setTimeout(res, 20000))]).then(() => { this.bakgrunn(resten); });
   },
   /* startsettet i nettutgaven: det som sjekkes med en gang eller kopieres én gang (UI-settet, glassene, animasjonsarkene, pasienten og
-     det pasienten har på seg), og flatene (gulv, vegger og bakke), så etasjene bygges med bildene */
-  iStart(k) { return /^(ui_|anim_|glass|sko_|pynt_|tillegg_|lik$|hode_pasient|kropp_(pasient|tvang|skjorte|pyjamas|serk)|gulv_|vegg_|bakke_)/.test(k); },
+     det pasienten har på seg, kortene, våpnene, tingene, lommerusket, pillene og flaskene, og portrettene i tjenestene), og flatene
+     (gulv, vegger og bakke), så etasjene bygges med bildene. Uten kortene kom kodetegningen i HUD-en og journalen først (Tom 29.9.) */
+  iStart(k) {
+    if (/^(ui_|anim_|glass|sko_|pynt_|tillegg_|lik$|hode_pasient|kropp_(pasient|tvang|skjorte|pyjamas|serk)|gulv_|vegg_|bakke_|kort_|vaapen_|kur_|akt_|lomme_|pille_|flaske_)/.test(k)) return true;
+    const m = /^hode_([a-z]+)_f$/.exec(k); return !!m && typeof SVC_WHO === 'object' && Object.values(SVC_WHO).includes(m[1]);
+  },
+  /* en kopi i HTML (kort, ikoner, portretter) tegnes med det som er klart. I nettutgaven tegnes den på nytt når bildene til delene
+     den bruker, er hentet; Art.part har da byttet tegningen i delen selv, fordi den ventet først */
+  omTegn(deler, tegn) {
+    const k = [...new Set(deler.filter(P => P && P.key && SPRITES[P.key] && !this.klar(P.key)).map(P => P.key))];
+    if (k.length) Promise.all(k.map(x => this.hent(x))).then(() => { try { tegn(); } catch (e) { } });
+  },
   /* henter og dekoder ett bilde. Gir bildet, eller null når det ikke finnes eller ikke kan leses */
   hent(k) {
     if (!SPRITES[k]) return Promise.resolve(null);
@@ -477,9 +487,13 @@ function propPart(k) { const d = PROPS[k]; return Art.part('prop_' + k, d[0], d[
 function portraitCanvas(type, look) {
   const D = type === 'pasient' ? Pasient.deler(look) : null, P = D ? D.hode.f : charPart(type, 'hode', 'f'), c = document.createElement('canvas'); c.width = c.height = 128;
   // hodet krymper bare når pynten stikker over kanten (nattlua, hjelmen), ellers får ansiktet plassen
-  const hatt = D && D.pynt.some(p => !p.L.face && p.L.off.f[1] + p.P.h - p.P.ay > 1), s = hatt ? .8 : .94, y0 = hatt ? 24 : 8, g = c.getContext('2d'), w = P.canvas.width * s, h = P.canvas.height * s, x0 = (128 - w) / 2; g.drawImage(P.canvas, x0, y0, w, h);
-  // pynt i samme skala: hodet er P.w enheter bredt, festepunktet ligger P.ay over bunnen
-  if (D) { const u = w / P.w, ax = x0 + P.ax * u, ay = y0 + (P.h - P.ay) * u; for (const p of D.pynt) { const Q = p.P, o = p.L.off.f; g.drawImage(Q.canvas, ax + (o[0] - Q.ax) * u, ay - (o[1] + Q.h - Q.ay) * u, Q.w * u, Q.h * u); } }
+  const hatt = D && D.pynt.some(p => !p.L.face && p.L.off.f[1] + p.P.h - p.P.ay > 1), s = hatt ? .8 : .94, y0 = hatt ? 24 : 8, g = c.getContext('2d'), w = P.canvas.width * s, h = P.canvas.height * s, x0 = (128 - w) / 2;
+  const tegn = () => {
+    g.clearRect(0, 0, 128, 128); g.drawImage(P.canvas, x0, y0, w, h);
+    // pynt i samme skala: hodet er P.w enheter bredt, festepunktet ligger P.ay over bunnen
+    if (D) { const u = w / P.w, ax = x0 + P.ax * u, ay = y0 + (P.h - P.ay) * u; for (const p of D.pynt) { const Q = p.P, o = p.L.off.f; g.drawImage(Q.canvas, ax + (o[0] - Q.ax) * u, ay - (o[1] + Q.h - Q.ay) * u, Q.w * u, Q.h * u); } }
+  };
+  tegn(); Art.omTegn([P].concat(D ? D.pynt.map(p => p.P) : []), tegn);
   return c;
 }
 
@@ -545,7 +559,9 @@ const CARD_ART = {
 };
 function cardArtCanvas(id, size = 120) {
   const P = Art.part('kort_' + id, 1, 1, .5, .5, CARD_ART[id] || CARD_ART.ukjent);
-  const c = document.createElement('canvas'); c.width = c.height = size; c.getContext('2d').drawImage(P.canvas, 0, 0, size, size); return c;
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const tegn = () => { const g = c.getContext('2d'); g.clearRect(0, 0, size, size); g.drawImage(P.canvas, 0, 0, size, size); };
+  tegn(); Art.omTegn([P], tegn); return c;
 }
 /* hel figur til portrett (journal og dødskort): lemmer som blekkstreker */
 function drawDollPortrait(g, type, cx, cy, S, look) {

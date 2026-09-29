@@ -77,7 +77,7 @@ function innhold(K) {
   } catch (e) { }
   return [0, 0, K.width, K.height];
 }
-function hendFigur(type) { try { const c = fiendeBilde(type, 400, 400), g = c.getContext('2d'); g.globalCompositeOperation = 'destination-over'; g.fillStyle = '#15100c'; g.fillRect(0, 0, 400, 400); return c; } catch (e) { return hendBilde(null); } }
+function hendFigur(type) { try { return fiendeBilde(type, 400, 400, g => { g.save(); g.globalCompositeOperation = 'destination-over'; g.fillStyle = '#15100c'; g.fillRect(0, 0, 400, 400); g.restore(); }); } catch (e) { return hendBilde(null); } }
 /* øyet i sprekken, tett på */
 function oyeBilde(aapent = 1) {
   const c = document.createElement('canvas'); c.width = c.height = 400; const g = c.getContext('2d');

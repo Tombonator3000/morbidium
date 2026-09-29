@@ -297,7 +297,8 @@ async def del_67(b):
 
 async def del_68(b):
     # 68) Nettutgaven (dist/web, build.py): bildene, delene og lydene er egne filer. Startsettet (UI-settet, glassene, animasjonsarkene,
-    #     pasienten og flatene) er dekodet før tittelen, resten hentes i bakgrunnen, en fiende utenfor startsettet får bildet sitt i spillet,
+    #     pasienten, flatene, og kortene, våpnene, tingene og det andre som kopieres én gang til HUD, journal og valg) er dekodet før tittelen,
+    #     en kopi i HTML av noe som ikke er hentet ennå, tegnes på nytt når bildet kommer, resten hentes i bakgrunnen, en fiende utenfor startsettet får bildet sitt i spillet,
     #     lydene hentes og pakkes ut uten feil, en mester som kommer før delene hans er hentet, tegnes av koden uten feil, og fra disken
     #     sier siden at nettutgaven må åpnes fra en nettside. Serveres over http som på GitHub Pages.
     import functools, http.server, threading
@@ -311,14 +312,26 @@ async def del_68(b):
     url = f'http://127.0.0.1:{srv.server_address[1]}/index.html?2d'
     try:
         pg = await ny_side(b, viewport={'width': 1280, 'height': 720})
+        # nettleseren husker 250 nedlastinger som standard, og startsettet alene er over 200 bilder: lista utvides før siden lastes
+        await pg.add_init_script("performance.setResourceTimingBufferSize(5000)")
         await pg.goto(url); await pg.wait_for_function("() => window.MORBIDIUM && MORBIDIUM.state === 'title'", timeout=90000)
-        ti = await pg.evaluate("""() => { performance.setResourceTimingBufferSize(5000); // bufferen holder 250 oppføringer som standard
+        ti = await pg.evaluate("""() => {
               const k = Object.keys(SPRITES), start = k.filter(x => Art.iStart(x)), rest = k.filter(x => !Art.iStart(x));
               const lastet = performance.getEntriesByType('resource').concat(performance.getEntriesByType('navigation')).reduce((a, e) => a + (e.transferSize || e.encodedBodySize || 0), 0);
+              const kopier = k.filter(x => /^(kort_|vaapen_|kur_|akt_|lomme_|pille_|flaske_)/.test(x) || Object.values(SVC_WHO).some(n => x === 'hode_' + n + '_f'));
               return { ute: BYGG.ute, adresser: k.every(x => !SPRITES[x].startsWith('data:')), start: start.length, startKlar: start.filter(x => Art.klar(x)).length,
+                kopier: kopier.length, kopierKlar: kopier.filter(x => Art.klar(x)).length,
                 rest: rest.length, restDekodet: rest.filter(x => Art.klar(x)).length, lyd: Object.values(LYDFILER).every(v => typeof v === 'string' && v.startsWith('lyd/')), mb: +(lastet / 1e6).toFixed(2) }; }""")
         sjekk('nettutgaven: SPRITES og LYDFILER er adresser, og hele startsettet er dekodet før tittelen', ti['ute'] and ti['adresser'] and ti['lyd'] and ti['start'] > 60 and ti['startKlar'] == ti['start'], ti)
-        sjekk('nettutgaven: resten er ikke dekodet ved tittelen, og det som er lastet før tittelen, er under 5 MB (den selvstendige fila er 12,7)', ti['restDekodet'] < ti['rest'] / 2 and 0 < ti['mb'] < 5, ti)
+        sjekk('nettutgaven: kortene, våpnene, tingene, lommerusket, pillene, flaskene og portrettene i tjenestene er dekodet før tittelen (ingen kodetegning på kortene)', ti['kopier'] > 100 and ti['kopierKlar'] == ti['kopier'], ti)
+        sjekk('nettutgaven: resten er ikke dekodet ved tittelen, og det som er lastet før tittelen, er under 6 MB (den selvstendige fila er 12,7)', ti['restDekodet'] < ti['rest'] / 2 and 0 < ti['mb'] < 6, ti)
+        # en kopi i HTML av noe som ikke er hentet (fienden i håndboka): kodetegningen først, og så bildet når det er hentet
+        om = await pg.evaluate("""async () => { const vent = t => new Promise(r => setTimeout(r, t));
+              const t = Object.keys(ENEMIES).find(x => SPRITES['hode_' + x + '_f'] && !Art.cache.has('hode_' + x + '_f') && !Art.klar('hode_' + x + '_f')); if (!t) return { type: null };
+              const k = 'hode_' + t + '_f', c = fiendeBilde(t, 132, 156), px = () => { const d = c.getContext('2d').getImageData(0, 0, 132, 156).data; let s = 0; for (let i = 0; i < d.length; i += 7) s = (s * 31 + d[i]) >>> 0; return s; };
+              const for_ = px(), klarFor = Art.klar(k); for (let i = 0; i < 100 && !Art.klar(k); i++) await vent(100); await vent(100);
+              return { type: t, klarFor, klar: Art.klar(k), endret: px() !== for_ }; }""")
+        sjekk('nettutgaven: fienden i håndboka tegnes av koden først og med bildet når det er hentet', om['type'] and not om['klarFor'] and om['klar'] and om['endret'], om)
         await klikk(pg, '#tNew'); await pg.wait_for_timeout(500); await klikk(pg, '[data-awk]')
         await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=60000)
         sp = await pg.evaluate("""async () => { const G = MORBIDIUM, P = G.player, vent = t => new Promise(r => setTimeout(r, t)); rolig(); P.hp = P.maxHp = 1e6; P.invuln = 999;

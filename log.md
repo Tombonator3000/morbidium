@@ -2,18 +2,6 @@
 
 Alle tidspunkt er UTC.
 
-## 2026-09-28 18:25 Mobilrettingen testet og lagt på main
-- Del 65, 64, 37 og 36: 63 av 63 OK (telefon med fin peker, kameraprøven og omgivelsesskyggen på PC, skyggekart på telefon, og mobiloppsettet med mistet grafikk som kommer tilbake).
-- Målt på nytt som telefon med fin peker (384 x 832, dpr 3,75): middels, oppløsning 1,5, ingen dybdetekstur og 33 til 48 MB, mot høy, oppløsning 2, dybdetekstur og 68 til 82 MB før rettingen.
-- Lagt på main som fast-forward, så Pages publiserer.
-
-## 2026-09-28 18:50 «Error creating WebGL context» på telefonen etter krasjet
-- Tom sendte et nytt skjermbilde fra telefonen (18:46 UTC, etter at mobilrettingen var publisert): «Noe gikk galt: Error creating WebGL context.», uten opplysninger om skjermkortet.
-- Den feilen kommer fra three når nettleseren ikke gir siden WebGL i det hele tatt, før spillet har tegnet noe. Så langt jeg vet, legger Chrome et domene som skjermkortet krasjet på, i en sperreliste som ikke går ut av seg selv. Den gjelder til Chrome startes helt på nytt, eller til man trykker på knappen i meldingen «WebGL hit a snag». Det stemmer med at feilen kom rett ved oppstart. Trolig har telefonen ikke fått kjørt den rettede versjonen ennå, men det er ikke bevist.
-- Spillet viser nå en norsk forklaring når WebGL ikke kan lages: at Chrome stenger WebGL etter et krasj, og at nettleseren må lukkes helt (sveipes bort, eller Tving avslutning) før spillet åpnes igjen. Feilteksten fra three står i parentes. Meldingen om mistet grafikk sier det samme kort.
-- Testdel 65 har fått en sjekk for dette (getContext for webgl gir null): 6 av 6 OK.
-- Gjennomspillingen (test_spill.py) er grønn uten feil på det nye bygget. Lagt på main.
-
 ## 2026-09-28 19:22 Telefonen krasjet også i trygg modus, og feilrapport i feilmeldingen
 - Tom sendte et tredje skjermbilde: grafikken ble borte igjen, nå med «telefon, enkel grafikk, oppløsning 1». Det er trygg modus, fordi oppstarten før stoppet under «Starter WebGL». Pasienten, tennene, nivået og erfaringen er de samme som på det første skjermbildet, så krasjet kommer kort tid etter at det lagrede løpet fortsetter.
 - Telefongjenkjenningen virker altså. Men verken kvaliteten, 3D, etterbehandlingen eller dybdeteksturen er årsaken, for alt det er av i trygg modus. Rettingene fra i sted er fortsatt riktige for telefoner med S Pen, men de løste ikke dette krasjet.
@@ -98,3 +86,9 @@ Alle tidspunkt er UTC.
 
 ## 2026-09-29 01:05 Krokrunden er på main og publisert
 - main er flyttet fra 211e5d5 til fa5e7c9 (fast-forward). CI er grønn, og Pages publiserte: forsiden (nettutgaven, 1 825 859 byte) og morbidium.html (12 787 298 byte) er like store som bygget her og har merket fa5e7c9 og de nye krokene.
+
+## 2026-09-29 05:26 Nettutgaven: kortene har bildene med en gang
+- Tom: mobil og PC virker, men kortene viste plassholdergrafikk (kodetegningen) til bildene var lastet. Grunnen: kortene i HUD-en, journalen og valgene er kopier som tegnes én gang, og kortbildene var ikke med i startsettet, så kopien ble kodetegningen og ble stående til HUD-en ble tegnet på nytt.
+- Startsettet (`Art.iStart`, 10_art.js) har nå også kortene, våpnene, tingene, lommerusket, pillene, flaskene og portrettene i tjenestene (111 bilder, rundt 0,6 MB). Før tittelen lastes 4,6 MB, mot 12,7 i den selvstendige fila. Tingene må være med fordi krukkene og lommeruskplukkene tegner ikonet inn i sin egen tegning én gang.
+- Ny `Art.omTegn(deler, tegn)`: en kopi i HTML tegnes på nytt når bildene den bruker, er hentet. `cardArtCanvas`, `partCanvas`, `canvasOf`, `portraitCanvas` og `fiendeBilde` bruker den, så også fiendene i håndboka (som hentes i bakgrunnen) får bildet når det kommer. `fiendeBilde` har fått `etter(g)`, så bakgrunnen i hendelsesbildene (hendFigur) kommer med på nytt.
+- Testdel 68: kortene og de andre kopiene er dekodet ved tittelen, og en fiende i håndboka tegnes av koden først og med bildet når det er hentet (10 av 10). Nettleseren husket bare 250 nedlastinger før testen utvidet lista, så den utvides nå før siden lastes (da ble også målingen riktig: 4,6 MB, ikke 4,05). Del 10, 11, 25, 45 og 66 og begge røyktestene er grønne. Skjermbilder av HUD-en og journalen i nettutgaven viser kortene med bildene rett etter start.
