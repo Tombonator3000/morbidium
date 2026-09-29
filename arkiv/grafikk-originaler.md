@@ -1,6 +1,6 @@
 # Originalbildene fra ChatGPT
 
-Originalene tas ut av gpt-grafikk/ når de er behandlet (tools/ta_imot_grafikk.py). De ligger i git-historikken; hent en fil med `git checkout <commit> -- gpt-grafikk/<fil>`.
+Originalene tas ut av gpt-grafikk/ når de er behandlet (tools/ta_imot_grafikk.py). Fra 29.9.2026 ligger de på grenen `arkiv/originaler`, ikke i historikken til main (den ble skrevet om for å bli kvitt 447 MB). Commit-numrene under er fra den gamle historikken og finnes på den grenen: hent en fil med `git fetch origin arkiv/originaler` og så `git checkout <commit> -- gpt-grafikk/<fil>`. Alt fram til 28.9.2026 ligger i mappa i commit 578f6f2, som grenen peker på, og kan lastes ned som zip fra grenen på GitHub.
 
 ## 2026-09-28
 - akt_adrenalin.png: f39751c

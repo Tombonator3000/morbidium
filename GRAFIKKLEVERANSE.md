@@ -1,6 +1,6 @@
 # Grafikkleveranse til Morbidium
 
-> Fra 28.9.2026 er `gpt-grafikk/` en innboks. Originalene fra denne leveransen ligger i git-historikken (commit 578f6f2, se `arkiv/grafikk-originaler.md`), og de behandlede bildene i `assets/ferdig/`.
+> Fra 28.9.2026 er `gpt-grafikk/` en innboks. Originalene fra denne leveransen ligger på grenen `arkiv/originaler` (commit 578f6f2, se `arkiv/grafikk-originaler.md`), ikke lenger i historikken til main, og de behandlede bildene i `assets/ferdig/`.
 
 Bestillingen er kontrollert mot [Claude-artifacten «Tegnelister»](https://claude.ai/artifact/CwTKtxx3rN65Es4PKpTPrW) 26. september 2026. Alle 74 bestillinger i de ti listene er dekket. De 257 manglende manifestbildene og 11 delarkene ligger i `gpt-grafikk/`, til sammen 268 nye PNG-filer. Delarkene gir 97 synlige nye deler.
 

@@ -2,7 +2,9 @@
 
 Denne mappa er innboksen. Alt ChatGPT tegner til Morbidium, legges her. Herfra plukker verktøyene bildene opp, klipper dem, renser dem og bygger dem inn i spillet. Ingenting annet skal ligge her.
 
-Innboksen er tom med vilje. Når en leveranse er tatt imot, ligger de behandlede bildene i `assets/ferdig/` (og delene til oppskriftssystemet i `assets/deler/`), og originalene er tatt ut av mappa. De finnes i git-historikken: `arkiv/grafikk-originaler.md` sier hvilken commit hver fil ligger i, og alt som var levert fram til 28.9.2026, ligger i commit 578f6f2 (`git checkout 578f6f2 -- gpt-grafikk/` henter alt tilbake).
+Innboksen er tom med vilje. Når en leveranse er tatt imot, ligger de behandlede bildene i `assets/ferdig/` (og delene til oppskriftssystemet i `assets/deler/`), og originalene er tatt ut av mappa. De ligger på grenen `arkiv/originaler`, ikke i historikken til main (den ble skrevet om 29.9.2026, så repoet er rundt 40 MB i stedet for nesten 500): `arkiv/grafikk-originaler.md` sier hvilken commit hver fil ligger i, og alt som var levert fram til 28.9.2026, ligger i commit 578f6f2 (`git fetch origin arkiv/originaler` og så `git checkout 578f6f2 -- gpt-grafikk/` henter alt tilbake). På GitHub kan grenen lastes ned som zip.
+
+Nye leveranser: send dem som zip til Claude, eller last dem opp i `gpt-grafikk/` på grenen `arkiv/originaler` (velg grenen før du laster opp). Da havner originalene ikke i historikken til main. Claude tar imot, legger de behandlede bildene på main og originalene på `arkiv/originaler`.
 
 ## Før du tegner
 - Les `DESIGN_BRIEF.md`. Den har stilblokken som limes inn først i hver ChatGPT-samtale, reglene og arktypene.

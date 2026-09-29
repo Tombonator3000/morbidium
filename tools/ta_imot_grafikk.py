@@ -1,9 +1,10 @@
 """Tar imot nye bilder fra ChatGPT i innboksen gpt-grafikk/.
 
 Klipper arkene (skjaer_ark.py), behandler alt inn i assets/ferdig og delarkene inn i assets/deler (behandle_bilder.py),
-sjekker at hvert bilde fikk en behandlet fil, og tar så originalene ut av innboksen. Originalene blir liggende i
-git-historikken: commiten hver fil kom i, skrives i arkiv/grafikk-originaler.md, så den kan hentes igjen med
-    git checkout <commit> -- gpt-grafikk/<fil>
+sjekker at hvert bilde fikk en behandlet fil, og tar så originalene ut av innboksen. Commiten hver fil kom i, skrives i
+arkiv/grafikk-originaler.md. Originalene skal ikke bli liggende i historikken til main (den ble skrevet om 29.9.2026): legg dem i en
+commit på grenen arkiv/originaler, og hent dem igjen med
+    git fetch origin arkiv/originaler && git checkout <commit> -- gpt-grafikk/<fil>
 Stopper uten å slette noe hvis et bilde ikke ble behandlet (ukjent navn eller feil).
 
 Bruk:  python3 tools/ta_imot_grafikk.py            tar imot og tømmer innboksen

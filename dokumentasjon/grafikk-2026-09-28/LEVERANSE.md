@@ -1,6 +1,6 @@
 # Grafikkleveranse 28. september 2026
 
-> Fra 28.9.2026 er `gpt-grafikk/` en innboks. Originalene fra denne leveransen ligger i git-historikken (commit 578f6f2, se `arkiv/grafikk-originaler.md`), og de behandlede bildene i `assets/ferdig/`.
+> Fra 28.9.2026 er `gpt-grafikk/` en innboks. Originalene fra denne leveransen ligger på grenen `arkiv/originaler` (commit 578f6f2, se `arkiv/grafikk-originaler.md`), ikke lenger i historikken til main, og de behandlede bildene i `assets/ferdig/`.
 
 53 nye manifestbilder er levert som 14 PNG-filer i `gpt-grafikk/`. Status er 611 av 636 bilder.
 
