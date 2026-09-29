@@ -71,7 +71,9 @@ async def del_11(b):
     sjekk('arkivet viser mapper med portrett, fragmenter og årsrapport', a == {'mapper': 1, 'portrett': 1, 'rapport': True}, a)
     await pg.click('[data-close]'); await pg.wait_for_timeout(300)
     await pg.click('#tNew'); await pg.wait_for_timeout(400); await pg.click('[data-awk]'); await pg.wait_for_timeout(1400)
-    await pg.keyboard.press('Escape'); await pg.wait_for_timeout(400)
+    # Escape åpner pausen bare når spillet går, og på en travel maskin tar innleggelsen mer enn 1,4 sekunder
+    await pg.wait_for_function("() => MORBIDIUM.state === 'play'", timeout=30000)
+    await pg.keyboard.press('Escape'); await pg.wait_for_selector('#pS', timeout=15000); await pg.wait_for_timeout(200)
     p1 = await pg.evaluate("() => ({ state: MORBIDIUM.state, clip: !!document.querySelector('.clip'), port: !!document.querySelector('.pport') })")
     await pg.click('#pS'); await pg.wait_for_timeout(300); await pg.click('[data-close]'); await pg.wait_for_timeout(300)
     p1['tilbake'] = await pg.evaluate("() => !!document.querySelector('.clip')")

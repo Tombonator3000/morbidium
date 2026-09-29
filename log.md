@@ -2,23 +2,6 @@
 
 Alle tidspunkt er UTC.
 
-## 2026-09-28 17:48 Testene er grønne, og kameravinkelen er lagt på main
-- Del 64 (kameraprøven, etterbehandlingen og Kameravinkel i innstillingene): 10 av 10 OK. Del 11 (menyene): alle OK. Første kjøring av del 41, 11 og 64 ga 25 OK og 1 feil, og feilen var sjekken i del 41 som ventet Skjermristing.
-- Del 41 med den rettede sjekken: 9 av 9 OK. Gjennomspillingen (test_spill.py) er grønn uten feil: kamp, rydding, tjeneste, sjef, luke, drøm og død.
-- Grenen claude/dazzling-newton-2iix7q er lagt på main som fast-forward fra 9b1e5af, så Pages bygger og publiserer. Tom trenger ikke laste opp zipen, og bør ikke gjøre det nå, for den ville satt log.md, memory.md og todo.md tilbake til en eldre utgave.
-
-## 2026-09-28 17:50 Pages publisert med kameravinkelen
-- Pages-byggingen for 4e511f1 (kjøring 50) gikk grønt. Den publiserte siden har BYGG-merket 4e511f1, er like stor som det lokale bygget (12 757 035 byte) og har Kameravinkel under Innstillinger, Bilde, med «Last på nytt».
-
-## 2026-09-28 18:18 Mobil: Samsung-telefonen fikk PC-oppsettet og mistet WebGL
-- Tom fikk hvitt bilde og «Noe gikk galt: Grafikken gikk tom for minne eller krasjet (WebGL-konteksten ble mistet), og kom ikke tilbake» på telefonen. Skjermbildet viste WebGL2 på Adreno 750 (Snapdragon 8 Gen 3), dpr 3,75 og Chrome 154 på Android, trolig en Galaxy S24 Ultra. Det skjedde midt i et løp (nivå 3).
-- Målt grafikkminne i telefonprofil (384 x 832, berøring, grov peker, seks etasjer og to tilbake) for bygget før i dag (4355d3d), veggprøven (9b1e5af) og i dag: 33 til 47 MB i alle tre, uten tap og uten lekkasje av betydning. Minnet forklarer det ikke på en så sterk telefon.
-- Det jeg fant: spillet kjente igjen telefoner bare med matchMedia('(pointer: coarse)'). Chrome på Samsung med S Pen melder fin peker, fordi pennen teller først. Da fikk telefonen PC-oppsettet: oppløsning 2 i stedet for 1,5, høy kvalitet i stedet for middels, 2048 i skyggekartet, større teksturer og, fra i dag, omgivelsesskyggen med dybdetekstur. Samme telefonstørrelse med fin peker målt: 68 til 82 MB og dybdetekstur på. Dybdeteksturen er det eneste helt nye på skjermkortet i dag, og den var aldri prøvd på en ekte telefon. Jeg har ikke en Adreno å prøve på, så dette er den mest sannsynlige forklaringen, ikke en bevist en.
-- Rettet: R.coarse er nå også sann for berøringsskjerm i en mobil nettleser (Android, iPhone, iPad eller userAgentData.mobile). En PC med berøringsskjerm er fortsatt PC. Telefoner og TV får aldri omgivelsesskyggen (D3.Q setter ao til 0, slik taket på 1024 i skyggekartet gjør), heller ikke på høy.
-- Kommer grafikken ikke tilbake på åtte sekunder, lagres et trinn lettere til neste lasting (automatisk kvalitet: høy til middels til lav, og så uten 3D), og feilmeldingen sier det. Før startet «Last inn på nytt» med samme oppsett og kunne krasje likt. Feilmeldingen viser nå også telefon eller PC, 3D og kvalitet, og oppløsningen (window.__glInfo).
-- AGENTS.md: bruk R.coarse, ikke pointer: coarse alene. memory.md og todo.md oppdatert.
-- Ny testdel 65: 5 av 5 OK (telefon med fin peker får telefonoppsettet, høy på telefon uten dybdetekstur, mistet grafikk gir lettere start og riktig melding, PC med berøringsskjerm er PC). Del 64, 37 og 36 kjører.
-
 ## 2026-09-28 18:25 Mobilrettingen testet og lagt på main
 - Del 65, 64, 37 og 36: 63 av 63 OK (telefon med fin peker, kameraprøven og omgivelsesskyggen på PC, skyggekart på telefon, og mobiloppsettet med mistet grafikk som kommer tilbake).
 - Målt på nytt som telefon med fin peker (384 x 832, dpr 3,75): middels, oppløsning 1,5, ingen dybdetekstur og 33 til 48 MB, mot høy, oppløsning 2, dybdetekstur og 68 til 82 MB før rettingen.
@@ -97,3 +80,18 @@ Alle tidspunkt er UTC.
 
 ## 2026-09-28 23:10 Testene: 18 deler over på testklokka
 - Del 4, 25, 28, 29, 30, 38, 44, 46, 48, 49, 57, 58, 61, 62, 63 og 67 venter nå i spilltid. Del 62 (Oldermannen), som feilet i fasiten, er grønn; den samler varslene i hvert steg klokka tar. Del 31 og 37 venter i vanlig tid som før: gaven etter instrumentskrinet kommer med setTimeout, og skyggene måles i tegnede bilder.
+
+## 2026-09-29 00:05 Hele testpakka på det samlede bygget, og punkt 3 og 6 på main
+- Hele pakka (67 deler, tre nettlesere samtidig) på 211e5d5: 45 minutter, 8 sjekker feilet i 4 deler. Del 4, 25, 30, 48 og 67, som feilet i forrige kjøring, er grønne, og nettutgaven (del 68) er grønn.
+- De fire som feilet, venter i vanlig tid: del 9 (en fast pause på 2,6 sekunder før dødsskjermen) og del 61 (en løkke med tak på to minutter i vanlig tid) er grønne alene på samme bygg, del 62 (tre dagsordener med tak på fire minutter) feilet på samme måte i forrige kjøring, og del 33 følger lydklokka. Ingen av dem kom av endringene.
+- CI (test.yml) er grønn for 211e5d5. main er flyttet fra 3720352 til 211e5d5 (fast-forward), og Pages (kjøring 57) publiserte: forsiden er nettutgaven (1 818 803 byte, som bygget her) og morbidium.html den selvstendige fila (12 780 242 byte), begge med merket 211e5d5. Bilder, vegger og lyder hentes som egne filer fra Pages.
+
+## 2026-09-29 00:59 Punkt 4: alle innpakningene av toppnivåfunksjoner er kroker
+- Kroker har fått to former til. `Kroker.vakt(navn, fn)` kjører før alt annet og kan svare i stedet for kjernen (gir fn noe annet enn undefined, blir det svaret). `Kroker.rundt(navn, fn)` får `neste` og er for det som må se begge sider på én gang: en verdi fra før kjernen, try/finally, endrede argumenter eller et endret svar. Rekkefølgen er den innpakningene ga: vaktene, rundt-lagene (sist lagt til ytterst), før-krokene, kjernen og etter-krokene.
+- 41 innpakninger av toppnivåfunksjoner er gjort om: hurt (4), hurtPlayer (3), enemySlip (3), charPart (3), updateEnemy og updatePlayer (2 hver), og groundEffects, nearestEnemy, bottlePart, healPlayer, meleeHit, useAbility, toast, stampBig, runStats, showDeath, visUtskrevet, applySettings, openPause, settingsBody, openSettings, addPuddle, hitProps, propArt, gainXp, bossOnHurt, updateBoss, descend, combatTick og utskrivningsbrev. Vakta for Nøkken i 37_utefiender.js er borte, fordi vakta for alt som er dukket i 49_havet.js dekker den. hurt, hurtPlayer og healPlayer gir krokene helsa fra før som ekstra argument, så blodet, treffkjeden og testmodusen ikke trenger egne lag.
+- Kodesjekken: en toppnivåfunksjon som settes på nytt, er nå en feil, og det samme er å skrive til en let fra en annen fil (fire steder; nå `hudKortPaaNytt` og `kartPaaNytt` i 30_game.js). Taket gjelder 45 innpakninger av metoder (det var én for mye, fordi `boot` ble gått gjennom to ganger). `--moduler` viser de 175 navnene i 75 filpar som tidligere filer bruker fra senere filer; de er det som gjenstår før ES-moduler, fordi de blir sirkler i importene.
+- Bevis: tools/fiende_fasit.py med 211e5d5 som fasit: alle 32 fiendetypene og tabellene oppfører seg nøyaktig likt. Testdel 66 sjekker vakt, rundt og rekkefølgen på de nye krokene (6 av 6). CI er grønn (kjøring 15). Hele pakka med tre nettlesere: 42 minutter, 6 sjekker feilet i 6 deler (11, 25, 33, 45, 46 og 49), og alle seks er grønne alene på samme bygg. De venter i vanlig tid eller måler noe som avhenger av bildefrekvensen og av den tilfeldige etasjen.
+
+## 2026-09-29 00:59 Testene: flere deler venter på spillet i stedet for faste pauser
+- Del 61 og 62 spoler kampene med testklokka i stedet for løkker i vanlig tid med tak i sekunder (med tre nettlesere rakk de ikke 20 og 70 sekunder spilltid). Del 62 tar 86 sekunder alene, før åtte minutter i pakka.
+- Del 9 venter på dødsskjermen i stedet for 2,6 sekunder, del 11 venter til spillet går før Escape, del 25 spoler til øyet har lukket seg, og del 33 gir musikkbyttet 25 sekunder. Alle er grønne alene.

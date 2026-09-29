@@ -31,7 +31,7 @@ Sanntids action-roguelite i et norsk sanatorium fra 1920-tallet. Lovecraft og He
 ## Bygg
 ```
 python3 build.py              # lager dist/morbidium.html (alt i én fil) og dist/web (nettutgaven med bildene og lydene som filer)
-node tools/sjekk_kode.js      # sjekker koden: rekkefølgen i bygget, ukjente navn og innpakninger
+node tools/sjekk_kode.js      # sjekker koden: rekkefølgen i bygget, ukjente navn, kroker i stedet for innpakninger (--moduler: veien til ES-moduler)
 node tools/test_gen.js        # tester generatoren
 python3 tools/test_roek.py    # røyktest i nettleseren (--mappe dist/web for nettutgaven)
 python3 tools/test_spill.py   # gjennomspilling i nettleseren (Playwright)
